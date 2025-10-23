@@ -953,12 +953,19 @@ reward = em_weight * EM + f1_weight * F1
 
 ## Related Documentation
 
+### Core Documentation
+- **[README.md](README.md)** - Project overview and quick start guide
+- **[CHANGELOG.md](CHANGELOG.md)** - Complete change history: rebranding and bug fixes
+- **[DEVELOPMENT_NOTES.md](DEVELOPMENT_NOTES.md)** - Technical details, architecture, and developer guidance
+- **[SETUP_VENV.md](SETUP_VENV.md)** - Setup guide for Python venv (lightweight mode)
+
+### Specialized Guides
+- **[docs/DATASET_AND_CORPUS_GUIDE.md](docs/DATASET_AND_CORPUS_GUIDE.md)** - Dataset preparation and corpus building
+- **[evaluation/README.md](evaluation/README.md)** - Evaluation metrics and testing
+- **[inference/README.md](inference/README.md)** - Model inference and deployment
+
+### Research Paper
 - **Full Paper**: [Graph-R1: Towards Agentic GraphRAG Framework via End-to-end Reinforcement Learning](https://arxiv.org/abs/2507.21892)
-- **Dataset & Corpus Guide**: [docs/DATASET_AND_CORPUS_GUIDE.md](docs/DATASET_AND_CORPUS_GUIDE.md)
-- **Evaluation Guide**: [evaluation/README.md](evaluation/README.md)
-- **Inference Guide**: [inference/README.md](inference/README.md)
-- **Setup Guide (venv)**: [SETUP_VENV.md](SETUP_VENV.md)
-- **Rebranding Changelog**: [REBRANDING_CHANGELOG.md](REBRANDING_CHANGELOG.md)
 
 ---
 

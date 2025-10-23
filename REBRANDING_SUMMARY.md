@@ -35,7 +35,7 @@ The Graph-R1 codebase has been successfully rebranded to **BiG-RAG** (Bipartite 
 ### Files Modified
 
 **Python Code** (5 files):
-- [bigrag/graphr1.py](bigrag/graphr1.py) - Main class renamed, terminology updated
+- [bigrag/bigrag.py](bigrag/bigrag.py) - Main module file (renamed from graphr1.py), class renamed, terminology updated
 - [bigrag/__init__.py](bigrag/__init__.py) - Exports updated, backward compatibility added
 - [bigrag/operate.py](bigrag/operate.py) - All hyperedge→bipartite_edge replacements
 - [script_api.py](script_api.py) - API server updated

@@ -3,7 +3,7 @@ import os
 from tqdm.asyncio import tqdm as tqdm_async
 from dataclasses import dataclass
 import numpy as np
-from graphr1.utils import logger
+from bigrag.utils import logger
 from ..base import BaseVectorStorage
 
 from pymilvus import MilvusClient

@@ -18,15 +18,21 @@ from bigrag import BiGRAG
 from bigrag.llm import gpt_4o_mini_complete, openai_embedding
 from bigrag.utils import logger
 
-# Configure logging
+# Configure logging (use UTF-8 encoding for file handler to support emojis)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('build_graph.log'),
+        logging.FileHandler('build_graph.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
+
+# For Windows console, replace sys.stdout to handle Unicode
+import io
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 # Load OpenAI API key
 def load_api_key():
@@ -36,10 +42,10 @@ def load_api_key():
         with open(api_key_file, 'r') as f:
             api_key = f.read().strip()
         os.environ["OPENAI_API_KEY"] = api_key
-        logger.info("✓ Loaded OpenAI API key from openai_api_key.txt")
+        logger.info(" Loaded OpenAI API key from openai_api_key.txt")
         return api_key
     else:
-        logger.error("❌ openai_api_key.txt not found!")
+        logger.error(" openai_api_key.txt not found!")
         sys.exit(1)
 
 
@@ -48,7 +54,7 @@ def load_corpus(data_source: str):
     corpus_path = Path(f"datasets/{data_source}/raw/corpus.jsonl")
 
     if not corpus_path.exists():
-        logger.error(f"❌ Corpus not found: {corpus_path}")
+        logger.error(f" Corpus not found: {corpus_path}")
         sys.exit(1)
 
     documents = []
@@ -61,7 +67,7 @@ def load_corpus(data_source: str):
                 "title": data.get("title", "")
             })
 
-    logger.info(f"✓ Loaded {len(documents)} documents from {corpus_path}")
+    logger.info(f" Loaded {len(documents)} documents from {corpus_path}")
     return documents
 
 
@@ -102,21 +108,21 @@ def extract_knowledge(rag, documents):
             try:
                 # Insert batch into BiGRAG
                 rag.insert(batch)
-                logger.info(f"[Batch {batch_num}/{total_batches}] ✓ Successfully inserted")
+                logger.info(f"[Batch {batch_num}/{total_batches}]  Successfully inserted")
                 break
             except Exception as e:
                 retries += 1
-                logger.warning(f"[Batch {batch_num}/{total_batches}] ⚠ Error (attempt {retries}/{max_retries}): {e}")
+                logger.warning(f"[Batch {batch_num}/{total_batches}]  Error (attempt {retries}/{max_retries}): {e}")
                 if retries < max_retries:
                     wait_time = 5 * retries
                     logger.info(f"[Batch {batch_num}/{total_batches}] Waiting {wait_time}s before retry...")
                     time.sleep(wait_time)
                 else:
-                    logger.error(f"[Batch {batch_num}/{total_batches}] ❌ Failed after {max_retries} attempts")
+                    logger.error(f"[Batch {batch_num}/{total_batches}]  Failed after {max_retries} attempts")
                     raise
 
     logger.info("")
-    logger.info("✓ Knowledge extraction complete!")
+    logger.info(" Knowledge extraction complete!")
     logger.info("")
 
 
@@ -165,14 +171,14 @@ def main():
         enable_llm_cache=True,
     )
 
-    logger.info("✓ BiG-RAG initialized successfully")
+    logger.info(" BiG-RAG initialized successfully")
     print("")
 
     # Step 4: Extract knowledge and build graph
     try:
         extract_knowledge(rag, documents)
     except Exception as e:
-        logger.error(f"❌ Build failed: {e}")
+        logger.error(f" Build failed: {e}")
         import traceback
         logger.error(traceback.format_exc())
         sys.exit(1)
@@ -194,9 +200,9 @@ def main():
         filepath = output_dir / filename
         if filepath.exists():
             size = filepath.stat().st_size
-            logger.info(f"✓ {filename} ({size:,} bytes)")
+            logger.info(f" {filename} ({size:,} bytes)")
         else:
-            logger.error(f"❌ {filename} - NOT FOUND")
+            logger.error(f" {filename} - NOT FOUND")
             all_exist = False
 
     print("")
@@ -219,14 +225,14 @@ def main():
         logger.info("="*80)
         print("")
 
-        logger.info("✅ BUILD SUCCESSFUL!")
+        logger.info(" BUILD SUCCESSFUL!")
         logger.info("")
         logger.info("Next steps:")
         logger.info("  1. Run test_retrieval.py to test query functionality")
         logger.info("  2. Run test_end_to_end.py for complete pipeline test")
         print("")
     else:
-        logger.error("❌ Build incomplete - some files are missing")
+        logger.error(" Build incomplete - some files are missing")
         sys.exit(1)
 
 
@@ -234,10 +240,10 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        logger.info("\n\n❌ Build cancelled by user")
+        logger.info("\n\n Build cancelled by user")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"\n\n❌ Unexpected error: {e}")
+        logger.error(f"\n\n Unexpected error: {e}")
         import traceback
         logger.error(traceback.format_exc())
         sys.exit(1)

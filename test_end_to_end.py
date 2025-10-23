@@ -35,10 +35,10 @@ def load_api_key():
         with open(api_key_file, 'r') as f:
             api_key = f.read().strip()
         os.environ["OPENAI_API_KEY"] = api_key
-        logger.info("✓ Loaded OpenAI API key")
+        logger.info(" Loaded OpenAI API key")
         return api_key
     else:
-        logger.error("❌ openai_api_key.txt not found!")
+        logger.error(" openai_api_key.txt not found!")
         sys.exit(1)
 
 
@@ -47,13 +47,13 @@ def load_test_questions(data_source: str):
     qa_path = Path(f"datasets/{data_source}/raw/qa_test.json")
 
     if not qa_path.exists():
-        logger.error(f"❌ Test questions not found: {qa_path}")
+        logger.error(f" Test questions not found: {qa_path}")
         sys.exit(1)
 
     with open(qa_path, 'r', encoding='utf-8') as f:
         qa_data = json.load(f)
 
-    logger.info(f"✓ Loaded {len(qa_data)} test questions")
+    logger.info(f" Loaded {len(qa_data)} test questions")
     return qa_data
 
 
@@ -64,11 +64,11 @@ def initialize_rag(data_source: str):
     # Check if graph exists
     graph_dir = Path(working_dir)
     if not graph_dir.exists():
-        logger.error(f"❌ Knowledge graph not found at {working_dir}")
+        logger.error(f" Knowledge graph not found at {working_dir}")
         logger.error("Please run test_build_graph.py first!")
         sys.exit(1)
 
-    logger.info(f"✓ Knowledge graph found at {working_dir}")
+    logger.info(f" Knowledge graph found at {working_dir}")
 
     # Initialize BiGRAG
     rag = BiGRAG(
@@ -78,7 +78,7 @@ def initialize_rag(data_source: str):
         enable_llm_cache=True,
     )
 
-    logger.info("✓ BiG-RAG initialized")
+    logger.info(" BiG-RAG initialized")
     return rag
 
 
@@ -133,7 +133,7 @@ Answer:"""
         return response.strip()
 
     except Exception as e:
-        logger.error(f"❌ LLM generation failed: {e}")
+        logger.error(f" LLM generation failed: {e}")
         return None
 
 
@@ -219,7 +219,7 @@ async def test_rag_qa(
         context = retrieve_context(rag, question, top_k=3)
 
         if not context:
-            logger.warning("⚠ No context retrieved")
+            logger.warning(" No context retrieved")
             results.append({
                 "question": question,
                 "success": False,
@@ -232,7 +232,7 @@ async def test_rag_qa(
 
         # Show retrieved context (truncated)
         context_preview = context[:300] + "..." if len(context) > 300 else context
-        logger.info(f"✓ Retrieved context ({len(context)} chars):")
+        logger.info(f" Retrieved context ({len(context)} chars):")
         logger.info(f"  {context_preview}")
         logger.info("")
 
@@ -246,7 +246,7 @@ async def test_rag_qa(
         )
 
         if not answer:
-            logger.warning("⚠ Answer generation failed")
+            logger.warning(" Answer generation failed")
             results.append({
                 "question": question,
                 "success": False,
@@ -257,16 +257,16 @@ async def test_rag_qa(
             logger.info("")
             continue
 
-        logger.info(f"✓ Generated answer: {answer}")
+        logger.info(f" Generated answer: {answer}")
         logger.info("")
 
         # Step 3: Check if answer matches expected
         match = simple_match(answer, golden_answers)
 
         if match:
-            logger.info("✓ Answer matches expected response!")
+            logger.info(" Answer matches expected response!")
         else:
-            logger.info("⚠ Answer does not match expected response")
+            logger.info(" Answer does not match expected response")
 
         results.append({
             "question": question,
@@ -332,7 +332,7 @@ async def demo_interactive_query(rag, llm_func):
         # Retrieve
         context = retrieve_context(rag, question, top_k=3)
         if not context:
-            logger.warning("⚠ No context found")
+            logger.warning(" No context found")
             continue
 
         # Generate
@@ -340,7 +340,7 @@ async def demo_interactive_query(rag, llm_func):
         if answer:
             logger.info(f"\nAnswer: {answer}\n")
         else:
-            logger.warning("⚠ Failed to generate answer\n")
+            logger.warning(" Failed to generate answer\n")
 
 
 async def main():
@@ -377,7 +377,7 @@ async def main():
     await demo_interactive_query(rag, gpt_4o_mini_complete)
     print("")
 
-    logger.info("✅ ALL END-TO-END TESTS COMPLETE!")
+    logger.info(" ALL END-TO-END TESTS COMPLETE!")
     logger.info("")
     logger.info("Test logs saved to: test_end_to_end.log")
     print("")
@@ -389,10 +389,10 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info("\n\n❌ Tests cancelled by user")
+        logger.info("\n\n Tests cancelled by user")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"\n\n❌ Unexpected error: {e}")
+        logger.error(f"\n\n Unexpected error: {e}")
         import traceback
         logger.error(traceback.format_exc())
         sys.exit(1)

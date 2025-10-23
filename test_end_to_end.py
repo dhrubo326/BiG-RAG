@@ -137,7 +137,7 @@ Answer:"""
         return None
 
 
-def retrieve_context(rag, question: str, top_k: int = 3) -> str:
+async def retrieve_context(rag, question: str, top_k: int = 3) -> str:
     """
     Retrieve relevant context from BiGRAG
     """
@@ -149,7 +149,8 @@ def retrieve_context(rag, question: str, top_k: int = 3) -> str:
         max_token_for_global_context=4000,
     )
 
-    results = rag.query(question, param=param)
+    # Use async method when already in async context
+    results = await rag.aquery(question, param=param)
 
     if not results:
         return ""
@@ -216,7 +217,7 @@ async def test_rag_qa(
 
         # Step 1: Retrieve context
         logger.info("Step 1: Retrieving context from BiGRAG...")
-        context = retrieve_context(rag, question, top_k=3)
+        context = await retrieve_context(rag, question, top_k=3)
 
         if not context:
             logger.warning(" No context retrieved")
@@ -330,7 +331,7 @@ async def demo_interactive_query(rag, llm_func):
         logger.info("="*80)
 
         # Retrieve
-        context = retrieve_context(rag, question, top_k=3)
+        context = await retrieve_context(rag, question, top_k=3)
         if not context:
             logger.warning(" No context found")
             continue

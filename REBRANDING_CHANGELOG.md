@@ -29,10 +29,10 @@ The Graph-R1 paper describes a "hypergraph" structure, but the actual implementa
 
 ### Phase 1: Core Python Module Updates
 
-#### 1.1 `bigrag/graphr1.py` → Core class updates
+#### 1.1 `bigrag/bigrag.py` (renamed from `graphr1.py`) → Core class updates
 
-**Type**: Code - Class rename, terminology update
-**Files changed**: `bigrag/graphr1.py`
+**Type**: Code - File rename, class rename, terminology update
+**Files changed**: `bigrag/graphr1.py` → `bigrag/bigrag.py`
 
 **Changes made**:
 1. **Class renamed**: `GraphR1` → `BiGRAG`
@@ -105,7 +105,7 @@ The Graph-R1 paper describes a "hypergraph" structure, but the actual implementa
 from .graphr1 import GraphR1 as GraphR1, QueryParam as QueryParam
 
 # NEW
-from .graphr1 import BiGRAG as BiGRAG, QueryParam as QueryParam
+from .bigrag import BiGRAG as BiGRAG, QueryParam as QueryParam
 
 # Backward compatibility alias (deprecated)
 GraphR1 = BiGRAG
@@ -397,9 +397,11 @@ GraphR1 = BiGRAG
 
 | File Path | Change Type | Key Changes |
 |-----------|-------------|-------------|
-| `bigrag/graphr1.py` | Class rename, terminology | `GraphR1` → `BiGRAG`, `hyperedges_vdb` → `bipartite_edges_vdb` |
-| `bigrag/__init__.py` | Import update | Export `BiGRAG`, add backward compatibility alias |
+| `bigrag/graphr1.py` → `bigrag/bigrag.py` | File rename, class rename, terminology | File renamed, `GraphR1` → `BiGRAG`, `hyperedges_vdb` → `bipartite_edges_vdb` |
+| `bigrag/__init__.py` | Import update | Updated import to use `bigrag.py`, export `BiGRAG`, add backward compatibility alias |
 | `bigrag/operate.py` | Terminology | All `hyperedge*` → `bipartite_edge*` |
+| `bigrag/utils.py` | Import update | `from graphr1.prompt` → `from bigrag.prompt` |
+| `bigrag/kg/*.py` (6 files) | Import updates | All `from graphr1.*` → `from bigrag.*` |
 | `script_api.py` | Import, variables | `GraphR1` → `BiGRAG`, file paths updated |
 | `script_build.py` | Import, variables | `GraphR1` → `BiGRAG`, file paths updated |
 

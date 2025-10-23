@@ -27,9 +27,9 @@ The Graph-R1 paper refers to a "hypergraph" structure, but the actual implementa
 ### 2. Code Identifiers
 
 #### Python Module Files
-- [ ] Rename: `bigrag/graphr1.py` → `bigrag/bigrag_core.py` or keep as is and update class name
-- [ ] Update class name: `GraphR1` → `BiGRAG`
-- [ ] Update all imports: `from .graphr1 import GraphR1` → `from .bigrag_core import BiGRAG`
+- [x] Rename: `bigrag/graphr1.py` → `bigrag/bigrag.py` ✅ COMPLETED
+- [x] Update class name: `GraphR1` → `BiGRAG` ✅ COMPLETED
+- [x] Update all imports: `from .graphr1 import BiGRAG` → `from .bigrag import BiGRAG` ✅ COMPLETED
 
 #### Key Identifiers to Change
 - [ ] Class: `GraphR1` → `BiGRAG`

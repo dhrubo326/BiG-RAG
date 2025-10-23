@@ -73,7 +73,7 @@ python test_retrieval.py
 - ✓ Retrieved results for each query
 - ✓ Coherence scores (0-1)
 - ✓ Success rate: 100%
-
+ 
 **If errors occur:**
 - Check `test_retrieval.log`
 - Ensure Step 4 completed successfully

@@ -33,10 +33,10 @@ def load_api_key():
         with open(api_key_file, 'r') as f:
             api_key = f.read().strip()
         os.environ["OPENAI_API_KEY"] = api_key
-        logger.info("✓ Loaded OpenAI API key")
+        logger.info(" Loaded OpenAI API key")
         return api_key
     else:
-        logger.error("❌ openai_api_key.txt not found!")
+        logger.error(" openai_api_key.txt not found!")
         sys.exit(1)
 
 
@@ -45,13 +45,13 @@ def load_test_questions(data_source: str):
     qa_path = Path(f"datasets/{data_source}/raw/qa_test.json")
 
     if not qa_path.exists():
-        logger.error(f"❌ Test questions not found: {qa_path}")
+        logger.error(f" Test questions not found: {qa_path}")
         sys.exit(1)
 
     with open(qa_path, 'r', encoding='utf-8') as f:
         qa_data = json.load(f)
 
-    logger.info(f"✓ Loaded {len(qa_data)} test questions")
+    logger.info(f" Loaded {len(qa_data)} test questions")
     return qa_data
 
 
@@ -62,7 +62,7 @@ def initialize_rag(data_source: str):
     # Check if graph exists
     graph_dir = Path(working_dir)
     if not graph_dir.exists():
-        logger.error(f"❌ Knowledge graph not found at {working_dir}")
+        logger.error(f" Knowledge graph not found at {working_dir}")
         logger.error("Please run test_build_graph.py first!")
         sys.exit(1)
 
@@ -74,11 +74,11 @@ def initialize_rag(data_source: str):
 
     for filename in required_files:
         if not (graph_dir / filename).exists():
-            logger.error(f"❌ Missing file: {filename}")
+            logger.error(f" Missing file: {filename}")
             logger.error("Please run test_build_graph.py first!")
             sys.exit(1)
 
-    logger.info(f"✓ Knowledge graph found at {working_dir}")
+    logger.info(f" Knowledge graph found at {working_dir}")
 
     # Initialize BiGRAG
     rag = BiGRAG(
@@ -88,7 +88,7 @@ def initialize_rag(data_source: str):
         enable_llm_cache=True,
     )
 
-    logger.info("✓ BiG-RAG initialized for querying")
+    logger.info(" BiG-RAG initialized for querying")
     return rag
 
 
@@ -115,7 +115,7 @@ def test_single_query(rag, query: str, mode: str = "hybrid", top_k: int = 5):
         results = rag.query(query, param=param)
 
         # Display results
-        logger.info(f"✓ Retrieved {len(results)} results")
+        logger.info(f" Retrieved {len(results)} results")
         logger.info("")
 
         if results:
@@ -131,12 +131,12 @@ def test_single_query(rag, query: str, mode: str = "hybrid", top_k: int = 5):
                 logger.info(f"  {knowledge}")
                 logger.info("")
         else:
-            logger.warning("⚠ No results found")
+            logger.warning(" No results found")
 
         return results
 
     except Exception as e:
-        logger.error(f"❌ Query failed: {e}")
+        logger.error(f" Query failed: {e}")
         import traceback
         logger.error(traceback.format_exc())
         return []
@@ -203,7 +203,7 @@ def run_qa_tests(rag, qa_data):
 
             logger.info(f"         Retrieved: {display_result}")
             logger.info(f"         Coherence: {coherence:.4f}")
-            logger.info(f"         ✓ Success")
+            logger.info(f"          Success")
 
             results.append({
                 "question": question,
@@ -212,7 +212,7 @@ def run_qa_tests(rag, qa_data):
                 "coherence": coherence
             })
         else:
-            logger.warning(f"         ⚠ No results")
+            logger.warning(f"          No results")
             results.append({
                 "question": question,
                 "success": False,
@@ -271,7 +271,7 @@ def main():
     qa_data = load_test_questions(data_source)
     run_qa_tests(rag, qa_data)
 
-    logger.info("✅ ALL TESTS COMPLETE!")
+    logger.info(" ALL TESTS COMPLETE!")
     logger.info("")
     logger.info("Next step: Run test_end_to_end.py for complete RAG pipeline test")
     print("")
@@ -281,10 +281,10 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        logger.info("\n\n❌ Tests cancelled by user")
+        logger.info("\n\n Tests cancelled by user")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"\n\n❌ Unexpected error: {e}")
+        logger.error(f"\n\n Unexpected error: {e}")
         import traceback
         logger.error(traceback.format_exc())
         sys.exit(1)

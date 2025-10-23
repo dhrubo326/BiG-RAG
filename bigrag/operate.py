@@ -125,7 +125,7 @@ async def _handle_single_hyperrelation_extraction(
         float(record_attributes[-1]) if is_float_regex(record_attributes[-1]) else 1.0
     )
     return dict(
-        bipartite_relation="<bipartite_edge>"+knowledge_fragment,
+        hyper_relation="<bipartite_edge>"+knowledge_fragment,  # Fixed: was bipartite_relation
         weight=weight,
         source_id=edge_source_id,
     )

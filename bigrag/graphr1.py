@@ -106,9 +106,9 @@ def always_get_an_event_loop() -> asyncio.AbstractEventLoop:
 
 
 @dataclass
-class GraphR1:
+class BiGRAG:
     working_dir: str = field(
-        default_factory=lambda: f"graphr1_cache_{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}"
+        default_factory=lambda: f"bigrag_cache_{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}"
     )
     # Default not to use embedding cache
     embedding_cache_config: dict = field(
@@ -169,14 +169,14 @@ class GraphR1:
     convert_response_to_json_func: callable = convert_response_to_json
 
     def __post_init__(self):
-        log_file = os.path.join("graphr1.log")
+        log_file = os.path.join("bigrag.log")
         set_logger(log_file)
         logger.setLevel(self.log_level)
 
         logger.info(f"Logger initialized for working directory: {self.working_dir}")
 
         _print_config = ",\n  ".join([f"{k} = {v}" for k, v in asdict(self).items()])
-        logger.debug(f"GraphR1 init with param:\n  {_print_config}\n")
+        logger.debug(f"BiGRAG init with param:\n  {_print_config}\n")
 
         self.key_string_value_json_storage_cls: Type[BaseKVStorage] = (
             self._get_storage_class()[self.kv_storage]
@@ -226,8 +226,8 @@ class GraphR1:
             global_config=asdict(self),
             embedding_func=self.embedding_func,
         )
-        self.hyperedges_vdb = self.key_string_value_json_storage_cls(
-            namespace="hyperedges",
+        self.bipartite_edges_vdb = self.key_string_value_json_storage_cls(
+            namespace="bipartite_edges",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
         )
@@ -320,11 +320,11 @@ class GraphR1:
                 inserting_chunks,
                 knowledge_graph_inst=self.chunk_entity_relation_graph,
                 entity_vdb=self.entities_vdb,
-                hyperedge_vdb=self.hyperedges_vdb,
+                bipartite_edge_vdb=self.bipartite_edges_vdb,
                 global_config=asdict(self),
             )
             if maybe_new_kg is None:
-                logger.warning("No new hyperedges and entities found")
+                logger.warning("No new bipartite edges and entities found")
                 return
             self.chunk_entity_relation_graph = maybe_new_kg
 
@@ -341,7 +341,7 @@ class GraphR1:
             self.text_chunks,
             self.llm_response_cache,
             self.entities_vdb,
-            self.hyperedges_vdb,
+            self.bipartite_edges_vdb,
             self.chunks_vdb,
             self.chunk_entity_relation_graph,
         ]:
@@ -469,7 +469,7 @@ class GraphR1:
                 await self.entities_vdb.upsert(data_for_vdb)
 
             # Insert relationships into vector storage if needed
-            if self.hyperedges_vdb is not None:
+            if self.bipartite_edges_vdb is not None:
                 data_for_vdb = {
                     compute_mdhash_id(dp["src_id"] + dp["tgt_id"], prefix="rel-"): {
                         "src_id": dp["src_id"],
@@ -481,22 +481,22 @@ class GraphR1:
                     }
                     for dp in all_relationships_data
                 }
-                await self.hyperedges_vdb.upsert(data_for_vdb)
+                await self.bipartite_edges_vdb.upsert(data_for_vdb)
         finally:
             if update_storage:
                 await self._insert_done()
 
-    def query(self, query: str, param: QueryParam = QueryParam(), entity_match=None, hyperedge_match=None):
+    def query(self, query: str, param: QueryParam = QueryParam(), entity_match=None, bipartite_edge_match=None):
         loop = always_get_an_event_loop()
-        return loop.run_until_complete(self.aquery(query, param, entity_match, hyperedge_match))
+        return loop.run_until_complete(self.aquery(query, param, entity_match, bipartite_edge_match))
 
-    async def aquery(self, query: str, param: QueryParam = QueryParam(), entity_match=None, hyperedge_match=None):
+    async def aquery(self, query: str, param: QueryParam = QueryParam(), entity_match=None, bipartite_edge_match=None):
         if param.mode in ["hybrid"]:
             response = await kg_query(
                 query,
                 self.chunk_entity_relation_graph,
                 entity_match,
-                hyperedge_match,
+                bipartite_edge_match,
                 self.text_chunks,
                 param,
                 asdict(self),
@@ -522,7 +522,7 @@ class GraphR1:
 
         try:
             await self.entities_vdb.delete_entity(entity_name)
-            await self.hyperedges_vdb.delete_relation(entity_name)
+            await self.bipartite_edges_vdb.delete_relation(entity_name)
             await self.chunk_entity_relation_graph.delete_node(entity_name)
 
             logger.info(
@@ -536,7 +536,7 @@ class GraphR1:
         tasks = []
         for storage_inst in [
             self.entities_vdb,
-            self.hyperedges_vdb,
+            self.bipartite_edges_vdb,
             self.chunk_entity_relation_graph,
         ]:
             if storage_inst is None:

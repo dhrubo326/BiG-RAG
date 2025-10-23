@@ -1,7 +1,7 @@
 import os
 import json
 import time
-from graphr1 import GraphR1
+from bigrag import BiGRAG
 import argparse
 import numpy as np
 from FlagEmbedding import FlagAutoModel
@@ -54,11 +54,11 @@ def embed_knowledge(data_source):
             corpus_entity.append(entities[item]['entity_name'])
             corpus_entity_des.append(entities[item]['content'])
             
-    corpus_hyperedge = []
-    with open(f"expr/{data_source}/kv_store_hyperedges.json") as f:
-        hyperedges = json.load(f)
-        for item in hyperedges:
-            corpus_hyperedge.append(hyperedges[item]['content'])
+    corpus_bipartite_edge = []
+    with open(f"expr/{data_source}/kv_store_bipartite_edges.json") as f:
+        bipartite_edges = json.load(f)
+        for item in bipartite_edges:
+            corpus_bipartite_edge.append(bipartite_edges[item]['content'])
 
     model = FlagAutoModel.from_finetuned(
         'BAAI/bge-large-en-v1.5',
@@ -92,22 +92,22 @@ def embed_knowledge(data_source):
     index.add(corpus_numpy)
     faiss.write_index(index, f"expr/{data_source}/index_entity.bin")
 
-    embeddings = model.encode_corpus(corpus_hyperedge)
+    embeddings = model.encode_corpus(corpus_bipartite_edge)
     #save
-    np.save(f"expr/{data_source}/corpus_hyperedge.npy", embeddings)
+    np.save(f"expr/{data_source}/corpus_bipartite_edge.npy", embeddings)
 
-    corpus_numpy = np.load(f"expr/{data_source}/corpus_hyperedge.npy")
+    corpus_numpy = np.load(f"expr/{data_source}/corpus_bipartite_edge.npy")
     dim = corpus_numpy.shape[-1]
 
     corpus_numpy = corpus_numpy.astype(np.float32)
 
     index = faiss.index_factory(dim, 'Flat', faiss.METRIC_INNER_PRODUCT)
     index.add(corpus_numpy)
-    faiss.write_index(index, f"expr/{data_source}/index_hyperedge.bin")
+    faiss.write_index(index, f"expr/{data_source}/index_bipartite_edge.bin")
 
 def insert_knowledge(data_source, unique_contexts):
-    rag = GraphR1(
-        working_dir=f"expr/{data_source}"   
+    rag = BiGRAG(
+        working_dir=f"expr/{data_source}"
     )    
     extract_knowledge(rag, unique_contexts)
     embed_knowledge(data_source)

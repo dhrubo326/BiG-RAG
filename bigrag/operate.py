@@ -559,10 +559,13 @@ async def _get_node_data(
     entities_vdb: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
-):  
-    results = entities_vdb
-    if not len(results):
+):
+    # Fixed: Actually query the vector database instead of assigning the object
+    results = await entities_vdb.query(query, top_k=query_param.top_k)
+    if not results or not len(results):  # Check for None or empty
         return "", "", ""
+    # Extract entity IDs from query results
+    results = [r["id"] for r in results]
     # get entity information
     node_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]
@@ -706,10 +709,13 @@ async def _get_edge_data(
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
 ):
-    results = bipartite_edges_vdb
+    # Fixed: Actually query the vector database instead of assigning the object
+    results = await bipartite_edges_vdb.query(keywords, top_k=query_param.top_k)
 
-    if not len(results):
+    if not results or not len(results):  # Check for None or empty
         return "", "", ""
+    # Extract edge IDs from query results
+    results = [r["id"] for r in results]
 
     edge_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]

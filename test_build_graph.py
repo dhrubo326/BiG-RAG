@@ -124,6 +124,8 @@ def extract_knowledge(rag, documents):
     logger.info("")
     logger.info(" Knowledge extraction complete!")
     logger.info("")
+    logger.info("Note: Embeddings are automatically created by NanoVectorDB during insert()")
+    logger.info("")
 
 
 def main():
@@ -175,6 +177,7 @@ def main():
     print("")
 
     # Step 4: Extract knowledge and build graph
+    # Note: Embeddings are automatically created during insert() via NanoVectorDB
     try:
         extract_knowledge(rag, documents)
     except Exception as e:

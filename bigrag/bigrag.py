@@ -221,20 +221,23 @@ class BiGRAG:
             embedding_func=self.embedding_func,
         )
 
-        self.entities_vdb = self.key_string_value_json_storage_cls(
+        self.entities_vdb = self.vector_db_storage_cls(
             namespace="entities",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
+            **self.vector_db_storage_cls_kwargs,
         )
-        self.bipartite_edges_vdb = self.key_string_value_json_storage_cls(
+        self.bipartite_edges_vdb = self.vector_db_storage_cls(
             namespace="bipartite_edges",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
+            **self.vector_db_storage_cls_kwargs,
         )
-        self.chunks_vdb = self.key_string_value_json_storage_cls(
+        self.chunks_vdb = self.vector_db_storage_cls(
             namespace="chunks",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
+            **self.vector_db_storage_cls_kwargs,
         )
 
         self.llm_model_func = limit_async_func_call(self.llm_model_max_async)(
@@ -495,8 +498,8 @@ class BiGRAG:
             response = await kg_query(
                 query,
                 self.chunk_entity_relation_graph,
-                entity_match,
-                bipartite_edge_match,
+                self.entities_vdb,  # Fixed: pass actual vector DB instead of None
+                self.bipartite_edges_vdb,  # Fixed: pass actual vector DB instead of None
                 self.text_chunks,
                 param,
                 asdict(self),

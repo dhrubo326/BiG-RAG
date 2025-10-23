@@ -1,0 +1,63 @@
+================================================================================
+BiG-RAG Testing Setup - START HERE
+================================================================================
+
+QUICK START (3 Steps):
+
+1. Open Command Prompt in this folder (d:\BiG-RAG)
+
+2. Activate virtual environment:
+   venv\Scripts\activate
+
+3. Run tests one by one:
+   python check_ready.py         (Optional: verify setup)
+   python test_build_graph.py    (Step 1: Build graph - 5 min)
+   python test_retrieval.py      (Step 2: Test retrieval - 2 min)
+   python test_end_to_end.py     (Step 3: Test complete RAG - 3 min)
+
+================================================================================
+
+WHAT'S INCLUDED:
+
+✓ Demo dataset (10 AI/ML documents)
+✓ Test questions (10 questions)
+✓ OpenAI integration (gpt-4o-mini + text-embedding-3-large)
+✓ Three test scripts
+✓ Comprehensive documentation
+
+================================================================================
+
+FILES TO READ:
+
+→ RUN_TESTS.md              Step-by-step instructions
+→ TEST_README.md            Complete testing guide
+→ TESTING_SETUP_COMPLETE.md Everything that was created
+
+================================================================================
+
+COST: ~$0.02-0.05 USD total for all tests
+
+TIME: ~10-15 minutes total
+
+================================================================================
+
+NEED HELP?
+
+If you get errors:
+1. Check the log files (build_graph.log, test_retrieval.log)
+2. Make sure openai_api_key.txt has your API key
+3. Run: python check_ready.py
+
+Report back:
+- Which test you ran
+- Success or error message
+- Statistics shown at the end
+
+================================================================================
+
+Ready? Let's go!
+
+venv\Scripts\activate
+python test_build_graph.py
+
+================================================================================

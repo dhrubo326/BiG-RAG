@@ -79,23 +79,25 @@
 
 ## 🏗️ Architecture and Deep Dives
 
-11. **[docs/GRAPH_R1_VS_BIGRAG_DEEP_DIVE.md](docs/GRAPH_R1_VS_BIGRAG_DEEP_DIVE.md)**
-    - Comparison between Graph-R1 and BiG-RAG
-    - Architectural differences
+11. **[docs/EDUCATIONAL_DEEP_DIVE_RETRIEVAL_ARCHITECTURE.md](docs/EDUCATIONAL_DEEP_DIVE_RETRIEVAL_ARCHITECTURE.md)** ⭐ **NEW**
+    - **Complete guide to BiG-RAG retrieval processes**
+    - Bipartite graph architecture explained
+    - Dual-path vector retrieval
+    - Multi-hop graph traversal with adaptive depth
+    - Query complexity analysis
+    - 5-factor coherence scoring system
+    - Practical examples and implementation guide
 
-12. **[docs/DEEP_DIVE_INDEXING_PIPELINES.md](docs/DEEP_DIVE_INDEXING_PIPELINES.md)**
-    - Detailed indexing pipeline explanation
-    - FAISS index construction
+12. **[docs/EDUCATIONAL_DEEP_DIVE_INDEXING_ARCHITECTURE.md](docs/EDUCATIONAL_DEEP_DIVE_INDEXING_ARCHITECTURE.md)** ⭐ **NEW**
+    - **Complete guide to BiG-RAG indexing processes**
+    - Document processing and chunking
+    - Multi-pass entity extraction (spaCy + LLM + resolution)
+    - N-ary relation extraction
+    - Bipartite graph construction
+    - Vector index building with FAISS
+    - Storage architecture and performance optimization
 
-13. **[docs/BIPARTITE_VALIDATION_AND_RELEVANCE_FILTERING_COMPARISON.md](docs/BIPARTITE_VALIDATION_AND_RELEVANCE_FILTERING_COMPARISON.md)**
-    - Bipartite graph validation
-    - Relevance filtering techniques
-
-14. **[docs/EDUCATIONAL_DEEP_DIVE_RETRIEVAL_ARCHITECTURES.md](docs/EDUCATIONAL_DEEP_DIVE_RETRIEVAL_ARCHITECTURES.md)**
-    - Educational overview of retrieval architectures
-    - RAG system comparisons
-
-15. **[docs/SETUP_AND_TESTING_GUIDE.md](docs/SETUP_AND_TESTING_GUIDE.md)**
+13. **[docs/SETUP_AND_TESTING_GUIDE.md](docs/SETUP_AND_TESTING_GUIDE.md)**
     - Complete setup instructions
     - Testing procedures
 
@@ -103,25 +105,25 @@
 
 ## 📖 Original Research
 
-16. **[docs/Graph-R1_full_paper.md](docs/Graph-R1_full_paper.md)**
+14. **[docs/Graph-R1_full_paper.md](docs/Graph-R1_full_paper.md)**
     - Original Graph-R1 paper (full text)
     - Kept as historical reference
 
-17. **[docs/BiG-RAG_Full_Paper.md](docs/BiG-RAG_Full_Paper.md)**
+15. **[docs/BiG-RAG_Full_Paper.md](docs/BiG-RAG_Full_Paper.md)**
     - BiG-RAG paper with updated terminology
 
 ---
 
 ## 🔧 Helper Code and Examples
 
-18. **[docs/Helper_code/README.md](docs/Helper_code/README.md)**
+16. **[docs/Helper_code/README.md](docs/Helper_code/README.md)**
     - Helper scripts overview
 
-19. **[docs/Helper_code/api_server.py](docs/Helper_code/api_server.py)**
+17. **[docs/Helper_code/api_server.py](docs/Helper_code/api_server.py)**
     - Enhanced API server with multi-provider LLM support
     - Uses OpenAI embeddings
 
-20. **[docs/Helper_code/build_knowledge_graph.py](docs/Helper_code/build_knowledge_graph.py)**
+18. **[docs/Helper_code/build_knowledge_graph.py](docs/Helper_code/build_knowledge_graph.py)**
     - Knowledge graph construction with OpenAI embeddings
     - Alternative to script_build.py
 
@@ -129,11 +131,11 @@
 
 ## 🎯 Evaluation and Inference
 
-21. **[evaluation/README.md](evaluation/README.md)**
+19. **[evaluation/README.md](evaluation/README.md)**
     - Evaluation procedures
     - Metrics (EM, F1, etc.)
 
-22. **[inference/README.md](inference/README.md)**
+20. **[inference/README.md](inference/README.md)**
     - Inference guide
     - Loading trained models
 

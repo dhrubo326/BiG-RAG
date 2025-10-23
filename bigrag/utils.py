@@ -30,7 +30,7 @@ class UnlimitedSemaphore:
 
 ENCODER = None
 
-logger = logging.getLogger("graphr1")
+logger = logging.getLogger("bigrag")
 
 
 def set_logger(log_file: str):

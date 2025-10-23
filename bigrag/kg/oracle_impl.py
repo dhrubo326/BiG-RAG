@@ -95,9 +95,9 @@ class OracleDB:
     async def check_tables(self):
         for k, v in TABLES.items():
             try:
-                if k.lower() == "graphr1_graph":
+                if k.lower() == "bigrag_graph":
                     await self.query(
-                        "SELECT id FROM GRAPH_TABLE (graphr1_graph MATCH (a) COLUMNS (a.id)) fetch first row only"
+                        "SELECT id FROM GRAPH_TABLE (bigrag_graph MATCH (a) COLUMNS (a.id)) fetch first row only"
                     )
                 else:
                     await self.query("SELECT 1 FROM {k}".format(k=k))
@@ -627,16 +627,16 @@ TABLES = {
                     )"""
     },
     "HYPERGRAPHRAG_GRAPH": {
-        "ddl": """CREATE OR REPLACE PROPERTY GRAPH graphr1_graph
+        "ddl": """CREATE OR REPLACE PROPERTY GRAPH bigrag_graph
                 VERTEX TABLES (
-                    graphr1_graph_nodes KEY (id)
+                    bigrag_graph_nodes KEY (id)
                         LABEL entity
                         PROPERTIES (id,workspace,name) -- ,entity_type,description,source_chunk_id)
                 )
                 EDGE TABLES (
-                    graphr1_graph_edges KEY (id)
-                        SOURCE KEY (source_name) REFERENCES graphr1_graph_nodes(name)
-                        DESTINATION KEY (target_name) REFERENCES graphr1_graph_nodes(name)
+                    bigrag_graph_edges KEY (id)
+                        SOURCE KEY (source_name) REFERENCES bigrag_graph_nodes(name)
+                        DESTINATION KEY (target_name) REFERENCES bigrag_graph_nodes(name)
                         LABEL  has_relation
                         PROPERTIES (id,workspace,source_name,target_name) -- ,weight, keywords,description,source_chunk_id)
                 ) OPTIONS(ALLOW MIXED PROPERTY TYPES)"""
@@ -677,22 +677,22 @@ SQL_TEMPLATES = {
         FROM HYPERGRAPHRAG_DOC_CHUNKS WHERE workspace=:workspace)
         WHERE distance>:better_than_threshold ORDER BY distance ASC FETCH FIRST :top_k ROWS ONLY""",
     # SQL for GraphStorage
-    "has_node": """SELECT * FROM GRAPH_TABLE (graphr1_graph
+    "has_node": """SELECT * FROM GRAPH_TABLE (bigrag_graph
         MATCH (a)
         WHERE a.workspace=:workspace AND a.name=:node_id
         COLUMNS (a.name))""",
-    "has_edge": """SELECT * FROM GRAPH_TABLE (graphr1_graph
+    "has_edge": """SELECT * FROM GRAPH_TABLE (bigrag_graph
         MATCH (a) -[e]-> (b)
         WHERE e.workspace=:workspace and a.workspace=:workspace and b.workspace=:workspace
         AND a.name=:source_node_id AND b.name=:target_node_id
         COLUMNS (e.source_name,e.target_name)  )""",
-    "node_degree": """SELECT count(1) as degree FROM GRAPH_TABLE (graphr1_graph
+    "node_degree": """SELECT count(1) as degree FROM GRAPH_TABLE (bigrag_graph
         MATCH (a)-[e]->(b)
         WHERE a.workspace=:workspace and a.workspace=:workspace and b.workspace=:workspace
         AND a.name=:node_id or b.name = :node_id
         COLUMNS (a.name))""",
     "get_node": """SELECT t1.name,t2.entity_type,t2.source_chunk_id as source_id,NVL(t2.description,'') AS description
-        FROM GRAPH_TABLE (graphr1_graph
+        FROM GRAPH_TABLE (bigrag_graph
         MATCH (a)
         WHERE a.workspace=:workspace AND a.name=:node_id
         COLUMNS (a.name)
@@ -700,14 +700,14 @@ SQL_TEMPLATES = {
         WHERE t2.workspace=:workspace""",
     "get_edge": """SELECT t1.source_id,t2.weight,t2.source_chunk_id as source_id,t2.keywords,
         NVL(t2.description,'') AS description,NVL(t2.KEYWORDS,'') AS keywords
-        FROM GRAPH_TABLE (graphr1_graph
+        FROM GRAPH_TABLE (bigrag_graph
         MATCH (a)-[e]->(b)
         WHERE e.workspace=:workspace and a.workspace=:workspace and b.workspace=:workspace
         AND a.name=:source_node_id and b.name = :target_node_id
         COLUMNS (e.id,a.name as source_id)
         ) t1 JOIN HYPERGRAPHRAG_GRAPH_EDGES t2 on t1.id=t2.id""",
     "get_node_edges": """SELECT source_name,target_name
-            FROM GRAPH_TABLE (graphr1_graph
+            FROM GRAPH_TABLE (bigrag_graph
             MATCH (a)-[e]->(b)
             WHERE e.workspace=:workspace and a.workspace=:workspace and b.workspace=:workspace
             AND a.name=:source_node_id
@@ -727,7 +727,7 @@ SQL_TEMPLATES = {
     "get_all_nodes": """WITH t0 AS (
                         SELECT name AS id, entity_type AS label, entity_type, description,
                             '["' || replace(source_chunk_id, '<SEP>', '","') || '"]'     source_chunk_ids
-                        FROM graphr1_graph_nodes
+                        FROM bigrag_graph_nodes
                         WHERE workspace = :workspace
                         ORDER BY createtime DESC fetch first :limit rows only
                     ), t1 AS (
@@ -735,7 +735,7 @@ SQL_TEMPLATES = {
                         FROM t0, JSON_TABLE ( source_chunk_ids, '$[*]' COLUMNS ( source_chunk_id PATH '$' ) )
                     ), t2 AS (
                         SELECT t1.id, LISTAGG(t2.content, '\n') content
-                        FROM t1 LEFT JOIN graphr1_doc_chunks t2 ON t1.source_chunk_id = t2.id
+                        FROM t1 LEFT JOIN bigrag_doc_chunks t2 ON t1.source_chunk_id = t2.id
                         GROUP BY t1.id
                     )
                     SELECT t0.id, label, entity_type, description, t2.content
@@ -750,10 +750,10 @@ SQL_TEMPLATES = {
     "get_statistics": """select  count(distinct CASE WHEN type='node' THEN id END) as nodes_count,
                 count(distinct CASE WHEN type='edge' THEN id END) as edges_count
                 FROM (
-                select 'node' as type, id FROM GRAPH_TABLE (graphr1_graph
+                select 'node' as type, id FROM GRAPH_TABLE (bigrag_graph
                     MATCH (a) WHERE a.workspace=:workspace columns(a.name as id))
                 UNION
-                select 'edge' as type, TO_CHAR(id) id FROM GRAPH_TABLE (graphr1_graph
+                select 'edge' as type, TO_CHAR(id) id FROM GRAPH_TABLE (bigrag_graph
                     MATCH (a)-[e]->(b) WHERE e.workspace=:workspace columns(e.id))
                 )""",
 }

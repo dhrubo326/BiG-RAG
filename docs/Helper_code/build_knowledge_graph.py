@@ -73,12 +73,12 @@ def embed_knowledge(data_source):
             corpus_entity.append(entities[item]['entity_name'])
             corpus_entity_des.append(entities[item]['content'])
 
-    # Load hyperedges corpus
-    corpus_hyperedge = []
-    with open(f"expr/{data_source}/kv_store_hyperedges.json", encoding='utf-8') as f:
-        hyperedges = json.load(f)
-        for item in hyperedges:
-            corpus_hyperedge.append(hyperedges[item]['content'])
+    # Load bipartite edges corpus
+    corpus_bipartite_edge = []
+    with open(f"expr/{data_source}/kv_store_bipartite_edges.json", encoding='utf-8') as f:
+        bipartite_edges = json.load(f)
+        for item in bipartite_edges:
+            corpus_bipartite_edge.append(bipartite_edges[item]['content'])
 
     print("\n" + "="*80)
     print("Creating embeddings with OpenAI text-embedding-3-large")
@@ -118,19 +118,19 @@ def embed_knowledge(data_source):
     faiss.write_index(index, f"expr/{data_source}/index_entity.bin")
     print(f"   ✅ Entity index saved: {len(corpus_entity)} vectors ({dim} dimensions)")
 
-    # Embed hyperedges
-    print(f"\n[3/4] Embedding {len(corpus_hyperedge)} hyperedges...")
-    embeddings = model.encode_corpus(corpus_hyperedge, batch_size=50)
-    np.save(f"expr/{data_source}/corpus_hyperedge.npy", embeddings)
+    # Embed bipartite edges
+    print(f"\n[3/4] Embedding {len(corpus_bipartite_edge)} bipartite edges...")
+    embeddings = model.encode_corpus(corpus_bipartite_edge, batch_size=50)
+    np.save(f"expr/{data_source}/corpus_bipartite_edge.npy", embeddings)
 
-    corpus_numpy = np.load(f"expr/{data_source}/corpus_hyperedge.npy")
+    corpus_numpy = np.load(f"expr/{data_source}/corpus_bipartite_edge.npy")
     dim = corpus_numpy.shape[-1]
     corpus_numpy = corpus_numpy.astype(np.float32)
 
     index = faiss.index_factory(dim, 'Flat', faiss.METRIC_INNER_PRODUCT)
     index.add(corpus_numpy)
-    faiss.write_index(index, f"expr/{data_source}/index_hyperedge.bin")
-    print(f"   ✅ Hyperedge index saved: {len(corpus_hyperedge)} vectors ({dim} dimensions)")
+    faiss.write_index(index, f"expr/{data_source}/index_bipartite_edge.bin")
+    print(f"   ✅ Bipartite edge index saved: {len(corpus_bipartite_edge)} vectors ({dim} dimensions)")
 
 def insert_knowledge(data_source, unique_contexts):
     """

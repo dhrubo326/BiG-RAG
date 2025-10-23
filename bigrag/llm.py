@@ -1074,7 +1074,7 @@ class MultiModel:
             Model(gen_func=openai_complete_if_cache, kwargs={"model": "gpt-4", "api_key": os.environ["OPENAI_API_KEY_5"]}),
         ]
         multi_model = MultiModel(models)
-        rag = GraphR1(
+        rag = BiGRAG(
             llm_model_func=multi_model.llm_model_func
             / ..other args
             )

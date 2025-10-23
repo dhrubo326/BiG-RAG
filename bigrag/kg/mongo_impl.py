@@ -14,7 +14,7 @@ class MongoKVStorage(BaseKVStorage):
         client = MongoClient(
             os.environ.get("MONGO_URI", "mongodb://root:root@localhost:27017/")
         )
-        database = client.get_database(os.environ.get("MONGO_DATABASE", "GraphR1"))
+        database = client.get_database(os.environ.get("MONGO_DATABASE", "BiGRAG"))
         self._data = database.get_collection(self.namespace)
         logger.info(f"Use MongoDB as KV {self.namespace}")
 

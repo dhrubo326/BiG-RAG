@@ -253,23 +253,23 @@ try:
         for item in entities:
             corpus_entity.append(entities[item]['entity_name'])
 
-    index_hyperedge = faiss.read_index(f"expr/{data_source}/index_hyperedge.bin")
-    corpus_hyperedge = []
-    with open(f"expr/{data_source}/kv_store_hyperedges.json", encoding='utf-8') as f:
-        hyperedges = json.load(f)
-        for item in hyperedges:
-            corpus_hyperedge.append(hyperedges[item]['content'])
+    index_bipartite_edge = faiss.read_index(f"expr/{data_source}/index_bipartite_edge.bin")
+    corpus_bipartite_edge = []
+    with open(f"expr/{data_source}/kv_store_bipartite_edges.json", encoding='utf-8') as f:
+        bipartite_edges = json.load(f)
+        for item in bipartite_edges:
+            corpus_bipartite_edge.append(bipartite_edges[item]['content'])
 except FileNotFoundError as e:
     print(f"❌ Dataset not found: {e}")
     print(f"   Make sure expr/{data_source}/ contains the knowledge graph files")
     sys.exit(1)
 
 # Initialize BiGRAG
-print(f"[INFO] Initializing BiGRAG with n-ary hypergraph...")
+print(f"[INFO] Initializing BiGRAG with n-ary bipartite graph...")
 rag = BiGRAG(working_dir=f"expr/{data_source}")
 
 print("✅ Server initialization complete!")
-print(f"📊 Loaded {len(corpus_entity)} entities, {len(corpus_hyperedge)} hyperedges")
+print(f"📊 Loaded {len(corpus_entity)} entities, {len(corpus_bipartite_edge)} bipartite edges")
 
 # ============================================================================
 # FASTAPI APP SETUP
@@ -317,12 +317,12 @@ def always_get_an_event_loop() -> asyncio.AbstractEventLoop:
         asyncio.set_event_loop(loop)
     return loop
 
-async def process_query(query_text, rag_instance, entity_match, hyperedge_match):
+async def process_query(query_text, rag_instance, entity_match, bipartite_edge_match):
     result = await rag_instance.aquery(
         query_text,
         param=QueryParam(only_need_context=True, top_k=config["multi_hop_depth"]),
         entity_match=entity_match,
-        hyperedge_match=hyperedge_match
+        bipartite_edge_match=bipartite_edge_match
     )
     return {"query": query_text, "result": result}
 
@@ -331,7 +331,7 @@ def _format_results(results: List, corpus) -> List[str]:
 
 def retrieve_context(question: str) -> Dict[str, Any]:
     """
-    Retrieve context using OpenAI embeddings + n-ary hypergraph traversal
+    Retrieve context using OpenAI embeddings + n-ary bipartite graph traversal
     """
     start_time = time.time()
 
@@ -346,14 +346,14 @@ def retrieve_context(question: str) -> Dict[str, Any]:
     _, entity_ids = index_entity.search(embeddings, config["initial_retrieval"])
     entity_match = {question: _format_results(entity_ids[0], corpus_entity)}
 
-    # Search hyperedges (5 initial, following BiG-RAG)
-    _, hyperedge_ids = index_hyperedge.search(embeddings, config["initial_retrieval"])
-    hyperedge_match = {question: _format_results(hyperedge_ids[0], corpus_hyperedge)}
+    # Search bipartite edges (5 initial, following BiG-RAG)
+    _, bipartite_edge_ids = index_bipartite_edge.search(embeddings, config["initial_retrieval"])
+    bipartite_edge_match = {question: _format_results(bipartite_edge_ids[0], corpus_bipartite_edge)}
 
-    # Get detailed context from BiGRAG (n-ary hypergraph traversal)
+    # Get detailed context from BiGRAG (n-ary bipartite graph traversal)
     loop = always_get_an_event_loop()
     result = loop.run_until_complete(
-        process_query(question, rag, entity_match[question], hyperedge_match[question])
+        process_query(question, rag, entity_match[question], bipartite_edge_match[question])
     )
 
     retrieval_time = (time.time() - start_time) * 1000
@@ -361,7 +361,7 @@ def retrieve_context(question: str) -> Dict[str, Any]:
     return {
         "context": result["result"],
         "entities": entity_match[question],
-        "relations": hyperedge_match[question],
+        "relations": bipartite_edge_match[question],
         "retrieval_time_ms": round(retrieval_time, 2)
     }
 
@@ -531,7 +531,7 @@ def health():
         "status": "healthy",
         "dataset": data_source,
         "entities": len(corpus_entity),
-        "hyperedges": len(corpus_hyperedge),
+        "bipartite_edges": len(corpus_bipartite_edge),
         "embedding_model": config["embedding_model"],
         "llm_provider": active_provider,
         "llm_model": active_model
@@ -673,7 +673,7 @@ if __name__ == "__main__":
     if active_provider == "ollama":
         print(f"Ollama URL: {config['ollama']['url']}")
     print(f"Entities: {len(corpus_entity)}")
-    print(f"Hyperedges: {len(corpus_hyperedge)}")
+    print(f"Bipartite Edges: {len(corpus_bipartite_edge)}")
     print(f"Port: {args.port}")
     print(f"Retrieval Strategy: {config['initial_retrieval']} initial → {config['multi_hop_depth']}-hop traversal")
     print(f"{'='*80}\n")

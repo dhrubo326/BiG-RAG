@@ -125,14 +125,14 @@ async def _handle_single_hyperrelation_extraction(
         float(record_attributes[-1]) if is_float_regex(record_attributes[-1]) else 1.0
     )
     return dict(
-        hyper_relation="<hyperedge>"+knowledge_fragment,
+        bipartite_relation="<bipartite_edge>"+knowledge_fragment,
         weight=weight,
         source_id=edge_source_id,
     )
     
 
-async def _merge_hyperedges_then_upsert(
-    hyperedge_name: str,
+async def _merge_bipartite_edges_then_upsert(
+    bipartite_edge_name: str,
     nodes_data: list[dict],
     knowledge_graph_inst: BaseGraphStorage,
     global_config: dict,
@@ -140,11 +140,11 @@ async def _merge_hyperedges_then_upsert(
     already_weights = []
     already_source_ids = []
 
-    already_hyperedge = await knowledge_graph_inst.get_node(hyperedge_name)
-    if already_hyperedge is not None:
-        already_weights.append(already_hyperedge["weight"])
+    already_bipartite_edge = await knowledge_graph_inst.get_node(bipartite_edge_name)
+    if already_bipartite_edge is not None:
+        already_weights.append(already_bipartite_edge["weight"])
         already_source_ids.extend(
-            split_string_by_multi_markers(already_hyperedge["source_id"], [GRAPH_FIELD_SEP])
+            split_string_by_multi_markers(already_bipartite_edge["source_id"], [GRAPH_FIELD_SEP])
         )
 
     weight = sum([dp["weight"] for dp in nodes_data] + already_weights)
@@ -152,15 +152,15 @@ async def _merge_hyperedges_then_upsert(
         set([dp["source_id"] for dp in nodes_data] + already_source_ids)
     )
     node_data = dict(
-        role = "hyperedge",
+        role = "bipartite_edge",
         weight=weight,
         source_id=source_id,
     )
     await knowledge_graph_inst.upsert_node(
-        hyperedge_name,
+        bipartite_edge_name,
         node_data=node_data,
     )
-    node_data["hyperedge_name"] = hyperedge_name
+    node_data["bipartite_edge_name"] = bipartite_edge_name
     return node_data
 
 
@@ -262,7 +262,7 @@ async def extract_entities(
     chunks: dict[str, TextChunkSchema],
     knowledge_graph_inst: BaseGraphStorage,
     entity_vdb: BaseVectorStorage,
-    hyperedge_vdb: BaseVectorStorage,
+    bipartite_edge_vdb: BaseVectorStorage,
     global_config: dict,
 ) -> Union[BaseGraphStorage, None]:
     use_llm_func: callable = global_config["llm_model_func"]
@@ -400,20 +400,20 @@ async def extract_entities(
         for k, v in m_edges.items():
             maybe_edges[k].extend(v)
             
-    logger.info("Inserting hyperedges into storage...")
-    all_hyperedges_data = []
+    logger.info("Inserting bipartite edges into storage...")
+    all_bipartite_edges_data = []
     for result in tqdm_async(
         asyncio.as_completed(
             [
-                _merge_hyperedges_then_upsert(k, v, knowledge_graph_inst, global_config)
+                _merge_bipartite_edges_then_upsert(k, v, knowledge_graph_inst, global_config)
                 for k, v in maybe_edges.items()
             ]
         ),
         total=len(maybe_edges),
-        desc="Inserting hyperedges",
+        desc="Inserting bipartite edges",
         unit="entity",
     ):
-        all_hyperedges_data.append(await result)
+        all_bipartite_edges_data.append(await result)
             
     logger.info("Inserting entities into storage...")
     all_entities_data = []
@@ -445,28 +445,28 @@ async def extract_entities(
     ):
         all_relationships_data.append(await result)
 
-    if not len(all_hyperedges_data) and not len(all_entities_data) and not len(all_relationships_data):
+    if not len(all_bipartite_edges_data) and not len(all_entities_data) and not len(all_relationships_data):
         logger.warning(
-            "Didn't extract any hyperedges and entities, maybe your LLM is not working"
+            "Didn't extract any bipartite edges and entities, maybe your LLM is not working"
         )
         return None
 
-    if not len(all_hyperedges_data):
-        logger.warning("Didn't extract any hyperedges")
+    if not len(all_bipartite_edges_data):
+        logger.warning("Didn't extract any bipartite edges")
     if not len(all_entities_data):
         logger.warning("Didn't extract any entities")
     if not len(all_relationships_data):
         logger.warning("Didn't extract any relationships")
 
-    if hyperedge_vdb is not None:
+    if bipartite_edge_vdb is not None:
         data_for_vdb = {
-            compute_mdhash_id(dp["hyperedge_name"], prefix="rel-"): {
-                "content": dp["hyperedge_name"],
-                "hyperedge_name": dp["hyperedge_name"],
+            compute_mdhash_id(dp["bipartite_edge_name"], prefix="rel-"): {
+                "content": dp["bipartite_edge_name"],
+                "bipartite_edge_name": dp["bipartite_edge_name"],
             }
-            for dp in all_hyperedges_data
+            for dp in all_bipartite_edges_data
         }
-        await hyperedge_vdb.upsert(data_for_vdb)
+        await bipartite_edge_vdb.upsert(data_for_vdb)
 
     if entity_vdb is not None:
         data_for_vdb = {
@@ -485,7 +485,7 @@ async def kg_query(
     query,
     knowledge_graph_inst: BaseGraphStorage,
     entities_vdb: list,
-    hyperedges_vdb: list,
+    bipartite_edges_vdb: list,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
     global_config: dict,
@@ -499,11 +499,11 @@ async def kg_query(
         keywords,
         knowledge_graph_inst,
         entities_vdb,
-        hyperedges_vdb,
+        bipartite_edges_vdb,
         text_chunks_db,
         query_param,
     )
-    
+
     return context
 
 
@@ -512,7 +512,7 @@ async def _build_query_context(
     query: list,
     knowledge_graph_inst: BaseGraphStorage,
     entities_vdb: BaseVectorStorage,
-    hyperedges_vdb: BaseVectorStorage,
+    bipartite_edges_vdb: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
 ):
@@ -530,7 +530,7 @@ async def _build_query_context(
     knowledge_list_2 = await _get_edge_data(
         hl_keywrds,
         knowledge_graph_inst,
-        hyperedges_vdb,
+        bipartite_edges_vdb,
         text_chunks_db,
         query_param,
     )
@@ -582,7 +582,7 @@ async def _get_node_data(
     use_relations = await _find_most_related_edges_from_entities(
         node_datas, query_param, knowledge_graph_inst
     )
-    knowledge_list = [s["description"].replace("<hyperedge>","") for s in use_relations]
+    knowledge_list = [s["description"].replace("<bipartite_edge>","") for s in use_relations]
     # s_ids = []
     # for r in use_relations:
     #     s_ids.extend(r["source_id"].split(GRAPH_FIELD_SEP))
@@ -702,11 +702,11 @@ async def _find_most_related_edges_from_entities(
 async def _get_edge_data(
     keywords,
     knowledge_graph_inst: BaseGraphStorage,
-    hyperedges_vdb: BaseVectorStorage,
+    bipartite_edges_vdb: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
-):  
-    results = hyperedges_vdb
+):
+    results = bipartite_edges_vdb
 
     if not len(results):
         return "", "", ""
@@ -718,17 +718,17 @@ async def _get_edge_data(
     if not all([n is not None for n in edge_datas]):
         logger.warning("Some edges are missing, maybe the storage is damaged")
     # edge_degree = await asyncio.gather(
-    #     *[knowledge_graph_inst.node_degree(r["hyperedge_name"]) for r in results]
+    #     *[knowledge_graph_inst.node_degree(r["bipartite_edge_name"]) for r in results]
     # )
     edge_datas = [
-        {"hyperedge": k, "rank": v["weight"], **v}
+        {"bipartite_edge": k, "rank": v["weight"], **v}
         for k, v in zip(results, edge_datas)
         if v is not None
     ]
     edge_datas = sorted(
         edge_datas, key=lambda x: (x["rank"], x["weight"]), reverse=True
     )
-    knowledge_list = [s["hyperedge"].replace("<hyperedge>","") for s in edge_datas]
+    knowledge_list = [s["bipartite_edge"].replace("<bipartite_edge>","") for s in edge_datas]
     # s_ids = []
     # for r in edge_datas:
     #     s_ids.extend(r["source_id"].split(GRAPH_FIELD_SEP))
@@ -743,7 +743,7 @@ async def _find_most_related_entities_from_relationships(
 ):
     
     node_datas = await asyncio.gather(
-        *[knowledge_graph_inst.get_node_edges(edge["hyperedge"]) for edge in edge_datas]
+        *[knowledge_graph_inst.get_node_edges(edge["bipartite_edge"]) for edge in edge_datas]
     )
     
     entity_names = []

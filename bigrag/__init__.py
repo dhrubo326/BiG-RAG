@@ -1,1 +1,4 @@
-from .graphr1 import GraphR1 as GraphR1, QueryParam as QueryParam
+from .graphr1 import BiGRAG as BiGRAG, QueryParam as QueryParam
+
+# Backward compatibility alias (deprecated)
+GraphR1 = BiGRAG

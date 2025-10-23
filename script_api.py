@@ -6,7 +6,7 @@ import faiss
 from FlagEmbedding import FlagAutoModel
 from typing import List
 import argparse
-from graphr1 import GraphR1, QueryParam
+from bigrag import BiGRAG, QueryParam
 import asyncio
 from tqdm import tqdm
 
@@ -34,20 +34,20 @@ print("[DEBUG] EMBEDDINGS LOADED")
 
 # 加载 FAISS 索引和 FlagEmbedding 模型
 print(f"[DEBUG] LOADING EMBEDDINGS")
-index_hyperedge = faiss.read_index(f"expr/{data_source}/index_hyperedge.bin")
-corpus_hyperedge = []
-with open(f"expr/{data_source}/kv_store_hyperedges.json") as f:
-    hyperedges = json.load(f)
-    for item in hyperedges:
-        corpus_hyperedge.append(hyperedges[item]['content'])
+index_bipartite_edge = faiss.read_index(f"expr/{data_source}/index_bipartite_edge.bin")
+corpus_bipartite_edge = []
+with open(f"expr/{data_source}/kv_store_bipartite_edges.json") as f:
+    bipartite_edges = json.load(f)
+    for item in bipartite_edges:
+        corpus_bipartite_edge.append(bipartite_edges[item]['content'])
 print("[DEBUG] EMBEDDINGS LOADED")
 
-rag = GraphR1(
-    working_dir=f"expr/{data_source}",  
+rag = BiGRAG(
+    working_dir=f"expr/{data_source}",
 )
 
-async def process_query(query_text, rag_instance, entity_match, hyperedge_match):
-    result = await rag_instance.aquery(query_text, param=QueryParam(only_need_context=True, top_k=10), entity_match=entity_match, hyperedge_match=hyperedge_match)
+async def process_query(query_text, rag_instance, entity_match, bipartite_edge_match):
+    result = await rag_instance.aquery(query_text, param=QueryParam(only_need_context=True, top_k=10), entity_match=entity_match, bipartite_edge_match=bipartite_edge_match)
     return {"query": query_text, "result": result}
 
 def always_get_an_event_loop() -> asyncio.AbstractEventLoop:
@@ -71,14 +71,14 @@ def queries_to_results(queries: List[str]) -> List[str]:
     embeddings = model.encode_queries(queries)
     _, ids = index_entity.search(embeddings, 5)  # 每个查询返回 5 个结果
     entity_match = {queries[i]:_format_results(ids[i], corpus_entity) for i in range(len(ids))}
-    _, ids = index_hyperedge.search(embeddings, 5)  # 每个查询返回 5 个结果
-    hyperedge_match = {queries[i]:_format_results(ids[i], corpus_hyperedge) for i in range(len(ids))}
-    
+    _, ids = index_bipartite_edge.search(embeddings, 5)  # 每个查询返回 5 个结果
+    bipartite_edge_match = {queries[i]:_format_results(ids[i], corpus_bipartite_edge) for i in range(len(ids))}
+
     results = []
     loop = always_get_an_event_loop()
     for query_text in tqdm(queries, desc="Processing queries", unit="query"):
         result = loop.run_until_complete(
-            process_query(query_text, rag, entity_match[query_text], hyperedge_match[query_text])
+            process_query(query_text, rag, entity_match[query_text], bipartite_edge_match[query_text])
         )
         results.append(json.dumps({"results": result["result"]}))
     return results

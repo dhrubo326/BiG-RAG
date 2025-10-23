@@ -11,7 +11,7 @@ shift $((OPTIND - 1))
 
 export VLLM_ATTENTION_BACKEND=XFORMERS
 export BASE_MODEL="${path}"
-export PROJECT_NAME='Graph-R1'
+export PROJECT_NAME='BiG-RAG'
 export EXPERIMENT_NAME="${model}_${dataset}_ppo"
 export HYDRA_FULL_ERROR=1
 export CUDA_LAUNCH_BLOCKING=1

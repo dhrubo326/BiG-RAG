@@ -10,7 +10,6 @@ import aioboto3
 import aiohttp
 import numpy as np
 import ollama
-import torch
 from openai import (
     AsyncOpenAI,
     APIConnectionError,
@@ -25,7 +24,11 @@ from tenacity import (
     wait_exponential,
     retry_if_exception_type,
 )
-from transformers import AutoTokenizer, AutoModelForCausalLM
+
+# Lazy imports for optional dependencies (only needed for specific LLM backends)
+# These will be imported when actually needed
+# import torch  # Only for HuggingFace
+# from transformers import AutoTokenizer, AutoModelForCausalLM  # Only for HuggingFace
 
 from .utils import (
     wrap_embedding_func_with_attrs,
@@ -222,6 +225,16 @@ async def bedrock_complete_if_cache(
 
 @lru_cache(maxsize=1)
 def initialize_hf_model(model_name):
+    # Lazy import - only load transformers/torch when actually using HuggingFace
+    try:
+        from transformers import AutoTokenizer, AutoModelForCausalLM
+        import torch
+    except ImportError:
+        raise ImportError(
+            "HuggingFace transformers and torch are required for local model inference. "
+            "Install with: pip install transformers torch"
+        )
+
     hf_tokenizer = AutoTokenizer.from_pretrained(
         model_name, device_map="auto", trust_remote_code=True
     )

@@ -225,12 +225,14 @@ class BiGRAG:
             namespace="entities",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
+            meta_fields={"entity_name"},  # Bug #5 fix: Store entity_name for node lookup
             **self.vector_db_storage_cls_kwargs,
         )
         self.bipartite_edges_vdb = self.vector_db_storage_cls(
             namespace="bipartite_edges",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
+            meta_fields={"bipartite_edge_name"},  # Bug #5 fix: Store edge name for node lookup
             **self.vector_db_storage_cls_kwargs,
         )
         self.chunks_vdb = self.vector_db_storage_cls(
@@ -494,17 +496,18 @@ class BiGRAG:
         return loop.run_until_complete(self.aquery(query, param, entity_match, bipartite_edge_match))
 
     async def aquery(self, query: str, param: QueryParam = QueryParam(), entity_match=None, bipartite_edge_match=None):
-        if param.mode in ["hybrid"]:
-            response = await kg_query(
-                query,
-                self.chunk_entity_relation_graph,
-                self.entities_vdb,  # Fixed: pass actual vector DB instead of None
-                self.bipartite_edges_vdb,  # Fixed: pass actual vector DB instead of None
-                self.text_chunks,
-                param,
-                asdict(self),
-                hashing_kv=self.llm_response_cache,
-            )
+        # All query modes now pass VDB instances directly to kg_query
+        # kg_query will handle querying based on param.mode
+        response = await kg_query(
+            query,
+            self.chunk_entity_relation_graph,
+            self.entities_vdb,  # Fixed: pass actual vector DB instead of None
+            self.bipartite_edges_vdb,  # Fixed: pass actual vector DB instead of None
+            self.text_chunks,
+            param,
+            asdict(self),
+            hashing_kv=self.llm_response_cache,
+        )
         await self._query_done()
         return response
 

@@ -564,8 +564,8 @@ async def _get_node_data(
     results = await entities_vdb.query(query, top_k=query_param.top_k)
     if not results or not len(results):  # Check for None or empty
         return "", "", ""
-    # Extract entity IDs from query results
-    results = [r["id"] for r in results]
+    # Extract entity names from query results (Bug #5 fix: use entity_name, not hash ID)
+    results = [r["entity_name"] for r in results]
     # get entity information
     node_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]
@@ -714,8 +714,8 @@ async def _get_edge_data(
 
     if not results or not len(results):  # Check for None or empty
         return "", "", ""
-    # Extract edge IDs from query results
-    results = [r["id"] for r in results]
+    # Extract edge names from query results (Bug #5 fix: use bipartite_edge_name, not hash ID)
+    results = [r["bipartite_edge_name"] for r in results]
 
     edge_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]

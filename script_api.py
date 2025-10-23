@@ -15,32 +15,32 @@ parser.add_argument('--data_source', default='2WikiMultiHopQA')
 args = parser.parse_args()
 data_source = args.data_source
 
-# 加载 FAISS 索引和 FlagEmbedding 模型
+# Load FlagEmbedding model for query encoding
 model = FlagAutoModel.from_finetuned(
     'BAAI/bge-large-en-v1.5',
     query_instruction_for_retrieval="Represent this sentence for searching relevant passages: ",
     devices="cpu",
 )
 
-# 加载 FAISS 索引和 FlagEmbedding 模型
-print(f"[DEBUG] LOADING EMBEDDINGS")
+# Load entity FAISS index and corpus
+print(f"[DEBUG] LOADING ENTITY EMBEDDINGS")
 index_entity = faiss.read_index(f"expr/{data_source}/index_entity.bin")
 corpus_entity = []
 with open(f"expr/{data_source}/kv_store_entities.json") as f:
     entities = json.load(f)
     for item in entities:
         corpus_entity.append(entities[item]['entity_name'])
-print("[DEBUG] EMBEDDINGS LOADED")
+print("[DEBUG] ENTITY EMBEDDINGS LOADED")
 
-# 加载 FAISS 索引和 FlagEmbedding 模型
-print(f"[DEBUG] LOADING EMBEDDINGS")
+# Load bipartite edge FAISS index and corpus
+print(f"[DEBUG] LOADING BIPARTITE EDGE EMBEDDINGS")
 index_bipartite_edge = faiss.read_index(f"expr/{data_source}/index_bipartite_edge.bin")
 corpus_bipartite_edge = []
 with open(f"expr/{data_source}/kv_store_bipartite_edges.json") as f:
     bipartite_edges = json.load(f)
     for item in bipartite_edges:
         corpus_bipartite_edge.append(bipartite_edges[item]['content'])
-print("[DEBUG] EMBEDDINGS LOADED")
+print("[DEBUG] BIPARTITE EDGE EMBEDDINGS LOADED")
 
 rag = BiGRAG(
     working_dir=f"expr/{data_source}",
@@ -82,9 +82,9 @@ def queries_to_results(queries: List[str]) -> List[str]:
         )
         results.append(json.dumps({"results": result["result"]}))
     return results
-########### PREDEFINE ############
+########### FASTAPI SERVER ############
 
-# 创建 FastAPI 实例
+# Create FastAPI instance
 app = FastAPI(title="Search API", description="An API for document retrieval using FAISS and FlagEmbedding.")
 
 class SearchRequest(BaseModel):

@@ -192,10 +192,13 @@ def main():
     logger.info("="*80)
 
     output_dir = Path(working_dir)
+
+    # After bug fixes: entities and bipartite_edges are stored in VectorDB (not KV storage)
     expected_files = [
-        "kv_store_text_chunks.json",
-        "kv_store_entities.json",
-        "kv_store_bipartite_edges.json",
+        "kv_store_text_chunks.json",  # Text chunks KV storage
+        "vdb_entities.json",           # Entities vector database
+        "vdb_bipartite_edges.json",    # Bipartite edges vector database
+        "graph_chunk_entity_relation.graphml",  # NetworkX graph
     ]
 
     all_exist = True
@@ -214,17 +217,20 @@ def main():
         # Load and show statistics
         with open(output_dir / "kv_store_text_chunks.json", 'r', encoding='utf-8') as f:
             chunks = json.load(f)
-        with open(output_dir / "kv_store_entities.json", 'r', encoding='utf-8') as f:
-            entities = json.load(f)
-        with open(output_dir / "kv_store_bipartite_edges.json", 'r', encoding='utf-8') as f:
-            edges = json.load(f)
+        with open(output_dir / "vdb_entities.json", 'r', encoding='utf-8') as f:
+            entities_vdb = json.load(f)
+        with open(output_dir / "vdb_bipartite_edges.json", 'r', encoding='utf-8') as f:
+            edges_vdb = json.load(f)
 
         logger.info("="*80)
         logger.info("GRAPH STATISTICS")
         logger.info("="*80)
         logger.info(f"  Text Chunks: {len(chunks)}")
-        logger.info(f"  Entities: {len(entities)}")
-        logger.info(f"  Relations (Bipartite Edges): {len(edges)}")
+        # NanoVectorDB stores vectors in 'data' key
+        entities_count = len(entities_vdb.get('data', []))
+        edges_count = len(edges_vdb.get('data', []))
+        logger.info(f"  Entities: {entities_count}")
+        logger.info(f"  Relations (Bipartite Edges): {edges_count}")
         logger.info("="*80)
         print("")
 

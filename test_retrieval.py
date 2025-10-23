@@ -66,10 +66,12 @@ def initialize_rag(data_source: str):
         logger.error("Please run test_build_graph.py first!")
         sys.exit(1)
 
+    # After bug fixes: entities and bipartite_edges are stored in VectorDB
     required_files = [
-        "kv_store_text_chunks.json",
-        "kv_store_entities.json",
-        "kv_store_bipartite_edges.json",
+        "kv_store_text_chunks.json",   # Text chunks KV storage
+        "vdb_entities.json",            # Entities vector database
+        "vdb_bipartite_edges.json",     # Bipartite edges vector database
+        "graph_chunk_entity_relation.graphml",  # NetworkX graph
     ]
 
     for filename in required_files:

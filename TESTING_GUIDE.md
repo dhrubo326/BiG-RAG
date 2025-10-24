@@ -1,62 +1,24 @@
-# BiG-RAG Testing Guide
+# BiG-RAG Testing & API Guide
 
-Quick guide for testing your knowledge graph with questions.
-
----
-
-## Prerequisites
-
-✅ You have already built a knowledge graph (you have files in `expr/demo_test/`)
+Complete guide for testing your knowledge graph and using the API server.
 
 ---
 
-## Method 1: Using FastAPI Swagger UI (Recommended for Beginners)
+## Quick Start
 
-### Step 1: Start the API Server
+### 1. Start the API Server
 
-**IMPORTANT:** Use the correct API server based on how you built your knowledge graph:
-
-- **If you built with `tests/test_build_graph.py` (using OpenAI models):**
-  ```bash
-  python script_api_openai.py --data_source demo_test
-  ```
-
-- **If you built with `script_build.py` (using FlagEmbedding/FAISS):**
-  ```bash
-  python script_api.py --data_source demo_test
-  ```
-
-**For most users:** Use `script_api_openai.py` (recommended)
-
-**Output:**
-```
-[INFO] Loading BiG-RAG for dataset: demo_test
-[INFO] Embedding model loaded
-[INFO] Loaded X entities
-[INFO] Loaded Y bipartite edges
-[INFO] BiG-RAG initialized
-
-================================================================================
-  BiG-RAG API Server Starting
-  Dataset: demo_test
-  Host: 0.0.0.0:8001
-  Docs: http://0.0.0.0:8001/docs
-================================================================================
+```bash
+python script_api.py --data_source demo_test
 ```
 
-### Step 2: Open Swagger UI in Browser
+### 2. Test in Browser
 
-Open your browser and navigate to:
-```
-http://localhost:8001/docs
-```
+Open: **http://localhost:8001/docs**
 
-### Step 3: Test the `/ask` Endpoint
+### 3. Ask a Question
 
-1. Find the **Q&A** section in Swagger UI
-2. Click on **POST /ask**
-3. Click **"Try it out"**
-4. Enter your question in the request body:
+Find **POST /ask** → Click "Try it out" → Execute:
 
 ```json
 {
@@ -66,167 +28,269 @@ http://localhost:8001/docs
 }
 ```
 
-5. Click **"Execute"**
-6. View the response with retrieved contexts and coherence scores
+---
 
-**Parameters:**
-- `question`: Your question (string)
-- `top_k`: Number of results (default: 5)
-- `mode`: Retrieval mode - `hybrid`, `local`, `global`, or `naive` (default: `hybrid`)
+## API Server Overview
 
-**Retrieval Modes:**
-- `hybrid` - Combines entity and relation retrieval (**recommended**)
-- `local` - Entity-based retrieval only
-- `global` - Relation-based retrieval only
-- `naive` - Direct text chunk retrieval
+BiG-RAG provides a unified FastAPI server that automatically detects your knowledge graph format:
+
+- **OpenAI embeddings** (`vdb_*.json` files) → Uses OpenAI text-embedding API
+- **Local embeddings** (`index_*.bin` files) → Uses FlagEmbedding (BAAI/bge-large-en-v1.5)
+
+The server **automatically chooses** the right approach based on available files!
+
+### Supported LLM Providers
+
+The API server supports multiple LLM providers with minimal configuration:
+
+| Provider | Models | Configuration |
+|----------|--------|---------------|
+| **OpenAI** (default) | gpt-4o-mini, gpt-4o, gpt-4 | Set `OPENAI_API_KEY` |
+| **Anthropic** | claude-3-5-sonnet, claude-3-opus | Set `ANTHROPIC_API_KEY` |
+| **Google** | gemini-pro, gemini-1.5-pro | Set `GOOGLE_API_KEY` |
+| **Grok** | grok-beta | Set `XAI_API_KEY` |
+
+**Default**: `gpt-4o-mini` (fast, cheap, good quality)
 
 ---
 
-## Method 2: Using Command Line Script
+## Testing Methods
 
-### Step 1: Start the API Server (if not already running)
+### Method 1: Swagger UI (Easiest)
+
+1. **Start server:**
+   ```bash
+   python script_api.py --data_source demo_test
+   ```
+
+2. **Open browser:** http://localhost:8001/docs
+
+3. **Test `/ask` endpoint:**
+   - Find **Q&A** section
+   - Click **POST /ask**
+   - Click "Try it out"
+   - Enter your question:
+     ```json
+     {
+       "question": "What is Artificial Intelligence?",
+       "top_k": 5,
+       "mode": "hybrid"
+     }
+     ```
+   - Click "Execute"
+
+### Method 2: Command Line
 
 ```bash
-# Use OpenAI-based server (recommended)
-python script_api_openai.py --data_source demo_test
+# Start server
+python script_api.py --data_source demo_test
 
-# OR use FlagEmbedding-based server (if you built with script_build.py)
-# python script_api.py --data_source demo_test
-```
-
-### Step 2: Ask Questions via Command Line
-
-Open a **new terminal** (keep the server running) and run:
-
-```bash
-# Basic usage
+# In another terminal, ask questions
 python test_ask_question.py "What is Artificial Intelligence?"
-
-# Specify top_k
 python test_ask_question.py "What is machine learning?" --top_k 3
-
-# Specify retrieval mode
-python test_ask_question.py "Explain neural networks" --mode hybrid --top_k 5
-
-# Try different modes
-python test_ask_question.py "What is deep learning?" --mode local
-python test_ask_question.py "What is deep learning?" --mode global
-python test_ask_question.py "What is deep learning?" --mode naive
+python test_ask_question.py "Explain neural networks" --mode hybrid
 ```
 
-**Example Output:**
-```
-🔍 Testing BiG-RAG Knowledge Graph
-📡 Server: localhost:8001
-⚙️  Mode: hybrid | Top-K: 5
-
-================================================================================
-📝 QUESTION
-================================================================================
-What is Artificial Intelligence?
-
-================================================================================
-📚 RETRIEVED CONTEXTS (3 results, mode: hybrid)
-================================================================================
-
-[Result 1] (Coherence: 0.8542)
---------------------------------------------------------------------------------
-Artificial Intelligence (AI) refers to the simulation of human intelligence
-in machines that are programmed to think like humans and mimic their actions...
-
-[Result 2] (Coherence: 0.7821)
---------------------------------------------------------------------------------
-AI systems can learn from experience, adjust to new inputs, and perform
-human-like tasks...
-
-================================================================================
-✅ Query completed successfully
-================================================================================
-```
-
----
-
-## Method 3: Using curl (Terminal)
+### Method 3: curl
 
 ```bash
-# Basic request
 curl -X POST "http://localhost:8001/ask" \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is AI?", "top_k": 5, "mode": "hybrid"}'
-
-# Pretty-print JSON output (requires jq)
-curl -X POST "http://localhost:8001/ask" \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What is machine learning?"}' | jq .
+  -d '{
+    "question": "What is AI?",
+    "top_k": 5,
+    "mode": "hybrid"
+  }'
 ```
 
----
+### Method 4: Python Requests
 
-## Method 4: Using Python Script Directly
+```python
+import requests
 
-You can also use the test files in the `tests/` folder:
+response = requests.post(
+    "http://localhost:8001/ask",
+    json={
+        "question": "What is Artificial Intelligence?",
+        "top_k": 5,
+        "mode": "hybrid"
+    }
+)
+
+result = response.json()
+print(f"Found {result['num_results']} results")
+for ctx in result['retrieved_contexts']:
+    print(f"[{ctx['rank']}] {ctx['context'][:200]}...")
+```
+
+### Method 5: Test Scripts
 
 ```bash
 # Test retrieval only
 cd tests
 python test_retrieval.py
 
-# Test full end-to-end pipeline (retrieval + LLM generation)
+# Test full pipeline (retrieval + LLM)
 python test_end_to_end.py
 ```
 
-**Note:** These scripts require:
-- OpenAI API key in `openai_api_key.txt`
-- Test questions in `datasets/demo_test/raw/qa_test.json`
-
 ---
 
-## Method 5: Using Python Requests (Interactive)
+## API Endpoints
 
-Create a simple Python script:
+### POST /ask - Interactive Q&A
 
-```python
-import requests
+Ask a single question and get retrieved context.
 
-url = "http://localhost:8001/ask"
-payload = {
-    "question": "What is Artificial Intelligence?",
-    "top_k": 5,
-    "mode": "hybrid"
+**Request:**
+```json
+{
+  "question": "What is Artificial Intelligence?",
+  "top_k": 5,
+  "mode": "hybrid",
+  "llm_provider": "openai"  // optional: openai, anthropic, google, grok
 }
+```
 
-response = requests.post(url, json=payload)
-result = response.json()
+**Response:**
+```json
+{
+  "question": "What is Artificial Intelligence?",
+  "retrieved_contexts": [
+    {
+      "rank": 1,
+      "context": "AI refers to...",
+      "coherence_score": 0.85
+    }
+  ],
+  "num_results": 5,
+  "mode": "hybrid",
+  "message": "Successfully retrieved relevant context"
+}
+```
 
-print(f"Question: {result['question']}")
-print(f"Found {result['num_results']} results\n")
+**Retrieval Modes:**
+- `hybrid` - Entity + relation retrieval (**recommended**)
+- `local` - Entity-based only
+- `global` - Relation-based only
+- `naive` - Direct text chunks
 
-for ctx in result['retrieved_contexts']:
-    print(f"[Result {ctx['rank']}] (Score: {ctx['coherence_score']:.4f})")
-    print(ctx['context'][:200] + "...\n")
+### POST /search - Batch Retrieval
+
+For training/batch processing multiple queries.
+
+**Request:**
+```json
+{
+  "queries": [
+    "What is AI?",
+    "What is machine learning?"
+  ]
+}
+```
+
+### POST /chat/completions - LLM Generation
+
+OpenAI-compatible chat endpoint with RAG support.
+
+**Request:**
+```json
+{
+  "model": "gpt-4o-mini",
+  "messages": [
+    {"role": "user", "content": "What is AI?"}
+  ],
+  "use_rag": true,  // Use knowledge graph for context
+  "temperature": 0.7,
+  "llm_provider": "openai"  // optional
+}
+```
+
+### GET /health - Health Check
+
+Check server status and graph statistics.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "dataset": "demo_test",
+  "entities_count": 150,
+  "edges_count": 300,
+  "chunks_count": 50,
+  "embedding_mode": "openai",
+  "available_providers": ["openai", "anthropic"]
+}
 ```
 
 ---
 
-## Comparing Retrieval Modes
+## Switching LLM Providers
 
-Test the same question with different modes to see which works best:
+### Option 1: Environment Variables
 
 ```bash
-# Hybrid mode (entity + relation)
-python test_ask_question.py "What is deep learning?" --mode hybrid
+# Use OpenAI (default)
+export OPENAI_API_KEY="sk-..."
+python script_api.py --data_source demo_test
 
-# Local mode (entity only)
-python test_ask_question.py "What is deep learning?" --mode local
+# Use Claude
+export ANTHROPIC_API_KEY="sk-ant-..."
+python script_api.py --data_source demo_test --llm_provider anthropic
 
-# Global mode (relation only)
-python test_ask_question.py "What is deep learning?" --mode global
+# Use Gemini
+export GOOGLE_API_KEY="..."
+python script_api.py --data_source demo_test --llm_provider google
 
-# Naive mode (text chunks)
-python test_ask_question.py "What is deep learning?" --mode naive
+# Use Grok
+export XAI_API_KEY="..."
+python script_api.py --data_source demo_test --llm_provider grok
 ```
 
-**Recommendation:** Start with `hybrid` mode (it combines the best of both worlds).
+### Option 2: Per-Request Override
+
+```bash
+curl -X POST "http://localhost:8001/ask" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What is AI?",
+    "llm_provider": "anthropic"
+  }'
+```
+
+### Option 3: API Key File
+
+Create provider-specific files:
+- `openai_api_key.txt`
+- `anthropic_api_key.txt`
+- `google_api_key.txt`
+- `grok_api_key.txt`
+
+The server will automatically load them.
+
+---
+
+## Configuration
+
+### Command Line Arguments
+
+```bash
+python script_api.py \
+  --data_source demo_test \     # Dataset name
+  --port 8001 \                 # Server port
+  --host 0.0.0.0 \              # Server host
+  --llm_provider openai \       # LLM provider (default: openai)
+  --embedding_provider openai   # Embedding provider (auto-detected)
+```
+
+### Supported Configurations
+
+| Build Method | Embedding Files | Server Mode |
+|--------------|----------------|-------------|
+| `tests/test_build_graph.py` | `vdb_*.json` | OpenAI embeddings |
+| `script_build.py` | `index_*.bin` | FlagEmbedding (local) |
+
+**Auto-detection**: Server checks your `expr/{dataset}/` folder and uses the appropriate mode.
 
 ---
 
@@ -237,11 +301,8 @@ python test_ask_question.py "What is deep learning?" --mode naive
 **Error:** `Cannot connect to server at localhost:8001`
 
 **Solutions:**
-1. Make sure the API server is running:
-   ```bash
-   python script_api.py --data_source demo_test
-   ```
-2. Check if port 8001 is already in use:
+1. Check if server is running: `ps aux | grep script_api`
+2. Check port availability:
    ```bash
    # Windows
    netstat -ano | findstr :8001
@@ -249,42 +310,63 @@ python test_ask_question.py "What is deep learning?" --mode naive
    # Linux/Mac
    lsof -i :8001
    ```
-3. Use a different port:
-   ```bash
-   python script_api.py --data_source demo_test --port 8002
-   python test_ask_question.py "Your question" --port 8002
-   ```
+3. Use different port: `python script_api.py --port 8002`
+
+### Error: "This event loop is already running"
+
+**Fixed!** The current version uses proper async/await patterns.
+
+### Error: "No module named 'FlagEmbedding'"
+
+**Option 1**: Install FlagEmbedding:
+```bash
+pip install FlagEmbedding faiss-cpu
+```
+
+**Option 2**: Rebuild graph with OpenAI:
+```bash
+cd tests
+python test_build_graph.py
+```
+
+### Error: "OPENAI_API_KEY not found"
+
+```bash
+# Set environment variable
+export OPENAI_API_KEY="your-key-here"
+
+# OR create file
+echo "your-key-here" > openai_api_key.txt
+```
 
 ### No Results Found
 
-If you get "No relevant context found", try:
-1. Check if your knowledge graph was built successfully:
+1. Check graph files exist:
    ```bash
    ls expr/demo_test/
    ```
-   Should see: `vdb_entities.json`, `vdb_bipartite_edges.json`, etc.
 
-2. Try different retrieval modes:
+2. Try different modes:
    ```bash
    python test_ask_question.py "Your question" --mode naive
    ```
 
-3. Check if your question relates to the corpus you built
+3. Check if question relates to your corpus
 
 ### Knowledge Graph Not Found
 
-**Error:** `Knowledge graph not found at expr/demo_test`
-
-**Solution:** Build the knowledge graph first:
+Build the graph first:
 ```bash
-python tests/test_build_graph.py
+cd tests
+python test_build_graph.py
 ```
 
 ---
 
-## Example Questions to Try
+## Example Questions
 
-Based on your `demo_test` dataset, try questions like:
+Based on the `demo_test` dataset:
+
 - "What is Artificial Intelligence?"
 - "What is machine learning?"
 - "Explain neural networks"
@@ -293,43 +375,140 @@ Based on your `demo_test` dataset, try questions like:
 
 ---
 
-## Next Steps
+## Advanced Usage
 
-Once you've tested basic retrieval:
+### Comparing Retrieval Modes
 
-1. **Test end-to-end with LLM** (requires OpenAI API key):
+```bash
+# Test all modes with same question
+for mode in hybrid local global naive; do
+  python test_ask_question.py "What is deep learning?" --mode $mode
+done
+```
+
+### Batch Testing
+
+```python
+import requests
+
+questions = [
+    "What is AI?",
+    "What is ML?",
+    "What is deep learning?"
+]
+
+for q in questions:
+    response = requests.post(
+        "http://localhost:8001/ask",
+        json={"question": q, "mode": "hybrid"}
+    )
+    print(f"Q: {q}")
+    print(f"Results: {response.json()['num_results']}\n")
+```
+
+### Using Different LLM Providers
+
+```python
+import requests
+
+# Try multiple providers for comparison
+providers = ["openai", "anthropic", "google"]
+
+for provider in providers:
+    response = requests.post(
+        "http://localhost:8001/chat/completions",
+        json={
+            "messages": [{"role": "user", "content": "What is AI?"}],
+            "llm_provider": provider,
+            "use_rag": True
+        }
+    )
+    print(f"{provider}: {response.json()['choices'][0]['message']['content']}\n")
+```
+
+---
+
+## Performance Tips
+
+1. **Use `hybrid` mode** for best results
+2. **Adjust `top_k`**: 3-10 depending on needs
+3. **Local embeddings** (FlagEmbedding) are faster for high query volume
+4. **OpenAI embeddings** are easier for development/testing
+5. **Keep server running** between queries to avoid reload time
+6. **Use different ports** for multiple datasets simultaneously
+
+---
+
+## Production Deployment
+
+### Using Local Embeddings (Faster)
+
+1. **Install dependencies:**
    ```bash
-   cd tests
-   python test_end_to_end.py
+   pip install FlagEmbedding faiss-cpu
    ```
 
-2. **Try the `/chat/completions` endpoint** in Swagger UI:
-   - Uses GPT-4o-mini to synthesize answers
-   - Requires `OPENAI_API_KEY` environment variable
+2. **Build graph with FlagEmbedding:**
+   ```bash
+   python script_build.py --data_source your_dataset
+   ```
 
-3. **Build larger knowledge graphs** with more documents:
-   - See `docs/DATASET_AND_CORPUS_GUIDE.md`
+3. **Start server:**
+   ```bash
+   python script_api.py --data_source your_dataset --host 0.0.0.0 --port 8001
+   ```
+
+### Docker Deployment
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY . .
+
+RUN pip install -r requirements_graphrag_only.txt
+
+EXPOSE 8001
+
+CMD ["python", "script_api.py", "--data_source", "demo_test", "--host", "0.0.0.0"]
+```
+
+```bash
+docker build -t bigrag-api .
+docker run -p 8001:8001 -e OPENAI_API_KEY=$OPENAI_API_KEY bigrag-api
+```
 
 ---
 
-## API Endpoints Summary
+## Next Steps
 
-| Endpoint | Purpose | Usage |
-|----------|---------|-------|
-| `/ask` | **Interactive Q&A** (single question) | ✅ Use this for testing |
-| `/search` | Batch retrieval (for training) | Used during RL training |
-| `/chat/completions` | LLM completions with GPT-4o-mini | Requires OpenAI API key |
-| `/health` | Server health check | Check if server is running |
-| `/docs` | Interactive API documentation | Swagger UI |
+1. **Build larger graphs** with more documents
+   - See [docs/DATASET_AND_CORPUS_GUIDE.md](docs/DATASET_AND_CORPUS_GUIDE.md)
+
+2. **Try RL training** to fine-tune models
+   - See [CLAUDE.md](CLAUDE.md) for training instructions
+
+3. **Integrate with your application**
+   - Use `/chat/completions` endpoint (OpenAI-compatible)
+   - Add RAG to existing chatbots
+
+4. **Evaluate performance**
+   - Run `cd evaluation && python eval.py`
+   - Compare different retrieval modes
+   - Test different LLM providers
 
 ---
 
-## Tips
+## Summary
 
-1. **Start with Swagger UI** - easiest way to test
-2. **Use `hybrid` mode** - gives best results in most cases
-3. **Adjust `top_k`** - try 3-10 results depending on your needs
-4. **Keep the server running** - you can ask multiple questions without restarting
-5. **Check the logs** - the server prints useful debug info
+- ✅ **One unified API server** that auto-detects your setup
+- ✅ **Multiple LLM providers** (OpenAI, Claude, Gemini, Grok)
+- ✅ **Two embedding modes** (OpenAI API or local FlagEmbedding)
+- ✅ **Simple switching** via environment variables or per-request
+- ✅ **Production-ready** with Docker support
+
+**Start testing**: `python script_api.py --data_source demo_test`
+
+**View docs**: http://localhost:8001/docs
 
 Happy testing! 🚀

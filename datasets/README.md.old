@@ -1,0 +1,101 @@
+# BiG-RAG Datasets
+
+Datasets are not included in this repository due to size constraints.
+
+## Download Links
+
+Pre-processed datasets and pre-built knowledge graphs are available at:
+- **Datasets**: [TeraBox Link](https://1024terabox.com/s/12FXnOnOhOZNyGzjWuoo-qg)
+- **Pre-built Graphs**: [TeraBox Link](https://1024terabox.com/s/1y1G7trP-hcmIDQRUaBaDDw)
+
+## Supported Datasets
+
+- **2WikiMultiHopQA** - Multi-hop question answering
+- **HotpotQA** - Multi-hop reasoning over Wikipedia
+- **Musique** - Multi-hop QA with diverse reasoning patterns
+- **NQ** (Natural Questions) - Single-hop factual questions
+- **PopQA** - Popular entity questions
+- **TriviaQA** - Trivia questions with evidence
+
+## Directory Structure
+
+After downloading, place datasets in this directory:
+
+```
+datasets/
+├── 2WikiMultiHopQA/
+│   ├── raw/
+│   │   ├── corpus.jsonl          # Knowledge base documents
+│   │   ├── qa_train.json         # Training QA pairs
+│   │   ├── qa_dev.json           # Development QA pairs
+│   │   └── qa_test.json          # Test QA pairs
+│   └── processed/
+│       ├── train.parquet         # Preprocessed training data
+│       ├── dev.parquet           # Preprocessed dev data
+│       └── test.parquet          # Preprocessed test data
+├── HotpotQA/
+│   └── [same structure]
+└── [other datasets...]
+```
+
+## Usage
+
+### Step 1: Download Datasets
+Download from the TeraBox links above and extract to this directory.
+
+### Step 2: Preprocess (Optional)
+If you downloaded raw data, preprocess it:
+```bash
+python script_process.py --data_source 2WikiMultiHopQA
+```
+
+### Step 3: Build Knowledge Graph
+```bash
+python script_build.py --data_source 2WikiMultiHopQA
+```
+
+Or download pre-built graphs from the second TeraBox link and place in `expr/` directory.
+
+## Custom Datasets
+
+For building custom datasets, see the comprehensive guide:
+**[DATASET_AND_CORPUS_GUIDE.md](../docs/DATASET_AND_CORPUS_GUIDE.md)**
+
+### Minimal Dataset Structure
+
+```json
+// corpus.jsonl (one document per line)
+{"id": "doc_001", "contents": "Your document text here", "title": "Document Title"}
+{"id": "doc_002", "contents": "Another document...", "title": "Another Title"}
+
+// qa_train.json (array of QA pairs)
+[
+  {
+    "question": "What is the capital of France?",
+    "golden_answers": ["Paris"]
+  },
+  {
+    "question": "Who wrote Romeo and Juliet?",
+    "golden_answers": ["William Shakespeare", "Shakespeare"]
+  }
+]
+```
+
+## Demo Dataset
+
+A small demo dataset for testing is included in:
+- `datasets/demo_test/` (if you ran the test scripts)
+
+To create a demo dataset for testing:
+```bash
+python test_build_graph.py
+```
+
+This will create a minimal 10-document knowledge graph for testing.
+
+## Questions?
+
+- See [README.md](../README.md) for quick start guide
+- See [DEVELOPMENT_NOTES.md](../DEVELOPMENT_NOTES.md) for technical details
+- See [docs/DATASET_AND_CORPUS_GUIDE.md](../docs/DATASET_AND_CORPUS_GUIDE.md) for dataset creation
+

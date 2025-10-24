@@ -568,7 +568,7 @@ async def rebuild_knowledge_graph_incremental(data_source: str, new_contents: Li
 
     try:
         # Use the existing RAG instance to insert new documents
-        # BiGRAG.insert() handles:
+        # BiGRAG.ainsert() handles:
         # 1. Chunking
         # 2. Entity extraction
         # 3. Relation extraction
@@ -580,7 +580,7 @@ async def rebuild_knowledge_graph_incremental(data_source: str, new_contents: Li
         batch_size = 3
         for i in range(0, len(new_contents), batch_size):
             batch = new_contents[i:i+batch_size]
-            rag.insert(batch)
+            await rag.ainsert(batch)  # Use async version
             logger.info(f"Processed batch {i//batch_size + 1}/{(len(new_contents) + batch_size - 1)//batch_size}")
 
         logger.info("✓ Knowledge graph updated successfully")
@@ -601,20 +601,18 @@ class UploadResponse(BaseModel):
     success: bool
     message: str
     document_id: str
+    filename: str
     title: str
     content_length: int
-    chunks_created: int
-    graph_updated: bool
+    dataset: str
 
 
 class RebuildResponse(BaseModel):
     success: bool
     message: str
     documents_processed: int
-    entities_count: int
-    relations_count: int
-    chunks_count: int
-    time_taken: str
+    dataset: str
+    rebuild_type: str
 
 
 # ============================================================================
@@ -677,14 +675,16 @@ async def upload_document(
       -F "file=@my_document.txt" \\
       -F "title=My Research Paper"
     ```
+
+    **Note:** Leave data_source empty to use the current dataset (demo_test by default)
     """
     try:
         # Validate file type
         if not file.filename.endswith('.txt'):
             raise HTTPException(status_code=400, detail="Only .txt files are supported")
 
-        # Use current dataset if not specified
-        target_dataset = data_source or args.data_source
+        # Use current dataset if not specified or if "string" placeholder used
+        target_dataset = data_source if (data_source and data_source != "string") else args.data_source
 
         # Read file content
         content = await file.read()

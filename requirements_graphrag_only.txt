@@ -61,6 +61,7 @@ tenacity  # Retry logic with exponential backoff
 fastapi  # REST API framework
 uvicorn[standard]  # ASGI server
 pydantic>=2.0.0  # Data validation
+python-multipart  # File upload support for FastAPI
 
 # Utilities
 python-dotenv  # Environment variable management

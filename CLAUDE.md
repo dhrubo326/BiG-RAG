@@ -967,11 +967,8 @@ reward = em_weight * EM + f1_weight * F1
 
 BiG-RAG builds upon several excellent open-source projects:
 - **[Agent-R1](https://github.com/0russwest0/Agent-R1)**: Tool-augmented RL training
-- **[HyperGraphRAG](https://github.com/LHRLAB/HyperGraphRAG)**: Graph-based RAG inspiration
-- **[FlashRAG](https://github.com/RUC-NLPIR/FlashRAG)**: Efficient retrieval
 - **[LightRAG](https://github.com/HKUDS/LightRAG)**: Lightweight graph RAG
 - **[HippoRAG2](https://github.com/OSU-NLP-Group/HippoRAG)**: Hippocampus-inspired RAG
-- **[R1-Searcher](https://github.com/RUCAIBox/R1-Searcher)**: Search-augmented reasoning
 - **[VERL](https://github.com/volcengine/verl)**: Volcano Engine RL Framework (Bytedance)
 
 Thanks to all these projects for their wonderful contributions to the field!

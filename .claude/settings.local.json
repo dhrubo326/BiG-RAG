@@ -3,7 +3,6 @@
     "allow": [
       "Bash(git init:*)",
       "Read(//d/**)",
-      "Bash(move graphr1.py bigrag.py)",
       "Bash(python:*)",
       "Bash(awk:*)",
       "Bash(pip install:*)",

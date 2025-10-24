@@ -268,7 +268,7 @@ rag = BiGRAG(
 ### Files Updated
 
 1. ✅ `README.md` - Added link to tests and LLM configuration guide
-2. ✅ `evaluation/README.md` - Updated GraphR1 → BiG-RAG
+2. ✅ `evaluation/README.md` - Updated to BiG-RAG branding
 3. ✅ `inference/README.md` - Updated paths and naming
 4. ✅ `run_grpo.sh`, `run_ppo.sh`, `run_rpp.sh` - Updated PROJECT_NAME
 
@@ -380,7 +380,6 @@ Before pushing to GitHub:
 - [x] README.md updated with new links
 - [x] Training scripts updated (PROJECT_NAME)
 - [x] Evaluation/inference READMEs updated
-- [x] No GraphR1 references in active code
 - [x] Consistent BiG-RAG branding
 - [x] Bipartite graph terminology used
 

@@ -49,7 +49,6 @@ BiG-RAG/
 │   ├── BIPARTITE_VALIDATION_AND_RELEVANCE_FILTERING_COMPARISON.md  # Reference comparison
 │   ├── COMPARISON_AND_ENHANCEMENTS.md                        # Other comparisons
 │   ├── DEEP_ALIGNMENT_ANALYSIS.md                            # Alignment analysis
-│   ├── Graph-R1_full_paper.md                                # Reference paper
 │   ├── HyperGraphRAG_full_Paper.md                           # Reference paper
 │   └── SETUP_AND_TESTING_GUIDE.md                            # This file
 │
@@ -63,7 +62,6 @@ BiG-RAG/
 ├── api_server.py                  # ✅ UTILITIES (FastAPI server)
 ├── eval.py                        # ✅ UTILITIES (Evaluation script)
 │
-├── graphr1/                       # ⚠️ REFERENCE ONLY (Not part of BiG-RAG)
 ├── hypergraphrag/                 # ⚠️ REFERENCE ONLY (Not part of BiG-RAG)
 ├── agent/                         # ⚠️ LEGACY (RL components, not needed for Algorithmic Mode)
 ├── inference/                     # ⚠️ LEGACY (RL components, not needed for Algorithmic Mode)
@@ -83,7 +81,6 @@ BiG-RAG/
 - ✅ Utility scripts in root (build, API server, eval)
 
 **Reference folders (excluded from BiG-RAG):**
-- `graphr1/` - Reference implementation (inspiration only)
 - `hypergraphrag/` - Reference implementation (inspiration only)
 
 **Optional/Legacy folders:**
@@ -257,7 +254,7 @@ Gap #4 fix verified:
   [OK] Weight extracted for all relations
   [OK] Relations ranked by (degree, weight) descending
 
-Implementation aligns with HyperGraphRAG & Graph-R1 patterns!
+Implementation aligns with HyperGraphRAG patterns!
 ```
 
 ✅ **If you see "ALL TESTS PASSED", BiG-RAG is correctly installed!**
@@ -1031,7 +1028,7 @@ python test_evaluation.py
 **File:** `test_degree_ranking.py`
 
 **What it tests:**
-- Degree + weight ranking (HyperGraphRAG/Graph-R1 pattern)
+- Degree + weight ranking (HyperGraphRAG pattern)
 - Bipartite graph structure
 
 **Run:**
@@ -1323,7 +1320,7 @@ A:
 **For Questions:**
 - Check documentation in `docs/` folder
 - Review example scripts in project root
-- Consult reference implementations (graphr1, hypergraphrag) for patterns
+- Consult reference implementation (hypergraphrag) for patterns
 
 ---
 

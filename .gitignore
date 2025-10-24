@@ -185,7 +185,6 @@ expr_results/
 
 # Temporary/cache directories
 bigrag_cache_*/
-graphr1_cache_*/
 .cache/
 tmp/
 temp/

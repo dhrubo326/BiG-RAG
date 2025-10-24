@@ -19,7 +19,6 @@
 - [x] Fixed Chinese comments in `script_api.py` (translated to English)
 - [x] All critical bugs fixed (5 bugs documented in CHANGELOG.md)
 - [x] Code follows consistent naming conventions (BiGRAG, bipartite_edge)
-- [x] Backward compatibility maintained (GraphR1 alias)
 
 ### 3. Security ✅
 - [x] Removed `openai_api_key.txt` (sensitive)
@@ -274,9 +273,9 @@ git status
 # Create initial commit
 git commit -m "Initial release: BiG-RAG v1.0.0
 
-- Complete rebranding from Graph-R1 to BiG-RAG
+- Bipartite Graph Retrieval-Augmented Generation framework
 - Fixed 5 critical bugs in retrieval system
-- Comprehensive documentation (CHANGELOG, DEVELOPMENT_NOTES)
+- Comprehensive documentation
 - Test suite with demo dataset support
 - Support for multiple storage backends (Milvus, ChromaDB, Neo4J, etc.)
 - RL training framework (GRPO, PPO, REINFORCE++)

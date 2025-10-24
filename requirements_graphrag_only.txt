@@ -31,8 +31,10 @@ networkx>=3.0  # Core: Bipartite graph structure with entity/relation partitions
 pyvis  # Optional: Graph visualization
 
 # Embeddings and Vector Search (for dual-path retrieval)
-# FlagEmbedding  # OPTIONAL: Use OpenAI text-embedding-3-large instead
-faiss-cpu  # Vector similarity search for entity/relation embeddings
+# FlagEmbedding  # OPTIONAL: Local embeddings (BAAI/bge-large-en-v1.5). Use OpenAI text-embedding-3-large instead
+# NOTE: If using script_api.py (old version with FAISS), uncomment FlagEmbedding above
+# If using script_api_openai.py (new version), keep it commented (uses OpenAI embeddings)
+faiss-cpu  # Vector similarity search for entity/relation embeddings (only needed for old script_api.py)
 # hnswlib  # SKIP: requires C++ compiler on Python 3.13
 nano-vectordb  # Lightweight vector database for BiG-RAG
 

@@ -1,38 +1,44 @@
 """
-BiG-RAG API Server
+BiG-RAG API Server (OpenAI Edition)
 
-Provides FastAPI endpoints for:
-1. Knowledge graph retrieval (/search)
-2. LLM completions with GPT-4o-mini (/chat/completions)
-3. Health checks (/health)
+Designed for knowledge graphs built with OpenAI models:
+- gpt-4o-mini for entity extraction
+- text-embedding-3-small/large for embeddings
+- NanoVectorDB for storage (not FAISS)
 
 Usage:
-    python script_api.py --data_source 2WikiMultiHopQA
-    python script_api.py --data_source HotpotQA --port 8002
+    python script_api_openai.py --data_source demo_test
+    python script_api_openai.py --data_source demo_test --port 8002
 
-Environment Variables:
-    OPENAI_API_KEY: Required for GPT-4o-mini endpoint
+Prerequisites:
+    - Knowledge graph built with tests/test_build_graph.py
+    - OpenAI API key in openai_api_key.txt or environment variable
+    - Graph files: vdb_entities.json, vdb_bipartite_edges.json, etc.
 """
 
 import json
 import os
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
-import faiss
-from FlagEmbedding import FlagAutoModel
 from typing import List, Optional, Dict, Any, Literal
 import argparse
+
+# Import BiG-RAG and OpenAI functions
 from bigrag import BiGRAG, QueryParam
-from bigrag.llm import gpt_4o_mini_complete
+from bigrag.llm import gpt_4o_mini_complete, openai_embedding
+from bigrag.utils import logger
 import asyncio
-from tqdm import tqdm
+
+# ============================================================================
+# Configuration
+# ============================================================================
 
 # Parse command-line arguments
-parser = argparse.ArgumentParser(description="BiG-RAG API Server")
-parser.add_argument('--data_source', default='2WikiMultiHopQA',
-                    help='Dataset name (default: 2WikiMultiHopQA)')
+parser = argparse.ArgumentParser(description="BiG-RAG API Server (OpenAI Edition)")
+parser.add_argument('--data_source', default='demo_test',
+                    help='Dataset name (default: demo_test)')
 parser.add_argument('--port', type=int, default=8001,
                     help='Server port (default: 8001)')
 parser.add_argument('--host', default='0.0.0.0',
@@ -40,124 +46,87 @@ parser.add_argument('--host', default='0.0.0.0',
 args = parser.parse_args()
 data_source = args.data_source
 
+# Load OpenAI API key
+def load_api_key():
+    """Load OpenAI API key from file or environment"""
+    api_key_file = "openai_api_key.txt"
+    if os.path.exists(api_key_file):
+        with open(api_key_file, 'r') as f:
+            api_key = f.read().strip()
+        os.environ["OPENAI_API_KEY"] = api_key
+        logger.info("✓ Loaded OpenAI API key from openai_api_key.txt")
+        return api_key
+    elif os.getenv("OPENAI_API_KEY"):
+        logger.info("✓ Using OpenAI API key from environment variable")
+        return os.getenv("OPENAI_API_KEY")
+    else:
+        logger.warning("⚠ OPENAI_API_KEY not found!")
+        logger.warning("Set it in openai_api_key.txt or as environment variable")
+        return None
+
+load_api_key()
+
 # ============================================================================
-# Load BiG-RAG Components
+# Initialize BiG-RAG
 # ============================================================================
 
 print(f"[INFO] Loading BiG-RAG for dataset: {data_source}")
+print(f"[INFO] Working directory: expr/{data_source}")
 
-# Load FlagEmbedding model for query encoding
-model = FlagAutoModel.from_finetuned(
-    'BAAI/bge-large-en-v1.5',
-    query_instruction_for_retrieval="Represent this sentence for searching relevant passages: ",
-    devices="cpu",
-)
-print("[INFO] Embedding model loaded")
-
-# Load entity FAISS index and corpus
-print(f"[INFO] Loading entity embeddings from expr/{data_source}/")
-index_entity = faiss.read_index(f"expr/{data_source}/index_entity.bin")
-corpus_entity = []
-with open(f"expr/{data_source}/kv_store_entities.json") as f:
-    entities = json.load(f)
-    for item in entities:
-        corpus_entity.append(entities[item]['entity_name'])
-print(f"[INFO] Loaded {len(corpus_entity)} entities")
-
-# Load bipartite edge FAISS index and corpus
-print(f"[INFO] Loading bipartite edge embeddings from expr/{data_source}/")
-index_bipartite_edge = faiss.read_index(f"expr/{data_source}/index_bipartite_edge.bin")
-corpus_bipartite_edge = []
-with open(f"expr/{data_source}/kv_store_bipartite_edges.json") as f:
-    bipartite_edges = json.load(f)
-    for item in bipartite_edges:
-        corpus_bipartite_edge.append(bipartite_edges[item]['content'])
-print(f"[INFO] Loaded {len(corpus_bipartite_edge)} bipartite edges")
-
-# Initialize BiGRAG instance
+# Initialize BiGRAG with OpenAI models
 rag = BiGRAG(
     working_dir=f"expr/{data_source}",
+    llm_model_func=gpt_4o_mini_complete,
+    embedding_func=openai_embedding,
+    enable_llm_cache=True,
 )
-print(f"[INFO] BiG-RAG initialized with working_dir: expr/{data_source}")
 
-# ============================================================================
-# Helper Functions
-# ============================================================================
+print(f"[INFO] BiG-RAG initialized successfully")
 
-async def process_query(query_text: str, rag_instance: BiGRAG,
-                       entity_match: List[str], bipartite_edge_match: List[str]) -> Dict[str, Any]:
-    """Process a single query through BiG-RAG retrieval"""
-    result = await rag_instance.aquery(
-        query_text,
-        param=QueryParam(only_need_context=True, top_k=10),
-        entity_match=entity_match,
-        bipartite_edge_match=bipartite_edge_match
-    )
-    return {"query": query_text, "result": result}
+# Load statistics
+stats = {
+    "entities": 0,
+    "edges": 0,
+    "chunks": 0
+}
 
+try:
+    # Load text chunks
+    chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
+    if os.path.exists(chunks_file):
+        with open(chunks_file, 'r', encoding='utf-8') as f:
+            chunks = json.load(f)
+        stats["chunks"] = len(chunks)
 
-def always_get_an_event_loop() -> asyncio.AbstractEventLoop:
-    """Get or create an event loop"""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop
+    # Load entities from NanoVectorDB
+    entities_file = f"expr/{data_source}/vdb_entities.json"
+    if os.path.exists(entities_file):
+        with open(entities_file, 'r', encoding='utf-8') as f:
+            entities_vdb = json.load(f)
+        stats["entities"] = len(entities_vdb.get('data', []))
 
+    # Load bipartite edges from NanoVectorDB
+    edges_file = f"expr/{data_source}/vdb_bipartite_edges.json"
+    if os.path.exists(edges_file):
+        with open(edges_file, 'r', encoding='utf-8') as f:
+            edges_vdb = json.load(f)
+        stats["edges"] = len(edges_vdb.get('data', []))
 
-def _format_results(results: List[int], corpus: List[str]) -> List[str]:
-    """Format FAISS search results to text list"""
-    return [corpus[result] for result in results]
+    print(f"[INFO] Graph statistics:")
+    print(f"  - Entities: {stats['entities']}")
+    print(f"  - Relations (Bipartite Edges): {stats['edges']}")
+    print(f"  - Text Chunks: {stats['chunks']}")
 
-
-def queries_to_results(queries: List[str]) -> List[str]:
-    """
-    Batch process queries through BiG-RAG retrieval
-
-    Args:
-        queries: List of query strings
-
-    Returns:
-        List of JSON-encoded results
-    """
-    # Encode queries to embeddings
-    embeddings = model.encode_queries(queries)
-
-    # Search entity index
-    _, ids_entity = index_entity.search(embeddings, 5)  # Top-5 entities per query
-    entity_match = {
-        queries[i]: _format_results(ids_entity[i], corpus_entity)
-        for i in range(len(ids_entity))
-    }
-
-    # Search bipartite edge index
-    _, ids_edge = index_bipartite_edge.search(embeddings, 5)  # Top-5 edges per query
-    bipartite_edge_match = {
-        queries[i]: _format_results(ids_edge[i], corpus_bipartite_edge)
-        for i in range(len(ids_edge))
-    }
-
-    # Process queries asynchronously
-    results = []
-    loop = always_get_an_event_loop()
-    for query_text in tqdm(queries, desc="Processing queries", unit="query"):
-        result = loop.run_until_complete(
-            process_query(query_text, rag,
-                         entity_match[query_text],
-                         bipartite_edge_match[query_text])
-        )
-        results.append(json.dumps({"results": result["result"]}))
-
-    return results
+except Exception as e:
+    logger.warning(f"Could not load statistics: {e}")
 
 # ============================================================================
 # FastAPI App Setup
 # ============================================================================
 
 app = FastAPI(
-    title="BiG-RAG API",
-    description="API for BiG-RAG retrieval and GPT-4o-mini completions",
+    title="BiG-RAG API (OpenAI Edition)",
+    description="API for BiG-RAG retrieval using OpenAI models (gpt-4o-mini + text-embedding)",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -166,68 +135,6 @@ app = FastAPI(
 # ============================================================================
 # Pydantic Models for Request/Response Validation
 # ============================================================================
-
-class SearchRequest(BaseModel):
-    """Request model for /search endpoint"""
-    queries: List[str]
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "queries": [
-                    "What is the capital of France?",
-                    "Who directed Nosferatu in 1922?"
-                ]
-            }
-        }
-
-
-class ChatMessage(BaseModel):
-    """Single message in chat completions"""
-    role: Literal["system", "user", "assistant"]
-    content: str
-
-
-class ChatCompletionRequest(BaseModel):
-    """Request model for /chat/completions endpoint (OpenAI-compatible)"""
-    model: str = "gpt-4o-mini"
-    messages: List[ChatMessage]
-    temperature: Optional[float] = 1.0
-    max_tokens: Optional[int] = None
-    stream: Optional[bool] = False
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "model": "gpt-4o-mini",
-                "messages": [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "What is the capital of France?"}
-                ],
-                "temperature": 0.7,
-                "max_tokens": 150
-            }
-        }
-
-
-class ChatCompletionResponse(BaseModel):
-    """Response model for /chat/completions endpoint"""
-    id: str
-    object: str = "chat.completion"
-    created: int
-    model: str
-    choices: List[Dict[str, Any]]
-    usage: Optional[Dict[str, int]] = None
-
-
-class HealthResponse(BaseModel):
-    """Response model for /health endpoint"""
-    status: str
-    dataset: str
-    entities_count: int
-    edges_count: int
-    api_version: str
-
 
 class AskRequest(BaseModel):
     """Request model for /ask endpoint (single question)"""
@@ -253,6 +160,60 @@ class AskResponse(BaseModel):
     mode: str
     message: Optional[str] = None
 
+
+class SearchRequest(BaseModel):
+    """Request model for /search endpoint (batch processing)"""
+    queries: List[str]
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "queries": [
+                    "What is machine learning?",
+                    "Who invented neural networks?"
+                ]
+            }
+        }
+
+
+class ChatMessage(BaseModel):
+    """Single message in chat completions"""
+    role: Literal["system", "user", "assistant"]
+    content: str
+
+
+class ChatCompletionRequest(BaseModel):
+    """Request model for /chat/completions endpoint (OpenAI-compatible)"""
+    model: str = "gpt-4o-mini"
+    messages: List[ChatMessage]
+    temperature: Optional[float] = 1.0
+    max_tokens: Optional[int] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": "What is the capital of France?"}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 150
+            }
+        }
+
+
+class HealthResponse(BaseModel):
+    """Response model for /health endpoint"""
+    status: str
+    dataset: str
+    entities_count: int
+    edges_count: int
+    chunks_count: int
+    api_version: str
+    embedding_model: str
+    llm_model: str
+
 # ============================================================================
 # API Endpoints
 # ============================================================================
@@ -261,9 +222,13 @@ class AskResponse(BaseModel):
 async def root():
     """Root endpoint with API information"""
     return {
-        "message": "BiG-RAG API Server",
+        "message": "BiG-RAG API Server (OpenAI Edition)",
         "version": "1.0.0",
         "dataset": data_source,
+        "models": {
+            "llm": "gpt-4o-mini",
+            "embedding": "text-embedding-3-small (via OpenAI)"
+        },
         "endpoints": {
             "ask": "/ask - Ask a single question (interactive Q&A)",
             "search": "/search - Batch retrieval (for training)",
@@ -280,37 +245,13 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         dataset=data_source,
-        entities_count=len(corpus_entity),
-        edges_count=len(corpus_bipartite_edge),
-        api_version="1.0.0"
+        entities_count=stats["entities"],
+        edges_count=stats["edges"],
+        chunks_count=stats["chunks"],
+        api_version="1.0.0",
+        embedding_model="text-embedding-3-small (OpenAI)",
+        llm_model="gpt-4o-mini (OpenAI)"
     )
-
-
-@app.post("/search", tags=["Retrieval"])
-async def search(request: SearchRequest):
-    """
-    Knowledge graph retrieval endpoint
-
-    Performs hybrid retrieval (entity-based + relation-based) over bipartite graph.
-
-    **Request Body:**
-    - `queries`: List of query strings
-
-    **Returns:**
-    - List of JSON-encoded retrieval results
-
-    **Example:**
-    ```json
-    {
-        "queries": ["What is the capital of France?"]
-    }
-    ```
-    """
-    try:
-        results_str = queries_to_results(request.queries)
-        return results_str
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Retrieval error: {str(e)}")
 
 
 @app.post("/ask", response_model=AskResponse, tags=["Q&A"])
@@ -347,28 +288,14 @@ async def ask_question(request: AskRequest):
     ```
     """
     try:
-        # Encode query to embedding
-        embeddings = model.encode_queries([request.question])
-
-        # Search entity and bipartite edge indices
-        _, ids_entity = index_entity.search(embeddings, request.top_k)
-        entity_match = _format_results(ids_entity[0], corpus_entity)
-
-        _, ids_edge = index_bipartite_edge.search(embeddings, request.top_k)
-        bipartite_edge_match = _format_results(ids_edge[0], corpus_bipartite_edge)
-
-        # Query BiGRAG
-        loop = always_get_an_event_loop()
-        result = loop.run_until_complete(
-            rag.aquery(
-                request.question,
-                param=QueryParam(
-                    mode=request.mode,
-                    only_need_context=True,
-                    top_k=request.top_k,
-                ),
-                entity_match=entity_match,
-                bipartite_edge_match=bipartite_edge_match
+        # Query BiGRAG (uses OpenAI embeddings internally)
+        # Since this is already an async function, we can await directly
+        result = await rag.aquery(
+            request.question,
+            param=QueryParam(
+                mode=request.mode,
+                only_need_context=True,
+                top_k=request.top_k,
             )
         )
 
@@ -387,8 +314,8 @@ async def ask_question(request: AskRequest):
         for i, item in enumerate(result, 1):
             contexts.append({
                 "rank": i,
-                "context": item.get("<knowledge>", ""),
-                "coherence_score": item.get("<coherence>", 0.0)
+                "context": item if isinstance(item, str) else str(item),
+                "coherence_score": 0.0  # NanoVectorDB doesn't provide scores in the same way
             })
 
         return AskResponse(
@@ -400,7 +327,53 @@ async def ask_question(request: AskRequest):
         )
 
     except Exception as e:
+        logger.error(f"Query error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Query error: {str(e)}")
+
+
+@app.post("/search", tags=["Retrieval"])
+async def search(request: SearchRequest):
+    """
+    Knowledge graph retrieval endpoint (batch processing)
+
+    Performs hybrid retrieval over bipartite graph for multiple queries.
+
+    **Request Body:**
+    - `queries`: List of query strings
+
+    **Returns:**
+    - List of JSON-encoded retrieval results
+
+    **Example:**
+    ```json
+    {
+        "queries": ["What is AI?", "What is ML?"]
+    }
+    ```
+    """
+    try:
+        results = []
+
+        for query_text in request.queries:
+            result = await rag.aquery(
+                query_text,
+                param=QueryParam(
+                    mode="hybrid",
+                    only_need_context=True,
+                    top_k=10,
+                )
+            )
+            results.append(json.dumps({"query": query_text, "results": result}))
+
+        return results
+
+    except Exception as e:
+        logger.error(f"Retrieval error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Retrieval error: {str(e)}")
 
 
 @app.post("/chat/completions", tags=["LLM"])
@@ -415,7 +388,6 @@ async def chat_completions(request: ChatCompletionRequest):
     - `messages`: List of chat messages with role and content
     - `temperature`: Sampling temperature (0-2, default: 1.0)
     - `max_tokens`: Maximum tokens to generate
-    - `stream`: Enable streaming responses (not yet implemented)
 
     **Returns:**
     - OpenAI-compatible chat completion response
@@ -430,12 +402,6 @@ async def chat_completions(request: ChatCompletionRequest):
     }
     ```
     """
-    if request.stream:
-        raise HTTPException(
-            status_code=501,
-            detail="Streaming is not yet implemented. Set 'stream': false"
-        )
-
     try:
         # Extract system prompt and history
         system_prompt = None
@@ -494,6 +460,7 @@ async def chat_completions(request: ChatCompletionRequest):
         return JSONResponse(content=response)
 
     except Exception as e:
+        logger.error(f"LLM error: {e}")
         raise HTTPException(status_code=500, detail=f"LLM error: {str(e)}")
 
 
@@ -503,16 +470,17 @@ async def chat_completions(request: ChatCompletionRequest):
 
 if __name__ == "__main__":
     print("\n" + "="*80)
-    print(f"  BiG-RAG API Server Starting")
+    print(f"  BiG-RAG API Server Starting (OpenAI Edition)")
     print(f"  Dataset: {data_source}")
     print(f"  Host: {args.host}:{args.port}")
     print(f"  Docs: http://{args.host}:{args.port}/docs")
+    print(f"  Models: gpt-4o-mini + text-embedding-3-small")
     print("="*80 + "\n")
 
     # Check for OpenAI API key
     if not os.getenv("OPENAI_API_KEY"):
         print("[WARNING] OPENAI_API_KEY not found in environment")
-        print("[WARNING] /chat/completions endpoint will not work")
+        print("[WARNING] API endpoints will not work properly")
         print("[WARNING] Set with: export OPENAI_API_KEY='your-key-here'\n")
 
     uvicorn.run(app, host=args.host, port=args.port)

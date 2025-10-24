@@ -67,7 +67,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+docs/
 
 # PyBuilder
 .pybuilder/
@@ -161,7 +161,7 @@ cython_debug/
 *.pem
 .env.local
 .env.*.local
-
+figs/
 # Log files
 *.log
 build_graph.log
@@ -192,7 +192,7 @@ temp/
 
 # Old/legacy files
 graphrag/
-Readme.md
+# Readme.md
 
 # Test outputs (can be regenerated)
 demo_test/
@@ -207,3 +207,8 @@ Thumbs.db
 # IDE-specific
 *.sublime-project
 *.sublime-workspace
+# Temporary files 
+verl/
+agent/
+evaluation/
+inference/

@@ -174,9 +174,9 @@ checkpoints/
 wandb/
 
 # Datasets (Too large for GitHub, provide download links instead)
-datasets/
-new_datasets/
-datasets2/
+# datasets/
+# new_datasets/
+# datasets2/
 
 # Experiment results (Too large, provide examples only)
 expr/

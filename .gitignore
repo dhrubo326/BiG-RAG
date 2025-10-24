@@ -67,7 +67,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/
+docs/_build/
 
 # PyBuilder
 .pybuilder/
@@ -161,7 +161,7 @@ cython_debug/
 *.pem
 .env.local
 .env.*.local
-figs/
+
 # Log files
 *.log
 build_graph.log
@@ -174,9 +174,9 @@ checkpoints/
 wandb/
 
 # Datasets (Too large for GitHub, provide download links instead)
-# datasets/
-# new_datasets/
-# datasets2/
+datasets/
+new_datasets/
+datasets2/
 
 # Experiment results (Too large, provide examples only)
 expr/
@@ -192,10 +192,24 @@ temp/
 
 # Old/legacy files
 graphrag/
-# Readme.md
 
-# Test outputs (can be regenerated)
-demo_test/
+###############################################################################
+# Temporarily Excluded (Not Ready for Public Release Yet)
+###############################################################################
+
+# RL Training Components (will publish when ready for RL)
+verl/
+agent/
+evaluation/
+
+# Documentation (work in progress)
+docs/
+
+# Figures (will add with final version)
+figs/
+
+# Inference module (work in progress)
+inference/
 
 # OS-specific
 .DS_Store
@@ -207,8 +221,3 @@ Thumbs.db
 # IDE-specific
 *.sublime-project
 *.sublime-workspace
-# Temporary files 
-verl/
-agent/
-evaluation/
-inference/

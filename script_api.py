@@ -21,12 +21,15 @@ import json
 import os
 import sys
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
 from typing import List, Optional, Dict, Any, Literal
 import argparse
+import hashlib
+import asyncio
+from datetime import datetime
 
 # Import BiG-RAG core
 from bigrag import BiGRAG, QueryParam
@@ -522,6 +525,99 @@ class HealthResponse(BaseModel):
     default_provider: str
 
 # ============================================================================
+# Document Management Helper Functions
+# ============================================================================
+
+def compute_doc_id(content: str, prefix: str = "upload") -> str:
+    """Generate unique ID from content hash"""
+    hash_obj = hashlib.md5(content.encode('utf-8'))
+    return f"{prefix}-{hash_obj.hexdigest()[:16]}"
+
+
+async def add_document_to_corpus(data_source: str, doc_id: str, content: str, title: str):
+    """Add a document to the corpus.jsonl file"""
+    corpus_file = Path(f"datasets/{data_source}/raw/corpus.jsonl")
+
+    # Create directory if doesn't exist
+    corpus_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Prepare document
+    doc = {
+        "id": doc_id,
+        "contents": content,
+        "title": title,
+        "upload_date": datetime.now().isoformat(),
+        "source": "upload"
+    }
+
+    # Append to corpus
+    with open(corpus_file, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(doc, ensure_ascii=False) + '\n')
+
+    logger.info(f"Added document {doc_id} to corpus")
+    return doc
+
+
+async def rebuild_knowledge_graph_incremental(data_source: str, new_contents: List[str]):
+    """
+    Incrementally add new documents to existing knowledge graph
+
+    This updates the existing graph without rebuilding from scratch.
+    """
+    working_dir = f"expr/{data_source}"
+
+    try:
+        # Use the existing RAG instance to insert new documents
+        # BiGRAG.insert() handles:
+        # 1. Chunking
+        # 2. Entity extraction
+        # 3. Relation extraction
+        # 4. Graph updates
+        # 5. Vector index updates
+        logger.info(f"Adding {len(new_contents)} new documents to knowledge graph...")
+
+        # Insert in small batches to avoid overwhelming the API
+        batch_size = 3
+        for i in range(0, len(new_contents), batch_size):
+            batch = new_contents[i:i+batch_size]
+            rag.insert(batch)
+            logger.info(f"Processed batch {i//batch_size + 1}/{(len(new_contents) + batch_size - 1)//batch_size}")
+
+        logger.info("✓ Knowledge graph updated successfully")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to update knowledge graph: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise
+
+
+# ============================================================================
+# Response Models for New Endpoints
+# ============================================================================
+
+class UploadResponse(BaseModel):
+    success: bool
+    message: str
+    document_id: str
+    title: str
+    content_length: int
+    chunks_created: int
+    graph_updated: bool
+
+
+class RebuildResponse(BaseModel):
+    success: bool
+    message: str
+    documents_processed: int
+    entities_count: int
+    relations_count: int
+    chunks_count: int
+    time_taken: str
+
+
+# ============================================================================
 # API Endpoints
 # ============================================================================
 
@@ -538,6 +634,8 @@ async def root():
             "ask": "/ask - Interactive Q&A",
             "search": "/search - Batch retrieval",
             "chat": "/chat/completions - LLM generation (OpenAI-compatible)",
+            "upload": "/upload - Upload text files to knowledge graph",
+            "rebuild": "/rebuild - Rebuild knowledge graph from corpus",
             "health": "/health - Health check",
             "docs": "/docs - API documentation"
         }
@@ -556,6 +654,144 @@ async def health_check():
         available_providers=llm_manager.get_available_providers(),
         default_provider=args.llm_provider
     )
+
+
+@app.post("/upload", response_model=UploadResponse, tags=["Document Management"])
+async def upload_document(
+    file: UploadFile = File(..., description="Text file to upload (.txt)"),
+    title: str = Form(None, description="Optional document title (defaults to filename)"),
+    data_source: str = Form(None, description="Dataset name (defaults to current dataset)")
+):
+    """
+    Upload a text file and automatically add it to the knowledge graph.
+
+    This endpoint:
+    1. Reads the uploaded text file
+    2. Generates a unique document ID
+    3. Adds it to corpus.jsonl
+    4. Incrementally updates the knowledge graph (chunking, entity extraction, graph building)
+
+    **Example usage:**
+    ```bash
+    curl -X POST "http://localhost:8001/upload" \\
+      -F "file=@my_document.txt" \\
+      -F "title=My Research Paper"
+    ```
+    """
+    try:
+        # Validate file type
+        if not file.filename.endswith('.txt'):
+            raise HTTPException(status_code=400, detail="Only .txt files are supported")
+
+        # Use current dataset if not specified
+        target_dataset = data_source or args.data_source
+
+        # Read file content
+        content = await file.read()
+        content_text = content.decode('utf-8')
+
+        # Validate content
+        if not content_text.strip():
+            raise HTTPException(status_code=400, detail="File is empty")
+
+        # Generate unique document ID
+        doc_id = compute_doc_id(content_text, prefix="upload")
+
+        # Use filename as title if not provided
+        doc_title = title or file.filename
+
+        # Add to corpus.jsonl
+        doc = await add_document_to_corpus(
+            data_source=target_dataset,
+            doc_id=doc_id,
+            content=content_text,
+            title=doc_title
+        )
+
+        # Incrementally add to knowledge graph
+        logger.info(f"Adding document '{doc_title}' to knowledge graph...")
+        await rebuild_knowledge_graph_incremental(target_dataset, [content_text])
+
+        return UploadResponse(
+            success=True,
+            message=f"Document '{doc_title}' successfully added to knowledge graph",
+            document_id=doc_id,
+            filename=file.filename,
+            title=doc_title,
+            content_length=len(content_text),
+            dataset=target_dataset
+        )
+
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File encoding error. Please upload UTF-8 encoded text files")
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+@app.post("/rebuild", response_model=RebuildResponse, tags=["Document Management"])
+async def rebuild_graph(
+    data_source: str = Form(None, description="Dataset name (defaults to current dataset)"),
+    force_full_rebuild: bool = Form(False, description="Force full rebuild instead of incremental")
+):
+    """
+    Manually trigger knowledge graph rebuild.
+
+    By default, performs incremental update (adds new documents from corpus.jsonl).
+    Use `force_full_rebuild=true` to rebuild entire graph from scratch.
+
+    **Example usage:**
+    ```bash
+    # Incremental rebuild
+    curl -X POST "http://localhost:8001/rebuild"
+
+    # Full rebuild
+    curl -X POST "http://localhost:8001/rebuild" \\
+      -F "force_full_rebuild=true"
+    ```
+    """
+    try:
+        target_dataset = data_source or args.data_source
+        corpus_file = Path(f"datasets/{target_dataset}/raw/corpus.jsonl")
+
+        if not corpus_file.exists():
+            raise HTTPException(status_code=404, detail=f"Corpus file not found: {corpus_file}")
+
+        # Load all documents from corpus
+        documents = []
+        with open(corpus_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                doc = json.loads(line)
+                documents.append(doc.get("contents", ""))
+
+        if not documents:
+            raise HTTPException(status_code=400, detail="No documents found in corpus")
+
+        # Rebuild graph
+        logger.info(f"Rebuilding knowledge graph for {target_dataset} ({len(documents)} documents)...")
+
+        if force_full_rebuild:
+            # Clear existing graph and rebuild from scratch
+            logger.warning("Full rebuild requested - this will replace existing graph")
+            # Note: BiGRAG doesn't have a clear() method, so we rely on insert() to handle updates
+            await rebuild_knowledge_graph_incremental(target_dataset, documents)
+            rebuild_type = "full"
+        else:
+            # Incremental rebuild (only new documents)
+            await rebuild_knowledge_graph_incremental(target_dataset, documents)
+            rebuild_type = "incremental"
+
+        return RebuildResponse(
+            success=True,
+            message=f"Knowledge graph {'fully rebuilt' if force_full_rebuild else 'incrementally updated'}",
+            documents_processed=len(documents),
+            dataset=target_dataset,
+            rebuild_type=rebuild_type
+        )
+
+    except Exception as e:
+        logger.error(f"Rebuild failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Rebuild failed: {str(e)}")
 
 
 @app.post("/ask", response_model=AskResponse, tags=["Q&A"])

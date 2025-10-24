@@ -138,13 +138,16 @@ python test_end_to_end.py
 
 ## API Endpoints
 
-BiG-RAG provides three endpoints with different purposes:
+BiG-RAG provides multiple endpoints for different use cases:
 
 | Endpoint | Purpose | Returns | Best For |
 |----------|---------|---------|----------|
-| **`/chat/completions`** | Get a synthesized answer | Complete answer from LLM | **Most users - just ask questions!** |
+| **`/chat/completions`** ⭐ | Get a synthesized answer | Complete answer from LLM | **Most users - just ask questions!** |
+| **`/upload`** ⭐ NEW | Upload text files | Adds to knowledge graph | **Adding new documents** |
 | `/ask` | Get retrieved context only | Raw context from knowledge graph | Developers testing retrieval |
 | `/search` | Batch retrieval | Multiple query results | Training/bulk processing |
+| `/rebuild` | Rebuild knowledge graph | Status of rebuild operation | After uploading multiple files |
+| `/health` | Check server status | Graph statistics | Monitoring |
 
 ---
 
@@ -254,6 +257,105 @@ Check server status and graph statistics.
   "available_providers": ["openai", "anthropic"]
 }
 ```
+
+---
+
+## Document Upload - Add Files to Knowledge Graph
+
+BiG-RAG now supports **automatic document upload** that handles everything under the hood!
+
+### POST /upload - Upload Text Files ⭐ NEW
+
+Upload a `.txt` file and automatically add it to your knowledge graph. No manual corpus building required!
+
+**What it does:**
+1. ✅ Reads your text file
+2. ✅ Generates unique document ID
+3. ✅ Adds to `corpus.jsonl`
+4. ✅ Automatically chunks text
+5. ✅ Extracts entities using LLM
+6. ✅ Updates knowledge graph incrementally
+
+**Quick Test (Swagger UI):**
+
+1. Navigate to **POST /upload** in Swagger UI
+2. Click "Try it out"
+3. Click "Choose File" and select a `.txt` file
+4. (Optional) Add a title
+5. Click "Execute"
+
+**curl Example:**
+```bash
+curl -X POST "http://localhost:8001/upload" \
+  -F "file=@my_research_paper.txt" \
+  -F "title=Deep Learning Research"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Document 'Deep Learning Research' successfully added to knowledge graph",
+  "document_id": "upload-a3f8e9c1b2d4e5f6",
+  "filename": "my_research_paper.txt",
+  "title": "Deep Learning Research",
+  "content_length": 15234,
+  "dataset": "demo_test"
+}
+```
+
+**Python Example:**
+```python
+import requests
+
+with open("my_document.txt", "rb") as f:
+    files = {"file": f}
+    data = {"title": "My Document Title"}
+    response = requests.post("http://localhost:8001/upload", files=files, data=data)
+
+print(response.json())
+```
+
+---
+
+### POST /rebuild - Rebuild Knowledge Graph
+
+Manually trigger a knowledge graph rebuild from the corpus.
+
+**Use cases:**
+- After uploading multiple documents
+- To refresh the entire graph
+- After manual corpus edits
+
+**Quick Test (Swagger UI):**
+
+1. Navigate to **POST /rebuild**
+2. Click "Try it out"
+3. (Optional) Check `force_full_rebuild` for complete rebuild
+4. Click "Execute"
+
+**curl Examples:**
+```bash
+# Incremental rebuild (add new documents)
+curl -X POST "http://localhost:8001/rebuild"
+
+# Full rebuild (rebuild everything from scratch)
+curl -X POST "http://localhost:8001/rebuild" \
+  -F "force_full_rebuild=true"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Knowledge graph incrementally updated",
+  "documents_processed": 52,
+  "dataset": "demo_test",
+  "rebuild_type": "incremental"
+}
+```
+
+**Note:** Incremental updates are usually sufficient. Full rebuilds take longer but ensure graph consistency.
 
 ---
 

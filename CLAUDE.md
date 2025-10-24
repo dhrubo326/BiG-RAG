@@ -991,7 +991,7 @@ Thanks to all these projects for their wonderful contributions to the field!
 ```
 BiG-RAG/
 ├── bigrag/                      # Core library
-│   ├── bigrag.py               # Main BiGRAG class (renamed from graphr1.py)
+│   ├── bigrag.py               # Main BiGRAG class
 │   ├── operate.py              # Graph operations
 │   └── kg/                     # Storage backends
 ├── datasets/{name}/

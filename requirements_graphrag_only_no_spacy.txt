@@ -1,0 +1,72 @@
+# ============================================================================
+# BiG-RAG - Algorithmic Mode Only (No RL Training) - NO SPACY
+# Bipartite Graph Retrieval-Augmented Generation
+# For macOS/Windows/Linux + Python 3.9-3.13 + CPU/GPU
+# ============================================================================
+#
+# This is a minimal version that excludes spacy to avoid compilation issues.
+# Query complexity analysis will be disabled, but core BiG-RAG functionality works.
+# ============================================================================
+
+# INSTALLATION STEPS:
+# 1. python3 -m venv venv
+# 2. source venv/bin/activate  # or venv\Scripts\activate on Windows
+# 3. pip install --upgrade pip
+# 4. pip install torch torchvision torchaudio
+# 5. pip install -r requirements_graphrag_only_no_spacy.txt
+# 6. python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+
+# Core Data Processing
+numpy>=1.26.0
+pandas>=2.0.0
+pyarrow>=15.0.0
+datasets
+
+# Bipartite Graph and Knowledge Graph
+networkx>=3.0  # Core: Bipartite graph structure with entity/relation partitions
+pyvis  # Optional: Graph visualization
+
+# Embeddings and Vector Search (for dual-path retrieval)
+faiss-cpu  # Vector similarity search for entity/relation embeddings
+nano-vectordb  # Lightweight vector database for BiG-RAG
+
+# LLM API Integration (for Algorithmic Mode)
+openai>=1.0.0  # For GPT-4/GPT-4o-mini (recommended)
+tiktoken  # Token counting for OpenAI models
+ollama  # Optional: Local LLM support (Qwen, Llama, etc.)
+
+# NLP and Text Processing (for query analysis & decomposition)
+transformers>=4.30.0  # LLM loading (optional for local models)
+nltk  # Tokenization and text processing
+# SKIPPED: spacy (causes compilation issues on some systems)
+
+PyPDF2  # PDF document loading
+jsonlines  # Dataset reading
+xxhash  # Fast hashing for deduplication
+
+# Async and Utilities (for concurrent processing)
+aiohttp  # Async HTTP requests
+aioboto3  # AWS S3 support (optional)
+tqdm  # Progress bars for graph construction
+tenacity  # Retry logic with exponential backoff
+
+# API Server (optional - for retrieval API)
+fastapi  # REST API framework
+uvicorn[standard]  # ASGI server
+pydantic>=2.0.0  # Data validation
+python-multipart  # File upload support for FastAPI
+
+# Utilities
+python-dotenv  # Environment variable management
+requests  # HTTP requests
+colorama  # Colored terminal output
+
+# ============================================================================
+# WHAT'S EXCLUDED:
+#
+# - spacy: Query complexity analysis (optional feature)
+# - blis: Dependency of spacy (causes compilation issues)
+#
+# Impact: Query complexity analysis will be disabled, but this doesn't affect
+# core BiG-RAG functionality (graph construction, retrieval, API server)
+# ============================================================================

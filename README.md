@@ -64,13 +64,15 @@ By integrating structured knowledge into LLM reasoning more flexibly via reinfor
 - **[CLAUDE.md](CLAUDE.md)** - AI agent development reference (for Claude Code)
 - **[SETUP_VENV.md](SETUP_VENV.md)** - Python venv setup guide (lightweight mode)
 
-### Additional Documentation
+### Coming Soon
 
-- **[tests/README.md](tests/README.md)** - Test suite documentation and usage
-- **[evaluation/README.md](evaluation/README.md)** - Evaluation metrics and testing
-- **[inference/README.md](inference/README.md)** - Inference and model deployment
-- **[docs/LLM_CONFIGURATION_GUIDE.md](docs/LLM_CONFIGURATION_GUIDE.md)** - Configure multiple LLM providers (OpenAI, DeepSeek, Gemini, Claude, etc.)
-- **[docs/](docs/)** - In-depth technical documentation and guides
+The following components will be published when the RL training framework is fully ready:
+- **RL Training Framework** (`verl/`) - GRPO, PPO, REINFORCE++ implementations
+- **Agent System** (`agent/`) - Tool-based agent for retrieval
+- **Evaluation Module** (`evaluation/`) - Metrics and testing
+- **Inference Module** (`inference/`) - Model deployment
+- **Complete Documentation** (`docs/`) - In-depth technical guides
+- **Visual Assets** (`figs/`) - Architecture diagrams and charts
 
 ---
 
@@ -160,32 +162,16 @@ nohup python -u script_api.py --data_source 2WikiMultiHopQA > result_api_2WikiMu
 # nohup python -u script_api.py --data_source TriviaQA > result_api_TriviaQA.log 2>&1 &
 ```
 
-#### 4. Run GRPO/REINFORCE++/PPO training with Qwen2.5-3B-Instruct (Need 4 x 48GB GPUs)
-```bash
-# GRPO
-nohup bash -u run_grpo.sh -p Qwen/Qwen2.5-3B-Instruct -m Qwen2.5-3B-Instruct -d 2WikiMultiHopQA > result_run_Qwen2.5-3B-Instruct_2WikiMultiHopQA_grpo.log 2>&1 &
-# nohup bash -u run_grpo.sh -p Qwen/Qwen2.5-3B-Instruct -m Qwen2.5-3B-Instruct -d HotpotQA > result_run_Qwen2.5-3B-Instruct_HotpotQA_grpo.log 2>&1 &
-# nohup bash -u run_grpo.sh -p Qwen/Qwen2.5-3B-Instruct -m Qwen2.5-3B-Instruct -d Musique > result_run_Qwen2.5-3B-Instruct_Musique_grpo.log 2>&1 &
-# nohup bash -u run_grpo.sh -p Qwen/Qwen2.5-3B-Instruct -m Qwen2.5-3B-Instruct -d NQ > result_run_Qwen2.5-3B-Instruct_NQ_grpo.log 2>&1 &
-# nohup bash -u run_grpo.sh -p Qwen/Qwen2.5-3B-Instruct -m Qwen2.5-3B-Instruct -d PopQA > result_run_Qwen2.5-3B-Instruct_PopQA_grpo.log 2>&1 &
-# nohup bash -u run_grpo.sh -p Qwen/Qwen2.5-3B-Instruct -m Qwen2.5-3B-Instruct -d TriviaQA > result_run_Qwen2.5-3B-Instruct_TriviaQA_grpo.log 2>&1 &
-# REINFORCE++
-# nohup bash -u run_rpp.sh -p Qwen/Qwen2.5-3B-Instruct -m Qwen2.5-3B-Instruct -d 2WikiMultiHopQA > result_run_Qwen2.5-3B-Instruct_2WikiMultiHopQA_rpp.log 2>&1 &
-# PPO
-# nohup bash -u run_ppo.sh -p Qwen/Qwen2.5-3B-Instruct -m Qwen2.5-3B-Instruct -d 2WikiMultiHopQA > result_run_Qwen2.5-3B-Instruct_2WikiMultiHopQA_ppo.log 2>&1 &
-```
+### RL Training (Coming Soon)
 
-#### 5. Close retrieve server 8001 port
-```bash
-fuser -k 8001/tcp
-```
+The RL training framework (GRPO, PPO, REINFORCE++) will be published in the next release. For now, BiG-RAG can be used as a standalone knowledge graph RAG system with the OpenAI integration provided in the test suite.
 
-### Evaluation
-> For evaluation, please refer to the [evaluation](./evaluation/README.md) folder.
-
-
-### Inference
-> For inference, please refer to the [inference](./inference/README.md) folder.
+**Current Status:**
+- ✅ BiG-RAG Core (knowledge graph construction and retrieval)
+- ✅ OpenAI Integration (for testing and development)
+- ✅ Test Suite (build, retrieval, end-to-end RAG tests)
+- ⏳ RL Training Framework (coming soon)
+- ⏳ Full Documentation (coming soon)
 
 
 ## Citation

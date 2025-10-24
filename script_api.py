@@ -489,10 +489,26 @@ class ChatMessage(BaseModel):
 class ChatCompletionRequest(BaseModel):
     model: str = "gpt-4o-mini"
     messages: List[ChatMessage]
-    temperature: Optional[float] = 1.0
-    max_tokens: Optional[int] = None
+    temperature: Optional[float] = 0.7
+    max_tokens: Optional[int] = 500
     llm_provider: Optional[str] = None
-    use_rag: Optional[bool] = False
+    use_rag: Optional[bool] = True  # Enable RAG by default
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "What is Artificial Intelligence?"
+                    }
+                ],
+                "temperature": 0.7,
+                "max_tokens": 500,
+                "use_rag": True
+            }
+        }
 
 
 class HealthResponse(BaseModel):
@@ -643,9 +659,22 @@ async def search(request: SearchRequest):
 @app.post("/chat/completions", tags=["LLM"])
 async def chat_completions(request: ChatCompletionRequest):
     """
-    OpenAI-compatible chat completions endpoint
+    OpenAI-compatible chat completions endpoint with RAG
 
-    Supports multiple LLM providers and optional RAG integration.
+    This endpoint:
+    1. Retrieves relevant context from the knowledge graph (if use_rag=True)
+    2. Synthesizes a comprehensive answer using the specified LLM
+    3. Returns the answer in OpenAI-compatible format
+
+    Example request:
+    ```json
+    {
+        "messages": [{"role": "user", "content": "What is Artificial Intelligence?"}],
+        "use_rag": true
+    }
+    ```
+
+    Click "Try it out" and hit "Execute" to test!
     """
     try:
         # Extract prompts
@@ -664,30 +693,54 @@ async def chat_completions(request: ChatCompletionRequest):
         if user_prompt is None:
             raise HTTPException(status_code=400, detail="No user message found")
 
-        # Optional RAG: Retrieve context and prepend to prompt
+        # RAG: Retrieve context from knowledge graph
         if request.use_rag:
             entity_match = None
             edge_match = None
 
             if embedding_manager.mode == "flagembedding":
-                entity_match = await embedding_manager.search_entities(user_prompt, 3)
-                edge_match = await embedding_manager.search_edges(user_prompt, 3)
+                entity_match = await embedding_manager.search_entities(user_prompt, 5)
+                edge_match = await embedding_manager.search_edges(user_prompt, 5)
 
             context_results = await rag.aquery(
                 user_prompt,
-                param=QueryParam(mode="hybrid", only_need_context=True, top_k=3),
+                param=QueryParam(mode="hybrid", only_need_context=True, top_k=5),
                 entity_match=entity_match,
                 bipartite_edge_match=edge_match
             )
 
             if context_results:
-                context_str = "\n\n".join([
-                    str(item) if not isinstance(item, dict) else item.get("<knowledge>", str(item))
-                    for item in context_results[:3]
-                ])
-                user_prompt = f"Context:\n{context_str}\n\nQuestion: {user_prompt}"
+                # Format retrieved contexts
+                context_parts = []
+                for i, item in enumerate(context_results[:5], 1):
+                    if isinstance(item, dict):
+                        context = item.get("<knowledge>", str(item))
+                    else:
+                        context = str(item)
+                    context_parts.append(f"[Source {i}]\n{context}")
 
-        # Call LLM
+                context_str = "\n\n".join(context_parts)
+
+                # Create RAG system prompt
+                if not system_prompt:
+                    system_prompt = """You are a helpful AI assistant. Answer the user's question based on the provided context from the knowledge graph.
+
+Instructions:
+- Use the information from the context sources to provide a comprehensive answer
+- Be clear, accurate, and concise
+- If the context doesn't fully answer the question, acknowledge what you know and what's uncertain
+- Cite relevant information from the sources when appropriate"""
+
+                # Prepend context to user prompt
+                user_prompt = f"""Based on the following context from the knowledge graph:
+
+{context_str}
+
+Question: {user_prompt}
+
+Please provide a comprehensive answer based on the above context."""
+
+        # Call LLM to synthesize answer
         response_text = await llm_manager.complete(
             prompt=user_prompt,
             provider=request.llm_provider,

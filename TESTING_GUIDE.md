@@ -138,9 +138,58 @@ python test_end_to_end.py
 
 ## API Endpoints
 
-### POST /ask - Interactive Q&A
+BiG-RAG provides three endpoints with different purposes:
 
-Ask a single question and get retrieved context.
+| Endpoint | Purpose | Returns | Best For |
+|----------|---------|---------|----------|
+| **`/chat/completions`** | Get a synthesized answer | Complete answer from LLM | **Most users - just ask questions!** |
+| `/ask` | Get retrieved context only | Raw context from knowledge graph | Developers testing retrieval |
+| `/search` | Batch retrieval | Multiple query results | Training/bulk processing |
+
+---
+
+### POST /chat/completions - Synthesized Answer ⭐ RECOMMENDED
+
+**Use this endpoint to get complete answers to your questions!**
+
+This is the main endpoint that:
+1. Retrieves relevant context from your knowledge graph
+2. Uses LLM to synthesize a comprehensive answer
+3. Returns a natural language response
+
+**Quick Test (click "Try it out" in Swagger UI):**
+```json
+{
+  "messages": [
+    {"role": "user", "content": "What is Artificial Intelligence?"}
+  ]
+}
+```
+
+That's it! The endpoint automatically:
+- ✅ Retrieves context from knowledge graph (`use_rag: true` by default)
+- ✅ Uses gpt-4o-mini to synthesize answer (or specify `llm_provider`)
+- ✅ Returns complete, natural answer
+
+**Full Options:**
+```json
+{
+  "model": "gpt-4o-mini",
+  "messages": [
+    {"role": "user", "content": "What is AI?"}
+  ],
+  "use_rag": true,
+  "temperature": 0.7,
+  "max_tokens": 500,
+  "llm_provider": "openai"
+}
+```
+
+---
+
+### POST /ask - Retrieve Context Only
+
+Get raw retrieved context from the knowledge graph (for developers/debugging).
 
 **Request:**
 ```json
@@ -186,23 +235,6 @@ For training/batch processing multiple queries.
     "What is AI?",
     "What is machine learning?"
   ]
-}
-```
-
-### POST /chat/completions - LLM Generation
-
-OpenAI-compatible chat endpoint with RAG support.
-
-**Request:**
-```json
-{
-  "model": "gpt-4o-mini",
-  "messages": [
-    {"role": "user", "content": "What is AI?"}
-  ],
-  "use_rag": true,  // Use knowledge graph for context
-  "temperature": 0.7,
-  "llm_provider": "openai"  // optional
 }
 ```
 

@@ -8,8 +8,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **BiG-RAG** (Bipartite Graph Retrieval-Augmented Generation) is an end-to-end reinforcement learning framework that combines bipartite graph-based knowledge retrieval with LLM reasoning capabilities. The project enables LLMs to iteratively execute a "**think → generate query → retrieve subgraph → rethink**" reasoning cycle using explicit reward mechanisms within RL training.
 
-> **Note**: This project was originally published as **Graph-R1** ([arXiv:2507.21892](https://arxiv.org/abs/2507.21892)). The implementation has been rebranded to **BiG-RAG** to accurately reflect the underlying bipartite graph architecture.
-
 ### Key Features
 
 - **Bipartite Graph Structure**: Unlike traditional hypergraph terminology, the implementation uses a true bipartite graph with documents ↔ entities ↔ relations
@@ -955,7 +953,6 @@ reward = em_weight * EM + f1_weight * F1
 
 ### Core Documentation
 - **[README.md](README.md)** - Project overview and quick start guide
-- **[CHANGELOG.md](CHANGELOG.md)** - Complete change history: rebranding and bug fixes
 - **[DEVELOPMENT_NOTES.md](DEVELOPMENT_NOTES.md)** - Technical details, architecture, and developer guidance
 - **[SETUP_VENV.md](SETUP_VENV.md)** - Setup guide for Python venv (lightweight mode)
 
@@ -964,14 +961,11 @@ reward = em_weight * EM + f1_weight * F1
 - **[evaluation/README.md](evaluation/README.md)** - Evaluation metrics and testing
 - **[inference/README.md](inference/README.md)** - Model inference and deployment
 
-### Research Paper
-- **Full Paper**: [Graph-R1: Towards Agentic GraphRAG Framework via End-to-end Reinforcement Learning](https://arxiv.org/abs/2507.21892)
-
 ---
 
 ## Acknowledgments
 
-BiG-RAG is based on the Graph-R1 framework and builds upon:
+BiG-RAG builds upon several excellent open-source projects:
 - **[Agent-R1](https://github.com/0russwest0/Agent-R1)**: Tool-augmented RL training
 - **[HyperGraphRAG](https://github.com/LHRLAB/HyperGraphRAG)**: Graph-based RAG inspiration
 - **[FlashRAG](https://github.com/RUC-NLPIR/FlashRAG)**: Efficient retrieval

@@ -207,6 +207,35 @@ BiG-RAG supports 4 retrieval modes:
 └──────────────────────────────────────────────────────────────┘
 ```
 
+**⚠️ Current Implementation Note:**
+
+In the current codebase (`bigrag/operate.py:484-553`), the `kg_query()` function **always executes both entity-based and relation-based retrieval paths**, regardless of the `mode` parameter specified in `QueryParam`. The results from both paths are then combined using Reciprocal Rank Fusion (RRF).
+
+**What this means:**
+- **`mode="local"`**: Currently behaves the same as `mode="hybrid"` (executes both paths)
+- **`mode="global"`**: Currently behaves the same as `mode="hybrid"` (executes both paths)
+- **`mode="hybrid"`**: Explicit dual-path retrieval (same as above)
+- **`mode="naive"`**: Different - uses direct chunk vector search without graph traversal
+
+The `mode` parameter is **reserved for future differentiation** where single-path modes may be optimized separately. For now, `"hybrid"` mode is effectively used for all graph-based queries.
+
+**Code Reference:**
+```python
+# bigrag/operate.py lines 484-553
+async def kg_query(...):
+    # Always executes both paths:
+    knowledge_list_1 = await _get_node_data(...)      # Entity path
+    knowledge_list_2 = await _get_edge_data(...)       # Relation path
+
+    # Combine via RRF
+    for i, k in enumerate(knowledge_list_1):
+        score = 1/(i+1)
+        know_score[k] += score
+    for i, k in enumerate(knowledge_list_2):
+        score = 1/(i+1)
+        know_score[k] += score
+```
+
 **Bipartite Graph Traversal:**
 
 ```

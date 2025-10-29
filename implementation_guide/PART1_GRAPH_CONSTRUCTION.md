@@ -28,10 +28,12 @@
 - Limited ability to answer questions requiring multiple reasoning steps
 
 **BiG-RAG's Solution:** Build a **bipartite graph** that explicitly models:
-- **Entities** (people, places, organizations, events)
-- **Relations** (semantic connections between entities)
-- **Documents** (source text chunks)
-- **Bipartite edges** connecting entities to the relations they participate in
+- **Entities** (people, places, organizations, events) - stored as graph nodes with `role="entity"`
+- **Relations** (semantic connections between entities) - stored as **bipartite edge nodes** with `role="bipartite_edge"`
+- **Documents** (source text chunks) - stored in key-value storage
+- **Graph edges** connecting entity nodes to bipartite edge nodes (NOT traditional entity-to-entity edges)
+
+**⚠️ Important Terminology:** In BiG-RAG, "bipartite edges" (semantic relations) are stored as **nodes** in the graph, not as traditional graph edges. The actual graph edges are undirected connections between entity nodes and bipartite edge nodes. This design allows relations to be first-class citizens with their own embeddings and metadata.
 
 ### Why This Approach vs. Alternatives?
 
@@ -44,7 +46,7 @@
 | **Knowledge Graphs** | Entity-entity triples (SPO) | Explicit facts | Requires structured data | Extracted from unstructured |
 | **HippoRAG** | Personalized PageRank on KG | Hippocampus-inspired | Heavyweight, slower | Hybrid with vector search |
 | **GraphRAG** | Community detection on entities | Global reasoning | Expensive preprocessing | Faster dual-path |
-| **BiG-RAG (Ours)** | **Bipartite: Entities ↔ Relations** | **Clean structure, fast retrieval, dual-path** | **Requires LLM extraction** | **Our contribution** |
+| **BiG-RAG (Ours)** | **Bipartite: Entity Nodes ↔ Bipartite Edge Nodes** | **Clean structure, fast retrieval, dual-path** | **Requires LLM extraction** | **Our contribution** |
 
 **Key Advantages of Bipartite Structure:**
 

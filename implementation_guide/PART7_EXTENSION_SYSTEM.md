@@ -468,7 +468,39 @@ rag = BiGRAG(embedding_func=openai_embed)
 
 ## 4. Usage Examples
 
-### Example 1: Adding PostgreSQL Vector Storage
+**⚠️ IMPORTANT: Example Status Disclaimer**
+
+The examples in this section are **illustrative templates** that demonstrate the extension patterns and API design. They are not currently implemented in the BiG-RAG codebase.
+
+**What this means:**
+- ✅ **Extension Pattern**: The approach shown (inheriting from base classes, implementing required methods) is correct and tested
+- ✅ **API Design**: The method signatures and interfaces shown match the actual base classes in `bigrag/base.py`
+- ✅ **Use as Templates**: You can copy these examples and implement them for real use
+- ❌ **Not Pre-Built**: These specific implementations (PostgreSQL storage, SQL tool, legal extraction, code generation reward) don't exist in `bigrag/kg/` or `agent/tool/tools/`
+
+**Status of Built-in Extensions:**
+| Extension | Status | Location |
+|-----------|--------|----------|
+| **NetworkXStorage** | ✅ Implemented | `bigrag/storage.py:178-318` |
+| **NanoVectorDBStorage** | ✅ Implemented | `bigrag/storage.py:67-175` |
+| **JsonKVStorage** | ✅ Implemented | `bigrag/storage.py:26-64` |
+| **Neo4JStorage** | ✅ Implemented | `bigrag/kg/neo4j_impl.py` |
+| **OracleStorage** | ✅ Implemented | `bigrag/kg/oracle_impl.py` |
+| **MilvusStorage** | ✅ Implemented | `bigrag/kg/milvus_impl.py` |
+| **SearchTool** | ✅ Implemented | `agent/tool/tools/search_tool.py` |
+| **PostgreSQLStorage** | ⚠️ Template Example | Not implemented |
+| **SQLTool** | ⚠️ Template Example | Not implemented |
+| **Legal Extraction** | ⚠️ Template Example | Not implemented |
+| **Code Generation Reward** | ⚠️ Template Example | Not implemented |
+
+**How to Use These Examples:**
+1. Copy the template code
+2. Install required dependencies (`asyncpg`, `sqlparse`, etc.)
+3. Implement any missing methods marked with `# TODO`
+4. Test thoroughly before production use
+5. Contribute back to BiG-RAG if you build something useful!
+
+### Example 1: Adding PostgreSQL Vector Storage (Template)
 
 **File:** `custom_extensions/postgres_storage.py`
 
@@ -582,7 +614,7 @@ rag = BiGRAG(
 )
 ```
 
-### Example 2: Adding SQL Query Tool
+### Example 2: Adding SQL Query Tool (Template)
 
 **File:** `custom_extensions/sql_tool.py`
 
@@ -676,7 +708,7 @@ class MultiToolEnv(ToolEnv):
 tool_env = MultiToolEnv(**tool_config)
 ```
 
-### Example 3: Custom Entity Extraction for Legal Documents
+### Example 3: Custom Entity Extraction for Legal Documents (Template)
 
 **File:** `custom_extensions/legal_extraction.py`
 
@@ -813,7 +845,7 @@ context = await rag.aquery(
 )
 ```
 
-### Example 4: Custom Reward Function for Code Generation
+### Example 4: Custom Reward Function for Code Generation (Template)
 
 **File:** `custom_extensions/code_reward.py`
 

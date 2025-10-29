@@ -736,7 +736,17 @@ class SearchTool(Tool):
     def execute(self, args: Dict) -> str:
         """
         Single execution (NOT IMPLEMENTED)
-        Use batch_execute() instead
+
+        ⚠️ In the current implementation (agent/tool/tools/search_tool.py:49-61),
+        this method only contains 'pass' - it is not functional.
+
+        BiG-RAG only uses batch_execute() for efficient parallel tool execution.
+        This design choice optimizes for:
+        1. Batching multiple queries to the retrieval server
+        2. Reducing HTTP request overhead
+        3. Better GPU utilization during training
+
+        If you need single execution, call: batch_execute([args])[0]
         """
         pass
 
@@ -751,8 +761,22 @@ class SearchTool(Tool):
 
     def calculate_reward(self, args: Dict, result: str) -> float:
         """
-        Tool-specific reward (currently 0.0)
-        Reward assigned only at final answer
+        Tool-specific reward calculation
+
+        ⚠️ CURRENT IMPLEMENTATION: Always returns 0.0
+
+        In the current BiG-RAG implementation (agent/tool/tools/search_tool.py:68-83),
+        this method always returns 0.0. Tool-level rewards are not used during training.
+
+        Instead, rewards are computed by the RL training system based on:
+        1. Final answer quality (Exact Match score)
+        2. Token-level F1 score vs ground truth
+        3. Format compliance (proper use of <answer> tags)
+
+        See Part 4: RL Training System for reward model details.
+
+        This method exists for future extensibility where different tools
+        could provide immediate feedback (e.g., valid SQL query = +0.1).
         """
         return 0.0
 ```

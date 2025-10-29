@@ -197,9 +197,9 @@ graphrag/
 ###############################################################################
 
 # RL Training Components (will publish when ready for RL)
-verl/
-agent/
-evaluation/
+# verl/
+# agent/
+# evaluation/
 
 # Documentation (work in progress)
 docs/

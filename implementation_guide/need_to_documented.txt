@@ -1,0 +1,188 @@
+Part 1: Graph Construction System
+1.1 Text Preprocessing
+    - Chunking algorithms (token-based, semantic, hybrid)
+    - Overlap strategies and boundary handling
+    - Document deduplication
+
+1.2 Entity Extraction Pipeline
+    - LLM prompt engineering (templates, examples, formatting)
+    - Multi-turn gleaning algorithm
+    - Entity parsing and validation
+    - Entity type taxonomy
+
+1.3 Graph Construction
+    - Node merging strategies
+    - Edge creation logic
+    - Weight calculation formulas
+    - Graph stabilization process
+
+1.4 Embedding Generation
+    - Batch processing strategies
+    - Embedding model selection
+    - Dimension handling
+
+1.5 Vector Indexing
+    - FAISS index types (Flat, IVF, HNSW)
+    - Index building optimization
+    - Query performance tuning
+Part 2: Retrieval System
+2.1 Query Processing
+    - Query understanding and reformulation
+    - Embedding generation strategies
+    - Multi-query expansion
+
+2.2 Vector Search
+    - FAISS query algorithms
+    - Top-k selection strategies
+    - Distance metrics (cosine, L2, IP)
+
+2.3 Graph Traversal
+    - Entity-based path algorithm
+    - Relation-based path algorithm
+    - Multi-hop reasoning
+
+2.4 Result Ranking
+    - Reciprocal rank fusion mathematics
+    - Scoring function design
+    - Diversity promotion
+
+2.5 Context Formatting
+    - Token budget management
+    - Context compression techniques
+    - Relevance filtering
+Part 3: Tool-Augmented Generation
+3.1 Tool Environment
+    - State management
+    - Action parsing
+    - Reward calculation
+
+3.2 Generation Loop
+    - Iterative generation process
+    - Active masking mechanism
+    - Tool call extraction
+
+3.3 Tool Execution
+    - Batch execution optimization
+    - Error handling
+    - Response formatting
+
+3.4 Loss Masking
+    - Why mask tool responses?
+    - Implementation algorithm
+    - Training stability impact
+Part 4: RL Training System
+4.1 GRPO Algorithm
+    - Group-relative advantage estimation
+    - Policy gradient computation
+    - Update rules
+
+4.2 Reward System
+    - Format reward design
+    - Answer quality metrics (EM, F1)
+    - Reward composition strategies
+
+4.3 Distributed Training
+    - Ray architecture
+    - Worker coordination
+    - GPU parallelism strategies
+
+4.4 Training Optimization
+    - Hyperparameter tuning
+    - Convergence monitoring
+    - Checkpoint management
+Part 5: Storage System
+5.1 Abstract Base Classes
+    - Interface design principles
+    - Method contracts
+    - Extension guidelines
+
+5.2 Default Implementations
+    - JsonKVStorage design
+    - NanoVectorDB architecture
+    - NetworkX graph management
+
+5.3 Enterprise Backends
+    - Neo4J integration
+    - Milvus vector database
+    - Oracle graph database
+    - MongoDB document store
+
+5.4 Performance Optimization
+    - Caching strategies
+    - Batch operations
+    - Index optimization
+Part 6: API Server
+6.1 FastAPI Architecture
+    - Endpoint design
+    - Request validation
+    - Response formatting
+
+6.2 Retrieval Endpoint
+    - Batch query handling
+    - Timeout management
+    - Error handling
+
+6.3 Chat Endpoint
+    - OpenAI compatibility
+    - Streaming support
+    - Token counting
+
+6.4 LLM Provider Management
+    - Provider selection
+    - Fallback chains
+    - Cost tracking
+Part 7: Extension System
+7.1 Adding Storage Backends
+    - Step-by-step guide
+    - Example implementations
+    - Testing strategies
+
+7.2 Adding Tools
+    - Tool interface
+    - Batch execution patterns
+    - Reward design
+
+7.3 Customizing Extraction
+    - Prompt modification
+    - Entity type addition
+    - Parsing logic extension
+
+7.4 Integrating New Models
+    - Embedding function creation
+    - LLM provider adapter
+    - Testing and validation
+🎨 Documentation Format Recommendations
+For deep documentation, each part should have:
+1. Conceptual Overview
+What problem does this solve?
+Why this approach vs. alternatives?
+High-level architecture diagram
+2. Implementation Details
+Algorithm pseudocode
+Data structure specifications
+Code organization and flow
+3. Configuration Reference
+All parameters explained
+Default values and rationale
+Performance implications
+4. Usage Examples
+Basic usage
+Advanced scenarios
+Common patterns
+5. Troubleshooting
+Common issues
+Error messages and fixes
+Performance optimization
+6. API Reference
+Function signatures
+Parameter descriptions
+Return value specifications
+Exception handling
+7. Performance Analysis
+Time complexity
+Space complexity
+Benchmarks and profiling
+8. Testing Guide
+Unit test examples
+Integration test scenarios
+Validation procedures

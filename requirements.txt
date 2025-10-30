@@ -54,4 +54,8 @@ PyPDF2
 fastapi
 uvicorn
 spacy
+markdown
+beautifulsoup4
+python-multipart
+lxml
 

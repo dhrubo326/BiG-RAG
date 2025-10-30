@@ -21,7 +21,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
@@ -30,10 +30,29 @@ import argparse
 import hashlib
 import asyncio
 from datetime import datetime
+import time
 
 # Import BiG-RAG core
 from bigrag import BiGRAG, QueryParam
 from bigrag.utils import logger
+
+# Import API support modules
+from api.jobs import (
+    ProcessingJob, JobStatus, ProcessingStage,
+    processing_jobs, process_document_background, get_queue_stats
+)
+from api.registry import registry
+from api.utils import process_markdown, validate_file_upload, truncate_text
+from api.kg_utils import (
+    get_document_stats_from_kg, get_document_entities,
+    find_related_documents, get_document_content_from_corpus
+)
+from api.models import (
+    UploadResponse as EnhancedUploadResponse, JobStatusResponse,
+    DocumentListResponse, DocumentDetailResponse, DocumentSummary,
+    DeleteResponse, GraphStatsResponse, HealthResponse as EnhancedHealthResponse,
+    DocumentFilter, KGStatistics, EntityInfo, RelatedDocument
+)
 
 # ============================================================================
 # LLM Provider Manager
@@ -390,6 +409,9 @@ print(f"[INFO] Working directory: expr/{args.data_source}\n")
 embedding_manager = EmbeddingManager(f"expr/{args.data_source}")
 llm_manager = LLMProviderManager(default_provider=args.llm_provider)
 
+# Track server start time for uptime
+server_start_time = time.time()
+
 # Initialize BiGRAG
 from bigrag.llm import gpt_4o_mini_complete
 rag = BiGRAG(
@@ -534,7 +556,13 @@ def compute_doc_id(content: str, prefix: str = "upload") -> str:
     return f"{prefix}-{hash_obj.hexdigest()[:16]}"
 
 
-async def add_document_to_corpus(data_source: str, doc_id: str, content: str, title: str):
+async def add_document_to_corpus(
+    data_source: str,
+    doc_id: str,
+    content: str,
+    title: str,
+    metadata: Optional[Dict[str, Any]] = None
+):
     """Add a document to the corpus.jsonl file"""
     corpus_file = Path(f"datasets/{data_source}/raw/corpus.jsonl")
 
@@ -549,6 +577,10 @@ async def add_document_to_corpus(data_source: str, doc_id: str, content: str, ti
         "upload_date": datetime.now().isoformat(),
         "source": "upload"
     }
+
+    # Add metadata if provided
+    if metadata:
+        doc["metadata"] = metadata
 
     # Append to corpus
     with open(corpus_file, 'a', encoding='utf-8') as f:
@@ -622,110 +654,276 @@ class RebuildResponse(BaseModel):
 @app.get("/", tags=["Root"])
 async def root():
     return {
-        "message": "BiG-RAG Unified API Server",
-        "version": "2.0.0",
+        "message": "BiG-RAG Unified API Server - Enhanced",
+        "version": "3.0.0",
         "dataset": args.data_source,
         "embedding_mode": embedding_manager.mode,
         "default_llm_provider": args.llm_provider,
         "available_providers": llm_manager.get_available_providers(),
         "endpoints": {
-            "ask": "/ask - Interactive Q&A",
-            "search": "/search - Batch retrieval",
-            "chat": "/chat/completions - LLM generation (OpenAI-compatible)",
-            "upload": "/upload - Upload text files to knowledge graph",
-            "rebuild": "/rebuild - Rebuild knowledge graph from corpus",
-            "health": "/health - Health check",
-            "docs": "/docs - API documentation"
-        }
+            "document_management": {
+                "upload": "POST /upload - Upload .txt or .md files with metadata",
+                "list": "GET /documents - List all documents with filtering",
+                "details": "GET /documents/{id} - Get document details with KG stats",
+                "delete": "DELETE /documents/{id} - Delete document (soft/hard)",
+                "rebuild": "POST /rebuild - Rebuild knowledge graph"
+            },
+            "job_management": {
+                "status": "GET /status/{job_id} - Get processing job status"
+            },
+            "graph_management": {
+                "stats": "GET /graph/stats - Get knowledge graph statistics"
+            },
+            "retrieval": {
+                "ask": "POST /ask - Interactive Q&A with context",
+                "search": "POST /search - Batch document retrieval"
+            },
+            "llm": {
+                "chat": "POST /chat/completions - OpenAI-compatible chat endpoint"
+            },
+            "system": {
+                "health": "GET /health - System health and statistics",
+                "docs": "GET /docs - Interactive API documentation"
+            }
+        },
+        "new_features": [
+            "✅ Markdown (.md) file support",
+            "✅ Background job processing with progress tracking",
+            "✅ Document registry and metadata management",
+            "✅ Soft and hard delete options",
+            "✅ Advanced filtering and pagination",
+            "✅ Knowledge graph statistics and analytics"
+        ]
     }
 
 
-@app.get("/health", response_model=HealthResponse, tags=["Health"])
+@app.get("/health", response_model=EnhancedHealthResponse, tags=["Health"])
 async def health_check():
-    return HealthResponse(
+    """
+    Get comprehensive system health and statistics.
+
+    **Returns:**
+    - System status
+    - RAG instance information
+    - Job queue statistics
+    - Server uptime
+    """
+    from api.models import RAGInstanceInfo
+
+    # Get active RAG instances
+    rag_instances_info = {}
+    expr_dir = Path("expr")
+    if expr_dir.exists():
+        for dataset_dir in expr_dir.iterdir():
+            if dataset_dir.is_dir() and not dataset_dir.name.startswith('.'):
+                # Check if indices exist
+                indices_loaded = (
+                    (dataset_dir / "index_entity.bin").exists() or
+                    (dataset_dir / "index_bipartite_edge.bin").exists()
+                )
+
+                # Count documents in registry
+                try:
+                    reg_stats = await registry.get_stats(dataset_dir.name)
+                    total_docs = reg_stats.get("total", 0)
+                except:
+                    total_docs = 0
+
+                rag_instances_info[dataset_dir.name] = RAGInstanceInfo(
+                    dataset=dataset_dir.name,
+                    status="active" if indices_loaded else "inactive",
+                    total_documents=total_docs,
+                    indices_loaded=indices_loaded
+                )
+
+    # Get job queue stats
+    job_stats = get_queue_stats()
+
+    # Calculate uptime
+    uptime_seconds = time.time() - server_start_time
+
+    return EnhancedHealthResponse(
         status="healthy",
-        dataset=args.data_source,
-        entities_count=stats["entities"],
-        edges_count=stats["edges"],
-        chunks_count=stats["chunks"],
-        embedding_mode=embedding_manager.mode,
-        available_providers=llm_manager.get_available_providers(),
-        default_provider=args.llm_provider
+        version="3.0.0",
+        timestamp=datetime.now().isoformat(),
+        rag_instances=rag_instances_info,
+        job_queue=job_stats,
+        uptime_seconds=uptime_seconds
     )
 
 
-@app.post("/upload", response_model=UploadResponse, tags=["Document Management"])
+@app.post("/upload", response_model=EnhancedUploadResponse, tags=["Document Management"])
 async def upload_document(
-    file: UploadFile = File(..., description="Text file to upload (.txt)"),
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(..., description="Text or Markdown file to upload (.txt or .md)"),
     title: str = Form(None, description="Optional document title (defaults to filename)"),
-    data_source: str = Form(None, description="Dataset name (defaults to current dataset)")
+    data_source: str = Form(None, description="Dataset name (defaults to current dataset)"),
+    process_async: bool = Form(True, description="Process in background (recommended for large files)"),
+    metadata: str = Form(None, description="Optional JSON metadata: {\"category\": \"research\", \"tags\": [...]}")
 ):
     """
-    Upload a text file and automatically add it to the knowledge graph.
+    Upload a document (.txt or .md) and add it to the knowledge graph.
 
-    This endpoint:
-    1. Reads the uploaded text file
-    2. Generates a unique document ID
-    3. Adds it to corpus.jsonl
-    4. Incrementally updates the knowledge graph (chunking, entity extraction, graph building)
+    **Enhanced Features:**
+    - ✅ Supports both .txt and .md (Markdown) files
+    - ✅ Background processing with job tracking
+    - ✅ Document registry for metadata management
+    - ✅ Optional metadata (category, tags, custom fields)
+    - ✅ Progress tracking via /status/{job_id}
 
     **Example usage:**
     ```bash
+    # Basic upload
     curl -X POST "http://localhost:8001/upload" \\
-      -F "file=@my_document.txt" \\
+      -F "file=@document.md" \\
       -F "title=My Research Paper"
+
+    # With metadata
+    curl -X POST "http://localhost:8001/upload" \\
+      -F "file=@document.md" \\
+      -F "title=BiG-RAG Paper" \\
+      -F 'metadata={"category":"research","tags":["RAG","NLP"]}'
     ```
 
-    **Note:** Leave data_source empty to use the current dataset (demo_test by default)
+    **Returns:** job_id for tracking processing status via /status/{job_id}
     """
     try:
-        # Validate file type
-        if not file.filename.endswith('.txt'):
-            raise HTTPException(status_code=400, detail="Only .txt files are supported")
-
-        # Use current dataset if not specified or if "string" placeholder used
-        target_dataset = data_source if (data_source and data_source != "string") else args.data_source
+        # Validate file extension
+        if not file.filename.endswith(('.txt', '.md')):
+            raise HTTPException(
+                status_code=400,
+                detail="Only .txt and .md files are supported"
+            )
 
         # Read file content
-        content = await file.read()
-        content_text = content.decode('utf-8')
+        content_bytes = await file.read()
 
-        # Validate content
+        # Validate file
+        is_valid, error_msg = validate_file_upload(
+            content_bytes,
+            file.filename,
+            max_size_mb=50
+        )
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
+
+        # Decode content
+        content_text = content_bytes.decode('utf-8')
+
+        # Process Markdown if .md
+        if file.filename.endswith('.md'):
+            logger.info(f"Processing Markdown file: {file.filename}")
+            content_text = process_markdown(content_text)
+
+        # Validate content not empty
         if not content_text.strip():
-            raise HTTPException(status_code=400, detail="File is empty")
+            raise HTTPException(status_code=400, detail="File is empty after processing")
 
-        # Generate unique document ID
+        # Parse metadata
+        doc_metadata = {}
+        if metadata:
+            try:
+                doc_metadata = json.loads(metadata)
+            except json.JSONDecodeError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid JSON in metadata field"
+                )
+
+        # Determine target dataset
+        target_dataset = data_source if (data_source and data_source != "string") else args.data_source
+
+        # Generate IDs
         doc_id = compute_doc_id(content_text, prefix="upload")
+        job_id = f"job-{compute_doc_id(doc_id + str(datetime.now()), prefix='')}"
 
         # Use filename as title if not provided
         doc_title = title or file.filename
 
         # Add to corpus.jsonl
-        doc = await add_document_to_corpus(
+        await add_document_to_corpus(
             data_source=target_dataset,
             doc_id=doc_id,
             content=content_text,
-            title=doc_title
+            title=doc_title,
+            metadata=doc_metadata
         )
 
-        # Incrementally add to knowledge graph
-        logger.info(f"Adding document '{doc_title}' to knowledge graph...")
-        await rebuild_knowledge_graph_incremental(target_dataset, [content_text])
-
-        return UploadResponse(
-            success=True,
-            message=f"Document '{doc_title}' successfully added to knowledge graph",
+        # Add to document registry
+        await registry.add_document(
             document_id=doc_id,
             filename=file.filename,
             title=doc_title,
             content_length=len(content_text),
-            dataset=target_dataset
+            dataset=target_dataset,
+            metadata=doc_metadata,
+            job_id=job_id,
+            status="pending"
+        )
+
+        # Create processing job
+        job = ProcessingJob(
+            job_id=job_id,
+            document_id=doc_id,
+            dataset=target_dataset,
+            status=JobStatus.PENDING,
+            progress=0.0,
+            stage=ProcessingStage.QUEUED
+        )
+        processing_jobs[job_id] = job
+
+        # Process document
+        if process_async:
+            # Background processing
+            background_tasks.add_task(
+                process_document_background,
+                job_id=job_id,
+                content=content_text,
+                title=doc_title,
+                dataset=target_dataset,
+                rag_instance=rag,
+                registry_instance=registry
+            )
+            message = "Document queued for processing"
+        else:
+            # Synchronous processing (blocks response)
+            await process_document_background(
+                job_id=job_id,
+                content=content_text,
+                title=doc_title,
+                dataset=target_dataset,
+                rag_instance=rag,
+                registry_instance=registry
+            )
+            message = "Document processed successfully"
+
+        # Return response
+        return EnhancedUploadResponse(
+            success=True,
+            message=message,
+            document_id=doc_id,
+            job_id=job_id,
+            filename=file.filename,
+            title=doc_title,
+            content_preview=truncate_text(content_text, 200),
+            content_length=len(content_text),
+            dataset=target_dataset,
+            status=job.status.value if isinstance(job.status, JobStatus) else job.status,
+            metadata=doc_metadata,
+            upload_date=datetime.now().isoformat()
         )
 
     except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="File encoding error. Please upload UTF-8 encoded text files")
+        raise HTTPException(
+            status_code=400,
+            detail="File encoding error. Please upload UTF-8 encoded files"
+        )
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
     except Exception as e:
         logger.error(f"Upload failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
@@ -792,6 +990,371 @@ async def rebuild_graph(
     except Exception as e:
         logger.error(f"Rebuild failed: {e}")
         raise HTTPException(status_code=500, detail=f"Rebuild failed: {str(e)}")
+
+
+@app.get("/status/{job_id}", response_model=JobStatusResponse, tags=["Job Management"])
+async def get_job_status(job_id: str):
+    """
+    Get processing status for a document upload job.
+
+    **Example usage:**
+    ```bash
+    curl "http://localhost:8001/status/job-abc123"
+    ```
+
+    **Returns:** Job status with progress (0.0 to 1.0) and current stage
+    """
+    if job_id not in processing_jobs:
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+
+    job = processing_jobs[job_id]
+
+    # Convert stats to JobStatistics model if present
+    job_stats = None
+    if job.stats:
+        from api.models import JobStatistics
+        job_stats = JobStatistics(
+            chunks_created=job.stats.get("chunks", 0),
+            entities_extracted=job.stats.get("entities", 0),
+            edges_created=job.stats.get("edges", 0),
+            tokens_processed=job.stats.get("tokens", 0)
+        )
+
+    return JobStatusResponse(
+        job_id=job.job_id,
+        document_id=job.document_id,
+        dataset=job.dataset,
+        status=job.status,
+        progress=job.progress,
+        stage=job.stage,
+        started_at=job.started_at.isoformat() if job.started_at else None,
+        completed_at=job.completed_at.isoformat() if job.completed_at else None,
+        error=job.error,
+        stats=job_stats
+    )
+
+
+@app.get("/documents", response_model=DocumentListResponse, tags=["Document Management"])
+async def list_documents(
+    dataset: Optional[str] = None,
+    search: Optional[str] = None,
+    category: Optional[str] = None,
+    tags: Optional[str] = None,  # Comma-separated
+    status: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    """
+    List all documents with optional filtering and pagination.
+
+    **Filters:**
+    - `dataset`: Filter by dataset name
+    - `search`: Search in title or filename
+    - `category`: Filter by category
+    - `tags`: Comma-separated tags (e.g., "RAG,NLP")
+    - `status`: Filter by status (pending, processing, indexed, failed, deleted)
+    - `date_from`, `date_to`: Date range filter (ISO format)
+    - `limit`: Results per page (1-500, default 50)
+    - `offset`: Pagination offset (default 0)
+
+    **Example usage:**
+    ```bash
+    # Get all documents
+    curl "http://localhost:8001/documents"
+
+    # Search with filters
+    curl "http://localhost:8001/documents?search=research&category=science&limit=20"
+
+    # Get documents by status
+    curl "http://localhost:8001/documents?status=indexed"
+    ```
+    """
+    try:
+        # Parse tags
+        tags_list = tags.split(',') if tags else None
+
+        # Get documents from registry
+        docs = await registry.list_documents(
+            dataset=dataset,
+            search=search,
+            category=category,
+            tags=tags_list,
+            status=status,
+            date_from=date_from,
+            date_to=date_to
+        )
+
+        # Apply pagination
+        total = len(docs)
+        paginated = docs[offset:offset+limit]
+
+        # Convert to DocumentSummary models
+        summaries = [
+            DocumentSummary(
+                document_id=doc["document_id"],
+                filename=doc["filename"],
+                title=doc["title"],
+                content_length=doc["content_length"],
+                upload_date=doc["upload_date"],
+                indexed_date=doc.get("indexed_date"),
+                last_modified=doc["last_modified"],
+                status=doc["status"],
+                dataset=doc["dataset"],
+                metadata=doc.get("metadata"),
+                job_id=doc["job_id"]
+            )
+            for doc in paginated
+        ]
+
+        return DocumentListResponse(
+            total=total,
+            limit=limit,
+            offset=offset,
+            documents=summaries
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to list documents: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to list documents: {str(e)}")
+
+
+@app.get("/documents/{document_id}", response_model=DocumentDetailResponse, tags=["Document Management"])
+async def get_document_details(document_id: str, include_entities: bool = True, include_related: bool = True):
+    """
+    Get detailed information about a specific document.
+
+    **Includes:**
+    - Document metadata and status
+    - Knowledge graph statistics (chunks, entities, edges)
+    - Top extracted entities (optional, default: true)
+    - Related documents by entity overlap (optional, default: true)
+
+    **Example usage:**
+    ```bash
+    curl "http://localhost:8001/documents/upload-abc123"
+
+    # Without entities and related docs
+    curl "http://localhost:8001/documents/upload-abc123?include_entities=false&include_related=false"
+    ```
+    """
+    try:
+        # Get document from registry
+        doc = await registry.get_document(document_id)
+
+        if not doc:
+            raise HTTPException(status_code=404, detail=f"Document not found: {document_id}")
+
+        # Get content preview
+        content = await get_document_content_from_corpus(doc["dataset"], document_id)
+        content_preview = truncate_text(content, 500) if content else "N/A"
+
+        # Get KG statistics
+        kg_stats_dict = await get_document_stats_from_kg(doc["dataset"], document_id)
+        kg_stats = KGStatistics(**kg_stats_dict) if kg_stats_dict else None
+
+        # Get top entities (if requested and document is indexed)
+        top_entities = None
+        if include_entities and doc.get("status") == "indexed":
+            entities_list = await get_document_entities(doc["dataset"], document_id, top_k=10)
+            top_entities = [EntityInfo(**e) for e in entities_list]
+
+        # Get related documents (if requested and document is indexed)
+        related_docs = None
+        if include_related and doc.get("status") == "indexed":
+            related_list = await find_related_documents(doc["dataset"], document_id, top_k=5)
+            related_docs = [RelatedDocument(**r) for r in related_list]
+
+        return DocumentDetailResponse(
+            document_id=doc["document_id"],
+            filename=doc["filename"],
+            title=doc["title"],
+            content_length=doc["content_length"],
+            content_preview=content_preview,
+            upload_date=doc["upload_date"],
+            indexed_date=doc.get("indexed_date"),
+            last_modified=doc["last_modified"],
+            status=doc["status"],
+            dataset=doc["dataset"],
+            metadata=doc.get("metadata"),
+            job_id=doc["job_id"],
+            stats=kg_stats,
+            top_entities=top_entities,
+            related_documents=related_docs
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get document details: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get document details: {str(e)}")
+
+
+@app.delete("/documents/{document_id}", response_model=DeleteResponse, tags=["Document Management"])
+async def delete_document(document_id: str, hard_delete: bool = False):
+    """
+    Delete a document from the system.
+
+    **Delete Modes:**
+    - **Soft delete** (default): Marks document as deleted in registry, keeps in KG
+    - **Hard delete**: Removes from corpus.jsonl, requires full graph rebuild
+
+    **Example usage:**
+    ```bash
+    # Soft delete (recommended)
+    curl -X DELETE "http://localhost:8001/documents/upload-abc123"
+
+    # Hard delete (requires rebuild)
+    curl -X DELETE "http://localhost:8001/documents/upload-abc123?hard_delete=true"
+    ```
+
+    **Note:** Hard delete requires running `/rebuild` afterward to update the knowledge graph.
+    """
+    try:
+        # Get document info
+        doc = await registry.get_document(document_id)
+
+        if not doc:
+            raise HTTPException(status_code=404, detail=f"Document not found: {document_id}")
+
+        if hard_delete:
+            # Hard delete: Remove from corpus and registry
+            from api.kg_utils import remove_from_corpus
+            await remove_from_corpus(doc["dataset"], document_id)
+            await registry.delete_document(document_id, hard=True)
+
+            return DeleteResponse(
+                success=True,
+                message=f"Document {document_id} permanently deleted. Run /rebuild to update knowledge graph.",
+                document_id=document_id,
+                hard_delete=True,
+                rebuild_required=True
+            )
+        else:
+            # Soft delete: Just mark as deleted
+            await registry.delete_document(document_id, hard=False)
+
+            return DeleteResponse(
+                success=True,
+                message=f"Document {document_id} marked as deleted (soft delete)",
+                document_id=document_id,
+                hard_delete=False,
+                rebuild_required=False
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete document: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete document: {str(e)}")
+
+
+@app.get("/graph/stats", response_model=GraphStatsResponse, tags=["Graph Management"])
+async def get_graph_statistics(dataset: Optional[str] = None):
+    """
+    Get knowledge graph statistics.
+
+    **Returns:**
+    - Global statistics (all datasets)
+    - Per-dataset breakdown
+    - Document counts by status
+    - Entity, edge, and chunk counts
+
+    **Example usage:**
+    ```bash
+    # All datasets
+    curl "http://localhost:8001/graph/stats"
+
+    # Specific dataset
+    curl "http://localhost:8001/graph/stats?dataset=user_uploads"
+    ```
+    """
+    try:
+        from api.models import DatasetStats
+
+        datasets_to_query = []
+        if dataset:
+            datasets_to_query = [dataset]
+        else:
+            # Get all datasets
+            expr_dir = Path("expr")
+            if expr_dir.exists():
+                datasets_to_query = [
+                    d.name for d in expr_dir.iterdir()
+                    if d.is_dir() and not d.name.startswith('.')
+                ]
+
+        # Collect stats per dataset
+        dataset_stats_list = []
+        global_totals = {
+            "total_documents": 0,
+            "total_entities": 0,
+            "total_edges": 0,
+            "total_chunks": 0
+        }
+
+        for ds in datasets_to_query:
+            # Get registry stats
+            reg_stats = await registry.get_stats(ds)
+
+            # Get KG file counts
+            entities_file = f"expr/{ds}/kv_store_entities.json"
+            edges_file = f"expr/{ds}/kv_store_bipartite_edges.json"
+            chunks_file = f"expr/{ds}/kv_store_text_chunks.json"
+
+            entities_count = 0
+            edges_count = 0
+            chunks_count = 0
+            tokens_count = 0
+
+            if os.path.exists(entities_file):
+                with open(entities_file, 'r', encoding='utf-8') as f:
+                    entities = json.load(f)
+                    entities_count = len(entities)
+
+            if os.path.exists(edges_file):
+                with open(edges_file, 'r', encoding='utf-8') as f:
+                    edges = json.load(f)
+                    edges_count = len(edges)
+
+            if os.path.exists(chunks_file):
+                with open(chunks_file, 'r', encoding='utf-8') as f:
+                    chunks = json.load(f)
+                    chunks_count = len(chunks)
+                    tokens_count = sum(c.get("tokens", 0) for c in chunks.values())
+
+            # Create dataset stats
+            ds_stats = DatasetStats(
+                dataset=ds,
+                total_documents=reg_stats["total"],
+                indexed_documents=reg_stats["indexed"],
+                pending_documents=reg_stats["pending"],
+                failed_documents=reg_stats["failed"],
+                total_chunks=chunks_count,
+                total_entities=entities_count,
+                total_edges=edges_count,
+                total_tokens=tokens_count
+            )
+
+            dataset_stats_list.append(ds_stats)
+
+            # Add to global totals
+            global_totals["total_documents"] += reg_stats["total"]
+            global_totals["total_entities"] += entities_count
+            global_totals["total_edges"] += edges_count
+            global_totals["total_chunks"] += chunks_count
+
+        return GraphStatsResponse(
+            success=True,
+            total_datasets=len(dataset_stats_list),
+            global_stats=global_totals,
+            datasets=dataset_stats_list
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get graph statistics: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get graph statistics: {str(e)}")
 
 
 @app.post("/ask", response_model=AskResponse, tags=["Q&A"])

@@ -48,9 +48,114 @@
 └───────────────────────────────────────────────────────────┘
 ```
 
+### Comparison to Standard GraphRAG
+
+BiG-RAG implements all core GraphRAG features plus enhanced capabilities:
+
+| Feature | Standard GraphRAG | BiG-RAG | Status |
+|---------|-------------------|---------|--------|
+| **Text chunking** | ✅ Yes | ✅ Yes (1200 tokens, 100 overlap) | ✅ Implemented |
+| **Chunk storage** | ✅ Yes | ✅ Yes (KV + vector DB) | ✅ Implemented |
+| **Entity extraction** | ✅ Yes | ✅ Yes (GPT-4o-mini) | ✅ Implemented |
+| **Entity embeddings** | ✅ Yes | ✅ Yes (OpenAI embeddings) | ✅ Implemented |
+| **Vector search** | ✅ Yes | ✅ Yes (entities + relations) | ✅ Implemented |
+| **Graph structure** | ✅ Yes | ✅ Yes (bipartite graph) | ✅ Implemented |
+| **Graph traversal** | ✅ Yes | ✅ Yes (during retrieval) | ✅ Implemented |
+| **Hybrid retrieval** | ✅ Yes | ✅ Yes (vector + graph) | ✅ Implemented |
+| **Relation extraction** | ⚠️ Often binary | ✅ N-ary relations | ✅ Enhanced |
+| **Dual-path retrieval** | ❌ Usually entity-only | ✅ Entity + relation paths | ✅ Enhanced |
+
+**BiG-RAG's Enhanced Features:**
+1. **Bipartite graph structure**: Entities and relations as separate node types (not traditional entity graphs)
+2. **N-ary relations**: Preserves complex relationships in natural language
+3. **Dual-path retrieval**: Both entity-based AND relation-based vector searches
+4. **Three-layer storage**: KV storage + Vector DB + Graph DB working together
+5. **Reciprocal rank fusion**: Combines multiple retrieval paths intelligently
+
 ---
 
 ## 2. Implementation Details
+
+### Complete Storage Flow
+
+**During Graph Construction** (`script_build.py`):
+
+```
+Input: Raw Documents
+   ↓
+1. Chunk into 1200-token segments (100 overlap)
+   │  Implementation: bigrag/operate.py → chunking_by_token_size()
+   ↓
+2. Store chunks in KV storage
+   ├─→ kv_store_text_chunks.json (metadata)
+   └─→ chunks_vdb (vector embeddings)
+   │  Implementation: bigrag/bigrag.py → text_chunks.upsert()
+   ↓
+3. Extract entities from chunks (GPT-4o-mini)
+   │  Implementation: bigrag/operate.py → extract_entities()
+   ↓
+4. Store entities
+   ├─→ kv_store_entities.json (metadata)
+   ├─→ entities_vdb (vector embeddings)
+   └─→ chunk_entity_relation_graph (graph structure)
+   │  Implementation: bigrag/operate.py → _merge_nodes_then_upsert()
+   ↓
+5. Extract n-ary relations from chunks
+   │  Implementation: bigrag/operate.py → extract_entities() [bipartite edges]
+   ↓
+6. Store relations
+   ├─→ kv_store_bipartite_edges.json (metadata)
+   ├─→ bipartite_edges_vdb (vector embeddings)
+   └─→ chunk_entity_relation_graph (graph edges)
+   │  Implementation: bigrag/operate.py → _merge_edges_then_upsert()
+   ↓
+7. Build FAISS indices
+   ├─→ index_entity.bin (entity vectors)
+   ├─→ index_bipartite_edge.bin (relation vectors)
+   └─→ index.bin (chunk vectors)
+   │  Implementation: bigrag/storage.py → index_done_callback()
+   ↓
+Output: Complete Bipartite Graph
+```
+
+**During Retrieval** (`script_api.py` or `aquery()`):
+
+```
+Input: User Query
+   ↓
+1. Embed query
+   │  Implementation: embedding_func() via OpenAI/FlagEmbedding
+   ↓
+2. Parallel vector searches
+   ├─→ entities_vdb.query() (find similar entities)
+   └─→ bipartite_edges_vdb.query() (find similar relations)
+   │  Implementation: bigrag/operate.py → _build_query_context()
+   ↓
+3. For each result, traverse graph
+   ├─→ Get entity metadata (graph.get_node())
+   ├─→ Get entity degree (graph.node_degree())
+   ├─→ Find connected relations (_find_most_related_edges_from_entities())
+   └─→ Find connected entities
+   │  Implementation: bigrag/operate.py → _get_node_data(), _get_edge_data()
+   ↓
+4. Reciprocal rank fusion
+   ├─→ Combine entity-based results
+   ├─→ Combine relation-based results
+   └─→ Score = 1/(rank+1) for each result
+   │  Implementation: bigrag/operate.py → _merge_and_rank()
+   ↓
+5. Return top-k fused results
+   ↓
+Output: Ranked Knowledge Contexts
+```
+
+**Key Storage Interactions:**
+- **Write operations**: Always async with `await storage.upsert(data)`
+- **Read operations**: Always async with `await storage.query(query, top_k)`
+- **Persistence**: Triggered by `index_done_callback()` after batch operations
+- **Caching**: LLM responses cached in `llm_response_cache` (optional KV storage)
+
+---
 
 ### Base Classes
 
@@ -381,6 +486,74 @@ def test_storage_backend(storage: BaseVectorStorage):
 test_storage_backend(NanoVectorDBStorage())
 test_storage_backend(MilvusVectorDBStorage())
 ```
+
+### Verifying Storage Files
+
+After running `script_build.py`, verify the following files are created in your working directory:
+
+```bash
+expr/2WikiMultiHopQA/
+├── kv_store_entities.json          # ✅ Entity metadata (KV storage)
+├── kv_store_bipartite_edges.json   # ✅ Relation metadata (KV storage)
+├── kv_store_text_chunks.json       # ✅ Text chunks (KV storage)
+├── index_entity.bin                # ✅ Entity vectors (FAISS)
+├── index_bipartite_edge.bin        # ✅ Relation vectors (FAISS)
+├── index.bin                       # ✅ Chunk vectors (FAISS)
+├── corpus.npy                      # ✅ Chunk embeddings (numpy)
+├── corpus_entity.npy               # ✅ Entity embeddings (numpy)
+└── corpus_bipartite_edge.npy       # ✅ Relation embeddings (numpy)
+```
+
+**Expected File Sizes** (for ~10K document corpus):
+
+| File | Typical Size | Purpose |
+|------|--------------|---------|
+| `kv_store_*.json` | 100KB - 10MB | Text metadata and entity/relation descriptions |
+| `index_*.bin` | 10MB - 100MB | FAISS indices for fast similarity search |
+| `corpus_*.npy` | 10MB - 100MB | Numpy arrays of embeddings |
+
+**How to Verify**:
+
+```bash
+# Check all files exist
+ls -lh expr/2WikiMultiHopQA/
+
+# Validate JSON files are readable
+python -c "import json; json.load(open('expr/2WikiMultiHopQA/kv_store_entities.json'))"
+
+# Check FAISS indices
+python -c "import faiss; idx = faiss.read_index('expr/2WikiMultiHopQA/index_entity.bin'); print(f'Entities: {idx.ntotal}')"
+
+# Check embeddings
+python -c "import numpy as np; arr = np.load('expr/2WikiMultiHopQA/corpus_entity.npy'); print(f'Shape: {arr.shape}')"
+```
+
+**Expected Output**:
+```
+Entities: 15234
+Shape: (15234, 1536)  # or (15234, 3072) for text-embedding-3-large
+```
+
+**If Files Are Missing**:
+1. Check build logs for errors: `tail -f build.log`
+2. Verify OpenAI API key is set: `cat openai_api_key.txt`
+3. Ensure corpus.jsonl exists: `ls datasets/2WikiMultiHopQA/raw/corpus.jsonl`
+4. Re-run build: `python script_build.py --data_source 2WikiMultiHopQA`
+
+**Storage Size Estimates**:
+
+| Corpus Size | Total Storage | Entity Index | Relation Index | Chunks Index |
+|-------------|--------------|--------------|----------------|--------------|
+| 1K docs | ~100 MB | ~10 MB | ~10 MB | ~50 MB |
+| 10K docs | ~1 GB | ~100 MB | ~100 MB | ~500 MB |
+| 100K docs | ~10 GB | ~1 GB | ~1 GB | ~5 GB |
+| 1M docs | ~100 GB | ~10 GB | ~10 GB | ~50 GB |
+
+**Note**: Actual sizes depend on:
+- Document length and complexity
+- Number of entities/relations extracted
+- Embedding dimensions (1536 vs 3072)
+- Storage backend (JSON is larger than binary formats)
 
 ---
 

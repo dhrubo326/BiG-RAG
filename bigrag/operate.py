@@ -581,7 +581,7 @@ async def _get_node_data(
     # Fixed: Actually query the vector database instead of assigning the object
     results = await entities_vdb.query(query, top_k=query_param.top_k)
     if not results or not len(results):  # Check for None or empty
-        return "", "", ""
+        return []  # Return empty list when no results (not empty strings)
     # Extract entity names from query results (Bug #5 fix: use entity_name, not hash ID)
     results = [r["entity_name"] for r in results]
     # get entity information
@@ -736,7 +736,7 @@ async def _get_edge_data(
     results = await bipartite_edges_vdb.query(keywords, top_k=query_param.top_k)
 
     if not results or not len(results):  # Check for None or empty
-        return "", "", ""
+        return []  # Return empty list when no results (not empty strings)
     # Extract edge names from query results (Bug #5 fix: use bipartite_edge_name, not hash ID)
     results = [r["bipartite_edge_name"] for r in results]
 

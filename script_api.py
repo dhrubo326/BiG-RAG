@@ -350,8 +350,10 @@ class EmbeddingManager:
             self._init_flagembedding()
 
         else:
-            logger.warning("⚠ No embedding files detected! Server may not work properly.")
-            self.mode = "none"
+            # No existing embeddings - default to OpenAI for new documents
+            logger.warning("⚠ No embedding files detected! Defaulting to OpenAI embeddings.")
+            self.mode = "openai"
+            self._init_openai()
 
     def _init_openai(self):
         """Initialize OpenAI embedding mode"""

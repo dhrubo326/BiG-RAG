@@ -1,11 +1,29 @@
 # Complete Testing Guide - Bangladesh.txt
 
+**Version:** 2.0 - Updated 2025-10-31
+**Status:** ✅ All bugs fixed - Ready to use!
+
 This guide walks you through testing ALL important endpoints using Bangladesh.txt.
+
+## 🔥 What Changed (IMPORTANT!)
+
+This guide has been updated to reflect critical bug fixes:
+
+**✅ Fixed:**
+1. **Document ID Format** - Now uses `doc-` prefix with 32-char hash (was `upload-` with 16 chars)
+2. **ID Matching** - Document IDs now match between registry and knowledge graph
+3. **Source ID Tracking** - Evaluation endpoints now properly track document sources
+4. **Empty Dataset Startup** - Server now starts correctly with empty datasets
+
+**🚨 Critical New Step:**
+- **Step 2.5** added - MUST verify document has non-zero stats before testing
+- If stats are 0, evaluation will fail (empty knowledge graph)
 
 **Prerequisites:**
 - Server running: `python script_api.py --data_source demo_test`
 - OpenAI API key configured
 - Bangladesh.txt file in current directory
+- **Latest code changes committed** (document ID fixes applied)
 
 ---
 
@@ -29,16 +47,21 @@ curl -X POST "http://localhost:8001/upload" \
 {
   "success": true,
   "message": "Document queued for processing",
-  "document_id": "upload-xxxxx",
-  "job_id": "job-xxxxx",
+  "document_id": "doc-53a0479813a7da9e631fcac2f7c0a80d",
+  "job_id": "job--53e973922dfaabba",
   "filename": "Bangladesh.txt",
   "status": "pending"
 }
 ```
 
+**CRITICAL - Document ID Format:**
+- ✅ **NEW format**: `doc-` prefix with 32-character hash (e.g., `doc-53a0479813a7da9e631fcac2f7c0a80d`)
+- ❌ **OLD format**: `upload-` with 16 chars (deprecated, won't work with evaluation)
+
 **ACTION REQUIRED:**
-- Copy the `job_id` from the response (you'll need it for Step 2)
-- Example: `job--5c553d5b175cbb32`
+- 📝 **WRITE DOWN BOTH IDs** - you'll need them for all tests!
+- Copy the `job_id` (e.g., `job--53e973922dfaabba`)
+- Copy the `document_id` (e.g., `doc-53a0479813a7da9e631fcac2f7c0a80d`)
 
 ---
 
@@ -81,9 +104,60 @@ curl "http://localhost:8001/status/job--5c553d5b175cbb32"
 }
 ```
 
-**Wait time:** 2-5 minutes (document is ~6,900 characters)
+**Wait time:** 2-5 minutes (document is ~23,000 characters)
 
 **Keep checking every 30 seconds until status = "completed"**
+
+---
+
+## Step 2.5: 🚨 CRITICAL - Verify Document Has Stats (NEW STEP)
+
+**BEFORE proceeding to testing, you MUST verify the document was indexed properly!**
+
+```bash
+# Replace YOUR_DOC_ID with your document_id from Step 1
+curl "http://localhost:8001/documents/YOUR_DOC_ID?include_entities=true"
+```
+
+**Example:**
+```bash
+curl "http://localhost:8001/documents/doc-53a0479813a7da9e631fcac2f7c0a80d?include_entities=true"
+```
+
+**CRITICAL - Check Stats:**
+```json
+{
+  "document_id": "doc-53a0479813a7da9e631fcac2f7c0a80d",
+  "status": "indexed",
+  "stats": {
+    "chunks": 15,      // ❗ MUST be > 0
+    "entities": 80,    // ❗ MUST be > 0
+    "edges": 60,       // ❗ MUST be > 0
+    "tokens": 6000     // ❗ MUST be > 0
+  },
+  "top_entities": [
+    {"name": "BANGLADESH", "type": "LOCATION"},
+    {"name": "DHAKA", "type": "LOCATION"},
+    ...
+  ]
+}
+```
+
+**🚨 IF ALL STATS ARE 0:**
+```json
+"stats": {
+  "chunks": 0,    // ❌ BAD!
+  "entities": 0,  // ❌ BAD!
+  "edges": 0      // ❌ BAD!
+}
+```
+
+**This means the document failed to index! You must:**
+1. Check server logs for errors
+2. Check job status for error message
+3. **DO NOT continue testing** - evaluation will fail!
+
+**✅ ONLY proceed to Step 3 if stats show non-zero values!**
 
 ---
 
@@ -268,7 +342,7 @@ curl -X POST "http://localhost:8001/eval/retrieval" \
     "queries": [
       {
         "question": "What is the capital of Bangladesh?",
-        "ground_truth_docs": ["upload-xxxxx"]
+        "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"]
       }
     ],
     "dataset": "demo_test",
@@ -278,7 +352,9 @@ curl -X POST "http://localhost:8001/eval/retrieval" \
   }'
 ```
 
-**IMPORTANT:** Replace `upload-xxxxx` with your actual document_id from Step 1
+**IMPORTANT:** Replace `doc-53a0479813a7da9e631fcac2f7c0a80d` with your actual document_id from Step 1
+- ✅ Use the FULL 32-character hash
+- ✅ Must start with `doc-` prefix
 
 **Expected Response:**
 ```json
@@ -304,21 +380,22 @@ curl -X POST "http://localhost:8001/eval/retrieval" \
 ### Test 5b: Multiple Query Evaluation
 
 ```bash
+# IMPORTANT: Replace doc-xxxxx with YOUR actual document_id!
 curl -X POST "http://localhost:8001/eval/retrieval" \
   -H "Content-Type: application/json" \
   -d '{
     "queries": [
       {
         "question": "What is the capital of Bangladesh?",
-        "ground_truth_docs": ["upload-xxxxx"]
+        "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"]
       },
       {
         "question": "When did Bangladesh gain independence?",
-        "ground_truth_docs": ["upload-xxxxx"]
+        "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"]
       },
       {
         "question": "Which countries border Bangladesh?",
-        "ground_truth_docs": ["upload-xxxxx"]
+        "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"]
       }
     ],
     "dataset": "demo_test",
@@ -421,13 +498,14 @@ curl -X POST "http://localhost:8001/eval/answer" \
 **What this does:** Compares hybrid vs local vs global vs naive modes
 
 ```bash
+# IMPORTANT: Replace doc-xxxxx with YOUR actual document_id!
 curl -X POST "http://localhost:8001/eval/compare" \
   -H "Content-Type: application/json" \
   -d '{
     "queries": [
       {
         "question": "What is Bangladesh?",
-        "ground_truth_docs": ["upload-xxxxx"]
+        "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"]
       }
     ],
     "dataset": "demo_test",
@@ -574,6 +652,8 @@ curl -X GET "http://localhost:8001/documents/upload-56304e0ee590ff89?dataset=dem
 
 First, create a test file:
 
+**🚨 CRITICAL: You MUST replace `doc-xxxxx` below with YOUR actual document_id before running!**
+
 ```bash
 cat > bangladesh_test_questions.json << 'EOF'
 {
@@ -586,7 +666,7 @@ cat > bangladesh_test_questions.json << 'EOF'
       "id": "bd_q001",
       "question": "What is the capital of Bangladesh?",
       "ground_truth_answer": "Dhaka",
-      "ground_truth_docs": ["upload-xxxxx"],
+      "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"],
       "difficulty": "easy",
       "type": "factual"
     },
@@ -594,7 +674,7 @@ cat > bangladesh_test_questions.json << 'EOF'
       "id": "bd_q002",
       "question": "When did Bangladesh gain independence?",
       "ground_truth_answer": "16 December 1971",
-      "ground_truth_docs": ["upload-xxxxx"],
+      "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"],
       "difficulty": "easy",
       "type": "historical"
     },
@@ -602,7 +682,7 @@ cat > bangladesh_test_questions.json << 'EOF'
       "id": "bd_q003",
       "question": "Which countries border Bangladesh?",
       "ground_truth_answer": "India and Myanmar",
-      "ground_truth_docs": ["upload-xxxxx"],
+      "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"],
       "difficulty": "medium",
       "type": "geographic"
     },
@@ -610,7 +690,7 @@ cat > bangladesh_test_questions.json << 'EOF'
       "id": "bd_q004",
       "question": "What is the second-largest city in Bangladesh?",
       "ground_truth_answer": "Chittagong",
-      "ground_truth_docs": ["upload-xxxxx"],
+      "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"],
       "difficulty": "medium",
       "type": "factual"
     },
@@ -618,7 +698,7 @@ cat > bangladesh_test_questions.json << 'EOF'
       "id": "bd_q005",
       "question": "What was the Bengali language movement?",
       "ground_truth_answer": "A political movement in 1952 to establish Bengali as an official language of Pakistan",
-      "ground_truth_docs": ["upload-xxxxx"],
+      "ground_truth_docs": ["doc-53a0479813a7da9e631fcac2f7c0a80d"],
       "difficulty": "hard",
       "type": "historical"
     }
@@ -627,7 +707,9 @@ cat > bangladesh_test_questions.json << 'EOF'
 EOF
 ```
 
-**IMPORTANT:** Replace all `upload-xxxxx` with your actual document_id!
+**BEFORE running this command:**
+1. Replace ALL instances of `doc-53a0479813a7da9e631fcac2f7c0a80d` with YOUR actual document_id
+2. Use Find & Replace in your text editor to replace all occurrences at once
 
 Then run batch evaluation:
 
@@ -760,12 +842,27 @@ After completing all tests, you should see:
 
 ## Quick Reference: Important IDs
 
-Fill these in as you go:
+**📝 Fill these in as you go:**
 
 ```
-Job ID (from Step 1): ___________________________
-Document ID (from Step 1): ___________________________
+Job ID (from Step 1):
+  Example: job--53e973922dfaabba
+  Your ID: ___________________________
+
+Document ID (from Step 1):
+  Example: doc-53a0479813a7da9e631fcac2f7c0a80d
+  Your ID: ___________________________
 ```
+
+**🚨 CRITICAL CHECKS:**
+
+Before proceeding with tests, verify:
+- [ ] Document ID starts with `doc-` (NOT `upload-`)
+- [ ] Document ID is 36 characters total (4 chars "doc-" + 32 char hash)
+- [ ] Status = "completed" in Step 2
+- [ ] Stats show chunks > 0, entities > 0 in Step 2.5
+
+**If ANY of these fail, DO NOT continue testing - fix the issue first!**
 
 ---
 

@@ -140,10 +140,9 @@ async def process_document_background(
 
         # Process document with BiGRAG
         # This handles: chunking, entity extraction, graph building, embedding, indexing
-        await rag_instance.ainsert([{
-            "content": content,
-            "title": title
-        }])
+        # Note: ainsert expects raw content strings, not dicts
+        # Title and metadata are stored separately in the registry
+        await rag_instance.ainsert(content)
 
         # Update progress through remaining stages
         job.update(

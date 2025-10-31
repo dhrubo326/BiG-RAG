@@ -292,6 +292,35 @@ class LLMProviderManager:
         """Get list of available providers"""
         return list(self.available_providers.keys())
 
+    def get_model_func(self, provider: str, model: str):
+        """
+        Get LLM function for specified provider and model
+
+        Args:
+            provider: Provider name (e.g., "openai", "anthropic")
+            model: Model name (e.g., "gpt-4o-mini", "claude-3-5-sonnet")
+
+        Returns:
+            LLM completion function
+
+        Raises:
+            ValueError: If provider or model not available
+        """
+        if provider not in self.available_providers:
+            available = ", ".join(self.available_providers.keys())
+            raise ValueError(
+                f"Provider '{provider}' not available. Available providers: {available}"
+            )
+
+        if model not in self.available_providers[provider]:
+            available_models = ", ".join(self.available_providers[provider].keys())
+            raise ValueError(
+                f"Model '{model}' not available for provider '{provider}'. "
+                f"Available models: {available_models}"
+            )
+
+        return self.available_providers[provider][model]
+
 # ============================================================================
 # Embedding Manager
 # ============================================================================

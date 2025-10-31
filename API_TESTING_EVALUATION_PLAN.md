@@ -1,21 +1,56 @@
 # BiG-RAG API Testing & Evaluation Endpoints Plan
 
-**Version:** 1.0
-**Date:** 2025-10-30
+**Version:** 2.0
+**Date:** 2025-10-31
 **Purpose:** Comprehensive testing, error validation, and accuracy measurement endpoints
-**Status:** 📋 Planning Phase
+**Status:** 🚀 Phase 3 Complete - Evaluation Endpoints Live!
+
+---
+
+## Implementation Status
+
+| Phase | Status | Endpoints | Description |
+|-------|--------|-----------|-------------|
+| **Phase 1-2** | ✅ Complete | Document Management | Upload, insert, delete, list documents |
+| **Phase 3** | ✅ Complete | Evaluation Core | `/eval/retrieval`, `/eval/answer`, `/eval/compare`, `/eval/batch` |
+| **Phase 4** | 📋 Planned | Debug & Testing | Pipeline inspection, query analysis, edge case testing |
+| **Phase 5** | 📋 Planned | Analytics | Usage stats, performance monitoring, exports |
+| **Phase 6** | 📋 Planned | Error Testing | Error injection, failure analysis |
+
+---
+
+## Quick Start Guide
+
+**Already implemented and ready to use:**
+
+1. **Test Retrieval Quality**: Use `/eval/retrieval` to measure Precision, Recall, MRR, NDCG
+2. **Test Answer Quality**: Use `/eval/answer` to measure Exact Match, F1, ROUGE-L
+3. **Compare Configurations**: Use `/eval/compare` to compare retrieval modes side-by-side
+4. **Batch Evaluation**: Use `/eval/batch` to evaluate entire test datasets
+
+**How to test:**
+- See [TESTING_GUIDE.md](TESTING_GUIDE.md) for step-by-step instructions
+- Sample test dataset: [test_datasets/eval_qa.json](test_datasets/eval_qa.json)
+- Implementation details: [EVALUATION_IMPLEMENTATION_SUMMARY.md](EVALUATION_IMPLEMENTATION_SUMMARY.md)
+
+**Server requirement:**
+```bash
+# Ensure server is running
+python script_api.py --data_source demo_test
+```
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Evaluation Endpoints](#evaluation-endpoints)
-3. [Testing & Debug Endpoints](#testing--debug-endpoints)
-4. [Error Simulation & Validation](#error-simulation--validation)
-5. [Analytics & Monitoring](#analytics--monitoring)
+2. [Evaluation Endpoints (✅ LIVE)](#evaluation-endpoints)
+3. [Testing & Debug Endpoints (📋 Planned)](#testing--debug-endpoints)
+4. [Error Simulation & Validation (📋 Planned)](#error-simulation--validation)
+5. [Analytics & Monitoring (📋 Planned)](#analytics--monitoring)
 6. [Implementation Phases](#implementation-phases)
 7. [File Structure](#file-structure)
+8. [Upload Endpoint - Auto KG Building](#upload-endpoint---auto-kg-building)
 
 ---
 
@@ -55,9 +90,12 @@ This plan extends the BiG-RAG API with endpoints for:
 
 ---
 
-## 2. Evaluation Endpoints
+## 2. Evaluation Endpoints (✅ LIVE)
 
-### 2.1 POST /eval/retrieval
+**Status:** All 4 endpoints implemented and functional
+**Documentation:** See [TESTING_GUIDE.md](TESTING_GUIDE.md) for detailed testing instructions
+
+### 2.1 POST /eval/retrieval ✅
 
 **Purpose:** Evaluate retrieval quality with ground truth documents
 
@@ -113,7 +151,7 @@ This plan extends the BiG-RAG API with endpoints for:
 
 ---
 
-### 2.2 POST /eval/answer
+### 2.2 POST /eval/answer ✅
 
 **Purpose:** Evaluate answer quality against ground truth
 
@@ -184,7 +222,7 @@ This plan extends the BiG-RAG API with endpoints for:
 
 ---
 
-### 2.3 POST /eval/compare
+### 2.3 POST /eval/compare ✅
 
 **Purpose:** Compare different retrieval modes or configurations
 
@@ -266,7 +304,7 @@ This plan extends the BiG-RAG API with endpoints for:
 
 ---
 
-### 2.4 POST /eval/batch
+### 2.4 POST /eval/batch ✅
 
 **Purpose:** Batch evaluation from QA dataset file
 
@@ -324,9 +362,12 @@ This plan extends the BiG-RAG API with endpoints for:
 
 ---
 
-## 3. Testing & Debug Endpoints
+## 3. Testing & Debug Endpoints (📋 Planned)
 
-### 3.1 POST /debug/retrieval
+**Status:** Not yet implemented - Phase 4
+**Priority:** Medium
+
+### 3.1 POST /debug/retrieval 📋
 
 **Purpose:** Inspect retrieval pipeline step-by-step
 
@@ -425,7 +466,7 @@ This plan extends the BiG-RAG API with endpoints for:
 
 ---
 
-### 3.2 GET /debug/document/{document_id}
+### 3.2 GET /debug/document/{document_id} 📋
 
 **Purpose:** Inspect how a document was processed and indexed
 
@@ -528,7 +569,7 @@ GET /debug/document/upload-abc123?dataset=demo_test
 
 ---
 
-### 3.3 POST /debug/query-analysis
+### 3.3 POST /debug/query-analysis 📋
 
 **Purpose:** Analyze query characteristics and predict retrieval difficulty
 
@@ -603,7 +644,7 @@ GET /debug/document/upload-abc123?dataset=demo_test
 
 ---
 
-### 3.4 POST /test/edge-cases
+### 3.4 POST /test/edge-cases 📋
 
 **Purpose:** Test system behavior with edge cases
 
@@ -667,9 +708,12 @@ GET /debug/document/upload-abc123?dataset=demo_test
 
 ---
 
-## 4. Error Simulation & Validation
+## 4. Error Simulation & Validation (📋 Planned)
 
-### 4.1 POST /test/error-injection
+**Status:** Not yet implemented - Phase 6
+**Priority:** Low
+
+### 4.1 POST /test/error-injection 📋
 
 **Purpose:** Simulate various error conditions for testing error handling
 
@@ -717,7 +761,7 @@ GET /debug/document/upload-abc123?dataset=demo_test
 
 ---
 
-### 4.2 GET /test/failed-jobs
+### 4.2 GET /test/failed-jobs 📋
 
 **Purpose:** Retrieve and analyze failed processing jobs
 
@@ -765,9 +809,12 @@ GET /test/failed-jobs?limit=50&include_details=true
 
 ---
 
-## 5. Analytics & Monitoring
+## 5. Analytics & Monitoring (📋 Planned)
 
-### 5.1 GET /analytics/query-stats
+**Status:** Not yet implemented - Phase 5
+**Priority:** Medium-Low
+
+### 5.1 GET /analytics/query-stats 📋
 
 **Purpose:** Query usage analytics
 
@@ -826,7 +873,7 @@ GET /analytics/query-stats?time_range=7d&group_by=day
 
 ---
 
-### 5.2 GET /analytics/document-usage
+### 5.2 GET /analytics/document-usage 📋
 
 **Purpose:** Document retrieval statistics
 
@@ -868,7 +915,7 @@ GET /analytics/document-usage?dataset=demo_test&sort_by=retrieval_count
 
 ---
 
-### 5.3 GET /analytics/performance
+### 5.3 GET /analytics/performance 📋
 
 **Purpose:** System performance metrics
 
@@ -923,7 +970,7 @@ GET /analytics/performance?time_range=24h&metrics=all
 
 ---
 
-### 5.4 POST /analytics/export
+### 5.4 POST /analytics/export 📋
 
 **Purpose:** Export analytics data for external analysis
 
@@ -972,37 +1019,60 @@ GET /analytics/performance?time_range=24h&metrics=all
 
 ## 6. Implementation Phases
 
-### Phase 3: Evaluation Core (Priority: High)
+### Phase 3: Evaluation Core ✅ COMPLETE
 
-**Estimated Time:** 3-4 days
+**Status:** ✅ Completed on 2025-10-31
+**Time Taken:** 1 day
 
-**Tasks:**
-1. Create `api/evaluation.py`:
-   - Metric calculation functions (EM, F1, Precision, Recall, MRR, NDCG)
+**Completed Tasks:**
+1. ✅ Created `api/metrics.py` (485 lines):
+   - Metric calculation functions (EM, F1, Precision, Recall, MRR, NDCG, MAP, ROUGE-L)
+   - Text normalization (SQuAD/HotpotQA style)
    - Ground truth comparison logic
-   - Batch evaluation runner
+   - Batch metric aggregation
 
-2. Implement endpoints:
-   - ✅ POST /eval/retrieval
-   - ✅ POST /eval/answer
-   - ✅ POST /eval/compare
-   - ✅ POST /eval/batch
+2. ✅ Created `api/models_eval.py` (370 lines):
+   - Request models: RetrievalEvalRequest, AnswerEvalRequest, CompareEvalRequest, BatchEvalRequest
+   - Response models: RetrievalEvalResponse, AnswerEvalResponse, CompareEvalResponse, BatchEvalResponse
+   - Validation with Pydantic Field validators
+   - Example schemas in docstrings
 
-3. Create Pydantic models in `api/models_eval.py`:
-   - EvaluationRequest
-   - EvaluationResponse
-   - MetricResult
-   - ComparisonResult
+3. ✅ Created `api/evaluation.py` (541 lines):
+   - evaluate_single_retrieval() - Single query evaluation
+   - evaluate_retrieval() - Multiple query evaluation
+   - evaluate_single_answer() - Answer quality evaluation
+   - compare_configurations() - Side-by-side comparison
+   - batch_evaluate() - File-based batch evaluation
+   - load_qa_dataset() - Dataset loading
+   - save_evaluation_results() - Results export
 
-4. Add to `requirements.txt`:
-   - `scikit-learn` (for metrics)
-   - `rouge-score` (for ROUGE-L)
-   - `bert-score` (for BERTScore - optional)
+4. ✅ Implemented endpoints in `script_api.py`:
+   - ✅ POST /eval/retrieval - Retrieval quality evaluation
+   - ✅ POST /eval/answer - Answer quality evaluation
+   - ✅ POST /eval/compare - Configuration comparison
+   - ✅ POST /eval/batch - Batch evaluation from file
+
+5. ✅ Created test dataset:
+   - test_datasets/eval_qa.json (10 questions with ground truth)
+
+6. ✅ Created documentation:
+   - TESTING_GUIDE.md (443 lines) - Step-by-step testing instructions
+   - EVALUATION_IMPLEMENTATION_SUMMARY.md (550 lines) - Implementation details
 
 **Deliverables:**
-- `/eval/*` endpoints functional
-- Batch evaluation from QA files
-- Export results to JSON/CSV
+- ✅ All `/eval/*` endpoints functional and tested
+- ✅ Batch evaluation from QA files working
+- ✅ Export results to JSON
+- ✅ Comprehensive documentation
+- ✅ Sample test dataset ready
+
+**Files Created:**
+- api/metrics.py
+- api/models_eval.py
+- api/evaluation.py
+- test_datasets/eval_qa.json
+- TESTING_GUIDE.md
+- EVALUATION_IMPLEMENTATION_SUMMARY.md
 
 ---
 
@@ -1296,6 +1366,228 @@ curl "http://localhost:8001/analytics/performance?time_range=24h"
 
 ---
 
+## 8. Upload Endpoint - Auto KG Building
+
+### How Does /upload Work?
+
+**Short Answer:** YES - When you upload a .txt or .md file via `/upload`, the system automatically builds the Knowledge Graph and creates all necessary indexing. You don't need to do anything else!
+
+### Automatic Processing Pipeline
+
+When you POST to `/upload` with a markdown or text file:
+
+```bash
+curl -X POST "http://localhost:8001/upload" \
+  -F "file=@my_document.md" \
+  -F "dataset=demo_test"
+```
+
+**The system automatically:**
+
+#### Step 1: File Validation & Storage
+- ✅ Validates file type (.txt or .md)
+- ✅ For .md files: Converts markdown to plain text (removes formatting)
+- ✅ Generates unique document ID (MD5 hash)
+- ✅ Saves to `datasets/demo_test/raw/corpus.jsonl`
+
+#### Step 2: Background Job Creation
+- ✅ Creates a processing job with unique job_id
+- ✅ Returns immediately with job_id for tracking
+- ✅ Processing happens asynchronously in background
+
+#### Step 3: Automatic Knowledge Graph Building
+**No user action required - these all happen automatically:**
+
+1. **Chunking:**
+   - Splits document into chunks (1200 tokens with 100 overlap)
+   - Preserves semantic boundaries
+
+2. **Entity Extraction:**
+   - Uses GPT-4o-mini for entity extraction
+   - Applies gleaning (multiple rounds for completeness)
+   - Extracts entities with types (PERSON, ORGANIZATION, TECHNOLOGY, CONCEPT, etc.)
+
+3. **Relation Extraction:**
+   - Extracts relationships between entities (n-ary relations)
+   - Creates bipartite graph edges (Document ↔ Entity ↔ Relation)
+
+4. **Embedding Generation:**
+   - Generates embeddings for:
+     - Text chunks (OpenAI text-embedding-3-large, 1536 dims)
+     - Entities
+     - Relations
+
+5. **FAISS Indexing:**
+   - Updates FAISS indices:
+     - `expr/demo_test/index.bin` (chunk embeddings)
+     - `expr/demo_test/index_entity.bin` (entity embeddings)
+     - `expr/demo_test/index_bipartite_edge.bin` (relation embeddings)
+
+6. **Metadata Storage:**
+   - Updates JSON metadata stores:
+     - `expr/demo_test/kv_store_text_chunks.json`
+     - `expr/demo_test/kv_store_entities.json`
+     - `expr/demo_test/kv_store_bipartite_edges.json`
+
+#### Step 4: Ready for Retrieval
+- ✅ Document is immediately available for `/search` and `/ask` queries
+- ✅ Integrated into existing Knowledge Graph (incremental update)
+- ✅ No restart required - BiGRAG hot-reloads indices
+
+### How to Track Upload Progress
+
+```bash
+# Step 1: Upload file
+RESPONSE=$(curl -X POST "http://localhost:8001/upload" \
+  -F "file=@my_document.md" \
+  -F "dataset=demo_test")
+
+# Extract job_id from response
+JOB_ID=$(echo $RESPONSE | jq -r '.job_id')
+
+# Step 2: Check status
+curl "http://localhost:8001/status/$JOB_ID"
+```
+
+**Status Response:**
+```json
+{
+  "job_id": "job-abc123",
+  "status": "processing",
+  "stage": "extracting_entities",
+  "progress": 60,
+  "created_at": "2025-10-31T10:00:00Z",
+  "updated_at": "2025-10-31T10:02:30Z",
+  "result": null
+}
+```
+
+**Possible statuses:**
+- `pending`: Job queued but not started
+- `processing`: Currently building KG (stages: chunking → extracting_entities → extracting_relations → embedding → indexing)
+- `completed`: Ready for retrieval
+- `failed`: Error occurred (check error message)
+
+### What You DON'T Need to Do
+
+❌ **You don't need to:**
+- Run `script_build.py` manually
+- Regenerate FAISS indices
+- Restart the server
+- Manually add to corpus.jsonl
+- Configure entity extraction
+- Set up embeddings
+
+✅ **Everything is automatic!**
+
+### Dataset Structure
+
+When you upload to `dataset=demo_test`:
+
+**Before upload:**
+```
+datasets/demo_test/
+├── raw/
+│   └── corpus.jsonl          # 12 existing documents
+expr/demo_test/
+├── kv_store_*.json           # Existing metadata
+└── index*.bin                # Existing FAISS indices
+```
+
+**After upload:**
+```
+datasets/demo_test/
+├── raw/
+│   └── corpus.jsonl          # 13 documents (your new doc appended)
+expr/demo_test/
+├── kv_store_*.json           # Updated metadata (includes new entities/relations)
+└── index*.bin                # Updated FAISS indices (includes new embeddings)
+```
+
+### Key Points
+
+1. **One Dataset = One Unified KG**
+   - Each upload to `demo_test` extends the same Knowledge Graph
+   - Entities from new documents can connect to existing entities
+   - Cross-document retrieval works immediately
+
+2. **Incremental Updates**
+   - New documents don't rebuild the entire graph
+   - Only new entities/relations are extracted
+   - FAISS indices updated incrementally
+
+3. **No Downtime**
+   - Server keeps running while processing
+   - Existing queries work normally
+   - New document available as soon as status = "completed"
+
+4. **Requirements**
+   - OpenAI API key must be set (for GPT-4o-mini entity extraction)
+   - Server must be running (`python script_api.py --data_source demo_test`)
+   - Sufficient API quota (entity extraction makes multiple LLM calls)
+
+### Example: Full Upload Workflow
+
+```bash
+# 1. Upload a new document
+curl -X POST "http://localhost:8001/upload" \
+  -F "file=@research_paper.md" \
+  -F "dataset=demo_test"
+
+# Response:
+# {
+#   "message": "File uploaded successfully",
+#   "document_id": "upload-xyz789",
+#   "job_id": "job-abc123",
+#   "filename": "research_paper.md"
+# }
+
+# 2. Monitor processing (poll every 10 seconds)
+watch -n 10 'curl -s "http://localhost:8001/status/job-abc123" | jq'
+
+# 3. When status="completed", test retrieval
+curl -X POST "http://localhost:8001/search" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "queries": ["What is the main contribution of this research paper?"],
+    "mode": "hybrid",
+    "top_k": 5
+  }'
+
+# 4. Document is now part of the Knowledge Graph!
+```
+
+### Troubleshooting
+
+**Q: Upload successful but status stuck at "pending"?**
+- Check server logs for errors
+- Ensure OpenAI API key is valid
+- Check API quota limits
+
+**Q: Status shows "failed"?**
+- Get error details: `curl "http://localhost:8001/status/job-abc123"`
+- Common causes:
+  - OpenAI API rate limit
+  - Invalid API key
+  - Document too large (>100MB)
+  - Markdown parsing error
+
+**Q: How long does processing take?**
+- Small document (1-5 pages): 30-90 seconds
+- Medium document (10-20 pages): 2-5 minutes
+- Large document (50+ pages): 5-15 minutes
+- Depends on: document size, number of entities, API latency
+
+**Q: Can I upload multiple files simultaneously?**
+- Yes! Each gets a separate job_id
+- Jobs process in parallel (up to system limits)
+
+**Q: What file formats are supported?**
+- Currently: `.txt` and `.md` (markdown)
+- Planned: `.pdf`, `.docx`, `.html`
+
+---
+
 ## Conclusion
 
 This comprehensive plan provides everything needed for:
@@ -1304,13 +1596,23 @@ This comprehensive plan provides everything needed for:
 - ✅ Error validation and handling
 - ✅ Performance monitoring and optimization
 - ✅ Usage analytics and insights
+- ✅ **Automatic Knowledge Graph building from uploaded documents**
+
+**Current Status:**
+- ✅ **Phase 1-2 Complete:** Document Management (upload, insert, delete, list)
+- ✅ **Phase 3 Complete:** Evaluation Endpoints (retrieval, answer, compare, batch evaluation)
+- 📋 **Phase 4 Planned:** Debug & Testing Tools
+- 📋 **Phase 5 Planned:** Analytics & Monitoring
+- 📋 **Phase 6 Planned:** Error Testing
 
 **Total Estimated Time:** 9-13 days for full implementation
+**Completed So Far:** 4 days (Phases 1-3)
+**Remaining:** 5-9 days (Phases 4-6)
 
 **Recommended Priority:**
-1. Phase 3 (Evaluation Core) - **Start Here**
-2. Phase 4 (Debug Tools)
+1. ✅ Phase 3 (Evaluation Core) - **COMPLETE**
+2. Phase 4 (Debug Tools) - **Next**
 3. Phase 5 (Analytics)
 4. Phase 6 (Error Testing)
 
-Ready to proceed with implementation? 🚀
+Ready to proceed with Phase 4? 🚀

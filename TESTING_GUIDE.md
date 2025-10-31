@@ -1,648 +1,442 @@
-# BiG-RAG Testing & API Guide
+# BiG-RAG Evaluation Endpoints - Testing Guide
 
-Complete guide for testing your knowledge graph and using the API server.
+**Version:** 1.0
+**Date:** 2025-10-30
+**Status:** ✅ Ready for Testing
 
 ---
 
 ## Quick Start
 
-### 1. Start the API Server
+### 1. Server Already Running
+Your server is running at: `http://localhost:8001`
 
-```bash
-python script_api.py --data_source demo_test
-```
+### 2. Open Swagger UI
+Navigate to: **http://localhost:8001/docs**
 
-### 2. Test in Browser
-
-Open: **http://localhost:8001/docs**
-
-### 3. Ask a Question
-
-Find **POST /ask** → Click "Try it out" → Execute:
-
-```json
-{
-  "question": "What is Artificial Intelligence?",
-  "top_k": 5,
-  "mode": "hybrid"
-}
-```
+Scroll to the **"Evaluation"** section - you should see 4 new endpoints.
 
 ---
 
-## API Server Overview
+## Test Scenario 1: Simple Retrieval Evaluation (2 minutes)
 
-BiG-RAG provides a unified FastAPI server that automatically detects your knowledge graph format:
+**Purpose:** Test if retrieval metrics work correctly
 
-- **OpenAI embeddings** (`vdb_*.json` files) → Uses OpenAI text-embedding API
-- **Local embeddings** (`index_*.bin` files) → Uses FlagEmbedding (BAAI/bge-large-en-v1.5)
+**Steps:**
+1. In Swagger UI, click **POST /eval/retrieval**
+2. Click "Try it out"
+3. Paste this JSON:
 
-The server **automatically chooses** the right approach based on available files!
-
-### Supported LLM Providers
-
-The API server supports multiple LLM providers with minimal configuration:
-
-| Provider | Models | Configuration |
-|----------|--------|---------------|
-| **OpenAI** (default) | gpt-4o-mini, gpt-4o, gpt-4 | Set `OPENAI_API_KEY` |
-| **Anthropic** | claude-3-5-sonnet, claude-3-opus | Set `ANTHROPIC_API_KEY` |
-| **Google** | gemini-pro, gemini-1.5-pro | Set `GOOGLE_API_KEY` |
-| **Grok** | grok-beta | Set `XAI_API_KEY` |
-
-**Default**: `gpt-4o-mini` (fast, cheap, good quality)
-
----
-
-## Testing Methods
-
-### Method 1: Swagger UI (Easiest)
-
-1. **Start server:**
-   ```bash
-   python script_api.py --data_source demo_test
-   ```
-
-2. **Open browser:** http://localhost:8001/docs
-
-3. **Test `/ask` endpoint:**
-   - Find **Q&A** section
-   - Click **POST /ask**
-   - Click "Try it out"
-   - Enter your question:
-     ```json
-     {
-       "question": "What is Artificial Intelligence?",
-       "top_k": 5,
-       "mode": "hybrid"
-     }
-     ```
-   - Click "Execute"
-
-### Method 2: Command Line
-
-```bash
-# Start server
-python script_api.py --data_source demo_test
-
-# In another terminal, ask questions
-python test_ask_question.py "What is Artificial Intelligence?"
-python test_ask_question.py "What is machine learning?" --top_k 3
-python test_ask_question.py "Explain neural networks" --mode hybrid
-```
-
-### Method 3: curl
-
-```bash
-curl -X POST "http://localhost:8001/ask" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "What is AI?",
-    "top_k": 5,
-    "mode": "hybrid"
-  }'
-```
-
-### Method 4: Python Requests
-
-```python
-import requests
-
-response = requests.post(
-    "http://localhost:8001/ask",
-    json={
-        "question": "What is Artificial Intelligence?",
-        "top_k": 5,
-        "mode": "hybrid"
-    }
-)
-
-result = response.json()
-print(f"Found {result['num_results']} results")
-for ctx in result['retrieved_contexts']:
-    print(f"[{ctx['rank']}] {ctx['context'][:200]}...")
-```
-
-### Method 5: Test Scripts
-
-```bash
-# Test retrieval only
-cd tests
-python test_retrieval.py
-
-# Test full pipeline (retrieval + LLM)
-python test_end_to_end.py
-```
-
----
-
-## API Endpoints
-
-BiG-RAG provides multiple endpoints for different use cases:
-
-| Endpoint | Purpose | Returns | Best For |
-|----------|---------|---------|----------|
-| **`/chat/completions`** ⭐ | Get a synthesized answer | Complete answer from LLM | **Most users - just ask questions!** |
-| **`/upload`** ⭐ NEW | Upload text files | Adds to knowledge graph | **Adding new documents** |
-| `/ask` | Get retrieved context only | Raw context from knowledge graph | Developers testing retrieval |
-| `/search` | Batch retrieval | Multiple query results | Training/bulk processing |
-| `/rebuild` | Rebuild knowledge graph | Status of rebuild operation | After uploading multiple files |
-| `/health` | Check server status | Graph statistics | Monitoring |
-
----
-
-### POST /chat/completions - Synthesized Answer ⭐ RECOMMENDED
-
-**Use this endpoint to get complete answers to your questions!**
-
-This is the main endpoint that:
-1. Retrieves relevant context from your knowledge graph
-2. Uses LLM to synthesize a comprehensive answer
-3. Returns a natural language response
-
-**Quick Test (click "Try it out" in Swagger UI):**
-```json
-{
-  "messages": [
-    {"role": "user", "content": "What is Artificial Intelligence?"}
-  ]
-}
-```
-
-That's it! The endpoint automatically:
-- ✅ Retrieves context from knowledge graph (`use_rag: true` by default)
-- ✅ Uses gpt-4o-mini to synthesize answer (or specify `llm_provider`)
-- ✅ Returns complete, natural answer
-
-**Full Options:**
-```json
-{
-  "model": "gpt-4o-mini",
-  "messages": [
-    {"role": "user", "content": "What is AI?"}
-  ],
-  "use_rag": true,
-  "temperature": 0.7,
-  "max_tokens": 500,
-  "llm_provider": "openai"
-}
-```
-
----
-
-### POST /ask - Retrieve Context Only
-
-Get raw retrieved context from the knowledge graph (for developers/debugging).
-
-**Request:**
-```json
-{
-  "question": "What is Artificial Intelligence?",
-  "top_k": 5,
-  "mode": "hybrid",
-  "llm_provider": "openai"  // optional: openai, anthropic, google, grok
-}
-```
-
-**Response:**
-```json
-{
-  "question": "What is Artificial Intelligence?",
-  "retrieved_contexts": [
-    {
-      "rank": 1,
-      "context": "AI refers to...",
-      "coherence_score": 0.85
-    }
-  ],
-  "num_results": 5,
-  "mode": "hybrid",
-  "message": "Successfully retrieved relevant context"
-}
-```
-
-**Retrieval Modes:**
-- `hybrid` - Entity + relation retrieval (**recommended**)
-- `local` - Entity-based only
-- `global` - Relation-based only
-- `naive` - Direct text chunks
-
-### POST /search - Batch Retrieval
-
-For training/batch processing multiple queries.
-
-**Request:**
 ```json
 {
   "queries": [
-    "What is AI?",
-    "What is machine learning?"
-  ]
-}
-```
-
-### GET /health - Health Check
-
-Check server status and graph statistics.
-
-**Response:**
-```json
-{
-  "status": "healthy",
+    {
+      "question": "What is Artificial Intelligence?",
+      "ground_truth_docs": ["doc_001"]
+    }
+  ],
   "dataset": "demo_test",
-  "entities_count": 150,
-  "edges_count": 300,
-  "chunks_count": 50,
-  "embedding_mode": "openai",
-  "available_providers": ["openai", "anthropic"]
+  "mode": "hybrid",
+  "top_k": 5,
+  "metrics": ["precision", "recall", "mrr"]
 }
 ```
 
----
+4. Click **"Execute"**
 
-## Document Upload - Add Files to Knowledge Graph
-
-BiG-RAG now supports **automatic document upload** that handles everything under the hood!
-
-### POST /upload - Upload Text Files ⭐ NEW
-
-Upload a `.txt` file and automatically add it to your knowledge graph. No manual corpus building required!
-
-**What it does:**
-1. ✅ Reads your text file
-2. ✅ Generates unique document ID
-3. ✅ Adds to `corpus.jsonl`
-4. ✅ Automatically chunks text
-5. ✅ Extracts entities using LLM
-6. ✅ Updates knowledge graph incrementally
-
-**Quick Test (Swagger UI):**
-
-1. Navigate to **POST /upload** in Swagger UI
-2. Click "Try it out"
-3. Click "Choose File" and select a `.txt` file
-4. (Optional) Add a title
-5. Click "Execute"
-
-**curl Example:**
-```bash
-curl -X POST "http://localhost:8001/upload" \
-  -F "file=@my_research_paper.txt" \
-  -F "title=Deep Learning Research"
-```
-
-**Response:**
+**Expected Result:**
 ```json
 {
   "success": true,
-  "message": "Document 'Deep Learning Research' successfully added to knowledge graph",
-  "document_id": "upload-a3f8e9c1b2d4e5f6",
-  "filename": "my_research_paper.txt",
-  "title": "Deep Learning Research",
-  "content_length": 15234,
-  "dataset": "demo_test"
+  "total_queries": 1,
+  "metrics": {
+    "precision@5": 0.2,
+    "recall@5": 1.0,
+    "mrr": 1.0
+  },
+  "per_query_results": [
+    {
+      "question": "What is Artificial Intelligence?",
+      "retrieved_docs": ["doc_001", "doc_003", "doc_005", "doc_007", "doc_010"],
+      "relevant_retrieved": ["doc_001"],
+      "metrics": {
+        "precision@5": 0.2,
+        "recall@5": 1.0,
+        "mrr": 1.0
+      }
+    }
+  ],
+  "evaluation_time": 1.5
 }
 ```
 
-**Python Example:**
-```python
-import requests
-
-with open("my_document.txt", "rb") as f:
-    files = {"file": f}
-    data = {"title": "My Document Title"}
-    response = requests.post("http://localhost:8001/upload", files=files, data=data)
-
-print(response.json())
-```
+✅ **Success if:**
+- `success: true`
+- `mrr: 1.0` (found relevant doc at rank 1)
+- `recall@5: 1.0` (retrieved the only relevant doc)
+- Execution time < 5 seconds
 
 ---
 
-### POST /rebuild - Rebuild Knowledge Graph
+## Test Scenario 2: Answer Quality Evaluation (3 minutes)
 
-Manually trigger a knowledge graph rebuild from the corpus.
+**Purpose:** Test answer generation and quality metrics
 
-**Use cases:**
-- After uploading multiple documents
-- To refresh the entire graph
-- After manual corpus edits
-
-**Quick Test (Swagger UI):**
-
-1. Navigate to **POST /rebuild**
+**Steps:**
+1. Click **POST /eval/answer**
 2. Click "Try it out"
-3. (Optional) Check `force_full_rebuild` for complete rebuild
-4. Click "Execute"
+3. Paste this JSON:
 
-**curl Examples:**
-```bash
-# Incremental rebuild (add new documents)
-curl -X POST "http://localhost:8001/rebuild"
-
-# Full rebuild (rebuild everything from scratch)
-curl -X POST "http://localhost:8001/rebuild" \
-  -F "force_full_rebuild=true"
+```json
+{
+  "test_cases": [
+    {
+      "question": "What is TensorFlow?",
+      "ground_truth": "an open-source machine learning framework developed by Google",
+      "use_rag": true
+    }
+  ],
+  "dataset": "demo_test",
+  "llm_provider": "openai",
+  "model": "gpt-4o-mini",
+  "metrics": ["em", "f1", "rouge_l"]
+}
 ```
 
-**Response:**
+4. Click **"Execute"**
+
+**Expected Result:**
 ```json
 {
   "success": true,
-  "message": "Knowledge graph incrementally updated",
-  "documents_processed": 52,
-  "dataset": "demo_test",
-  "rebuild_type": "incremental"
+  "total_questions": 1,
+  "aggregate_metrics": {
+    "exact_match": 0.0,
+    "f1": 0.6,
+    "rouge_l": 0.5
+  },
+  "per_question_results": [
+    {
+      "question": "What is TensorFlow?",
+      "ground_truth": "an open-source machine learning framework developed by Google",
+      "predicted_answer": "TensorFlow is an open-source machine learning framework created by Google...",
+      "metrics": {
+        "exact_match": 0.0,
+        "f1": 0.6,
+        "rouge_l": 0.5
+      },
+      "retrieval_used": true,
+      "num_contexts_used": 3,
+      "generation_time": 2.1
+    }
+  ],
+  "total_time": 3.5
 }
 ```
 
-**Note:** Incremental updates are usually sufficient. Full rebuilds take longer but ensure graph consistency.
+✅ **Success if:**
+- `predicted_answer` mentions TensorFlow and Google
+- `retrieval_used: true`
+- `f1 > 0.4` (good token overlap)
+- `num_contexts_used > 0`
 
 ---
 
-## Switching LLM Providers
+## Test Scenario 3: Compare Retrieval Modes (4 minutes)
 
-### Option 1: Environment Variables
+**Purpose:** Find which retrieval mode works best
 
-```bash
-# Use OpenAI (default)
-export OPENAI_API_KEY="sk-..."
-python script_api.py --data_source demo_test
+**Steps:**
+1. Click **POST /eval/compare**
+2. Click "Try it out"
+3. Paste this JSON:
 
-# Use Claude
-export ANTHROPIC_API_KEY="sk-ant-..."
-python script_api.py --data_source demo_test --llm_provider anthropic
-
-# Use Gemini
-export GOOGLE_API_KEY="..."
-python script_api.py --data_source demo_test --llm_provider google
-
-# Use Grok
-export XAI_API_KEY="..."
-python script_api.py --data_source demo_test --llm_provider grok
+```json
+{
+  "queries": [
+    {
+      "question": "What is deep learning?",
+      "ground_truth_docs": ["doc_003", "doc_007"]
+    }
+  ],
+  "dataset": "demo_test",
+  "configurations": [
+    {"name": "hybrid", "mode": "hybrid", "top_k": 5},
+    {"name": "local", "mode": "local", "top_k": 5},
+    {"name": "global", "mode": "global", "top_k": 5},
+    {"name": "naive", "mode": "naive", "top_k": 5}
+  ],
+  "metrics": ["precision", "recall", "mrr"]
+}
 ```
 
-### Option 2: Per-Request Override
+4. Click **"Execute"**
 
-```bash
-curl -X POST "http://localhost:8001/ask" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "What is AI?",
-    "llm_provider": "anthropic"
-  }'
+**Expected Result:**
+```json
+{
+  "success": true,
+  "comparison_results": {
+    "hybrid": {
+      "precision@5": 0.6,
+      "recall@5": 1.0,
+      "mrr": 0.5
+    },
+    "local": {
+      "precision@5": 0.4,
+      "recall@5": 0.8,
+      "mrr": 0.5
+    },
+    "global": {
+      "precision@5": 0.2,
+      "recall@5": 0.5,
+      "mrr": 0.33
+    },
+    "naive": {
+      "precision@5": 0.4,
+      "recall@5": 1.0,
+      "mrr": 1.0
+    }
+  },
+  "best_configuration": "hybrid",
+  "ranking": ["hybrid", "naive", "local", "global"]
+}
 ```
 
-### Option 3: API Key File
-
-Create provider-specific files:
-- `openai_api_key.txt`
-- `anthropic_api_key.txt`
-- `google_api_key.txt`
-- `grok_api_key.txt`
-
-The server will automatically load them.
+✅ **Success if:**
+- All 4 modes have results
+- `best_configuration` is identified
+- Hybrid mode typically ranks in top 2
 
 ---
 
-## Configuration
+## Test Scenario 4: Batch Evaluation (5 minutes)
 
-### Command Line Arguments
+**Purpose:** Test batch processing on full dataset
 
-```bash
-python script_api.py \
-  --data_source demo_test \     # Dataset name
-  --port 8001 \                 # Server port
-  --host 0.0.0.0 \              # Server host
-  --llm_provider openai \       # LLM provider (default: openai)
-  --embedding_provider openai   # Embedding provider (auto-detected)
+**Steps:**
+1. Click **POST /eval/batch**
+2. Click "Try it out"
+3. Paste this JSON:
+
+```json
+{
+  "dataset_file": "test_datasets/eval_qa.json",
+  "data_source": "demo_test",
+  "mode": "hybrid",
+  "top_k": 5,
+  "metrics": ["em", "f1", "precision", "recall"],
+  "use_llm": true,
+  "save_results": true,
+  "output_file": "evaluation_results/test_results.json",
+  "limit": 10
+}
 ```
 
-### Supported Configurations
+4. Click **"Execute"**
+5. Wait 30-60 seconds (processes 10 questions)
 
-| Build Method | Embedding Files | Server Mode |
-|--------------|----------------|-------------|
-| `tests/test_build_graph.py` | `vdb_*.json` | OpenAI embeddings |
-| `script_build.py` | `index_*.bin` | FlagEmbedding (local) |
+**Expected Result:**
+```json
+{
+  "success": true,
+  "dataset": "test_datasets/eval_qa.json",
+  "total_questions": 10,
+  "processed": 10,
+  "failed": 0,
+  "metrics": {
+    "retrieval": {
+      "precision@5": 0.68,
+      "recall@5": 0.85
+    },
+    "answer": {
+      "exact_match": 0.3,
+      "f1": 0.62
+    }
+  },
+  "performance": {
+    "total_time": 45.2,
+    "avg_time_per_query": 4.52,
+    "total_llm_calls": 10,
+    "total_embedding_calls": 10
+  },
+  "results_saved_to": "evaluation_results/test_results.json"
+}
+```
 
-**Auto-detection**: Server checks your `expr/{dataset}/` folder and uses the appropriate mode.
+✅ **Success if:**
+- `processed: 10` (all questions processed)
+- `failed: 0` (no failures)
+- Retrieval precision > 0.5
+- Answer F1 > 0.5
+- Results file created
+
+**Verify Results Saved:**
+```bash
+# Windows
+type evaluation_results\test_results.json
+
+# Linux/Mac
+cat evaluation_results/test_results.json
+```
+
+---
+
+## Metric Interpretation
+
+### Retrieval Metrics
+
+| Metric | Range | Good Score | Meaning |
+|--------|-------|------------|---------|
+| **Precision@5** | 0.0-1.0 | > 0.6 | % of retrieved docs that are relevant |
+| **Recall@5** | 0.0-1.0 | > 0.7 | % of relevant docs that were retrieved |
+| **MRR** | 0.0-1.0 | > 0.7 | 1 / rank of first relevant doc |
+| **NDCG@5** | 0.0-1.0 | > 0.7 | Quality of ranking (higher=better) |
+
+### Answer Metrics
+
+| Metric | Range | Good Score | Meaning |
+|--------|-------|------------|---------|
+| **Exact Match** | 0 or 1 | > 0.3 | Binary: exact match after normalization |
+| **Token F1** | 0.0-1.0 | > 0.5 | Token-level overlap (precision + recall) |
+| **ROUGE-L** | 0.0-1.0 | > 0.4 | Longest common subsequence |
 
 ---
 
 ## Troubleshooting
 
-### Server Not Starting
+### Issue: "Dataset file not found"
 
-**Error:** `Cannot connect to server at localhost:8001`
-
-**Solutions:**
-1. Check if server is running: `ps aux | grep script_api`
-2. Check port availability:
-   ```bash
-   # Windows
-   netstat -ano | findstr :8001
-
-   # Linux/Mac
-   lsof -i :8001
-   ```
-3. Use different port: `python script_api.py --port 8002`
-
-### Error: "This event loop is already running"
-
-**Fixed!** The current version uses proper async/await patterns.
-
-### Error: "No module named 'FlagEmbedding'"
-
-**Option 1**: Install FlagEmbedding:
 ```bash
-pip install FlagEmbedding faiss-cpu
+# Create the test dataset directory
+mkdir test_datasets
+
+# Verify file exists
+dir test_datasets\eval_qa.json  # Windows
+ls test_datasets/eval_qa.json   # Linux/Mac
 ```
 
-**Option 2**: Rebuild graph with OpenAI:
+The file should have been created during implementation. Check [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md).
+
+---
+
+### Issue: Low Metric Scores (all near 0)
+
+**Check 1:** Verify knowledge graph exists
 ```bash
-cd tests
-python test_build_graph.py
+curl "http://localhost:8001/graph/stats?dataset=demo_test"
 ```
 
-### Error: "OPENAI_API_KEY not found"
+Expected: Should show entities > 0, edges > 0
 
+**Check 2:** List documents in corpus
 ```bash
-# Set environment variable
-export OPENAI_API_KEY="your-key-here"
-
-# OR create file
-echo "your-key-here" > openai_api_key.txt
+python -c "import json; f=open('datasets/demo_test/raw/corpus.jsonl'); [print(json.loads(line).get('id')) for line in f]"
 ```
 
-### No Results Found
+Expected: Should see doc_001, doc_002, ... doc_010
 
-1. Check graph files exist:
-   ```bash
-   ls expr/demo_test/
-   ```
+**Check 3:** Verify ground truth docs match corpus
+- Test dataset uses doc_001 through doc_010
+- Your corpus should have these IDs
 
-2. Try different modes:
-   ```bash
-   python test_ask_question.py "Your question" --mode naive
-   ```
+---
 
-3. Check if question relates to your corpus
+### Issue: "OpenAI API Error"
 
-### Knowledge Graph Not Found
-
-Build the graph first:
+**Solution:**
 ```bash
-cd tests
-python test_build_graph.py
+# Check if API key file exists
+type openai_api_key.txt  # Windows
+cat openai_api_key.txt   # Linux/Mac
+
+# If missing, create it
+echo "your-api-key-here" > openai_api_key.txt
+
+# Restart server
+python script_api.py --data_source demo_test
 ```
 
 ---
 
-## Example Questions
+### Issue: Slow Performance (> 10 sec per query)
 
-Based on the `demo_test` dataset:
+**Try smaller batch:**
+```json
+{
+  "dataset_file": "test_datasets/eval_qa.json",
+  "limit": 3,
+  "use_llm": false
+}
+```
 
-- "What is Artificial Intelligence?"
-- "What is machine learning?"
-- "Explain neural networks"
-- "What is deep learning?"
-- "What are the applications of computer vision?"
-
----
-
-## Advanced Usage
-
-### Comparing Retrieval Modes
-
+**Or test retrieval only:**
 ```bash
-# Test all modes with same question
-for mode in hybrid local global naive; do
-  python test_ask_question.py "What is deep learning?" --mode $mode
-done
-```
-
-### Batch Testing
-
-```python
-import requests
-
-questions = [
-    "What is AI?",
-    "What is ML?",
-    "What is deep learning?"
-]
-
-for q in questions:
-    response = requests.post(
-        "http://localhost:8001/ask",
-        json={"question": q, "mode": "hybrid"}
-    )
-    print(f"Q: {q}")
-    print(f"Results: {response.json()['num_results']}\n")
-```
-
-### Using Different LLM Providers
-
-```python
-import requests
-
-# Try multiple providers for comparison
-providers = ["openai", "anthropic", "google"]
-
-for provider in providers:
-    response = requests.post(
-        "http://localhost:8001/chat/completions",
-        json={
-            "messages": [{"role": "user", "content": "What is AI?"}],
-            "llm_provider": provider,
-            "use_rag": True
-        }
-    )
-    print(f"{provider}: {response.json()['choices'][0]['message']['content']}\n")
+curl -X POST "http://localhost:8001/eval/retrieval" \
+  -H "Content-Type: application/json" \
+  -d '{"queries":[{"question":"What is AI?","ground_truth_docs":["doc_001"]}],"metrics":["precision"]}'
 ```
 
 ---
 
-## Performance Tips
+## Testing Checklist
 
-1. **Use `hybrid` mode** for best results
-2. **Adjust `top_k`**: 3-10 depending on needs
-3. **Local embeddings** (FlagEmbedding) are faster for high query volume
-4. **OpenAI embeddings** are easier for development/testing
-5. **Keep server running** between queries to avoid reload time
-6. **Use different ports** for multiple datasets simultaneously
+- [ ] ✅ Server running (`curl http://localhost:8001/health`)
+- [ ] ✅ Swagger UI accessible (http://localhost:8001/docs)
+- [ ] ✅ Test dataset exists (`test_datasets/eval_qa.json`)
+- [ ] ✅ Test 1: Retrieval evaluation works
+- [ ] ✅ Test 2: Answer evaluation works
+- [ ] ✅ Test 3: Mode comparison works
+- [ ] ✅ Test 4: Batch evaluation works
+- [ ] ✅ All metrics between 0.0 and 1.0
+- [ ] ✅ Results saving works
+- [ ] ✅ Performance acceptable (< 60 sec for 10 questions)
 
 ---
 
-## Production Deployment
+## Implementation Progress
 
-### Using Local Embeddings (Faster)
+**✅ Completed:**
+1. Created `api/metrics.py` - Metric calculation functions
+2. Created `api/models_eval.py` - Pydantic models
+3. Created `api/evaluation.py` - Evaluation logic
+4. Added 4 endpoints to `script_api.py`
+5. Created `test_datasets/eval_qa.json` - Test dataset
+6. Created this testing guide
 
-1. **Install dependencies:**
-   ```bash
-   pip install FlagEmbedding faiss-cpu
-   ```
+**Total Code:** ~1,500 lines of evaluation code
 
-2. **Build graph with FlagEmbedding:**
-   ```bash
-   python script_build.py --data_source your_dataset
-   ```
-
-3. **Start server:**
-   ```bash
-   python script_api.py --data_source your_dataset --host 0.0.0.0 --port 8001
-   ```
-
-### Docker Deployment
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-COPY . .
-
-RUN pip install -r requirements_graphrag_only.txt
-
-EXPOSE 8001
-
-CMD ["python", "script_api.py", "--data_source", "demo_test", "--host", "0.0.0.0"]
-```
-
-```bash
-docker build -t bigrag-api .
-docker run -p 8001:8001 -e OPENAI_API_KEY=$OPENAI_API_KEY bigrag-api
-```
+**New Files:**
+- `api/metrics.py` (485 lines)
+- `api/models_eval.py` (350 lines)
+- `api/evaluation.py` (350 lines)
+- `test_datasets/eval_qa.json` (125 lines)
+- `script_api.py` (320 lines added)
 
 ---
 
 ## Next Steps
 
-1. **Build larger graphs** with more documents
-   - See [docs/DATASET_AND_CORPUS_GUIDE.md](docs/DATASET_AND_CORPUS_GUIDE.md)
+After testing succeeds:
 
-2. **Try RL training** to fine-tune models
-   - See [CLAUDE.md](CLAUDE.md) for training instructions
-
-3. **Integrate with your application**
-   - Use `/chat/completions` endpoint (OpenAI-compatible)
-   - Add RAG to existing chatbots
-
-4. **Evaluate performance**
-   - Run `cd evaluation && python eval.py`
-   - Compare different retrieval modes
-   - Test different LLM providers
+1. **Analyze Results** - Which mode performs best?
+2. **Tune Parameters** - Try different `top_k` values
+3. **Create Custom Datasets** - Build eval sets for your domain
+4. **Monitor Over Time** - Track metrics as you add documents
+5. **Optimize** - Use `/eval/compare` to find best configuration
 
 ---
 
 ## Summary
 
-- ✅ **One unified API server** that auto-detects your setup
-- ✅ **Multiple LLM providers** (OpenAI, Claude, Gemini, Grok)
-- ✅ **Two embedding modes** (OpenAI API or local FlagEmbedding)
-- ✅ **Simple switching** via environment variables or per-request
-- ✅ **Production-ready** with Docker support
+**All evaluation endpoints are now implemented and ready for testing!**
 
-**Start testing**: `python script_api.py --data_source demo_test`
+Start with **Test Scenario 1** (simplest), then progress through scenarios 2-4.
 
-**View docs**: http://localhost:8001/docs
+If all 4 scenarios pass, you have a fully functional evaluation system for measuring:
+- ✅ Retrieval quality (IR metrics)
+- ✅ Answer accuracy (NLP metrics)
+- ✅ Configuration comparison
+- ✅ Large-scale batch evaluation
 
-Happy testing! 🚀
+**Happy Testing! 🚀**

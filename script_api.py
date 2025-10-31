@@ -590,10 +590,16 @@ class HealthResponse(BaseModel):
 # Document Management Helper Functions
 # ============================================================================
 
-def compute_doc_id(content: str, prefix: str = "upload") -> str:
-    """Generate unique ID from content hash"""
-    hash_obj = hashlib.md5(content.encode('utf-8'))
-    return f"{prefix}-{hash_obj.hexdigest()[:16]}"
+def compute_doc_id(content: str, prefix: str = "doc") -> str:
+    """
+    Generate unique ID from content hash
+
+    IMPORTANT: Uses same format as BiGRAG's compute_mdhash_id to ensure
+    document IDs match between upload system and knowledge graph.
+    Changed from "upload" prefix to "doc" prefix and full 32-char hash for consistency.
+    """
+    from bigrag.utils import compute_mdhash_id
+    return compute_mdhash_id(content.strip(), prefix=f"{prefix}-")
 
 
 async def add_document_to_corpus(

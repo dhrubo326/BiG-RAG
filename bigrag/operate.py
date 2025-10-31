@@ -535,21 +535,39 @@ async def _build_query_context(
         query_param,
     )
     
+    # Build knowledge with scores from both entity and edge retrieval
+    # Also track source IDs for evaluation purposes
     know_score = dict()
-    for i, k in enumerate(knowledge_list_1):
+    know_sources = dict()  # Track source IDs for each knowledge item
+
+    for i, (k, source_ids) in enumerate(knowledge_list_1):
         if k not in know_score:
             know_score[k] = 0
+            know_sources[k] = set()
         score = 1/(i+1)
         know_score[k] += score
-    for i, k in enumerate(knowledge_list_2):
+        if source_ids:
+            know_sources[k].update(source_ids if isinstance(source_ids, (list, set)) else [source_ids])
+
+    for i, (k, source_ids) in enumerate(knowledge_list_2):
         if k not in know_score:
             know_score[k] = 0
+            know_sources[k] = set()
         score = 1/(i+1)
         know_score[k] += score
+        if source_ids:
+            know_sources[k].update(source_ids if isinstance(source_ids, (list, set)) else [source_ids])
+
     knowledge_list = sorted(know_score.items(), key=lambda x: x[1], reverse=True)[:query_param.top_k]
     knowledge=[]
-    for k in knowledge_list:
-        knowledge.append({"<knowledge>": k[0], "<coherence>": round(k[1],3)})
+    for k, score in knowledge_list:
+        # Include source IDs in output for evaluation
+        sources = list(know_sources.get(k, []))
+        knowledge.append({
+            "<knowledge>": k,
+            "<coherence>": round(score, 3),
+            "<source_ids>": sources  # Add source document IDs
+        })
     return knowledge
 
 
@@ -585,11 +603,16 @@ async def _get_node_data(
     use_relations = await _find_most_related_edges_from_entities(
         node_datas, query_param, knowledge_graph_inst
     )
-    knowledge_list = [s["description"].replace("<bipartite_edge>","") for s in use_relations]
-    # s_ids = []
-    # for r in use_relations:
-    #     s_ids.extend(r["source_id"].split(GRAPH_FIELD_SEP))
-    # knowledge_list = [(await text_chunks_db.get_by_id(s))["content"] for s in s_ids]
+    # Extract knowledge and source IDs together for evaluation
+    knowledge_list = []
+    for s in use_relations:
+        description = s["description"].replace("<bipartite_edge>", "")
+        # Extract source_ids from the relation (chunks where this relation appears)
+        source_ids = []
+        if "source_id" in s and s["source_id"]:
+            # source_id may contain multiple IDs separated by GRAPH_FIELD_SEP
+            source_ids = s["source_id"].split(GRAPH_FIELD_SEP) if isinstance(s["source_id"], str) else [s["source_id"]]
+        knowledge_list.append((description, source_ids))
     return knowledge_list
 
 
@@ -734,11 +757,16 @@ async def _get_edge_data(
     edge_datas = sorted(
         edge_datas, key=lambda x: (x["rank"], x["weight"]), reverse=True
     )
-    knowledge_list = [s["bipartite_edge"].replace("<bipartite_edge>","") for s in edge_datas]
-    # s_ids = []
-    # for r in edge_datas:
-    #     s_ids.extend(r["source_id"].split(GRAPH_FIELD_SEP))
-    # knowledge_list = [(await text_chunks_db.get_by_id(s))["content"] for s in s_ids]
+    # Extract knowledge and source IDs together for evaluation
+    knowledge_list = []
+    for s in edge_datas:
+        bipartite_edge = s["bipartite_edge"].replace("<bipartite_edge>", "")
+        # Extract source_ids from the edge (chunks where this edge appears)
+        source_ids = []
+        if "source_id" in s and s["source_id"]:
+            # source_id may contain multiple IDs separated by GRAPH_FIELD_SEP
+            source_ids = s["source_id"].split(GRAPH_FIELD_SEP) if isinstance(s["source_id"], str) else [s["source_id"]]
+        knowledge_list.append((bipartite_edge, source_ids))
     return knowledge_list
 
 

@@ -64,12 +64,32 @@ async def evaluate_single_retrieval(
     )
 
     # Extract retrieved document IDs
+    # BiGRAG now returns: {"<knowledge>": text, "<coherence>": score, "<source_ids>": [chunk_ids]}
     retrieved_docs = []
     if result:
         for context in result:
-            doc_id = context.get('id', '')
-            if doc_id and doc_id not in retrieved_docs:
-                retrieved_docs.append(doc_id)
+            # Get source IDs (chunk IDs) from the knowledge context
+            source_ids = context.get('<source_ids>', [])
+            if source_ids:
+                for chunk_id in source_ids:
+                    if not chunk_id:
+                        continue
+
+                    # Look up the chunk to get its full_doc_id
+                    try:
+                        chunk_data = await rag_instance.text_chunks.get_by_id(chunk_id)
+                        if chunk_data and 'full_doc_id' in chunk_data:
+                            doc_id = chunk_data['full_doc_id']
+                            if doc_id and doc_id not in retrieved_docs:
+                                retrieved_docs.append(doc_id)
+                        else:
+                            # Fallback: use chunk_id if no full_doc_id found
+                            if chunk_id not in retrieved_docs:
+                                retrieved_docs.append(chunk_id)
+                    except Exception as e:
+                        # If lookup fails, use chunk_id as fallback
+                        if chunk_id not in retrieved_docs:
+                            retrieved_docs.append(chunk_id)
 
     # Calculate metrics
     metric_scores = calculate_retrieval_metrics(

@@ -75,46 +75,63 @@ async def get_document_stats_from_kg(
         "tokens": 0
     }
 
-    # Count chunks
+    # Count chunks - use correct field name "full_doc_id"
+    doc_chunk_ids = set()  # Track chunk IDs for this document
     if os.path.exists(chunks_file):
         try:
             with open(chunks_file, encoding='utf-8') as f:
                 chunks = json.load(f)
 
-            # Filter by document ID
+            # Filter by document ID using correct field name
             doc_chunks = [
-                c for c_id, c in chunks.items()
-                if document_id in c_id or c.get("doc_id") == document_id
+                (c_id, c) for c_id, c in chunks.items()
+                if c.get("full_doc_id") == document_id  # ✅ Fixed: was "doc_id"
             ]
+
+            # Store chunk IDs for entity/edge lookup
+            doc_chunk_ids = set(c_id for c_id, _ in doc_chunks)
+
             stats["chunks"] = len(doc_chunks)
-            stats["tokens"] = sum(c.get("tokens", 0) for c in doc_chunks)
+            stats["tokens"] = sum(c.get("tokens", 0) for _, c in doc_chunks)
         except Exception as e:
             logger.error(f"Error reading chunks file: {e}")
 
-    # Count entities (by source_id)
-    if os.path.exists(entities_file):
+    # Count entities (by source_id referencing our chunk IDs)
+    if os.path.exists(entities_file) and doc_chunk_ids:
         try:
             with open(entities_file, encoding='utf-8') as f:
                 entities = json.load(f)
 
-            doc_entities = [
-                e for e_id, e in entities.items()
-                if document_id in str(e.get("source_id", ""))
-            ]
+            # Check if entity's source_id contains any of our document's chunk IDs
+            doc_entities = []
+            for e_id, e in entities.items():
+                source_id_str = str(e.get("source_id", ""))
+                source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
+
+                # Check if any source_id matches our document's chunks
+                if any(sid in doc_chunk_ids for sid in source_ids):
+                    doc_entities.append(e)
+
             stats["entities"] = len(doc_entities)
         except Exception as e:
             logger.error(f"Error reading entities file: {e}")
 
-    # Count edges (by source_id)
-    if os.path.exists(edges_file):
+    # Count edges (by source_id referencing our chunk IDs)
+    if os.path.exists(edges_file) and doc_chunk_ids:
         try:
             with open(edges_file, encoding='utf-8') as f:
                 edges = json.load(f)
 
-            doc_edges = [
-                edge for edge_id, edge in edges.items()
-                if document_id in str(edge.get("source_id", ""))
-            ]
+            # Check if edge's source_id contains any of our document's chunk IDs
+            doc_edges = []
+            for edge_id, edge in edges.items():
+                source_id_str = str(edge.get("source_id", ""))
+                source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
+
+                # Check if any source_id matches our document's chunks
+                if any(sid in doc_chunk_ids for sid in source_ids):
+                    doc_edges.append(edge)
+
             stats["edges"] = len(doc_edges)
         except Exception as e:
             logger.error(f"Error reading edges file: {e}")
@@ -139,24 +156,41 @@ async def get_document_entities(
         List of {name, type, weight} dicts
     """
     entities_file = f"expr/{data_source}/kv_store_entities.json"
+    chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
 
     if not os.path.exists(entities_file):
         return []
 
     try:
+        # First, get all chunk IDs for this document
+        doc_chunk_ids = set()
+        if os.path.exists(chunks_file):
+            with open(chunks_file, encoding='utf-8') as f:
+                chunks = json.load(f)
+            doc_chunk_ids = set(
+                c_id for c_id, c in chunks.items()
+                if c.get("full_doc_id") == document_id
+            )
+
+        if not doc_chunk_ids:
+            return []
+
+        # Now filter entities by chunk IDs
         with open(entities_file, encoding='utf-8') as f:
             entities = json.load(f)
 
-        # Filter by document
-        doc_entities = [
-            {
-                "name": e.get("entity_name"),
-                "type": e.get("entity_type"),
-                "weight": e.get("weight", 0)
-            }
-            for e_id, e in entities.items()
-            if document_id in str(e.get("source_id", ""))
-        ]
+        doc_entities = []
+        for e_id, e in entities.items():
+            source_id_str = str(e.get("source_id", ""))
+            source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
+
+            # Check if any source_id matches our document's chunks
+            if any(sid in doc_chunk_ids for sid in source_ids):
+                doc_entities.append({
+                    "name": e.get("entity_name"),
+                    "type": e.get("entity_type"),
+                    "weight": e.get("weight", 0)
+                })
 
         # Sort by weight
         doc_entities.sort(key=lambda x: x["weight"], reverse=True)
@@ -184,20 +218,44 @@ async def find_related_documents(
         List of {id, title, similarity} dicts
     """
     entities_file = f"expr/{data_source}/kv_store_entities.json"
+    chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
 
-    if not os.path.exists(entities_file):
+    if not os.path.exists(entities_file) or not os.path.exists(chunks_file):
         return []
 
     try:
+        # Load chunks to build chunk_id -> document_id mapping
+        with open(chunks_file, encoding='utf-8') as f:
+            chunks = json.load(f)
+
+        chunk_to_doc = {
+            c_id: c.get("full_doc_id")
+            for c_id, c in chunks.items()
+            if c.get("full_doc_id")
+        }
+
+        # Get chunk IDs for this document
+        doc_chunk_ids = set(
+            c_id for c_id, c in chunks.items()
+            if c.get("full_doc_id") == document_id
+        )
+
+        if not doc_chunk_ids:
+            return []
+
+        # Load entities
         with open(entities_file, encoding='utf-8') as f:
             entities = json.load(f)
 
         # Get this document's entities
-        doc_entities = set([
-            e.get("entity_name")
-            for e_id, e in entities.items()
-            if document_id in str(e.get("source_id", ""))
-        ])
+        doc_entities = set()
+        for e_id, e in entities.items():
+            source_id_str = str(e.get("source_id", ""))
+            source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
+
+            # Check if any source_id (chunk) belongs to this document
+            if any(sid in doc_chunk_ids for sid in source_ids):
+                doc_entities.add(e.get("entity_name"))
 
         if not doc_entities:
             return []
@@ -211,18 +269,23 @@ async def find_related_documents(
             if entity_name not in doc_entities:
                 continue
 
-            # Get all documents mentioning this entity
+            # Get all chunk IDs mentioning this entity
             source_id_str = str(e.get("source_id", ""))
             source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
 
-            for source_id in source_ids:
-                if not source_id or source_id == document_id:
+            for chunk_id in source_ids:
+                if not chunk_id or chunk_id in doc_chunk_ids:
+                    continue  # Skip our own document's chunks
+
+                # Map chunk_id to document_id
+                related_doc_id = chunk_to_doc.get(chunk_id)
+                if not related_doc_id:
                     continue
 
-                if source_id not in doc_scores:
-                    doc_scores[source_id] = 0
+                if related_doc_id not in doc_scores:
+                    doc_scores[related_doc_id] = 0
 
-                doc_scores[source_id] += 1
+                doc_scores[related_doc_id] += 1
 
         # Normalize scores
         max_score = max(doc_scores.values()) if doc_scores else 1

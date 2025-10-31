@@ -882,7 +882,8 @@ async def upload_document(
         target_dataset = data_source if (data_source and data_source != "string") else args.data_source
 
         # Generate IDs
-        doc_id = compute_doc_id(content_text, prefix="upload")
+        # IMPORTANT: Use "doc" prefix to match BiGRAG's internal ID format
+        doc_id = compute_doc_id(content_text, prefix="doc")
         job_id = f"job-{compute_doc_id(doc_id + str(datetime.now()), prefix='')}"
 
         # Use filename as title if not provided

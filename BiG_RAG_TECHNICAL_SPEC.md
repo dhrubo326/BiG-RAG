@@ -854,7 +854,7 @@ result = await bigrag.aquery(
 
 ## Implementation Roadmap
 
-### Phase 1: Core Infrastructure (2 weeks)
+### Phase 1: Core Infrastructure 
 **Deliverables:**
 - [ ] Vector storage adapter with backend registry
 - [ ] Bipartite graph builder
@@ -866,7 +866,7 @@ result = await bigrag.aquery(
 - `bigrag/graph_builder.py`
 - `bigrag/base.py`
 
-### Phase 2: Indexing Pipeline (2 weeks)
+### Phase 2: Indexing Pipeline 
 **Deliverables:**
 - [ ] Document chunking module
 - [ ] **Metadata and title preservation in chunks** (CRITICAL FIX)
@@ -886,7 +886,7 @@ result = await bigrag.aquery(
 - Pass document context to LLM during entity extraction
 - Implement full document deletion with cascade cleanup
 
-### Phase 3: Retrieval Engine (2 weeks)
+### Phase 3: Retrieval Engine 
 **Deliverables:**
 - [ ] Path A (entity search + graph traversal)
 - [ ] Path B (edge search)
@@ -900,14 +900,14 @@ result = await bigrag.aquery(
 - `bigrag/reranker.py`
 - `bigrag/fusion.py`
 
-### Phase 4: Integration & Testing (1 week)
+### Phase 4: Integration & Testing 
 **Deliverables:**
 - [ ] End-to-end integration tests
 - [ ] Performance benchmarks
 - [ ] API documentation
 - [ ] Example notebooks
 
-### Phase 5: Production Features (2 weeks)
+### Phase 5: Production Features 
 **Deliverables:**
 - [ ] Milvus backend testing
 - [ ] Neo4j backend testing
@@ -915,7 +915,7 @@ result = await bigrag.aquery(
 - [ ] Monitoring and logging
 - [ ] Deployment guide
 
-### Phase 6: Quality Assurance Tools (1 week)
+### Phase 6: Quality Assurance Tools 
 **Deliverables:**
 - [ ] Graph validation script (validate bipartite structure)
 - [ ] Orphaned node detection and cleanup

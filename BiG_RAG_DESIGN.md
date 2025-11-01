@@ -447,7 +447,7 @@ mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
 
 ---
 
-## PHASE 1: Core Storage Infrastructure (Week 1-2)
+## PHASE 1: Core Storage Infrastructure
 
 **Note:** Phase 1 focuses on storage layer setup. Metadata preservation and document deletion are in PHASE 2 (Indexing Pipeline).
 
@@ -461,7 +461,7 @@ mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
 
 ---
 
-## PHASE 2: Indexing Pipeline & Critical Fixes (Week 3-4)
+## PHASE 2: Indexing Pipeline & Critical Fixes
 
 ### 2.1 Metadata and Title Preservation in Chunks ❌ 🚨 CRITICAL
 
@@ -868,7 +868,7 @@ stats = bigrag.delete_document("doc-abc123...")
 
 ---
 
-## PHASE 3: Three-Path Retrieval (Week 5-6)
+## PHASE 3: Three-Path Retrieval 
 
 ### 3.1 Path C: Chunk Vector Search ❌
 

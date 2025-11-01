@@ -292,9 +292,9 @@ These top-5 RRF results are then passed to Path C for extracting indirect chunks
 ┌─────────────────────────────────────────────────────────┐
 │                  Vector Storage Layer                   │
 ├─────────────────────────────────────────────────────────┤
-│  vdb_entities        → Entity embeddings                │
-│  vdb_hyperedges      → Knowledge edge embeddings        │
-│  vdb_chunks          → Document chunk embeddings        │
+│  vdb_entities            → Entity embeddings            │
+│  vdb_bipartite_edges     → Knowledge edge embeddings    │
+│  vdb_chunks              → Document chunk embeddings    │
 │                                                         │
 │  Backends: NanoVectorDB (dev), Milvus (prod),          │
 │            pgvector, ChromaDB, TiDB                     │
@@ -314,11 +314,11 @@ These top-5 RRF results are then passed to Path C for extracting indirect chunks
 ┌─────────────────────────────────────────────────────────┐
 │                  Key-Value Storage Layer                │
 ├─────────────────────────────────────────────────────────┤
-│  kv_store_entities        → Entity metadata             │
-│  kv_store_hyperedges      → Edge metadata               │
-│  kv_store_text_chunks     → Chunk metadata              │
-│  kv_store_full_docs       → Original documents          │
-│  kv_store_llm_cache       → LLM response cache          │
+│  kv_store_entities           → Entity metadata          │
+│  kv_store_bipartite_edges    → Edge metadata            │
+│  kv_store_text_chunks        → Chunk metadata           │
+│  kv_store_full_docs          → Original documents       │
+│  kv_store_llm_cache          → LLM response cache       │
 │                                                         │
 │  Backends: JSON (dev), MongoDB (prod), TiDB, Oracle    │
 └─────────────────────────────────────────────────────────┘
@@ -341,9 +341,9 @@ bigrag = BiGRAG(
 # Production Environment
 bigrag = BiGRAG(
     working_dir="./prod_index",
-    vector_storage_backend="MilvusVectorDBStorge", # Billion-scale vectors
-    graph_storage="Neo4JStorage",                  # Distributed graph
-    kv_storage="MongoKVStorage"                    # MongoDB cluster
+    vector_storage_backend="MilvusVectorDBStorage", # Billion-scale vectors
+    graph_storage="Neo4JStorage",                   # Distributed graph
+    kv_storage="MongoKVStorage"                     # MongoDB cluster
 )
 
 # Same API, different infrastructure!
@@ -736,7 +736,7 @@ class QueryParam:
 # Initialize BiG-RAG
 bigrag = BiGRAG(
     working_dir="./bigrag_index",
-    vector_storage_backend="MilvusVectorDBStorge",
+    vector_storage_backend="MilvusVectorDBStorage",
     graph_storage="Neo4JStorage",
     embedding_func=openai_embedding,
     llm_model_func=gpt_4o_complete,
@@ -908,7 +908,7 @@ bigrag_prod = BiGRAG(
     working_dir="/mnt/bigrag_index",
 
     # Production storage
-    vector_storage_backend="MilvusVectorDBStorge",
+    vector_storage_backend="MilvusVectorDBStorage",
     vector_db_storage_cls_kwargs={
         "uri": "http://milvus:19530",
         "collection_name": "bigrag_vectors",

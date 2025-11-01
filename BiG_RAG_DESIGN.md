@@ -7,6 +7,35 @@
 
 ---
 
+## Important Notes
+
+### Variable Naming Convention
+
+**Throughout this document, we use the `vdb_*` prefix:**
+- ✅ `vdb_entities` (NOT `entities_vdb`)
+- ✅ `vdb_bipartite_edges` (NOT `bipartite_edges_vdb`)
+- ✅ `vdb_chunks` (NOT `chunks_vdb`)
+
+### About FAISS
+
+**Clarification:** BiG-RAG uses OpenAI embeddings stored in FAISS indices.
+- You generate embeddings with OpenAI API (or FlagEmbedding)
+- These embeddings are stored in **FAISS index files** (`index.bin`, `index_entity.bin`, `index_bipartite_edge.bin`)
+- FAISS provides fast similarity search (not an alternative to OpenAI embeddings)
+- NanoVectorDB (default storage) uses FAISS internally
+
+### System Requirements (for Phase 1)
+
+**For indexing & retrieval improvements (Phase 1):**
+- ✅ CPU only (no GPU required)
+- ✅ 8-16GB RAM
+- ✅ Python 3.11+
+- ✅ OpenAI API key (for entity extraction)
+
+**GPU/CUDA requirements mentioned elsewhere are for RL training, NOT for this implementation.**
+
+---
+
 ## Table of Contents
 1. [Pre-Implementation Checklist](#pre-implementation-checklist)
 2. [Current Implementation Status](#current-implementation-status)
@@ -86,15 +115,15 @@ async def verify_storage():
     bigrag = BiGRAG(working_dir="./expr/demo_test")
 
     # Check entities
-    entity_count = await bigrag.entities_vdb.query("test", top_k=1)
+    entity_count = await bigrag.vdb_entities.query("test", top_k=1)
     print(f"✅ Entities indexed: {len(entity_count) > 0}")
 
     # Check bipartite edges
-    edge_count = await bigrag.bipartite_edges_vdb.query("test", top_k=1)
+    edge_count = await bigrag.vdb_bipartite_edges.query("test", top_k=1)
     print(f"✅ Bipartite edges indexed: {len(edge_count) > 0}")
 
     # Check chunks
-    chunk_count = await bigrag.chunks_vdb.query("test", top_k=1)
+    chunk_count = await bigrag.vdb_chunks.query("test", top_k=1)
     print(f"✅ Chunks indexed: {len(chunk_count) > 0}")
 
     # Check graph
@@ -180,7 +209,7 @@ Before starting implementation, verify:
 | Component | Status | Location |
 |-----------|--------|----------|
 | **Storage Infrastructure** | ✅ Done | `bigrag/bigrag.py`, `bigrag/storage.py` |
-| Three vector databases | ✅ Done | `entities_vdb`, `bipartite_edges_vdb`, `chunks_vdb` |
+| Three vector databases | ✅ Done | `vdb_entities`, `vdb_bipartite_edges`, `vdb_chunks` |
 | Pluggable storage backends | ✅ Done | `bigrag/kg/*.py` |
 | Graph storage (NetworkX) | ✅ Done | `bigrag/storage.py::NetworkXStorage` |
 | KV storage (JSON) | ✅ Done | `bigrag/storage.py::JsonKVStorage` |
@@ -307,21 +336,21 @@ Query → Path C (Chunks) ──┬→ 5 Direct Chunks   ┌────┘
 
 ```python
 # Already implemented in BiG-RAG
-self.entities_vdb = self.vector_db_storage_cls(
+self.vdb_entities = self.vector_db_storage_cls(
     namespace="entities",
     global_config=asdict(self),
     embedding_func=self.embedding_func,
     meta_fields={"entity_name"},
     **self.vector_db_storage_cls_kwargs,
 )
-self.bipartite_edges_vdb = self.vector_db_storage_cls(
+self.vdb_bipartite_edges = self.vector_db_storage_cls(
     namespace="bipartite_edges",  # ✅ Correct terminology!
     global_config=asdict(self),
     embedding_func=self.embedding_func,
     meta_fields={"bipartite_edge_name"},
     **self.vector_db_storage_cls_kwargs,
 )
-self.chunks_vdb = self.vector_db_storage_cls(
+self.vdb_chunks = self.vector_db_storage_cls(
     namespace="chunks",  # ✅ Created but not used in queries
     global_config=asdict(self),
     embedding_func=self.embedding_func,
@@ -339,14 +368,14 @@ self.chunks_vdb = self.vector_db_storage_cls(
 - ✅ Document chunking
 - ✅ Entity extraction via LLM
 - ✅ Bipartite graph construction
-- ✅ Entity embedding → `entities_vdb`
-- ✅ Bipartite edge embedding → `bipartite_edges_vdb`
-- ✅ Chunk embedding → `chunks_vdb` (line 379)
+- ✅ Entity embedding → `vdb_entities`
+- ✅ Bipartite edge embedding → `vdb_bipartite_edges`
+- ✅ Chunk embedding → `vdb_chunks` (line 379)
 
 ```python
 # Current implementation (line 378-381)
-if self.chunks_vdb is not None and all_chunks_data:
-    await self.chunks_vdb.upsert(all_chunks_data)  # ✅ Chunks ARE embedded!
+if self.vdb_chunks is not None and all_chunks_data:
+    await self.vdb_chunks.upsert(all_chunks_data)  # ✅ Chunks ARE embedded!
 if self.text_chunks is not None and all_chunks_data:
     await self.text_chunks.upsert(all_chunks_data)
 ```
@@ -368,7 +397,7 @@ if self.text_chunks is not None and all_chunks_data:
 knowledge_list_1 = await _get_node_data(
     ll_kewwords,
     knowledge_graph_inst,
-    entities_vdb,  # ✅ Uses entities_vdb
+    vdb_entities,  # ✅ Uses vdb_entities
     text_chunks_db,
     query_param,
 )
@@ -376,7 +405,7 @@ knowledge_list_1 = await _get_node_data(
 knowledge_list_2 = await _get_edge_data(
     hl_keywrds,
     knowledge_graph_inst,
-    bipartite_edges_vdb,  # ✅ Uses bipartite_edges_vdb
+    vdb_bipartite_edges,  # ✅ Uses vdb_bipartite_edges
     text_chunks_db,
     query_param,
 )
@@ -419,7 +448,7 @@ mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
 #### 1. Path C: Chunk Vector Search ❌
 
 **What's missing:**
-- `chunks_vdb` is created and populated, but **never queried**
+- `vdb_chunks` is created and populated, but **never queried**
 - No direct chunk vector search in retrieval flow
 - No indirect chunk extraction from RRF results
 
@@ -432,7 +461,7 @@ mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
 # === NEW: Path C - Chunk Vector Search ===
 async def _get_chunk_data(
     query: str,
-    chunks_vdb: BaseVectorStorage,
+    vdb_chunks: BaseVectorStorage,
     text_chunks_db: BaseKVStorage,
     query_param: QueryParam,
     rrf_results: List[Dict] = None,  # Top-5 structured knowledge from RRF
@@ -443,7 +472,7 @@ async def _get_chunk_data(
     Returns: (direct_chunks, indirect_chunks)
     """
     # Step 1: Direct vector search on chunks
-    direct_results = await chunks_vdb.query(query, top_k=5)
+    direct_results = await vdb_chunks.query(query, top_k=5)
     direct_chunks = []
     for r in direct_results:
         chunk_data = await text_chunks_db.get_by_id(r.get("id"))
@@ -489,11 +518,11 @@ async def _get_chunk_data(
 async def _build_query_context(
     query: list,
     knowledge_graph_inst: BaseGraphStorage,
-    entities_vdb: BaseVectorStorage,
-    bipartite_edges_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
-    chunks_vdb: BaseVectorStorage = None,  # NEW parameter
+    vdb_chunks: BaseVectorStorage = None,  # NEW parameter
     enable_reranking: bool = False,  # NEW parameter
 ):
     ll_kewwords, hl_keywrds = query[0], query[1]
@@ -520,11 +549,11 @@ async def _build_query_context(
         })
 
     # === NEW: Path C - Add chunk retrieval ===
-    if chunks_vdb is not None and query_param.mode in ["hybrid", "naive"]:
+    if vdb_chunks is not None and query_param.mode in ["hybrid", "naive"]:
         # Get chunks (5 direct + 5 indirect)
         direct_chunks, indirect_chunks = await _get_chunk_data(
             ll_kewwords,
-            chunks_vdb,
+            vdb_chunks,
             text_chunks_db,
             query_param,
             rrf_results=knowledge[:5]  # Pass top-5 structured knowledge
@@ -576,13 +605,13 @@ async def _build_query_context(
 async def kg_query(
     query,
     knowledge_graph_inst: BaseGraphStorage,
-    entities_vdb: BaseVectorStorage,
-    bipartite_edges_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
     global_config: dict,
     hashing_kv: BaseKVStorage = None,
-    chunks_vdb: BaseVectorStorage = None,  # NEW parameter
+    vdb_chunks: BaseVectorStorage = None,  # NEW parameter
     enable_reranking: bool = False,  # NEW parameter
 ) -> str:
 
@@ -592,11 +621,11 @@ async def kg_query(
     context = await _build_query_context(
         keywords,
         knowledge_graph_inst,
-        entities_vdb,
-        bipartite_edges_vdb,
+        vdb_entities,
+        vdb_bipartite_edges,
         text_chunks_db,
         query_param,
-        chunks_vdb=chunks_vdb,  # NEW
+        vdb_chunks=vdb_chunks,  # NEW
         enable_reranking=enable_reranking,  # NEW
     )
 
@@ -612,13 +641,13 @@ async def aquery(self, query: str, param: QueryParam = QueryParam(),
     response = await kg_query(
         query,
         self.chunk_entity_relation_graph,
-        self.entities_vdb,
-        self.bipartite_edges_vdb,
+        self.vdb_entities,
+        self.vdb_bipartite_edges,
         self.text_chunks,
         param,
         asdict(self),
         hashing_kv=self.llm_response_cache,
-        chunks_vdb=self.chunks_vdb,  # NEW
+        vdb_chunks=self.vdb_chunks,  # NEW
         enable_reranking=enable_reranking,  # NEW
     )
     await self._query_done()
@@ -933,12 +962,12 @@ async def _build_query_context(
         ),
     ]
 
-    # Add Path C task if chunks_vdb available
-    if chunks_vdb is not None and query_param.mode in ["hybrid", "naive"]:
+    # Add Path C task if vdb_chunks available
+    if vdb_chunks is not None and query_param.mode in ["hybrid", "naive"]:
         tasks.append(
             _get_chunk_data_initial(  # Note: Special version without RRF dependency
                 ll_kewwords,
-                chunks_vdb,
+                vdb_chunks,
                 text_chunks_db,
                 query_param,
             )
@@ -970,7 +999,7 @@ async def _build_query_context(
         })
 
     # === INDIRECT CHUNKS (after RRF) ===
-    if chunks_vdb is not None and query_param.mode in ["hybrid", "naive"]:
+    if vdb_chunks is not None and query_param.mode in ["hybrid", "naive"]:
         # Get indirect chunks from top-5 RRF results
         indirect_chunks = await _get_indirect_chunks(
             knowledge[:5],  # Top-5 structured knowledge
@@ -1016,12 +1045,12 @@ async def _build_query_context(
 ```python
 async def _get_chunk_data_initial(
     query: str,
-    chunks_vdb: BaseVectorStorage,
+    vdb_chunks: BaseVectorStorage,
     text_chunks_db: BaseKVStorage,
     query_param: QueryParam,
 ) -> List[Dict]:
     """Stage 1: Get direct chunks via vector search (NO RRF dependency)"""
-    direct_results = await chunks_vdb.query(query, top_k=5)
+    direct_results = await vdb_chunks.query(query, top_k=5)
     direct_chunks = []
     for r in direct_results:
         chunk_data = await text_chunks_db.get_by_id(r.get("id"))
@@ -1093,9 +1122,9 @@ rerank_task = asyncio.create_task(_semantic_rerank(query, chunks, top_k=5))
 
 | Component | graphr1 | BiG-RAG | Status |
 |-----------|---------|---------|--------|
-| **Entity nodes** | `entities_vdb` | `entities_vdb` | ✅ Identical |
-| **Relation edges** | `hyperedges_vdb` | `bipartite_edges_vdb` | ✅ Renamed |
-| **Text chunks** | `chunks_vdb` | `chunks_vdb` | ✅ Identical |
+| **Entity nodes** | `entities_vdb` | `vdb_entities` | ✅ Equivalent (renamed) |
+| **Relation edges** | `hyperedges_vdb` | `vdb_bipartite_edges` | ✅ Renamed |
+| **Text chunks** | `chunks_vdb` | `vdb_chunks` | ✅ Equivalent (renamed) |
 | **Graph storage** | NetworkX | NetworkX | ✅ Identical |
 | **KV storage** | JsonKVStorage | JsonKVStorage | ✅ Identical |
 | **Merging logic** | `_merge_hyperedges_then_upsert` | `_merge_bipartite_edges_then_upsert` | ✅ Renamed |
@@ -1568,15 +1597,15 @@ result = await bigrag.aquery(
 
 ### Phase 1: Add Path C (Core Functionality) - 4-8 hours
 
-**Goal:** Make `chunks_vdb` actually work during retrieval
+**Goal:** Make `vdb_chunks` actually work during retrieval
 
 **Tasks:**
-1. ✅ Verify `chunks_vdb` is populated (already done - line 379)
+1. ✅ Verify `vdb_chunks` is populated (already done - line 379)
 2. ❌ Add `_get_chunk_data()` function to [bigrag/operate.py](bigrag/operate.py)
 3. ❌ Modify `_build_query_context()` to call `_get_chunk_data()`
 4. ❌ Add indirect chunk extraction from RRF results
-5. ❌ Update `kg_query()` signature to pass `chunks_vdb`
-6. ❌ Update `bigrag.aquery()` to pass `chunks_vdb`
+5. ❌ Update `kg_query()` signature to pass `vdb_chunks`
+6. ❌ Update `bigrag.aquery()` to pass `vdb_chunks`
 7. ✅ Test with simple query to verify chunks are retrieved
 
 **Success criteria:**
@@ -1708,9 +1737,9 @@ result = await bigrag.aquery(
 | Component | Status | File Path | Line Numbers |
 |-----------|--------|-----------|--------------|
 | **Storage Creation** | | | |
-| entities_vdb | ✅ Done | [bigrag/bigrag.py](bigrag/bigrag.py) | 224-230 |
-| bipartite_edges_vdb | ✅ Done | [bigrag/bigrag.py](bigrag/bigrag.py) | 231-237 |
-| chunks_vdb | ✅ Done | [bigrag/bigrag.py](bigrag/bigrag.py) | 238-243 |
+| vdb_entities | ✅ Done | [bigrag/bigrag.py](bigrag/bigrag.py) | 224-230 |
+| vdb_bipartite_edges | ✅ Done | [bigrag/bigrag.py](bigrag/bigrag.py) | 231-237 |
+| vdb_chunks | ✅ Done | [bigrag/bigrag.py](bigrag/bigrag.py) | 238-243 |
 | **Indexing** | | | |
 | Chunk embedding | ✅ Done | [bigrag/bigrag.py](bigrag/bigrag.py) | 378-381 |
 | Entity extraction | ✅ Done | [bigrag/operate.py](bigrag/operate.py) | 261-481 |
@@ -1744,7 +1773,7 @@ BiG-RAG has a **solid foundation**:
 ### What's Missing ❌
 
 The **key gap** is Path C (chunk vector search):
-- ❌ `chunks_vdb` is created but never queried
+- ❌ `vdb_chunks` is created but never queried
 - ❌ No direct chunk vector search
 - ❌ No indirect chunk extraction from RRF results
 - ❌ No semantic reranking
@@ -1791,16 +1820,30 @@ The **key gap** is Path C (chunk vector search):
 
 ---
 
-## Appendix: Terminology Mapping
+## Appendix: Terminology & Naming Reference
+
+### Terminology Mapping (graphr1 vs. BiG-RAG)
 
 For developers familiar with the original graphr1 codebase:
 
 | Old Term (graphr1) | New Term (BiG-RAG) | Location |
 |--------------------|-------------------|----------|
 | hyperedge | bipartite_edge | Throughout BiG-RAG code |
-| hyperedges_vdb | bipartite_edges_vdb | [bigrag/bigrag.py:231](bigrag/bigrag.py#L231) |
+| hyperedges_vdb | vdb_bipartite_edges | [bigrag/bigrag.py:231](bigrag/bigrag.py#L231) |
 | hyperedge_name | bipartite_edge_name | [bigrag/bigrag.py:235](bigrag/bigrag.py#L235) |
 | `<hyperedge>` tag | `<bipartite_edge>` tag | [bigrag/operate.py:609](bigrag/operate.py#L609) |
 | HYPEREDGE | BIPARTITE_EDGE | Graph node types |
 
 **Note:** Internal variable names in `graphr1/` folder still use "hyperedge" terminology, but all **BiG-RAG** code uses "bipartite_edge".
+
+### Variable Naming Convention
+
+**BiG-RAG uses `vdb_*` prefix (NOT `*_vdb` suffix):**
+
+| ❌ Old/Incorrect | ✅ Correct (BiG-RAG) |
+|------------------|---------------------|
+| `entities_vdb` | `vdb_entities` |
+| `bipartite_edges_vdb` | `vdb_bipartite_edges` |
+| `chunks_vdb` | `vdb_chunks` |
+
+**Why?** Prefix notation groups related variables together and makes intent clearer in IDE autocomplete.

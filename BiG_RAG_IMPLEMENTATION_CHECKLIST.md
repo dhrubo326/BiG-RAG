@@ -8,7 +8,6 @@
 
 ## ✅ PHASE 1: Core Storage Infrastructure (COMPLETE)
 
-**Duration:** Weeks 1-2
 **Status:** ✅ **ALREADY DONE** - All storage layers are implemented
 
 **Deliverables:**
@@ -24,7 +23,6 @@
 
 ## 🚨 PHASE 2: Indexing Pipeline & Critical Fixes (START HERE)
 
-**Duration:** Weeks 3-4
 **Priority:** CRITICAL - Must complete before Phase 3
 
 ### Task 2.1: Metadata and Title Preservation ❌ 🚨
@@ -72,7 +70,6 @@
 
 ## 🔄 PHASE 3: Three-Path Retrieval (AFTER PHASE 2)
 
-**Duration:** Weeks 5-6
 **Priority:** HIGH - Core BiG-RAG functionality
 
 ### Task 3.1: Path C - Chunk Vector Search ❌
@@ -153,7 +150,6 @@ rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 ## 📊 PHASE 4: Integration & Testing (AFTER PHASE 3)
 
-**Duration:** Week 7
 **Focus:** End-to-end testing and validation
 
 **Deliverables:**
@@ -166,7 +162,6 @@ rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 ## 🚀 PHASE 5: Production Features (OPTIONAL)
 
-**Duration:** Weeks 8-9
 **Focus:** Production deployment readiness
 
 **Deliverables:**
@@ -180,7 +175,6 @@ rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 ## ✅ PHASE 6: Quality Assurance Tools (FUTURE)
 
-**Duration:** Week 10
 **Priority:** LOW - Implement after Phases 2 and 3 are stable
 
 **Deliverables:**
@@ -195,19 +189,19 @@ rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 ## Implementation Order
 
-### Week 3-4 (MUST DO FIRST):
+### (MUST DO FIRST):
 1. ✅ Task 2.1: Metadata Preservation (3-4 hours)
 2. ✅ Task 2.2: Document Deletion (3-4 hours)
 3. ✅ Test both features thoroughly
 
-### Week 5-6 (DO NEXT):
+###  (DO NEXT):
 4. ✅ Task 3.1: Path C Vector Search (2-4 hours)
 5. ✅ Task 3.2: Integrate Path C (2-3 hours)
 6. ✅ Task 3.3: Update kg_query() (1 hour)
 7. ✅ Task 3.4: Semantic Reranking (4-6 hours)
 8. ✅ Task 3.5: Reranking Toggle (1 hour)
 
-### Week 7 (VALIDATION):
+### (VALIDATION):
 9. ✅ Test three-path retrieval end-to-end
 10. ✅ Compare EM/F1 scores before and after
 11. ✅ Verify metadata preservation improves entity extraction

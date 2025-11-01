@@ -33,8 +33,27 @@ from .prompt import GRAPH_FIELD_SEP, PROMPTS
 
 
 def chunking_by_token_size(
-    content: str, overlap_token_size=128, max_token_size=1024, tiktoken_model="gpt-4o"
+    content: str,
+    overlap_token_size=128,
+    max_token_size=1024,
+    tiktoken_model="gpt-4o",
+    doc_title: str = "",
+    doc_metadata: dict = None,
 ):
+    """
+    Chunk content by token size with optional metadata preservation.
+
+    Args:
+        content: Text content to chunk
+        overlap_token_size: Token overlap between chunks
+        max_token_size: Maximum tokens per chunk
+        tiktoken_model: Tokenizer model name
+        doc_title: Document title for context (optional)
+        doc_metadata: Additional metadata dict (optional)
+
+    Returns:
+        List of chunk dicts with tokens, content, chunk_order_index, doc_title, doc_metadata
+    """
     tokens = encode_string_by_tiktoken(content, model_name=tiktoken_model)
     results = []
     for index, start in enumerate(
@@ -43,13 +62,17 @@ def chunking_by_token_size(
         chunk_content = decode_tokens_by_tiktoken(
             tokens[start : start + max_token_size], model_name=tiktoken_model
         )
-        results.append(
-            {
-                "tokens": min(max_token_size, len(tokens) - start),
-                "content": chunk_content.strip(),
-                "chunk_order_index": index,
-            }
-        )
+        chunk = {
+            "tokens": min(max_token_size, len(tokens) - start),
+            "content": chunk_content.strip(),
+            "chunk_order_index": index,
+        }
+        # Preserve metadata if provided
+        if doc_title:
+            chunk["doc_title"] = doc_title
+        if doc_metadata:
+            chunk["doc_metadata"] = doc_metadata
+        results.append(chunk)
     return results
 
 
@@ -316,10 +339,34 @@ async def extract_entities(
         chunk_key = chunk_key_dp[0]
         chunk_dp = chunk_key_dp[1]
         content = chunk_dp["content"]
-        # hint_prompt = entity_extract_prompt.format(**context_base, input_text=content)
+
+        # Extract metadata for context enhancement (Phase 2.1 improvement)
+        doc_title = chunk_dp.get("doc_title", "")
+        doc_metadata = chunk_dp.get("doc_metadata", {})
+
+        # Build context-enriched input text
+        context_parts = []
+        if doc_title:
+            context_parts.append(f"Document Title: {doc_title}")
+        if doc_metadata:
+            # Format metadata nicely
+            metadata_str = ", ".join(
+                f"{k}: {v}" for k, v in doc_metadata.items()
+                if k != "title" and v  # Skip empty values and title (already shown)
+            )
+            if metadata_str:
+                context_parts.append(f"Document Context: {metadata_str}")
+
+        # Combine context with content
+        if context_parts:
+            enriched_content = "\n".join(context_parts) + "\n\n" + content
+        else:
+            enriched_content = content
+
+        # hint_prompt = entity_extract_prompt.format(**context_base, input_text=enriched_content)
         hint_prompt = entity_extract_prompt.format(
             **context_base, input_text="{input_text}"
-        ).format(**context_base, input_text=content)
+        ).format(**context_base, input_text=enriched_content)
 
         final_result = await use_llm_func(hint_prompt)
         history = pack_user_ass_to_openai_messages(hint_prompt, final_result)
@@ -487,11 +534,12 @@ async def kg_query(
     entities_vdb: list,
     bipartite_edges_vdb: list,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
+    chunks_vdb: BaseVectorStorage,  # Phase 3.2: Added chunks_vdb parameter
     query_param: QueryParam,
     global_config: dict,
     hashing_kv: BaseKVStorage = None,
 ) -> str:
-    
+
     hl_keywords = query
     ll_keywords = query
     keywords = [ll_keywords, hl_keywords]
@@ -501,6 +549,7 @@ async def kg_query(
         entities_vdb,
         bipartite_edges_vdb,
         text_chunks_db,
+        chunks_vdb,  # Phase 3.2: Pass chunks_vdb
         query_param,
     )
 
@@ -514,11 +563,23 @@ async def _build_query_context(
     entities_vdb: BaseVectorStorage,
     bipartite_edges_vdb: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
+    chunks_vdb: BaseVectorStorage,  # Phase 3.2: Added chunks_vdb parameter
     query_param: QueryParam,
 ):
+    """
+    Three-Path Retrieval Context Builder (Phase 3.2 Enhancement)
+
+    Combines three retrieval paths:
+    - Path A: Entity-based (structural, high-level)
+    - Path B: Bipartite edge-based (relational, knowledge fragments)
+    - Path C: Chunk-based (semantic, raw text)
+
+    Returns 5 structured knowledge items + 5 chunk items = 10 total context items
+    """
 
     ll_kewwords, hl_keywrds = query[0], query[1]
 
+    # Path A: Entity retrieval
     knowledge_list_1 = await _get_node_data(
         ll_kewwords,
         knowledge_graph_inst,
@@ -527,6 +588,7 @@ async def _build_query_context(
         query_param,
     )
 
+    # Path B: Bipartite edge retrieval
     knowledge_list_2 = await _get_edge_data(
         hl_keywrds,
         knowledge_graph_inst,
@@ -534,40 +596,122 @@ async def _build_query_context(
         text_chunks_db,
         query_param,
     )
-    
-    # Build knowledge with scores from both entity and edge retrieval
+
+    # Phase 3.2: Collect source IDs from Path A + B for Path C
+    entity_source_ids = set()
+    for _, source_ids in knowledge_list_1:
+        if source_ids:
+            entity_source_ids.update(source_ids if isinstance(source_ids, (list, set)) else [source_ids])
+
+    edge_source_ids = set()
+    for _, source_ids in knowledge_list_2:
+        if source_ids:
+            edge_source_ids.update(source_ids if isinstance(source_ids, (list, set)) else [source_ids])
+
+    # Path C: Chunk retrieval (direct + indirect from Path A + B)
+    knowledge_list_3 = await _get_chunk_data(
+        ll_kewwords,  # Use same query as entity search
+        chunks_vdb,
+        text_chunks_db,
+        entity_source_ids,
+        edge_source_ids,
+        query_param,
+    )
+
+    # Build knowledge with scores from all three retrieval paths using RRF
     # Also track source IDs for evaluation purposes
     know_score = dict()
     know_sources = dict()  # Track source IDs for each knowledge item
+    know_type = dict()     # Track which path contributed this knowledge
 
+    # Path A contributions
     for i, (k, source_ids) in enumerate(knowledge_list_1):
         if k not in know_score:
             know_score[k] = 0
             know_sources[k] = set()
+            know_type[k] = "entity"
         score = 1/(i+1)
         know_score[k] += score
         if source_ids:
             know_sources[k].update(source_ids if isinstance(source_ids, (list, set)) else [source_ids])
 
+    # Path B contributions
     for i, (k, source_ids) in enumerate(knowledge_list_2):
         if k not in know_score:
             know_score[k] = 0
             know_sources[k] = set()
+            know_type[k] = "bipartite_edge"
         score = 1/(i+1)
         know_score[k] += score
         if source_ids:
             know_sources[k].update(source_ids if isinstance(source_ids, (list, set)) else [source_ids])
 
-    knowledge_list = sorted(know_score.items(), key=lambda x: x[1], reverse=True)[:query_param.top_k]
-    knowledge=[]
-    for k, score in knowledge_list:
-        # Include source IDs in output for evaluation
+    # Path C contributions (chunks get separate treatment to maintain diversity)
+    chunk_knowledge = []
+    for i, (k, source_ids) in enumerate(knowledge_list_3):
+        chunk_knowledge.append({
+            "content": k,
+            "score": 1/(i+1),
+            "sources": list(source_ids) if source_ids else [],
+            "type": "chunk"
+        })
+
+    # Phase 3.4: Apply semantic reranking to chunks if enabled
+    if query_param.enable_reranking and chunk_knowledge:
+        try:
+            from .reranker import rerank_chunks
+            # Prepare chunks for reranking: (content, source_ids)
+            chunk_candidates = [(c["content"], c["sources"]) for c in chunk_knowledge]
+            # Rerank and get top-5
+            reranked = await rerank_chunks(
+                query=ll_kewwords,  # Use original query
+                chunks=chunk_candidates,
+                top_k=5,
+                use_reranking=True
+            )
+            # Update chunk_knowledge with reranked results and scores
+            chunk_knowledge = [
+                {
+                    "content": content,
+                    "score": score,
+                    "sources": sources,
+                    "type": "chunk_reranked"
+                }
+                for content, sources, score in reranked
+            ]
+            logger.info("[Reranking] Applied cross-encoder reranking to chunks")
+        except Exception as e:
+            logger.warning(f"[Reranking] Failed, using original ranking: {e}")
+            # Keep original chunk_knowledge
+
+    # Take top-5 structured knowledge (from Path A + B)
+    structured_knowledge = sorted(know_score.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    # Combine: 5 structured + 5 chunks = 10 total
+    knowledge = []
+
+    # Add structured knowledge (entities + bipartite edges)
+    for k, score in structured_knowledge:
         sources = list(know_sources.get(k, []))
         knowledge.append({
             "<knowledge>": k,
             "<coherence>": round(score, 3),
-            "<source_ids>": sources  # Add source document IDs
+            "<source_ids>": sources,
+            "<type>": know_type.get(k, "unknown")  # Add type for debugging
         })
+
+    # Add chunk knowledge (already top-5 after reranking)
+    for chunk in chunk_knowledge[:5]:  # Top-5 chunks
+        knowledge.append({
+            "<knowledge>": chunk["content"],
+            "<coherence>": round(chunk["score"], 3),
+            "<source_ids>": chunk["sources"],
+            "<type>": chunk["type"]
+        })
+
+    logger.info(f"[Three-Path Retrieval] Returning {len(knowledge)} items: "
+                f"{len(structured_knowledge)} structured + {len(chunk_knowledge[:5])} chunks")
+
     return knowledge
 
 
@@ -767,6 +911,88 @@ async def _get_edge_data(
             # source_id may contain multiple IDs separated by GRAPH_FIELD_SEP
             source_ids = s["source_id"].split(GRAPH_FIELD_SEP) if isinstance(s["source_id"], str) else [s["source_id"]]
         knowledge_list.append((bipartite_edge, source_ids))
+    return knowledge_list
+
+
+async def _get_chunk_data(
+    query: str,
+    chunks_vdb: BaseVectorStorage,
+    text_chunks_db: BaseKVStorage[TextChunkSchema],
+    entity_source_ids: set,
+    edge_source_ids: set,
+    query_param: QueryParam,
+):
+    """
+    Path C: Chunk-level retrieval (Phase 3.1 - Three-Path Retrieval)
+
+    Combines two sources for 10 total candidate chunks:
+    1. Direct vector search on chunks_vdb (top-5 chunks)
+    2. Indirect extraction from Path A + Path B source_ids (another 5 chunks)
+
+    This provides both semantic relevance (direct) and structural relevance (indirect).
+
+    Args:
+        query: User query string
+        chunks_vdb: Chunk vector database
+        text_chunks_db: Chunk metadata storage
+        entity_source_ids: Set of chunk IDs from entity retrieval (Path A)
+        edge_source_ids: Set of chunk IDs from edge retrieval (Path B)
+        query_param: Query parameters
+
+    Returns:
+        List of tuples: (chunk_content, [source_id])
+    """
+    if chunks_vdb is None:
+        logger.warning("[Path C] chunks_vdb is None, skipping chunk retrieval")
+        return []
+
+    chunk_candidates = []
+
+    # Part 1: Direct vector search (top-5)
+    try:
+        direct_results = await chunks_vdb.query(query, top_k=5)
+        if direct_results:
+            for result in direct_results:
+                chunk_id = result.get("id")
+                if chunk_id:
+                    chunk_data = await text_chunks_db.get_by_id(chunk_id)
+                    if chunk_data and "content" in chunk_data:
+                        chunk_candidates.append({
+                            "content": chunk_data["content"],
+                            "source_id": chunk_id,
+                            "source": "direct_vector",
+                            "score": result.get("score", 0.0),
+                        })
+            logger.info(f"[Path C] Found {len(chunk_candidates)} chunks via direct vector search")
+    except Exception as e:
+        logger.warning(f"[Path C] Direct vector search failed: {e}")
+
+    # Part 2: Indirect extraction from Path A + Path B source_ids (top-5)
+    indirect_source_ids = list(entity_source_ids.union(edge_source_ids))
+    if indirect_source_ids:
+        # Take top 5 from combined source IDs
+        for chunk_id in indirect_source_ids[:5]:
+            # Skip if already in direct results
+            if any(c["source_id"] == chunk_id for c in chunk_candidates):
+                continue
+
+            chunk_data = await text_chunks_db.get_by_id(chunk_id)
+            if chunk_data and "content" in chunk_data:
+                chunk_candidates.append({
+                    "content": chunk_data["content"],
+                    "source_id": chunk_id,
+                    "source": "indirect_graph",
+                    "score": 0.5,  # Default score for indirect
+                })
+
+        logger.info(f"[Path C] Added {len([c for c in chunk_candidates if c['source'] == 'indirect_graph'])} indirect chunks from graph traversal")
+
+    # Format as knowledge list (compatible with existing structure)
+    knowledge_list = []
+    for chunk in chunk_candidates:
+        knowledge_list.append((chunk["content"], [chunk["source_id"]]))
+
+    logger.info(f"[Path C] Total: {len(knowledge_list)} chunk candidates")
     return knowledge_list
 
 

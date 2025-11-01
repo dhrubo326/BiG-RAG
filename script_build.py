@@ -79,10 +79,10 @@ def load_corpus(data_source: str):
 
 def extract_knowledge(rag, documents, batch_size=5):
     """
-    Extract entities and build bipartite graph
+    Extract entities and build bipartite graph with metadata preservation
     Uses BiGRAG's insert method which handles:
-    1. Chunking
-    2. Entity extraction via GPT-4o-mini
+    1. Chunking (with metadata preservation)
+    2. Entity extraction via GPT-4o-mini (context-enhanced with metadata)
     3. Bipartite graph construction
     4. Embeddings via text-embedding-3-large
     """
@@ -98,28 +98,37 @@ def extract_knowledge(rag, documents, batch_size=5):
     logger.info("  - Entity extraction complexity")
     logger.info("")
 
-    # Extract content for BiGRAG
+    # Extract content AND metadata for BiGRAG (Phase 2.1 improvement)
     contents = [doc["content"] for doc in documents]
+    metadata_list = [
+        {
+            "title": doc.get("title", ""),
+            "id": doc.get("id", ""),
+        }
+        for doc in documents
+    ]
 
     # Process in batches to avoid overwhelming the API
     total_batches = (len(contents) + batch_size - 1) // batch_size
 
     logger.info(f"Processing in {total_batches} batches...")
+    logger.info("(Now with metadata preservation for improved entity extraction)")
     logger.info("")
 
     for i in range(0, len(contents), batch_size):
         batch_num = i // batch_size + 1
-        batch = contents[i:i+batch_size]
+        batch_contents = contents[i:i+batch_size]
+        batch_metadata = metadata_list[i:i+batch_size]
 
-        logger.info(f"[Batch {batch_num}/{total_batches}] Processing documents {i+1} to {min(i+len(batch), len(contents))}...")
+        logger.info(f"[Batch {batch_num}/{total_batches}] Processing documents {i+1} to {min(i+len(batch_contents), len(contents))}...")
 
         retries = 0
         max_retries = 3
 
         while retries < max_retries:
             try:
-                # Insert batch into BiGRAG
-                rag.insert(batch)
+                # Insert batch into BiGRAG with metadata
+                rag.insert(batch_contents, metadata=batch_metadata)
                 logger.info(f"[Batch {batch_num}/{total_batches}] Successfully inserted")
                 break
             except Exception as e:

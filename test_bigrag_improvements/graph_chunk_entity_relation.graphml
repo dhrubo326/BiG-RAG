@@ -1,0 +1,178 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d6" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d5" for="edge" attr.name="weight" attr.type="double" />
+  <key id="d4" for="node" attr.name="description" attr.type="string" />
+  <key id="d3" for="node" attr.name="entity_type" attr.type="string" />
+  <key id="d2" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d1" for="node" attr.name="weight" attr.type="double" />
+  <key id="d0" for="node" attr.name="role" attr.type="string" />
+  <graph edgedefault="undirected">
+    <node id="&lt;bipartite_edge&gt;&quot;It is known for the Eiffel Tower.&quot;">
+      <data key="d0">bipartite_edge</data>
+      <data key="d1">16.0</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['england', 'europe']&quot;">
+      <data key="d0">bipartite_edge</data>
+      <data key="d1">7.0</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </node>
+    <node id="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['france', 'europe']&quot;">
+      <data key="d0">bipartite_edge</data>
+      <data key="d1">12.0</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&lt;bipartite_edge&gt;&quot;Document Title: Paris Facts&quot;">
+      <data key="d0">bipartite_edge</data>
+      <data key="d1">10.0</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&lt;bipartite_edge&gt;&quot;London is the capital of England.&quot;">
+      <data key="d0">bipartite_edge</data>
+      <data key="d1">9.0</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </node>
+    <node id="&lt;bipartite_edge&gt;&quot;It is famous for Big Ben.&quot;">
+      <data key="d0">bipartite_edge</data>
+      <data key="d1">8.0</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </node>
+    <node id="&lt;bipartite_edge&gt;&quot;Paris is the capital of France.&quot;">
+      <data key="d0">bipartite_edge</data>
+      <data key="d1">18.0</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&lt;bipartite_edge&gt;&quot;Document Title: London Facts&quot;">
+      <data key="d0">bipartite_edge</data>
+      <data key="d1">8.0</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </node>
+    <node id="&quot;GEOGRAPHY&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"CONCEPT"</data>
+      <data key="d4">"Geography is the category under which the London Facts document is classified."&lt;SEP&gt;"The category of the document indicates that it relates to geographical information."&lt;SEP&gt;"The document falls into the geography category, indicating a focus on geographical information about Paris."</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72&lt;SEP&gt;chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&quot;PARIS&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"LOCATION"</data>
+      <data key="d4">"Paris is a city and the capital of France, known for its significant cultural and historical influence."&lt;SEP&gt;"Paris is the city that serves as the capital of France, recognized for its historical and cultural significance."</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&quot;BIG BEN&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"LANDMARK"</data>
+      <data key="d4">"Big Ben is a notable clock tower in London, recognized as a symbol of the city."</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </node>
+    <node id="&quot;DOCUMENT TITLE&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"CONCEPT"</data>
+      <data key="d4">"The document titled 'Paris Facts' serves to inform about various aspects of Paris."&lt;SEP&gt;"The title of the document is 'Paris Facts', indicating the content relates to Paris."</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&quot;ENGLAND&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"LOCATION"</data>
+      <data key="d4">"England is a country that contains London as its capital."&lt;SEP&gt;"England is a tag associated with the document, indicating its relevance to the country of England."</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </node>
+    <node id="&quot;LONDON FACTS&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"DOCUMENT"</data>
+      <data key="d4">"London Facts is a document that provides information specifically about London."</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </node>
+    <node id="&quot;EUROPE&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"LOCATION"</data>
+      <data key="d4">"Europe is a tag associated with the document, indicating its relevance to the continent of Europe."&lt;SEP&gt;"Europe is referenced in tags to specify the geographical region in which France is located."&lt;SEP&gt;"Europe is referenced in the tags, indicating the continent on which France is located."</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72&lt;SEP&gt;chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&quot;EIFFEL TOWER&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"LANDMARK"</data>
+      <data key="d4">"The Eiffel Tower is a famous landmark located in Paris, symbolizing French culture and architecture."&lt;SEP&gt;"The Eiffel Tower is an iconic structure in Paris, known worldwide as a symbol of France."</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&quot;LONDON&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"LOCATION"</data>
+      <data key="d4">"London is the capital city of England, known for its rich history and cultural significance."</data>
+      <data key="d2">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </node>
+    <node id="&quot;FRANCE&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"LOCATION"</data>
+      <data key="d4">"France is a European country, of which Paris is the capital, known for its rich history and cultural heritage."&lt;SEP&gt;"France is a country in Europe, of which Paris is the capital."&lt;SEP&gt;"France is mentioned in the tags to highlight its relevance to the geographical context of the document."&lt;SEP&gt;"Frances is referenced in tags to denote relevance to the geographical context."</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <node id="&quot;TAGS&quot;">
+      <data key="d0">entity</data>
+      <data key="d3">"CONCEPT"</data>
+      <data key="d4">"Tags associated with the document are: 'france', 'europe' indicating the geographical context."&lt;SEP&gt;"The document includes tags such as 'france' and 'europe', marking key geographical themes related to Paris."</data>
+      <data key="d2">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </node>
+    <edge source="&lt;bipartite_edge&gt;&quot;It is known for the Eiffel Tower.&quot;" target="&quot;EIFFEL TOWER&quot;">
+      <data key="d5">180.0</data>
+      <data key="d6">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['england', 'europe']&quot;" target="&quot;EUROPE&quot;">
+      <data key="d5">80.0</data>
+      <data key="d6">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['england', 'europe']&quot;" target="&quot;GEOGRAPHY&quot;">
+      <data key="d5">85.0</data>
+      <data key="d6">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['england', 'europe']&quot;" target="&quot;ENGLAND&quot;">
+      <data key="d5">80.0</data>
+      <data key="d6">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['france', 'europe']&quot;" target="&quot;EUROPE&quot;">
+      <data key="d5">170.0</data>
+      <data key="d6">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['france', 'europe']&quot;" target="&quot;GEOGRAPHY&quot;">
+      <data key="d5">160.0</data>
+      <data key="d6">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['france', 'europe']&quot;" target="&quot;TAGS&quot;">
+      <data key="d5">160.0</data>
+      <data key="d6">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Context: category: geography, tags: ['france', 'europe']&quot;" target="&quot;FRANCE&quot;">
+      <data key="d5">170.0</data>
+      <data key="d6">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Title: Paris Facts&quot;" target="&quot;DOCUMENT TITLE&quot;">
+      <data key="d5">160.0</data>
+      <data key="d6">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;London is the capital of England.&quot;" target="&quot;ENGLAND&quot;">
+      <data key="d5">90.0</data>
+      <data key="d6">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;London is the capital of England.&quot;" target="&quot;LONDON&quot;">
+      <data key="d5">95.0</data>
+      <data key="d6">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;It is famous for Big Ben.&quot;" target="&quot;BIG BEN&quot;">
+      <data key="d5">85.0</data>
+      <data key="d6">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Paris is the capital of France.&quot;" target="&quot;PARIS&quot;">
+      <data key="d5">190.0</data>
+      <data key="d6">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Paris is the capital of France.&quot;" target="&quot;FRANCE&quot;">
+      <data key="d5">180.0</data>
+      <data key="d6">chunk-8a87b9e252a3e3b2fb40f82004d17b62</data>
+    </edge>
+    <edge source="&lt;bipartite_edge&gt;&quot;Document Title: London Facts&quot;" target="&quot;LONDON FACTS&quot;">
+      <data key="d5">90.0</data>
+      <data key="d6">chunk-9f5b3611cc02f70f292a038853648a72</data>
+    </edge>
+  </graph>
+</graphml>

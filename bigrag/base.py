@@ -7,7 +7,15 @@ from .utils import EmbeddingFunc
 
 TextChunkSchema = TypedDict(
     "TextChunkSchema",
-    {"tokens": int, "content": str, "full_doc_id": str, "chunk_order_index": int},
+    {
+        "tokens": int,
+        "content": str,
+        "full_doc_id": str,
+        "chunk_order_index": int,
+        "doc_title": str,  # Document title for context
+        "doc_metadata": dict,  # Additional metadata (tags, category, etc.)
+    },
+    total=False,  # Make doc_title and doc_metadata optional for backward compatibility
 )
 
 T = TypeVar("T")
@@ -30,6 +38,10 @@ class QueryParam:
     max_token_for_global_context: int = 4000
     # Number of tokens for the entity descriptions
     max_token_for_local_context: int = 4000
+    # Phase 3.4: Enable semantic reranking for chunk retrieval
+    # Uses cross-encoder to rerank top-10 chunks → top-5 by relevance
+    # Improves precision at cost of ~50-100ms latency
+    enable_reranking: bool = True
 
 
 @dataclass

@@ -1,0 +1,26 @@
+{
+  "doc-8a87b9e252a3e3b2fb40f82004d17b62": {
+    "content": "Paris is the capital of France. It is known for the Eiffel Tower.",
+    "title": "Paris Facts",
+    "metadata": {
+      "title": "Paris Facts",
+      "category": "geography",
+      "tags": [
+        "france",
+        "europe"
+      ]
+    }
+  },
+  "doc-9f5b3611cc02f70f292a038853648a72": {
+    "content": "London is the capital of England. It is famous for Big Ben.",
+    "title": "London Facts",
+    "metadata": {
+      "title": "London Facts",
+      "category": "geography",
+      "tags": [
+        "england",
+        "europe"
+      ]
+    }
+  }
+}

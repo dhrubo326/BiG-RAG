@@ -523,7 +523,7 @@ class AskRequest(BaseModel):
     top_k: Optional[int] = 5
     mode: Optional[str] = "hybrid"
     llm_provider: Optional[str] = None
-    enable_reranking: Optional[bool] = True  # Phase 3.4: Semantic reranking toggle
+    enable_reranking: Optional[bool] = False  # Phase 3.4: Semantic reranking (default: False)
 
     class Config:
         json_schema_extra = {
@@ -532,7 +532,7 @@ class AskRequest(BaseModel):
                 "top_k": 5,
                 "mode": "hybrid",
                 "llm_provider": "openai",
-                "enable_reranking": True
+                "enable_reranking": False
             }
         }
 
@@ -562,7 +562,7 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = 500
     llm_provider: Optional[str] = None
     use_rag: Optional[bool] = True  # Enable RAG by default
-    enable_reranking: Optional[bool] = True  # Phase 3.4: Semantic reranking toggle
+    enable_reranking: Optional[bool] = False  # Phase 3.4: Semantic reranking (default: False)
 
     class Config:
         json_schema_extra = {
@@ -577,7 +577,7 @@ class ChatCompletionRequest(BaseModel):
                 "temperature": 0.7,
                 "max_tokens": 500,
                 "use_rag": True,
-                "enable_reranking": True
+                "enable_reranking": False
             }
         }
 
@@ -1853,7 +1853,7 @@ async def search(request: SearchRequest):
                     mode="hybrid",
                     only_need_context=True,
                     top_k=10,
-                    enable_reranking=True  # Phase 3.4: semantic reranking enabled by default
+                    enable_reranking=False  # Phase 3.4: semantic reranking (default: False)
                 ),
                 entity_match=entity_match,
                 bipartite_edge_match=edge_match

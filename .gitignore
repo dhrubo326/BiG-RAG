@@ -155,12 +155,17 @@ cython_debug/
 ###############################################################################
 
 # API Keys and Secrets (CRITICAL - Never commit!)
+.env
+.env.local
+.env.*.local
 *openai_api_key.txt
+*anthropic_api_key.txt
+*google_api_key.txt
+*grok_api_key.txt
 *api_key*.txt
 *.key
 *.pem
-.env.local
-.env.*.local
+*.secret
 
 # Log files
 *.log
@@ -186,8 +191,16 @@ expr_results/
 # Temporary/cache directories
 bigrag_cache_*/
 .cache/
+cache/
 tmp/
 temp/
+
+# Document registry and job tracking
+document_registry.json
+job_queue.json
+
+# Evaluation results
+evaluation_results/
 
 # Old/legacy files
 graphrag/

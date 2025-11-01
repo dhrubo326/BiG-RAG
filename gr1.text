@@ -1,0 +1,37 @@
+1. GRAPH STRUCTURE - Naming Difference Only
+Graph-R1 Paper:
+Hypergraph Gₕ = (V, Eₕ, φ)
+  V = Entity nodes
+  Eₕ = Hyperedges (n-ary relations connecting multiple entities)
+  φ = Embedding function
+
+Storage structure:
+  hyperedges_vdb = {
+    "hyperedge_id": {
+      "content": "semantic description",
+      "entities": ["entity1", "entity2", ...],
+      "source_id": "chunk-id"
+    }
+  }
+BiG-RAG Implementation:
+Bipartite Graph = (V_E, V_R, E)
+  V_E = Entity nodes
+  V_R = Bipartite edge nodes (relations as nodes!)
+  E = Edges connecting entities ↔ relations ↔ chunks
+
+Storage structure:
+  vdb_bipartite_edges.json = {
+    "edge-id": {
+      "bipartite_edge_name": "entity1 - relation - entity2",
+      "description": "semantic description",
+      "source_id": "chunk-id"
+    }
+  }
+KEY INSIGHT:
+Graph-R1 uses hyperedges (edges connecting >2 nodes)
+BiG-RAG models relations as nodes in a bipartite graph
+BOTH represent n-ary relations - just different graph theory terminology!
+Mathematically:
+A hyperedge connecting {entity1, entity2, entity3} in Graph-R1
+Becomes a bipartite edge node connected to entity1, entity2, entity3 in BiG-RAG
+Same data structure, different representation!

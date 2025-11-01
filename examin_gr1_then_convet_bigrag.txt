@@ -1,0 +1,36 @@
+KEY DIFFERENCE: Graph-R1 vs BiG-RAG
+Graph-R1 reference code:
+# graphr1/operate.py:563
+results = entities_vdb  # Expects PRE-COMPUTED list of entity IDs
+BiG-RAG implementation:
+# bigrag/operate.py:582
+results = await entities_vdb.query(query, top_k=top_k)  # CALLS .query() method
+Why the difference? Graph-R1 expects external code (like API server) to pre-compute vector searches:
+# script_api.py:1811-1812
+entity_match = await embedding_manager.search_entities(query_text, 5)
+edge_match = await embedding_manager.search_edges(query_text, 5)
+Then passes results to Graph-R1:
+result = await rag.aquery(
+    query_text,
+    entity_match=entity_match,  # Pre-computed
+    bipartite_edge_match=edge_match  # Pre-computed
+)
+
+
+
+BiG-RAG Implementation (bigrag/operate.py):
+# Line 582: Path A - Entity-based retrieval
+results = await entities_vdb.query(query, top_k=query_param.top_k)
+# Returns: List of entities similar to query
+
+# Line 736: Path B - Relation-based retrieval  
+results = await bipartite_edges_vdb.query(keywords, top_k=query_param.top_k)
+# Returns: List of relations similar to query
+
+# NO CHUNK VECTOR SEARCH!
+# Chunks are retrieved AFTER finding entities/relations via graph traversal
+Graph-R1 Reference Code (graphr1/operate.py):
+# Line 563-585: Same structure
+# Path A: Uses entities_vdb (pre-computed entity matches)
+# Path B: Uses hyperedges_vdb (pre-computed hyperedge matches)
+

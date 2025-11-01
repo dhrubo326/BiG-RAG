@@ -443,9 +443,434 @@ mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
 
 ## What Needs to Be Added
 
-### Priority 0 (Must Have) - Core Functionality
+**Implementation organized by phases matching the roadmap.**
 
-#### 1. Path C: Chunk Vector Search ❌
+---
+
+## PHASE 1: Core Storage Infrastructure (Week 1-2)
+
+**Note:** Phase 1 focuses on storage layer setup. Metadata preservation and document deletion are in PHASE 2 (Indexing Pipeline).
+
+**Deliverables:**
+- ✅ Vector storage adapter (ALREADY DONE in [bigrag/bigrag.py:224-243](bigrag/bigrag.py#L224-L243))
+- ✅ Graph storage (ALREADY DONE - NetworkX)
+- ✅ KV storage (ALREADY DONE - JsonKVStorage)
+- ✅ Base classes and schemas (ALREADY DONE - QueryParam, schemas)
+
+**Status:** Phase 1 is COMPLETE. Proceed to Phase 2.
+
+---
+
+## PHASE 2: Indexing Pipeline & Critical Fixes (Week 3-4)
+
+### 2.1 Metadata and Title Preservation in Chunks ❌ 🚨 CRITICAL
+
+**Current Problem:**
+- Metadata (title, tags, category) from corpus.jsonl is **DISCARDED** during indexing
+- Chunks lose document context (e.g., chunk 50 from "Bangladesh" doc has no link to "Bangladesh")
+- LLM entity extraction doesn't see document-level context
+- Impacts KG quality and entity extraction accuracy
+
+**Example of the problem:**
+```json
+// corpus.jsonl entry
+{
+  "id": "doc-123...",
+  "contents": "...Page 50: Traditional food includes rice, fish...",
+  "title": "Bangladesh - Country Overview",
+  "metadata": {"category": "Geography", "tags": ["Bangladesh"]}
+}
+
+// What gets stored in chunk (CURRENT - BROKEN)
+{
+  "chunk-xyz...": {
+    "content": "Traditional food includes rice, fish...",  // ← NO "Bangladesh" context!
+    "full_doc_id": "doc-123...",
+    "chunk_order_index": 50
+  }
+}
+
+// What LLM sees during entity extraction
+"Traditional food includes rice, fish..."
+// ← Extracts: ("RICE", "food"), ("FISH", "food")
+// ← LOSES: Connection to Bangladesh!
+```
+
+**Where to fix:**
+
+**Location 1:** [bigrag/bigrag.py::ainsert():283-286](bigrag/bigrag.py#L283-L286)
+
+```python
+# CURRENT (BROKEN) - Only stores content
+new_docs = {
+    compute_mdhash_id(c.strip(), prefix="doc-"): {"content": c.strip()}
+    for c in string_or_strings
+}
+
+# FIX: Preserve metadata
+async def ainsert(self, string_or_strings, metadata=None):
+    """
+    Insert documents with optional metadata.
+
+    Args:
+        string_or_strings: Document content(s)
+        metadata: Optional list of metadata dicts matching documents
+                  Format: [{"title": "...", "metadata": {...}}, ...]
+    """
+    if isinstance(string_or_strings, str):
+        string_or_strings = [string_or_strings]
+        metadata = [metadata] if metadata else [{}]
+
+    if metadata is None:
+        metadata = [{}] * len(string_or_strings)
+
+    new_docs = {
+        compute_mdhash_id(c.strip(), prefix="doc-"): {
+            "content": c.strip(),
+            "title": meta.get("title", ""),           # ← ADD title
+            "metadata": meta.get("metadata", {}),     # ← ADD metadata
+        }
+        for c, meta in zip(string_or_strings, metadata)
+    }
+    # ... rest of function
+```
+
+**Location 2:** [bigrag/bigrag.py::ainsert():299-310](bigrag/bigrag.py#L299-L310) - Preserve in chunks
+
+```python
+# CURRENT (BROKEN) - Chunks don't have title/metadata
+for doc_key, doc in tqdm_async(new_docs.items(), desc="Chunking documents"):
+    chunks = {
+        compute_mdhash_id(dp["content"], prefix="chunk-"): {
+            **dp,
+            "full_doc_id": doc_key,
+        }
+        for dp in chunking_by_token_size(doc["content"], ...)
+    }
+
+# FIX: Preserve title and metadata in chunks
+for doc_key, doc in tqdm_async(new_docs.items(), desc="Chunking documents"):
+    chunks = {
+        compute_mdhash_id(dp["content"], prefix="chunk-"): {
+            **dp,
+            "full_doc_id": doc_key,
+            "doc_title": doc.get("title", ""),        # ← ADD title
+            "doc_metadata": doc.get("metadata", {}),  # ← ADD metadata
+        }
+        for dp in chunking_by_token_size(doc["content"], ...)
+    }
+```
+
+**Location 3:** [bigrag/operate.py::extract_entities():314-322](bigrag/operate.py#L314-L322) - Use in entity extraction
+
+```python
+# CURRENT (BROKEN) - LLM sees only chunk content
+async def _process_single_content(chunk_key_dp: tuple[str, TextChunkSchema]):
+    chunk_dp = chunk_key_dp[1]
+    content = chunk_dp["content"]
+    hint_prompt = entity_extract_prompt.format(input_text=content)  # ← NO CONTEXT
+
+# FIX: Prepend document context to LLM prompt
+async def _process_single_content(chunk_key_dp: tuple[str, TextChunkSchema]):
+    chunk_dp = chunk_key_dp[1]
+    content = chunk_dp["content"]
+    doc_title = chunk_dp.get("doc_title", "")
+
+    # Prepend document title as context
+    if doc_title:
+        contextual_content = f"Document: {doc_title}\n\nContent: {content}"
+    else:
+        contextual_content = content
+
+    hint_prompt = entity_extract_prompt.format(input_text=contextual_content)
+```
+
+**Location 4:** [script_build.py::load_corpus():56-76](script_build.py#L56-L76) - Pass metadata during indexing
+
+```python
+# CURRENT (BROKEN) - Metadata discarded
+def load_corpus(data_source: str):
+    documents = []
+    with open(corpus_path, encoding='utf-8') as f:
+        for line in f:
+            data = json.loads(line)
+            documents.append({
+                "id": data.get("id", ""),
+                "content": data.get("contents", ""),  # ← ONLY content passed
+                "title": data.get("title", "")        # ← title extracted but UNUSED
+            })
+    return documents
+
+# Later: contents = [doc["content"] for doc in documents]  # ← Metadata LOST
+
+# FIX: Pass metadata to BiGRAG
+def load_corpus(data_source: str):
+    documents = []
+    metadata = []
+    with open(corpus_path, encoding='utf-8') as f:
+        for line in f:
+            data = json.loads(line)
+            documents.append(data.get("contents", ""))
+            metadata.append({
+                "title": data.get("title", ""),
+                "metadata": data.get("metadata", {}),
+            })
+    return documents, metadata
+
+# Later: rag.insert(batch, metadata=batch_metadata)  # ← Metadata PASSED
+```
+
+**Expected Improvement:**
+- ✅ **Better entity extraction**: LLM knows "This is about Bangladesh" when extracting from chunk 50
+- ✅ **Improved KG quality**: Entities properly linked to document context
+- ✅ **Traceability**: Can filter/search by metadata (category, tags, date)
+- ✅ **Accuracy gain**: +2-3 F1 points from better entity extraction
+
+**Estimated effort:** 3-4 hours (modify 4 locations + test)
+
+**Phase:** PHASE 2
+
+---
+
+### 2.2 Document Deletion System ❌ 🔧
+
+**Current Problem:**
+- **NO document deletion exists** in current codebase
+- Only `delete_by_entity()` exists (partial deletion)
+- Cannot remove documents from indexed corpus
+- Cannot clean up outdated/incorrect data
+- Storage grows indefinitely
+
+**What needs to happen when deleting a document:**
+```
+Document ID: doc-abc123
+    ↓
+1. Find all chunks from this document
+    → chunk-001, chunk-042, chunk-058
+    ↓
+2. Find all entities/edges extracted from those chunks
+    → Entity "BANGLADESH" (source_ids: chunk-001, chunk-042, chunk-100)
+    → Entity "DHAKA" (source_ids: chunk-042)  ← Only from this doc
+    ↓
+3. Update or delete entities/edges
+    → "BANGLADESH": Remove chunk-001, chunk-042 from source_id (keep chunk-100)
+    → "DHAKA": DELETE completely (no other sources)
+    ↓
+4. Delete chunks from storage
+    → Delete chunk-001, chunk-042, chunk-058 from text_chunks
+    → Delete chunk-001, chunk-042, chunk-058 from vdb_chunks
+    ↓
+5. Delete document
+    → Delete doc-abc123 from full_docs
+```
+
+**Implementation:**
+
+**Location:** Add to [bigrag/bigrag.py](bigrag/bigrag.py) after `adelete_by_entity()`
+
+```python
+# ADD NEW METHOD: adelete_document()
+
+async def adelete_document(self, doc_id: str):
+    """
+    Delete a document and all associated data from the knowledge graph.
+
+    This includes:
+    1. All chunks from this document
+    2. Entities/edges that ONLY came from this document (full delete)
+    3. Remove document's chunks from entities/edges that have other sources (partial update)
+    4. Document metadata
+
+    Args:
+        doc_id: Document ID (e.g., "doc-abc123...")
+
+    Returns:
+        dict: Deletion statistics
+    """
+    from bigrag.prompt import GRAPH_FIELD_SEP
+
+    logger.info(f"Starting deletion of document: {doc_id}")
+
+    # Step 1: Get all chunks from this document
+    all_chunks = await self.text_chunks.get_by_ids([])  # Get all chunks
+    doc_chunks = {
+        chunk_id: chunk
+        for chunk_id, chunk in all_chunks.items()
+        if chunk.get("full_doc_id") == doc_id
+    }
+
+    if not doc_chunks:
+        logger.warning(f"Document {doc_id} not found or has no chunks")
+        return {
+            "status": "not_found",
+            "doc_id": doc_id,
+            "chunks_deleted": 0,
+            "entities_deleted": 0,
+            "entities_updated": 0,
+        }
+
+    doc_chunk_ids = set(doc_chunks.keys())
+    logger.info(f"Found {len(doc_chunks)} chunks for document {doc_id}")
+
+    # Step 2: Process all graph nodes (entities and edges)
+    all_nodes = await self.chunk_entity_relation_graph.get_all_nodes()
+
+    entities_deleted = 0
+    entities_updated = 0
+    edges_deleted = 0
+    edges_updated = 0
+
+    for node_id, node_data in all_nodes.items():
+        source_ids = node_data.get("source_id", "").split(GRAPH_FIELD_SEP)
+        source_ids = [sid for sid in source_ids if sid]  # Remove empty strings
+
+        # Check if any chunk from this document is in source_ids
+        overlap = doc_chunk_ids & set(source_ids)
+
+        if not overlap:
+            continue  # This entity/edge doesn't reference our document
+
+        # Remove this document's chunks from source_ids
+        remaining_sources = [sid for sid in source_ids if sid not in doc_chunk_ids]
+
+        if remaining_sources:
+            # Entity/edge still has other sources - UPDATE (remove our chunks)
+            node_data["source_id"] = GRAPH_FIELD_SEP.join(remaining_sources)
+
+            # Update weight (proportional reduction)
+            old_weight = node_data.get("weight", 1.0)
+            reduction_ratio = len(remaining_sources) / len(source_ids)
+            node_data["weight"] = old_weight * reduction_ratio
+
+            await self.chunk_entity_relation_graph.upsert_node(node_id, node_data)
+
+            if node_data.get("role") == "bipartite_edge":
+                edges_updated += 1
+            else:
+                entities_updated += 1
+
+            logger.debug(f"Updated {node_id}: removed {len(overlap)} source chunks")
+        else:
+            # Entity/edge ONLY came from this document - DELETE completely
+            await self.chunk_entity_relation_graph.delete_node(node_id)
+
+            # Delete from vector DBs
+            if node_data.get("role") == "bipartite_edge":
+                try:
+                    await self.vdb_bipartite_edges.delete([node_id])
+                    edges_deleted += 1
+                except Exception as e:
+                    logger.warning(f"Failed to delete edge {node_id} from vdb: {e}")
+            else:
+                try:
+                    await self.vdb_entities.delete([node_id])
+                    entities_deleted += 1
+                except Exception as e:
+                    logger.warning(f"Failed to delete entity {node_id} from vdb: {e}")
+
+            logger.debug(f"Deleted {node_id}: no remaining sources")
+
+    # Step 3: Delete chunks from storage
+    chunk_ids_list = list(doc_chunk_ids)
+
+    # Delete from text_chunks (KV store)
+    try:
+        await self.text_chunks.delete(chunk_ids_list)
+        logger.info(f"Deleted {len(chunk_ids_list)} chunks from text_chunks")
+    except Exception as e:
+        logger.error(f"Failed to delete chunks from text_chunks: {e}")
+
+    # Delete from vdb_chunks (vector DB)
+    try:
+        await self.vdb_chunks.delete(chunk_ids_list)
+        logger.info(f"Deleted {len(chunk_ids_list)} chunks from vdb_chunks")
+    except Exception as e:
+        logger.error(f"Failed to delete chunks from vdb_chunks: {e}")
+
+    # Step 4: Delete document from full_docs
+    try:
+        await self.full_docs.delete([doc_id])
+        logger.info(f"Deleted document {doc_id} from full_docs")
+    except Exception as e:
+        logger.error(f"Failed to delete document from full_docs: {e}")
+
+    # Step 5: Persist changes
+    await self._delete_document_done()
+
+    stats = {
+        "status": "success",
+        "doc_id": doc_id,
+        "chunks_deleted": len(chunk_ids_list),
+        "entities_deleted": entities_deleted,
+        "entities_updated": entities_updated,
+        "edges_deleted": edges_deleted,
+        "edges_updated": edges_updated,
+    }
+
+    logger.info(f"Document deletion complete: {stats}")
+    return stats
+
+
+def delete_document(self, doc_id: str):
+    """Synchronous wrapper for adelete_document()"""
+    loop = always_get_an_event_loop()
+    return loop.run_until_complete(self.adelete_document(doc_id))
+
+
+async def _delete_document_done(self):
+    """Persist changes after document deletion"""
+    tasks = []
+    for storage_inst in [
+        self.full_docs,
+        self.text_chunks,
+        self.vdb_entities,
+        self.vdb_bipartite_edges,
+        self.vdb_chunks,
+        self.chunk_entity_relation_graph,
+    ]:
+        if storage_inst is None:
+            continue
+        tasks.append(cast(StorageNameSpace, storage_inst).index_done_callback())
+    await asyncio.gather(*tasks)
+```
+
+**Usage Example:**
+```python
+from bigrag import BiGRAG
+
+# Initialize
+bigrag = BiGRAG(working_dir="./expr/demo_test")
+
+# Delete a document
+stats = bigrag.delete_document("doc-abc123...")
+
+# Output:
+# {
+#   "status": "success",
+#   "doc_id": "doc-abc123...",
+#   "chunks_deleted": 15,
+#   "entities_deleted": 3,    # Entities unique to this doc
+#   "entities_updated": 8,    # Entities shared with other docs
+#   "edges_deleted": 5,
+#   "edges_updated": 12
+# }
+```
+
+**Expected Benefit:**
+- ✅ **Data hygiene**: Remove outdated/incorrect documents
+- ✅ **Storage management**: Prevent indefinite growth
+- ✅ **Testing**: Easily reset test data
+- ✅ **GDPR compliance**: Remove user data on request
+
+**Estimated effort:** 3-4 hours (implement + test)
+
+**Phase:** PHASE 2
+
+---
+
+## PHASE 3: Three-Path Retrieval (Week 5-6)
+
+### 3.1 Path C: Chunk Vector Search ❌
 
 **What's missing:**
 - `vdb_chunks` is created and populated, but **never queried**
@@ -508,7 +933,9 @@ async def _get_chunk_data(
 
 **Estimated effort:** 2-4 hours
 
-#### 2. Integrate Path C into Query Flow ❌
+**Phase:** PHASE 3
+
+### 3.2 Integrate Path C into Query Flow ❌
 
 **Where to modify:** [bigrag/operate.py::_build_query_context()](bigrag/operate.py#L511-L571) after line 571
 
@@ -596,7 +1023,9 @@ async def _build_query_context(
 
 **Estimated effort:** 2-3 hours
 
-#### 3. Update kg_query() to Pass chunks_vdb ❌
+**Phase:** PHASE 3
+
+### 3.3 Update kg_query() to Pass chunks_vdb ❌
 
 **Where to modify:** [bigrag/operate.py::kg_query():484](bigrag/operate.py#L484)
 
@@ -656,9 +1085,9 @@ async def aquery(self, query: str, param: QueryParam = QueryParam(),
 
 **Estimated effort:** 1 hour
 
-### Priority 1 (Should Have) - Accuracy Improvements
+**Phase:** PHASE 3
 
-#### 4. Semantic Reranking with Cross-Encoder ❌
+### 3.4 Semantic Reranking with Cross-Encoder ❌
 
 **What's missing:**
 - Cross-encoder model for reranking chunks
@@ -757,7 +1186,9 @@ async def _semantic_rerank(
 
 **Estimated effort:** 4-6 hours (including testing)
 
-#### 5. Add Reranking Toggle to QueryParam ❌
+**Phase:** PHASE 3
+
+### 3.5 Add Reranking Toggle to QueryParam ❌
 
 **Where to modify:** [bigrag/base.py::QueryParam](bigrag/base.py#L17)
 
@@ -782,46 +1213,13 @@ class QueryParam:
 
 **Estimated effort:** 1 hour
 
+**Phase:** PHASE 2
+
 ---
 
-### Priority 1 (Critical Infrastructure) - Indexing & Data Management
+### 2.5 Reranking Toggle in QueryParam ❌
 
-#### 6. Metadata and Title Preservation in Chunks ❌ 🚨
-
-**Current Problem:**
-- Metadata (title, tags, category) from corpus.jsonl is **DISCARDED** during indexing
-- Chunks lose document context (e.g., chunk 50 from "Bangladesh" doc has no link to "Bangladesh")
-- LLM entity extraction doesn't see document-level context
-- Impacts KG quality and entity extraction accuracy
-
-**Example of the problem:**
-```json
-// corpus.jsonl entry
-{
-  "id": "doc-123...",
-  "contents": "...Page 50: Traditional food includes rice, fish...",
-  "title": "Bangladesh - Country Overview",
-  "metadata": {"category": "Geography", "tags": ["Bangladesh"]}
-}
-
-// What gets stored in chunk (CURRENT - BROKEN)
-{
-  "chunk-xyz...": {
-    "content": "Traditional food includes rice, fish...",  // ← NO "Bangladesh" context!
-    "full_doc_id": "doc-123...",
-    "chunk_order_index": 50
-  }
-}
-
-// What LLM sees during entity extraction
-"Traditional food includes rice, fish..."
-// ← Extracts: ("RICE", "food"), ("FISH", "food")
-// ← LOSES: Connection to Bangladesh!
-```
-
-**Where to fix:**
-
-**Location 1:** [bigrag/bigrag.py::ainsert():283-286](bigrag/bigrag.py#L283-L286)
+**Where to modify:** [bigrag/base.py::QueryParam](bigrag/base.py#L17)
 
 ```python
 # CURRENT (BROKEN) - Only stores content

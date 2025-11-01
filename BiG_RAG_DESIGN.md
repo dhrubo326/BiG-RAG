@@ -782,9 +782,414 @@ class QueryParam:
 
 **Estimated effort:** 1 hour
 
+---
+
+### Priority 1 (Critical Infrastructure) - Indexing & Data Management
+
+#### 6. Metadata and Title Preservation in Chunks ❌ 🚨
+
+**Current Problem:**
+- Metadata (title, tags, category) from corpus.jsonl is **DISCARDED** during indexing
+- Chunks lose document context (e.g., chunk 50 from "Bangladesh" doc has no link to "Bangladesh")
+- LLM entity extraction doesn't see document-level context
+- Impacts KG quality and entity extraction accuracy
+
+**Example of the problem:**
+```json
+// corpus.jsonl entry
+{
+  "id": "doc-123...",
+  "contents": "...Page 50: Traditional food includes rice, fish...",
+  "title": "Bangladesh - Country Overview",
+  "metadata": {"category": "Geography", "tags": ["Bangladesh"]}
+}
+
+// What gets stored in chunk (CURRENT - BROKEN)
+{
+  "chunk-xyz...": {
+    "content": "Traditional food includes rice, fish...",  // ← NO "Bangladesh" context!
+    "full_doc_id": "doc-123...",
+    "chunk_order_index": 50
+  }
+}
+
+// What LLM sees during entity extraction
+"Traditional food includes rice, fish..."
+// ← Extracts: ("RICE", "food"), ("FISH", "food")
+// ← LOSES: Connection to Bangladesh!
+```
+
+**Where to fix:**
+
+**Location 1:** [bigrag/bigrag.py::ainsert():283-286](bigrag/bigrag.py#L283-L286)
+
+```python
+# CURRENT (BROKEN) - Only stores content
+new_docs = {
+    compute_mdhash_id(c.strip(), prefix="doc-"): {"content": c.strip()}
+    for c in string_or_strings
+}
+
+# FIX: Preserve metadata
+async def ainsert(self, string_or_strings, metadata=None):
+    """
+    Insert documents with optional metadata.
+
+    Args:
+        string_or_strings: Document content(s)
+        metadata: Optional list of metadata dicts matching documents
+                  Format: [{"title": "...", "metadata": {...}}, ...]
+    """
+    if isinstance(string_or_strings, str):
+        string_or_strings = [string_or_strings]
+        metadata = [metadata] if metadata else [{}]
+
+    if metadata is None:
+        metadata = [{}] * len(string_or_strings)
+
+    new_docs = {
+        compute_mdhash_id(c.strip(), prefix="doc-"): {
+            "content": c.strip(),
+            "title": meta.get("title", ""),           # ← ADD title
+            "metadata": meta.get("metadata", {}),     # ← ADD metadata
+        }
+        for c, meta in zip(string_or_strings, metadata)
+    }
+    # ... rest of function
+```
+
+**Location 2:** [bigrag/bigrag.py::ainsert():299-310](bigrag/bigrag.py#L299-L310) - Preserve in chunks
+
+```python
+# CURRENT (BROKEN) - Chunks don't have title/metadata
+for doc_key, doc in tqdm_async(new_docs.items(), desc="Chunking documents"):
+    chunks = {
+        compute_mdhash_id(dp["content"], prefix="chunk-"): {
+            **dp,
+            "full_doc_id": doc_key,
+        }
+        for dp in chunking_by_token_size(doc["content"], ...)
+    }
+
+# FIX: Preserve title and metadata in chunks
+for doc_key, doc in tqdm_async(new_docs.items(), desc="Chunking documents"):
+    chunks = {
+        compute_mdhash_id(dp["content"], prefix="chunk-"): {
+            **dp,
+            "full_doc_id": doc_key,
+            "doc_title": doc.get("title", ""),        # ← ADD title
+            "doc_metadata": doc.get("metadata", {}),  # ← ADD metadata
+        }
+        for dp in chunking_by_token_size(doc["content"], ...)
+    }
+```
+
+**Location 3:** [bigrag/operate.py::extract_entities():314-322](bigrag/operate.py#L314-L322) - Use in entity extraction
+
+```python
+# CURRENT (BROKEN) - LLM sees only chunk content
+async def _process_single_content(chunk_key_dp: tuple[str, TextChunkSchema]):
+    chunk_dp = chunk_key_dp[1]
+    content = chunk_dp["content"]
+    hint_prompt = entity_extract_prompt.format(input_text=content)  # ← NO CONTEXT
+
+# FIX: Prepend document context to LLM prompt
+async def _process_single_content(chunk_key_dp: tuple[str, TextChunkSchema]):
+    chunk_dp = chunk_key_dp[1]
+    content = chunk_dp["content"]
+    doc_title = chunk_dp.get("doc_title", "")
+
+    # Prepend document title as context
+    if doc_title:
+        contextual_content = f"Document: {doc_title}\n\nContent: {content}"
+    else:
+        contextual_content = content
+
+    hint_prompt = entity_extract_prompt.format(input_text=contextual_content)
+```
+
+**Location 4:** [script_build.py::load_corpus():56-76](script_build.py#L56-L76) - Pass metadata during indexing
+
+```python
+# CURRENT (BROKEN) - Metadata discarded
+def load_corpus(data_source: str):
+    documents = []
+    with open(corpus_path, encoding='utf-8') as f:
+        for line in f:
+            data = json.loads(line)
+            documents.append({
+                "id": data.get("id", ""),
+                "content": data.get("contents", ""),  # ← ONLY content passed
+                "title": data.get("title", "")        # ← title extracted but UNUSED
+            })
+    return documents
+
+# Later: contents = [doc["content"] for doc in documents]  # ← Metadata LOST
+
+# FIX: Pass metadata to BiGRAG
+def load_corpus(data_source: str):
+    documents = []
+    metadata = []
+    with open(corpus_path, encoding='utf-8') as f:
+        for line in f:
+            data = json.loads(line)
+            documents.append(data.get("contents", ""))
+            metadata.append({
+                "title": data.get("title", ""),
+                "metadata": data.get("metadata", {}),
+            })
+    return documents, metadata
+
+# Later: rag.insert(batch, metadata=batch_metadata)  # ← Metadata PASSED
+```
+
+**Expected Improvement:**
+- ✅ **Better entity extraction**: LLM knows "This is about Bangladesh" when extracting from chunk 50
+- ✅ **Improved KG quality**: Entities properly linked to document context
+- ✅ **Traceability**: Can filter/search by metadata (category, tags, date)
+- ✅ **Accuracy gain**: +2-3 F1 points from better entity extraction
+
+**Estimated effort:** 3-4 hours (modify 4 locations + test)
+
+---
+
+#### 7. Full Document Deletion System ❌ 🔧
+
+**Current Problem:**
+- **NO document deletion exists** in current codebase
+- Only `delete_by_entity()` exists (partial deletion)
+- Cannot remove documents from indexed corpus
+- Cannot clean up outdated/incorrect data
+- Storage grows indefinitely
+
+**What needs to happen when deleting a document:**
+```
+Document ID: doc-abc123
+    ↓
+1. Find all chunks from this document
+    → chunk-001, chunk-042, chunk-058
+    ↓
+2. Find all entities/edges extracted from those chunks
+    → Entity "BANGLADESH" (source_ids: chunk-001, chunk-042, chunk-100)
+    → Entity "DHAKA" (source_ids: chunk-042)  ← Only from this doc
+    ↓
+3. Update or delete entities/edges
+    → "BANGLADESH": Remove chunk-001, chunk-042 from source_id (keep chunk-100)
+    → "DHAKA": DELETE completely (no other sources)
+    ↓
+4. Delete chunks from storage
+    → Delete chunk-001, chunk-042, chunk-058 from text_chunks
+    → Delete chunk-001, chunk-042, chunk-058 from vdb_chunks
+    ↓
+5. Delete document
+    → Delete doc-abc123 from full_docs
+```
+
+**Implementation:**
+
+**Location:** Add to [bigrag/bigrag.py](bigrag/bigrag.py) after `adelete_by_entity()`
+
+```python
+# ADD NEW METHOD: adelete_document()
+
+async def adelete_document(self, doc_id: str):
+    """
+    Delete a document and all associated data from the knowledge graph.
+
+    This includes:
+    1. All chunks from this document
+    2. Entities/edges that ONLY came from this document (full delete)
+    3. Remove document's chunks from entities/edges that have other sources (partial update)
+    4. Document metadata
+
+    Args:
+        doc_id: Document ID (e.g., "doc-abc123...")
+
+    Returns:
+        dict: Deletion statistics
+    """
+    from bigrag.prompt import GRAPH_FIELD_SEP
+
+    logger.info(f"Starting deletion of document: {doc_id}")
+
+    # Step 1: Get all chunks from this document
+    all_chunks = await self.text_chunks.get_by_ids([])  # Get all chunks
+    doc_chunks = {
+        chunk_id: chunk
+        for chunk_id, chunk in all_chunks.items()
+        if chunk.get("full_doc_id") == doc_id
+    }
+
+    if not doc_chunks:
+        logger.warning(f"Document {doc_id} not found or has no chunks")
+        return {
+            "status": "not_found",
+            "doc_id": doc_id,
+            "chunks_deleted": 0,
+            "entities_deleted": 0,
+            "entities_updated": 0,
+        }
+
+    doc_chunk_ids = set(doc_chunks.keys())
+    logger.info(f"Found {len(doc_chunks)} chunks for document {doc_id}")
+
+    # Step 2: Process all graph nodes (entities and edges)
+    all_nodes = await self.chunk_entity_relation_graph.get_all_nodes()
+
+    entities_deleted = 0
+    entities_updated = 0
+    edges_deleted = 0
+    edges_updated = 0
+
+    for node_id, node_data in all_nodes.items():
+        source_ids = node_data.get("source_id", "").split(GRAPH_FIELD_SEP)
+        source_ids = [sid for sid in source_ids if sid]  # Remove empty strings
+
+        # Check if any chunk from this document is in source_ids
+        overlap = doc_chunk_ids & set(source_ids)
+
+        if not overlap:
+            continue  # This entity/edge doesn't reference our document
+
+        # Remove this document's chunks from source_ids
+        remaining_sources = [sid for sid in source_ids if sid not in doc_chunk_ids]
+
+        if remaining_sources:
+            # Entity/edge still has other sources - UPDATE (remove our chunks)
+            node_data["source_id"] = GRAPH_FIELD_SEP.join(remaining_sources)
+
+            # Update weight (proportional reduction)
+            old_weight = node_data.get("weight", 1.0)
+            reduction_ratio = len(remaining_sources) / len(source_ids)
+            node_data["weight"] = old_weight * reduction_ratio
+
+            await self.chunk_entity_relation_graph.upsert_node(node_id, node_data)
+
+            if node_data.get("role") == "bipartite_edge":
+                edges_updated += 1
+            else:
+                entities_updated += 1
+
+            logger.debug(f"Updated {node_id}: removed {len(overlap)} source chunks")
+        else:
+            # Entity/edge ONLY came from this document - DELETE completely
+            await self.chunk_entity_relation_graph.delete_node(node_id)
+
+            # Delete from vector DBs
+            if node_data.get("role") == "bipartite_edge":
+                try:
+                    await self.vdb_bipartite_edges.delete([node_id])
+                    edges_deleted += 1
+                except Exception as e:
+                    logger.warning(f"Failed to delete edge {node_id} from vdb: {e}")
+            else:
+                try:
+                    await self.vdb_entities.delete([node_id])
+                    entities_deleted += 1
+                except Exception as e:
+                    logger.warning(f"Failed to delete entity {node_id} from vdb: {e}")
+
+            logger.debug(f"Deleted {node_id}: no remaining sources")
+
+    # Step 3: Delete chunks from storage
+    chunk_ids_list = list(doc_chunk_ids)
+
+    # Delete from text_chunks (KV store)
+    try:
+        await self.text_chunks.delete(chunk_ids_list)
+        logger.info(f"Deleted {len(chunk_ids_list)} chunks from text_chunks")
+    except Exception as e:
+        logger.error(f"Failed to delete chunks from text_chunks: {e}")
+
+    # Delete from vdb_chunks (vector DB)
+    try:
+        await self.vdb_chunks.delete(chunk_ids_list)
+        logger.info(f"Deleted {len(chunk_ids_list)} chunks from vdb_chunks")
+    except Exception as e:
+        logger.error(f"Failed to delete chunks from vdb_chunks: {e}")
+
+    # Step 4: Delete document from full_docs
+    try:
+        await self.full_docs.delete([doc_id])
+        logger.info(f"Deleted document {doc_id} from full_docs")
+    except Exception as e:
+        logger.error(f"Failed to delete document from full_docs: {e}")
+
+    # Step 5: Persist changes
+    await self._delete_document_done()
+
+    stats = {
+        "status": "success",
+        "doc_id": doc_id,
+        "chunks_deleted": len(chunk_ids_list),
+        "entities_deleted": entities_deleted,
+        "entities_updated": entities_updated,
+        "edges_deleted": edges_deleted,
+        "edges_updated": edges_updated,
+    }
+
+    logger.info(f"Document deletion complete: {stats}")
+    return stats
+
+
+def delete_document(self, doc_id: str):
+    """Synchronous wrapper for adelete_document()"""
+    loop = always_get_an_event_loop()
+    return loop.run_until_complete(self.adelete_document(doc_id))
+
+
+async def _delete_document_done(self):
+    """Persist changes after document deletion"""
+    tasks = []
+    for storage_inst in [
+        self.full_docs,
+        self.text_chunks,
+        self.vdb_entities,
+        self.vdb_bipartite_edges,
+        self.vdb_chunks,
+        self.chunk_entity_relation_graph,
+    ]:
+        if storage_inst is None:
+            continue
+        tasks.append(cast(StorageNameSpace, storage_inst).index_done_callback())
+    await asyncio.gather(*tasks)
+```
+
+**Usage Example:**
+```python
+from bigrag import BiGRAG
+
+# Initialize
+bigrag = BiGRAG(working_dir="./expr/demo_test")
+
+# Delete a document
+stats = bigrag.delete_document("doc-abc123...")
+
+# Output:
+# {
+#   "status": "success",
+#   "doc_id": "doc-abc123...",
+#   "chunks_deleted": 15,
+#   "entities_deleted": 3,    # Entities unique to this doc
+#   "entities_updated": 8,    # Entities shared with other docs
+#   "edges_deleted": 5,
+#   "edges_updated": 12
+# }
+```
+
+**Expected Benefit:**
+- ✅ **Data hygiene**: Remove outdated/incorrect documents
+- ✅ **Storage management**: Prevent indefinite growth
+- ✅ **Testing**: Easily reset test data
+- ✅ **GDPR compliance**: Remove user data on request
+
+**Estimated effort:** 3-4 hours (implement + test)
+
+---
+
 ### Priority 2 (Nice to Have) - Polish
 
-#### 6. Clarify Mode System 🔄
+#### 8. Clarify Mode System 🔄
 
 **Current confusion:**
 - Modes named `local`, `global`, `hybrid`, `naive` (inherited from graphr1)
@@ -807,6 +1212,315 @@ Retrieval mode:
 ```
 
 **Estimated effort:** 2-3 hours (documentation + testing)
+
+---
+
+### Future Enhancements (Not Immediate Priority)
+
+#### 9. Bipartite Graph Structure Validation Script ⚙️
+
+**Purpose:**
+- Ensure graph structure is truly bipartite (no entity→entity or edge→edge connections)
+- Verify graph integrity after KG building
+- Detect structural anomalies or bugs in graph construction
+
+**When to use:**
+- After making changes to KG building logic
+- When debugging extraction issues
+- Before deploying to production
+- Periodic health checks on large graphs
+
+**Implementation:**
+
+**Location:** New file `scripts/validate_graph.py`
+
+```python
+"""
+BiG-RAG Graph Validation Script
+
+Validates that the bipartite graph structure is correct:
+1. All nodes are either entities or bipartite edges
+2. Entities ONLY connect to bipartite edges (not other entities)
+3. Bipartite edges ONLY connect to entities (not other edges)
+4. All nodes have valid source_id tracking
+5. No orphaned nodes (0 degree)
+
+Usage:
+    python scripts/validate_graph.py --data-source demo_test
+    python scripts/validate_graph.py --data-source demo_test --fix-orphans
+"""
+
+import asyncio
+import argparse
+from pathlib import Path
+import sys
+
+# Add bigrag to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from bigrag import BiGRAG
+from bigrag.utils import logger
+
+
+async def validate_bipartite_structure(working_dir: str):
+    """
+    Validate that graph is truly bipartite.
+
+    Returns:
+        dict: Validation results with error counts
+    """
+    logger.info(f"Loading graph from: {working_dir}")
+    bigrag = BiGRAG(working_dir=working_dir)
+
+    # Get all nodes
+    all_nodes = await bigrag.chunk_entity_relation_graph.get_all_nodes()
+    logger.info(f"Total nodes in graph: {len(all_nodes)}")
+
+    # Statistics
+    entity_count = 0
+    edge_count = 0
+    violations = []
+    orphaned_nodes = []
+    missing_source_ids = []
+
+    # Check each node
+    for node_id, node_data in all_nodes.items():
+        # Determine node type
+        is_bipartite_edge = node_id.startswith("<bipartite_edge>")
+        node_type = "bipartite_edge" if is_bipartite_edge else "entity"
+
+        if is_bipartite_edge:
+            edge_count += 1
+        else:
+            entity_count += 1
+
+        # Check source_id
+        source_id = node_data.get("source_id", "")
+        if not source_id:
+            missing_source_ids.append(node_id)
+
+        # Get neighbors
+        try:
+            neighbors = await bigrag.chunk_entity_relation_graph.get_neighbors(node_id)
+
+            # Check for orphaned nodes
+            if len(neighbors) == 0:
+                orphaned_nodes.append(node_id)
+
+            # Validate bipartite structure
+            for neighbor_id in neighbors:
+                neighbor_is_edge = neighbor_id.startswith("<bipartite_edge>")
+                neighbor_type = "bipartite_edge" if neighbor_is_edge else "entity"
+
+                # VIOLATION: Same type nodes connected
+                if node_type == neighbor_type:
+                    violations.append({
+                        "type": "same_type_connection",
+                        "node": node_id,
+                        "node_type": node_type,
+                        "neighbor": neighbor_id,
+                        "neighbor_type": neighbor_type
+                    })
+        except Exception as e:
+            logger.error(f"Error checking neighbors for {node_id}: {e}")
+
+    # Report results
+    logger.info("="*80)
+    logger.info("VALIDATION RESULTS")
+    logger.info("="*80)
+    logger.info(f"✅ Entities: {entity_count}")
+    logger.info(f"✅ Bipartite Edges: {edge_count}")
+    logger.info("")
+
+    # Check for violations
+    if len(violations) == 0:
+        logger.info("✅ PASS: Graph structure is valid bipartite graph")
+        logger.info("   All entities connect only to bipartite edges")
+        logger.info("   All bipartite edges connect only to entities")
+    else:
+        logger.error(f"❌ FAIL: Found {len(violations)} bipartite structure violations")
+        logger.error("")
+        logger.error("Violations (first 5):")
+        for v in violations[:5]:
+            logger.error(f"  - {v['node']} ({v['node_type']}) → {v['neighbor']} ({v['neighbor_type']})")
+
+    logger.info("")
+
+    # Check orphaned nodes
+    if len(orphaned_nodes) == 0:
+        logger.info("✅ PASS: No orphaned nodes (all nodes have edges)")
+    else:
+        orphan_pct = len(orphaned_nodes) / len(all_nodes) * 100
+        logger.warning(f"⚠️  WARNING: Found {len(orphaned_nodes)} orphaned nodes ({orphan_pct:.1f}%)")
+        logger.warning("   (These nodes have 0 degree - not connected to anything)")
+        if len(orphaned_nodes) <= 10:
+            logger.warning("   Orphaned nodes:")
+            for node in orphaned_nodes:
+                logger.warning(f"     - {node}")
+
+    logger.info("")
+
+    # Check source IDs
+    if len(missing_source_ids) == 0:
+        logger.info("✅ PASS: All nodes have source_id tracking")
+    else:
+        logger.error(f"❌ FAIL: Found {len(missing_source_ids)} nodes without source_id")
+        logger.error("   (Cannot trace back to source documents)")
+        if len(missing_source_ids) <= 10:
+            logger.error("   Nodes missing source_id:")
+            for node in missing_source_ids:
+                logger.error(f"     - {node}")
+
+    logger.info("")
+    logger.info("="*80)
+
+    return {
+        "total_nodes": len(all_nodes),
+        "entity_count": entity_count,
+        "edge_count": edge_count,
+        "violations": len(violations),
+        "orphaned_nodes": len(orphaned_nodes),
+        "missing_source_ids": len(missing_source_ids),
+        "is_valid": len(violations) == 0 and len(missing_source_ids) == 0,
+    }
+
+
+async def fix_orphaned_nodes(working_dir: str, dry_run: bool = True):
+    """
+    Remove orphaned nodes from graph (nodes with 0 degree).
+
+    Args:
+        working_dir: Path to KG storage
+        dry_run: If True, only report what would be deleted
+    """
+    logger.info(f"Scanning for orphaned nodes in: {working_dir}")
+    bigrag = BiGRAG(working_dir=working_dir)
+
+    all_nodes = await bigrag.chunk_entity_relation_graph.get_all_nodes()
+    orphaned_nodes = []
+
+    for node_id in all_nodes.keys():
+        neighbors = await bigrag.chunk_entity_relation_graph.get_neighbors(node_id)
+        if len(neighbors) == 0:
+            orphaned_nodes.append(node_id)
+
+    if len(orphaned_nodes) == 0:
+        logger.info("✅ No orphaned nodes found")
+        return
+
+    logger.info(f"Found {len(orphaned_nodes)} orphaned nodes")
+
+    if dry_run:
+        logger.info("")
+        logger.info("DRY RUN - would delete these nodes:")
+        for node in orphaned_nodes[:20]:  # Show first 20
+            logger.info(f"  - {node}")
+        if len(orphaned_nodes) > 20:
+            logger.info(f"  ... and {len(orphaned_nodes) - 20} more")
+        logger.info("")
+        logger.info("Run with --fix-orphans --no-dry-run to actually delete")
+    else:
+        logger.info("Deleting orphaned nodes...")
+        deleted = 0
+        for node_id in orphaned_nodes:
+            try:
+                await bigrag.chunk_entity_relation_graph.delete_node(node_id)
+                deleted += 1
+            except Exception as e:
+                logger.error(f"Failed to delete {node_id}: {e}")
+
+        logger.info(f"✅ Deleted {deleted} orphaned nodes")
+
+        # Persist changes
+        await bigrag._delete_by_entity_done()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Validate BiG-RAG bipartite graph structure"
+    )
+    parser.add_argument(
+        "--data-source",
+        type=str,
+        required=True,
+        help="Dataset name (e.g., demo_test)"
+    )
+    parser.add_argument(
+        "--fix-orphans",
+        action="store_true",
+        help="Remove orphaned nodes (nodes with 0 degree)"
+    )
+    parser.add_argument(
+        "--no-dry-run",
+        action="store_true",
+        help="Actually delete orphans (default is dry run)"
+    )
+
+    args = parser.parse_args()
+
+    working_dir = f"./expr/{args.data_source}"
+
+    # Run validation
+    results = asyncio.run(validate_bipartite_structure(working_dir))
+
+    # Fix orphans if requested
+    if args.fix_orphans:
+        asyncio.run(fix_orphaned_nodes(
+            working_dir,
+            dry_run=not args.no_dry_run
+        ))
+
+    # Exit with error code if validation failed
+    if not results["is_valid"]:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+**Usage Examples:**
+
+```bash
+# Basic validation
+python scripts/validate_graph.py --data-source demo_test
+
+# Output:
+# ================================================================================
+# VALIDATION RESULTS
+# ================================================================================
+# ✅ Entities: 1,245
+# ✅ Bipartite Edges: 3,567
+#
+# ✅ PASS: Graph structure is valid bipartite graph
+#    All entities connect only to bipartite edges
+#    All bipartite edges connect only to entities
+#
+# ⚠️  WARNING: Found 12 orphaned nodes (0.3%)
+#    (These nodes have 0 degree - not connected to anything)
+#
+# ✅ PASS: All nodes have source_id tracking
+# ================================================================================
+
+# Fix orphaned nodes (dry run first)
+python scripts/validate_graph.py --data-source demo_test --fix-orphans
+
+# Actually delete orphans
+python scripts/validate_graph.py --data-source demo_test --fix-orphans --no-dry-run
+```
+
+**Expected Benefits:**
+- ✅ **Catch bugs**: Detect graph construction errors early
+- ✅ **Quality assurance**: Verify bipartite structure is maintained
+- ✅ **Debugging**: Identify problematic entities/edges
+- ✅ **Health monitoring**: Periodic checks on production graphs
+
+**When to implement:**
+- **NOT NOW**: Focus on Path C and metadata preservation first
+- **LATER**: After Phase 1 and Phase 2 are stable
+- **OPTIONAL**: Only if you encounter graph quality issues
+
+**Estimated effort:** 2-3 hours (when implemented later)
 
 ---
 

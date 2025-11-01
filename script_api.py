@@ -523,6 +523,7 @@ class AskRequest(BaseModel):
     top_k: Optional[int] = 5
     mode: Optional[str] = "hybrid"
     llm_provider: Optional[str] = None
+    enable_reranking: Optional[bool] = True  # Phase 3.4: Semantic reranking toggle
 
     class Config:
         json_schema_extra = {
@@ -530,7 +531,8 @@ class AskRequest(BaseModel):
                 "question": "What is Artificial Intelligence?",
                 "top_k": 5,
                 "mode": "hybrid",
-                "llm_provider": "openai"
+                "llm_provider": "openai",
+                "enable_reranking": True
             }
         }
 
@@ -560,6 +562,7 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = 500
     llm_provider: Optional[str] = None
     use_rag: Optional[bool] = True  # Enable RAG by default
+    enable_reranking: Optional[bool] = True  # Phase 3.4: Semantic reranking toggle
 
     class Config:
         json_schema_extra = {
@@ -573,7 +576,8 @@ class ChatCompletionRequest(BaseModel):
                 ],
                 "temperature": 0.7,
                 "max_tokens": 500,
-                "use_rag": True
+                "use_rag": True,
+                "enable_reranking": True
             }
         }
 
@@ -638,30 +642,49 @@ async def add_document_to_corpus(
     return doc
 
 
-async def rebuild_knowledge_graph_incremental(data_source: str, new_contents: List[str]):
+async def rebuild_knowledge_graph_incremental(data_source: str, new_documents: List[Dict[str, Any]]):
     """
     Incrementally add new documents to existing knowledge graph
 
     This updates the existing graph without rebuilding from scratch.
+
+    Args:
+        data_source: Dataset name
+        new_documents: List of document dicts with 'contents', 'title', 'metadata' fields
+
+    Phase 2.1 Enhancement: Now passes metadata to BiGRAG for improved entity extraction
     """
     working_dir = f"expr/{data_source}"
 
     try:
         # Use the existing RAG instance to insert new documents
         # BiGRAG.ainsert() handles:
-        # 1. Chunking
-        # 2. Entity extraction
+        # 1. Chunking (with metadata preservation)
+        # 2. Entity extraction (with document context)
         # 3. Relation extraction
         # 4. Graph updates
         # 5. Vector index updates
-        logger.info(f"Adding {len(new_contents)} new documents to knowledge graph...")
+        logger.info(f"Adding {len(new_documents)} new documents to knowledge graph...")
+
+        # Extract contents and metadata separately
+        contents = [doc.get("contents", "") for doc in new_documents]
+        metadata_list = [
+            {
+                "title": doc.get("title", ""),
+                **doc.get("metadata", {})
+            }
+            for doc in new_documents
+        ]
 
         # Insert in small batches to avoid overwhelming the API
         batch_size = 3
-        for i in range(0, len(new_contents), batch_size):
-            batch = new_contents[i:i+batch_size]
-            await rag.ainsert(batch)  # Use async version
-            logger.info(f"Processed batch {i//batch_size + 1}/{(len(new_contents) + batch_size - 1)//batch_size}")
+        for i in range(0, len(contents), batch_size):
+            batch_contents = contents[i:i+batch_size]
+            batch_metadata = metadata_list[i:i+batch_size]
+
+            # Phase 2.1: Pass metadata for improved entity extraction
+            await rag.ainsert(batch_contents, metadata=batch_metadata)
+            logger.info(f"Processed batch {i//batch_size + 1}/{(len(contents) + batch_size - 1)//batch_size}")
 
         logger.info("✓ Knowledge graph updated successfully")
         return True
@@ -921,7 +944,7 @@ async def upload_document(
         )
         processing_jobs[job_id] = job
 
-        # Process document
+        # Process document (Phase 2.1: pass metadata for improved entity extraction)
         if process_async:
             # Background processing
             background_tasks.add_task(
@@ -931,7 +954,8 @@ async def upload_document(
                 title=doc_title,
                 dataset=target_dataset,
                 rag_instance=rag,
-                registry_instance=registry
+                registry_instance=registry,
+                metadata=doc_metadata  # Phase 2.1: metadata preservation
             )
             message = "Document queued for processing"
         else:
@@ -942,7 +966,8 @@ async def upload_document(
                 title=doc_title,
                 dataset=target_dataset,
                 rag_instance=rag,
-                registry_instance=registry
+                registry_instance=registry,
+                metadata=doc_metadata  # Phase 2.1: metadata preservation
             )
             message = "Document processed successfully"
 
@@ -1004,12 +1029,17 @@ async def rebuild_graph(
         if not corpus_file.exists():
             raise HTTPException(status_code=404, detail=f"Corpus file not found: {corpus_file}")
 
-        # Load all documents from corpus
+        # Load all documents from corpus (Phase 2.1: extract full document objects with metadata)
         documents = []
         with open(corpus_file, 'r', encoding='utf-8') as f:
             for line in f:
                 doc = json.loads(line)
-                documents.append(doc.get("contents", ""))
+                # Extract full document with contents, title, and metadata
+                documents.append({
+                    "contents": doc.get("contents", ""),
+                    "title": doc.get("title", ""),
+                    "metadata": doc.get("metadata", {})
+                })
 
         if not documents:
             raise HTTPException(status_code=400, detail="No documents found in corpus")
@@ -1024,7 +1054,7 @@ async def rebuild_graph(
             await rebuild_knowledge_graph_incremental(target_dataset, documents)
             rebuild_type = "full"
         else:
-            # Incremental rebuild (only new documents)
+            # Incremental rebuild (Phase 2.1: includes metadata for improved entity extraction)
             await rebuild_knowledge_graph_incremental(target_dataset, documents)
             rebuild_type = "incremental"
 
@@ -1744,13 +1774,14 @@ async def ask_question(request: AskRequest):
             entity_match = await embedding_manager.search_entities(request.question, request.top_k)
             edge_match = await embedding_manager.search_edges(request.question, request.top_k)
 
-        # Query BiGRAG
+        # Query BiGRAG (Phase 3: Three-Path Retrieval + Semantic Reranking)
         result = await rag.aquery(
             request.question,
             param=QueryParam(
                 mode=request.mode,
                 only_need_context=True,
                 top_k=request.top_k,
+                enable_reranking=request.enable_reranking  # Phase 3.4: semantic reranking
             ),
             entity_match=entity_match,
             bipartite_edge_match=edge_match
@@ -1800,7 +1831,11 @@ async def ask_question(request: AskRequest):
 
 @app.post("/search", tags=["Retrieval"])
 async def search(request: SearchRequest):
-    """Batch retrieval for multiple queries"""
+    """
+    Batch retrieval for multiple queries
+
+    Phase 3 Enhancement: Uses Three-Path Retrieval (Entity + Edge + Chunk) with optional semantic reranking
+    """
     try:
         results = []
         for query_text in request.queries:
@@ -1811,9 +1846,15 @@ async def search(request: SearchRequest):
                 entity_match = await embedding_manager.search_entities(query_text, 5)
                 edge_match = await embedding_manager.search_edges(query_text, 5)
 
+            # Phase 3: Three-Path Retrieval + Semantic Reranking
             result = await rag.aquery(
                 query_text,
-                param=QueryParam(mode="hybrid", only_need_context=True, top_k=10),
+                param=QueryParam(
+                    mode="hybrid",
+                    only_need_context=True,
+                    top_k=10,
+                    enable_reranking=True  # Phase 3.4: semantic reranking enabled by default
+                ),
                 entity_match=entity_match,
                 bipartite_edge_match=edge_match
             )
@@ -1872,9 +1913,15 @@ async def chat_completions(request: ChatCompletionRequest):
                 entity_match = await embedding_manager.search_entities(user_prompt, 5)
                 edge_match = await embedding_manager.search_edges(user_prompt, 5)
 
+            # Phase 3: Three-Path Retrieval + Semantic Reranking
             context_results = await rag.aquery(
                 user_prompt,
-                param=QueryParam(mode="hybrid", only_need_context=True, top_k=5),
+                param=QueryParam(
+                    mode="hybrid",
+                    only_need_context=True,
+                    top_k=5,
+                    enable_reranking=request.enable_reranking  # Phase 3.4: semantic reranking
+                ),
                 entity_match=entity_match,
                 bipartite_edge_match=edge_match
             )

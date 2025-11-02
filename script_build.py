@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from bigrag import BiGRAG
 from bigrag.llm import gpt_4o_mini_complete, openai_embedding
 from bigrag.utils import logger
+from bigrag.config import config
 
 # Configure logging (UTF-8 encoding for Windows console)
 logging.basicConfig(
@@ -36,27 +37,25 @@ if sys.platform == 'win32':
 
 
 def load_api_key():
-    """Load OpenAI API key from file or environment"""
-    api_key_file = Path("openai_api_key.txt")
-
-    if api_key_file.exists():
-        with open(api_key_file, 'r') as f:
-            api_key = f.read().strip()
-        os.environ["OPENAI_API_KEY"] = api_key
-        logger.info("Loaded OpenAI API key from openai_api_key.txt")
-        return api_key
-    elif "OPENAI_API_KEY" in os.environ:
-        logger.info("Using OpenAI API key from environment variable")
-        return os.environ["OPENAI_API_KEY"]
-    else:
+    """
+    Load OpenAI API key from configuration.
+    Config automatically handles: .env file → openai_api_key.txt → environment variable
+    """
+    if not config.openai_api_key:
         logger.error("ERROR: OpenAI API key not found!")
-        logger.error("Please create openai_api_key.txt or set OPENAI_API_KEY environment variable")
+        logger.error("Please set it in one of these ways:")
+        logger.error("  1. Create .env file with: OPENAI_API_KEY=sk-your-key")
+        logger.error("  2. Create openai_api_key.txt file")
+        logger.error("  3. Set OPENAI_API_KEY environment variable")
         sys.exit(1)
+
+    logger.info(f"Using OpenAI API key: {config.openai_api_key[:12]}...")
+    return config.openai_api_key
 
 
 def load_corpus(data_source: str):
     """Load corpus from JSONL file"""
-    corpus_path = Path(f"datasets/{data_source}/raw/corpus.jsonl")
+    corpus_path = Path(f"{config.input_dir}/{data_source}/raw/corpus.jsonl")
 
     if not corpus_path.exists():
         logger.error(f"Corpus not found: {corpus_path}")
@@ -229,7 +228,7 @@ def main():
     print("="*80)
     print("")
 
-    working_dir = f"expr/{args.data_source}"
+    working_dir = f"{config.working_dir}/{args.data_source}"
 
     # Step 1: Load API key
     logger.info("Step 1: Loading OpenAI API key...")
@@ -244,6 +243,9 @@ def main():
     # Step 3: Initialize BiGRAG with OpenAI models
     logger.info("Step 3: Initializing BiG-RAG...")
     logger.info(f"  Working directory: {working_dir}")
+    logger.info(f"  Chunk size: {config.chunk_size} tokens")
+    logger.info(f"  Chunk overlap: {config.chunk_overlap_size} tokens")
+    logger.info(f"  LLM cache: {config.enable_llm_cache}")
     print("")
 
     rag = BiGRAG(
@@ -251,14 +253,14 @@ def main():
         # Use OpenAI models
         llm_model_func=gpt_4o_mini_complete,
         embedding_func=openai_embedding,
-        # Chunking parameters
-        chunk_token_size=args.chunk_size,
-        chunk_overlap_token_size=args.chunk_overlap,
+        # Chunking parameters from config (can be overridden by CLI args)
+        chunk_token_size=args.chunk_size if args.chunk_size != 1200 else config.chunk_size,
+        chunk_overlap_token_size=args.chunk_overlap if args.chunk_overlap != 100 else config.chunk_overlap_size,
         # Entity extraction parameters
         entity_extract_max_gleaning=1,
         entity_summary_to_max_tokens=500,
-        # Enable caching to reduce costs
-        enable_llm_cache=True,
+        # Caching from config
+        enable_llm_cache=config.enable_llm_cache,
     )
 
     logger.info("BiG-RAG initialized successfully")

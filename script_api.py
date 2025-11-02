@@ -35,6 +35,7 @@ import time
 # Import BiG-RAG core
 from bigrag import BiGRAG, QueryParam
 from bigrag.utils import logger
+from bigrag.config import config
 
 # Import API support modules
 from api.jobs import (
@@ -77,21 +78,27 @@ class LLMProviderManager:
         self.available_providers = {}
         self._initialize_providers()
 
-    def _load_api_key(self, key_name: str, file_name: str) -> Optional[str]:
-        """Load API key from environment or file"""
-        # Check environment variable
-        if os.getenv(key_name):
-            return os.getenv(key_name)
+    def _load_api_key(self, key_name: str, file_name: str = None) -> Optional[str]:
+        """
+        Load API key from configuration.
+        Config automatically handles: .env file → *_api_key.txt → environment variable
 
-        # Check file
-        key_file = Path(file_name)
-        if key_file.exists():
-            with open(key_file, 'r') as f:
-                key = f.read().strip()
-            os.environ[key_name] = key
-            return key
+        Args:
+            key_name: Environment variable name (e.g., "OPENAI_API_KEY")
+            file_name: Deprecated - kept for backward compatibility
 
-        return None
+        Returns:
+            API key if found, None otherwise
+        """
+        # Map environment variable names to config attributes
+        key_map = {
+            "OPENAI_API_KEY": config.openai_api_key,
+            "ANTHROPIC_API_KEY": config.anthropic_api_key,
+            "GOOGLE_API_KEY": config.google_api_key,
+            "XAI_API_KEY": config.xai_api_key,
+        }
+
+        return key_map.get(key_name)
 
     def _initialize_providers(self):
         """Initialize all available LLM providers"""
@@ -433,22 +440,23 @@ class EmbeddingManager:
 # ============================================================================
 
 parser = argparse.ArgumentParser(description="BiG-RAG Unified API Server")
-parser.add_argument('--data_source', default='demo_test',
-                    help='Dataset name (default: demo_test)')
-parser.add_argument('--port', type=int, default=8001,
-                    help='Server port (default: 8001)')
-parser.add_argument('--host', default='0.0.0.0',
-                    help='Server host (default: 0.0.0.0)')
-parser.add_argument('--llm_provider', default='openai',
+parser.add_argument('--data_source', default=config.default_dataset,
+                    help=f'Dataset name (default: {config.default_dataset})')
+parser.add_argument('--port', type=int, default=config.port,
+                    help=f'Server port (default: {config.port})')
+parser.add_argument('--host', default=config.host,
+                    help=f'Server host (default: {config.host})')
+parser.add_argument('--llm_provider', default=config.llm_provider,
                     choices=['openai', 'anthropic', 'google', 'grok'],
-                    help='Default LLM provider (default: openai)')
+                    help=f'Default LLM provider (default: {config.llm_provider})')
 args = parser.parse_args()
 
 # Initialize managers
+working_dir = f"{config.working_dir}/{args.data_source}"
 print(f"\n[INFO] Initializing BiG-RAG for dataset: {args.data_source}")
-print(f"[INFO] Working directory: expr/{args.data_source}\n")
+print(f"[INFO] Working directory: {working_dir}\n")
 
-embedding_manager = EmbeddingManager(f"expr/{args.data_source}")
+embedding_manager = EmbeddingManager(working_dir)
 llm_manager = LLMProviderManager(default_provider=args.llm_provider)
 
 # Track server start time for uptime
@@ -457,10 +465,12 @@ server_start_time = time.time()
 # Initialize BiGRAG
 from bigrag.llm import gpt_4o_mini_complete
 rag = BiGRAG(
-    working_dir=f"expr/{args.data_source}",
+    working_dir=working_dir,
     llm_model_func=gpt_4o_mini_complete,  # Fallback for entity extraction
     embedding_func=embedding_manager.get_embedding_func(),
-    enable_llm_cache=True,
+    chunk_token_size=config.chunk_size,
+    chunk_overlap_token_size=config.chunk_overlap_size,
+    enable_llm_cache=config.enable_llm_cache,
 )
 
 print(f"[INFO] BiG-RAG initialized")
@@ -471,20 +481,20 @@ print(f"[INFO] Default LLM provider: {args.llm_provider}\n")
 # Load statistics
 stats = {"entities": 0, "edges": 0, "chunks": 0}
 try:
-    chunks_file = f"expr/{args.data_source}/kv_store_text_chunks.json"
+    chunks_file = f"{working_dir}/kv_store_text_chunks.json"
     if os.path.exists(chunks_file):
         with open(chunks_file, 'r', encoding='utf-8') as f:
             chunks = json.load(f)
         stats["chunks"] = len(chunks)
 
     if embedding_manager.mode == "openai":
-        entities_file = f"expr/{args.data_source}/vdb_entities.json"
+        entities_file = f"{working_dir}/vdb_entities.json"
         if os.path.exists(entities_file):
             with open(entities_file, 'r', encoding='utf-8') as f:
                 entities_vdb = json.load(f)
             stats["entities"] = len(entities_vdb.get('data', []))
 
-        edges_file = f"expr/{args.data_source}/vdb_bipartite_edges.json"
+        edges_file = f"{working_dir}/vdb_bipartite_edges.json"
         if os.path.exists(edges_file):
             with open(edges_file, 'r', encoding='utf-8') as f:
                 edges_vdb = json.load(f)
@@ -616,7 +626,7 @@ async def add_document_to_corpus(
     metadata: Optional[Dict[str, Any]] = None
 ):
     """Add a document to the corpus.jsonl file"""
-    corpus_file = Path(f"datasets/{data_source}/raw/corpus.jsonl")
+    corpus_file = Path(f"{config.input_dir}/{data_source}/raw/corpus.jsonl")
 
     # Create directory if doesn't exist
     corpus_file.parent.mkdir(parents=True, exist_ok=True)
@@ -654,7 +664,7 @@ async def rebuild_knowledge_graph_incremental(data_source: str, new_documents: L
 
     Phase 2.1 Enhancement: Now passes metadata to BiGRAG for improved entity extraction
     """
-    working_dir = f"expr/{data_source}"
+    working_dir = f"{config.working_dir}/{data_source}"
 
     try:
         # Use the existing RAG instance to insert new documents
@@ -1024,7 +1034,7 @@ async def rebuild_graph(
     """
     try:
         target_dataset = data_source or args.data_source
-        corpus_file = Path(f"datasets/{target_dataset}/raw/corpus.jsonl")
+        corpus_file = Path(f"{config.input_dir}/{target_dataset}/raw/corpus.jsonl")
 
         if not corpus_file.exists():
             raise HTTPException(status_code=404, detail=f"Corpus file not found: {corpus_file}")
@@ -1378,9 +1388,9 @@ async def get_graph_statistics(dataset: Optional[str] = None):
             reg_stats = await registry.get_stats(ds)
 
             # Get KG file counts
-            entities_file = f"expr/{ds}/kv_store_entities.json"
-            edges_file = f"expr/{ds}/kv_store_bipartite_edges.json"
-            chunks_file = f"expr/{ds}/kv_store_text_chunks.json"
+            entities_file = f"{config.working_dir}/{ds}/kv_store_entities.json"
+            edges_file = f"{config.working_dir}/{ds}/kv_store_bipartite_edges.json"
+            chunks_file = f"{config.working_dir}/{ds}/kv_store_text_chunks.json"
 
             entities_count = 0
             edges_count = 0

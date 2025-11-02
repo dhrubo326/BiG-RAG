@@ -2,6 +2,13 @@ import os
 import datasets
 import argparse
 import json
+import sys
+from pathlib import Path
+
+# Add bigrag to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+from bigrag.config import config
 
 
 def make_prefix(dp, template_type):
@@ -28,11 +35,11 @@ if __name__ == '__main__':
 
     data_source = args.data_source
     
-    with open(f'datasets/{data_source}/raw/qa_train.json', 'r') as f:
+    with open(f'{config.input_dir}/{data_source}/raw/qa_train.json', 'r') as f:
         train_data = json.load(f)
-    with open(f'datasets/{data_source}/raw/qa_dev.json', 'r') as f:
+    with open(f'{config.input_dir}/{data_source}/raw/qa_dev.json', 'r') as f:
         dev_data = json.load(f)
-    with open(f'datasets/{data_source}/raw/qa_test.json', 'r') as f:
+    with open(f'{config.input_dir}/{data_source}/raw/qa_test.json', 'r') as f:
         test_data = json.load(f)
     
     train_dataset = datasets.Dataset.from_list(train_data)
@@ -95,7 +102,7 @@ Output format for answer:
     dev_dataset = dev_dataset.map(function=make_map_fn('dev'), with_indices=True)
     test_dataset = test_dataset.map(function=make_map_fn('test'), with_indices=True)
 
-    local_dir = f'datasets/{data_source}/processed'
+    local_dir = f'{config.input_dir}/{data_source}/processed'
     if not os.path.exists(local_dir):
         os.makedirs(local_dir)
 

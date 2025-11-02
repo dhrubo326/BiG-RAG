@@ -380,6 +380,19 @@ class BiGRAG:
 
             await self.full_docs.upsert(new_docs)
             await self.text_chunks.upsert(inserting_chunks)
+
+            # Phase 3.1: Index chunks to vector DB for Path C retrieval (Three-Path Retrieval)
+            # This enables direct semantic search on chunks (in addition to entity/edge-based retrieval)
+            if self.chunks_vdb is not None:
+                chunks_for_vdb = {
+                    chunk_id: {
+                        "content": chunk_data["content"],
+                        "full_doc_id": chunk_data.get("full_doc_id", ""),
+                    }
+                    for chunk_id, chunk_data in inserting_chunks.items()
+                }
+                await self.chunks_vdb.upsert(chunks_for_vdb)
+                logger.info(f"[Chunks VDB] Indexed {len(chunks_for_vdb)} chunks for vector search (Path C)")
         finally:
             if update_storage:
                 await self._insert_done()

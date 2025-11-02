@@ -65,8 +65,7 @@ async def get_document_stats_from_kg(
         {chunks, entities, edges, tokens}
     """
     chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
-    entities_file = f"expr/{data_source}/kv_store_entities.json"
-    edges_file = f"expr/{data_source}/kv_store_bipartite_edges.json"
+    graph_file = f"expr/{data_source}/graph_chunk_entity_relation.graphml"
 
     stats = {
         "chunks": 0,
@@ -85,7 +84,7 @@ async def get_document_stats_from_kg(
             # Filter by document ID using correct field name
             doc_chunks = [
                 (c_id, c) for c_id, c in chunks.items()
-                if c.get("full_doc_id") == document_id  # ✅ Fixed: was "doc_id"
+                if c.get("full_doc_id") == document_id
             ]
 
             # Store chunk IDs for entity/edge lookup
@@ -96,45 +95,39 @@ async def get_document_stats_from_kg(
         except Exception as e:
             logger.error(f"Error reading chunks file: {e}")
 
-    # Count entities (by source_id referencing our chunk IDs)
-    if os.path.exists(entities_file) and doc_chunk_ids:
+    # Count entities and edges from GraphML file (Bug Fix: was looking for non-existent KV files)
+    if os.path.exists(graph_file) and doc_chunk_ids:
         try:
-            with open(entities_file, encoding='utf-8') as f:
-                entities = json.load(f)
+            import networkx as nx
+            G = nx.read_graphml(graph_file)
 
-            # Check if entity's source_id contains any of our document's chunk IDs
             doc_entities = []
-            for e_id, e in entities.items():
-                source_id_str = str(e.get("source_id", ""))
+            doc_edges = []
+
+            # Iterate through all nodes in the graph
+            for node, attrs in G.nodes(data=True):
+                source_id_str = str(attrs.get("source_id", ""))
+                role = attrs.get("role", "")
+
+                # Split source_id by GRAPH_FIELD_SEP
                 source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
 
                 # Check if any source_id matches our document's chunks
                 if any(sid in doc_chunk_ids for sid in source_ids):
-                    doc_entities.append(e)
+                    if role == "entity":
+                        doc_entities.append(node)
+                    elif role == "bipartite_edge":
+                        doc_edges.append(node)
 
             stats["entities"] = len(doc_entities)
-        except Exception as e:
-            logger.error(f"Error reading entities file: {e}")
-
-    # Count edges (by source_id referencing our chunk IDs)
-    if os.path.exists(edges_file) and doc_chunk_ids:
-        try:
-            with open(edges_file, encoding='utf-8') as f:
-                edges = json.load(f)
-
-            # Check if edge's source_id contains any of our document's chunk IDs
-            doc_edges = []
-            for edge_id, edge in edges.items():
-                source_id_str = str(edge.get("source_id", ""))
-                source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
-
-                # Check if any source_id matches our document's chunks
-                if any(sid in doc_chunk_ids for sid in source_ids):
-                    doc_edges.append(edge)
-
             stats["edges"] = len(doc_edges)
+
+            logger.debug(f"Document {document_id}: Found {stats['entities']} entities and {stats['edges']} edges")
+
         except Exception as e:
-            logger.error(f"Error reading edges file: {e}")
+            logger.error(f"Error reading graph file: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
 
     return stats
 
@@ -155,10 +148,10 @@ async def get_document_entities(
     Returns:
         List of {name, type, weight} dicts
     """
-    entities_file = f"expr/{data_source}/kv_store_entities.json"
+    graph_file = f"expr/{data_source}/graph_chunk_entity_relation.graphml"
     chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
 
-    if not os.path.exists(entities_file):
+    if not os.path.exists(graph_file):
         return []
 
     try:
@@ -175,21 +168,24 @@ async def get_document_entities(
         if not doc_chunk_ids:
             return []
 
-        # Now filter entities by chunk IDs
-        with open(entities_file, encoding='utf-8') as f:
-            entities = json.load(f)
+        # Read entities from GraphML (Bug Fix: was looking for non-existent KV file)
+        import networkx as nx
+        G = nx.read_graphml(graph_file)
 
         doc_entities = []
-        for e_id, e in entities.items():
-            source_id_str = str(e.get("source_id", ""))
+        for node, attrs in G.nodes(data=True):
+            if attrs.get("role") != "entity":
+                continue
+
+            source_id_str = str(attrs.get("source_id", ""))
             source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
 
             # Check if any source_id matches our document's chunks
             if any(sid in doc_chunk_ids for sid in source_ids):
                 doc_entities.append({
-                    "name": e.get("entity_name"),
-                    "type": e.get("entity_type"),
-                    "weight": e.get("weight", 0)
+                    "name": node,  # node name is the entity name
+                    "type": attrs.get("entity_type", "UNKNOWN"),
+                    "weight": float(attrs.get("weight", 0))
                 })
 
         # Sort by weight
@@ -198,6 +194,8 @@ async def get_document_entities(
         return doc_entities[:top_k]
     except Exception as e:
         logger.error(f"Error getting document entities: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return []
 
 
@@ -217,10 +215,10 @@ async def find_related_documents(
     Returns:
         List of {id, title, similarity} dicts
     """
-    entities_file = f"expr/{data_source}/kv_store_entities.json"
+    graph_file = f"expr/{data_source}/graph_chunk_entity_relation.graphml"
     chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
 
-    if not os.path.exists(entities_file) or not os.path.exists(chunks_file):
+    if not os.path.exists(graph_file) or not os.path.exists(chunks_file):
         return []
 
     try:
@@ -243,19 +241,22 @@ async def find_related_documents(
         if not doc_chunk_ids:
             return []
 
-        # Load entities
-        with open(entities_file, encoding='utf-8') as f:
-            entities = json.load(f)
+        # Load entities from GraphML (Bug Fix: was looking for non-existent KV file)
+        import networkx as nx
+        G = nx.read_graphml(graph_file)
 
         # Get this document's entities
         doc_entities = set()
-        for e_id, e in entities.items():
-            source_id_str = str(e.get("source_id", ""))
+        for node, attrs in G.nodes(data=True):
+            if attrs.get("role") != "entity":
+                continue
+
+            source_id_str = str(attrs.get("source_id", ""))
             source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
 
             # Check if any source_id (chunk) belongs to this document
             if any(sid in doc_chunk_ids for sid in source_ids):
-                doc_entities.add(e.get("entity_name"))
+                doc_entities.add(node)  # node name is the entity name
 
         if not doc_entities:
             return []
@@ -263,14 +264,17 @@ async def find_related_documents(
         # Find other documents with overlapping entities
         doc_scores = {}
 
-        for e_id, e in entities.items():
-            entity_name = e.get("entity_name")
+        for node, attrs in G.nodes(data=True):
+            if attrs.get("role") != "entity":
+                continue
+
+            entity_name = node
 
             if entity_name not in doc_entities:
                 continue
 
             # Get all chunk IDs mentioning this entity
-            source_id_str = str(e.get("source_id", ""))
+            source_id_str = str(attrs.get("source_id", ""))
             source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
 
             for chunk_id in source_ids:
@@ -305,6 +309,8 @@ async def find_related_documents(
         return related[:top_k]
     except Exception as e:
         logger.error(f"Error finding related documents: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return []
 
 

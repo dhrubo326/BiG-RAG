@@ -196,6 +196,7 @@ async def _merge_nodes_then_upsert(
     already_entity_types = []
     already_source_ids = []
     already_description = []
+    already_weights = []
 
     already_node = await knowledge_graph_inst.get_node(entity_name)
     if already_node is not None:
@@ -204,6 +205,9 @@ async def _merge_nodes_then_upsert(
             split_string_by_multi_markers(already_node["source_id"], [GRAPH_FIELD_SEP])
         )
         already_description.append(already_node["description"])
+        # Preserve existing weight if present
+        if "weight" in already_node:
+            already_weights.append(already_node["weight"])
 
     entity_type = sorted(
         Counter(
@@ -218,6 +222,9 @@ async def _merge_nodes_then_upsert(
     source_id = GRAPH_FIELD_SEP.join(
         set([dp["source_id"] for dp in nodes_data] + already_source_ids)
     )
+    # Aggregate weights from all occurrences (same as bipartite edges)
+    weight = sum([dp.get("weight", 0) for dp in nodes_data] + already_weights)
+
     description = await _handle_entity_relation_summary(
         entity_name, description, global_config
     )
@@ -226,6 +233,7 @@ async def _merge_nodes_then_upsert(
         entity_type=entity_type,
         description=description,
         source_id=source_id,
+        weight=weight,  # Bug fix: include weight in node data
     )
     await knowledge_graph_inst.upsert_node(
         entity_name,

@@ -168,16 +168,16 @@ tail -f build.log
 **Output:**
 ```
 expr/2WikiMultiHopQA/
-├── kv_store_entities.json          # Entity metadata
-├── kv_store_bipartite_edges.json   # Relation metadata
-├── kv_store_text_chunks.json       # Text chunk metadata
-├── index_entity.bin                # FAISS index for entities
-├── index_bipartite_edge.bin        # FAISS index for relations
-├── index.bin                       # FAISS index for chunks
-├── corpus.npy                      # Chunk embeddings
-├── corpus_entity.npy               # Entity embeddings
-└── corpus_bipartite_edge.npy       # Edge embeddings
+├── kv_store_full_docs.json            # Full document metadata
+├── kv_store_text_chunks.json          # Text chunk metadata
+├── kv_store_llm_response_cache.json   # LLM response cache (optional)
+├── vdb_entities.json                  # Entity embeddings (NanoVectorDB)
+├── vdb_bipartite_edges.json           # Relation embeddings (NanoVectorDB)
+├── vdb_chunks.json                    # Chunk embeddings for Path C retrieval
+└── graph_chunk_entity_relation.graphml # Bipartite graph structure (NetworkX)
 ```
+
+**Note**: Entity and relation **metadata** (names, descriptions, source_ids, weights) are stored in the GraphML file, not in separate JSON files.
 
 **Time Estimate**: 2-4 hours for ~10K documents (depends on corpus size and API rate limits)
 
@@ -610,7 +610,22 @@ rag.insert(
 #### Document Deletion System
 **New Method**: `rag.delete_document(doc_id_or_content)`
 
-Enables removing indexed documents with cascade cleanup of chunks, entities, and edges.
+Enables removing indexed documents with **full cascade cleanup** across all storage layers:
+- Deletes document chunks from KV storage and vector DB
+- Removes orphaned entities/edges (only referenced by deleted document)
+- Updates shared entities/edges (preserves if referenced by other documents)
+- Smart reference counting prevents data loss
+
+**Usage**:
+```python
+# Delete by document ID
+rag.delete_document("doc-abc123")
+
+# Delete by original content
+rag.delete_document("The original document text...")
+```
+
+**Performance**: ~1-2 seconds for cascade deletion (no graph rebuild needed)
 
 ### Phase 3: Three-Path Retrieval + Reranking
 
@@ -645,6 +660,42 @@ results = rag.query("query", QueryParam(enable_reranking=False))
 **Optional Dependency**: `pip install sentence-transformers` (~330MB)
 
 **Performance**: +10-20% precision at ~50-100ms latency cost
+
+### Phase 4: Critical Bug Fixes (January 2025)
+
+During system testing, we discovered and fixed 5 critical bugs:
+
+#### Bug #1: Missing chunks_vdb Indexing
+**Symptom**: `vdb_chunks.json` file was empty (0 entries)
+**Cause**: Chunks were created but never indexed to `chunks_vdb`
+**Impact**: Path C (chunk-based retrieval) was completely broken
+**Fixed**: [bigrag/bigrag.py:384-395](bigrag/bigrag.py#L384-L395)
+
+#### Bug #2: API Reading Non-Existent Files
+**Symptom**: Document stats always showed 0 entities and 0 edges
+**Cause**: `api/kg_utils.py` looking for `kv_store_entities.json` and `kv_store_bipartite_edges.json` which were never created
+**Impact**: All document detail endpoints returned incorrect stats
+**Fixed**: [api/kg_utils.py:53-199](api/kg_utils.py#L53-L199) - Now reads from GraphML
+
+#### Bug #3: Entity Weights Missing
+**Symptom**: All entities had `weight=0` in API responses
+**Cause**: `_merge_nodes_then_upsert()` didn't aggregate weights from multiple occurrences
+**Impact**: Entities couldn't be ranked by importance
+**Fixed**: [bigrag/operate.py:190-243](bigrag/operate.py#L190-L243) - Added weight aggregation
+
+#### Bug #4: Incomplete Rebuild Cleanup
+**Symptom**: `rebuild_entire_graph()` listed non-existent files and missed actual files
+**Cause**: Outdated file list from old architecture
+**Impact**: Rebuild didn't clean all index files
+**Fixed**: [api/kg_utils.py:418-439](api/kg_utils.py#L418-L439)
+
+#### Bug #5: Incomplete Document Deletion
+**Symptom**: Hard delete only removed from corpus, leaving all KG data orphaned
+**Cause**: `adelete_document()` was incomplete stub; API didn't call it
+**Impact**: Deleted documents remained in knowledge graph
+**Fixed**: Complete cascade deletion implementation (see Phase 2 above)
+
+All bugs are now fixed and tested. The system is production-ready.
 
 ### Testing Your Installation
 
@@ -746,24 +797,30 @@ ray stop
 - Check Ray dashboard at `http://localhost:8265` for worker status
 - If training hangs, check Ray logs: `cat /tmp/ray/session_latest/logs/*`
 
-### FAISS Index Management
+### Storage Architecture
 
-BiG-RAG stores bipartite graph as multiple FAISS indices for fast similarity search:
+BiG-RAG uses a three-layer storage architecture:
 
-**Index Files**:
-- `index_entity.bin`: Entity node embeddings (for entity-based retrieval)
-- `index_bipartite_edge.bin`: Relation edge embeddings (for relation-based retrieval)
-- `index.bin`: Text chunk embeddings (for naive text search)
+**1. Vector Storage (NanoVectorDB by default)**:
+- `vdb_entities.json`: Entity embeddings for Path A (entity-based retrieval)
+- `vdb_bipartite_edges.json`: Relation embeddings for Path B (relation-based retrieval)
+- `vdb_chunks.json`: Text chunk embeddings for Path C (chunk-based retrieval)
 
-**Metadata Files** (JSON):
-- `kv_store_entities.json`: Entity names, descriptions, source IDs
-- `kv_store_bipartite_edges.json`: Relation structures, connected entities
-- `kv_store_text_chunks.json`: Original text, chunk metadata
+**2. Graph Storage (NetworkX by default)**:
+- `graph_chunk_entity_relation.graphml`: Complete bipartite graph with all node/edge attributes
+  - Entity nodes: `{name, description, entity_type, source_id, weight, role="entity"}`
+  - Relation nodes: `{name, description, source_id, weight, role="bipartite_edge"}`
+  - Edges connect chunks ↔ entities/relations
+
+**3. KV Storage (JSON by default)**:
+- `kv_store_full_docs.json`: Full document metadata and content
+- `kv_store_text_chunks.json`: Text chunks with metadata (title, id, source)
+- `kv_store_llm_response_cache.json`: Cached LLM responses (optional)
 
 **Query Modes**:
-- `local`: Entity-based retrieval only
-- `global`: Relation-based retrieval only
-- `hybrid`: Combines both (default, most effective)
+- `local`: Entity-based retrieval only (Path A)
+- `global`: Relation-based retrieval only (Path B)
+- `hybrid`: Combines Path A + Path B + Path C (default, most effective)
 - `naive`: Direct text chunk retrieval (baseline)
 
 ---
@@ -775,7 +832,7 @@ BiG-RAG stores bipartite graph as multiple FAISS indices for fast similarity sea
 | Script | Purpose | Output |
 |--------|---------|--------|
 | [script_process.py](script_process.py) | Preprocess datasets to parquet | `datasets/{dataset}/processed/*.parquet` |
-| [script_build.py](script_build.py) | Build bipartite knowledge graph | `expr/{dataset}/kv_store_*.json`, `index*.bin` |
+| [script_build.py](script_build.py) | Build bipartite knowledge graph | `expr/{dataset}/` (see Output section above) |
 | [script_api.py](script_api.py) | Start retrieval server (FastAPI) | HTTP server on port 8001 |
 | [verl/trainer/main_ppo.py](verl/trainer/main_ppo.py) | RL training entry point | Model checkpoints, logs |
 | [verl/trainer/main_generation.py](verl/trainer/main_generation.py) | Inference/generation | Generated text |

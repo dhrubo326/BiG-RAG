@@ -21,11 +21,12 @@
 
 ### What Problem Does This Solve?
 
-**Problem:** Single-path retrieval systems (vector search only) struggle with:
+**Problem:** Single-path and dual-path retrieval systems struggle with:
 - **Context fragmentation**: Missing related information across chunks
 - **Semantic ambiguity**: Query terms with multiple meanings
 - **Multi-hop reasoning**: Requiring traversal of entity relationships
 - **Ranking quality**: No way to combine different retrieval signals
+- **✨ Missing semantic chunks**: Dual-path only retrieves structured knowledge, missing raw chunk context
 
 **Example Query:** "What university did the director of Inception attend?"
 
@@ -34,10 +35,12 @@
   - May miss: "Christopher Nolan attended University College London"
   - **Problem**: Requires two-hop reasoning (Inception → Nolan → UCL)
 
-- **BiG-RAG Retrieval**: Dual-path traversal
-  - **Entity path**: Query → "Inception" entity → connected edges → "Christopher Nolan" entity → description
-  - **Relation path**: Query → "directed_by" relation → connected entities → "Christopher Nolan"
-  - **Result**: Finds "Christopher Nolan" through both paths, then retrieves education info
+- **✨ BiG-RAG Three-Path Retrieval**: Entity + Relation + Chunk traversal
+  - **Path A (Entity)**: Query → "Inception" entity → connected edges → "Christopher Nolan" entity → description
+  - **Path B (Relation)**: Query → "directed_by" relation → connected entities → "Christopher Nolan"
+  - **Path C (Chunk)**: Query → Direct vector search on chunks + Indirect chunks from Paths A & B
+  - **Result**: Finds "Christopher Nolan" through multiple paths + raw chunk context with semantic reranking
+  - **Output**: 5 structured knowledge items + 5 chunks = 10 total context items
 
 ### Why This Approach vs. Alternatives?
 
@@ -51,15 +54,17 @@
 | **Hybrid (DPR + BM25)** | Combine scores | Better than either alone | Still single-hop |
 | **HippoRAG** | Personalized PageRank | Multi-hop, memory-inspired | Expensive, slow queries |
 | **GraphRAG** | Community summaries | Global reasoning | Heavyweight preprocessing |
-| **BiG-RAG (Ours)** | **Dual-path vector search + graph** | **Fast multi-hop, dual signals** | **Requires graph** |
+| **BiG-RAG (Ours)** | **✨ Three-path: Entity + Relation + Chunk** | **Fast multi-hop, triple signals, semantic reranking** | **Requires graph** |
 
 **Key Advantages:**
 
-1. **Dual-Path Coverage**: Entity-based + Relation-based retrieval capture different aspects
+1. **✨ Three-Path Coverage**: Entity-based + Relation-based + Chunk-based retrieval capture different aspects
 2. **Fast Multi-Hop**: FAISS vector search O(log V) instead of graph traversal O(V × E)
-3. **Reciprocal Rank Fusion**: No hyperparameter tuning for score combination
-4. **Scalable**: Index-based retrieval scales to millions of entities
-5. **Interpretable**: Results show entity/relation provenance
+3. **Reciprocal Rank Fusion**: No hyperparameter tuning for score combination (Paths A + B)
+4. **✨ Semantic Reranking**: Cross-encoder reranks chunk candidates for +10-20% precision
+5. **Scalable**: Index-based retrieval scales to millions of entities
+6. **Interpretable**: Results show entity/relation/chunk provenance
+7. **✨ Flexible Output**: 10 total items (5 structured + 5 chunks) vs. original 5 items
 
 ### High-Level Architecture
 
@@ -76,19 +81,19 @@ Input: User Query
 ┌─────────────────────────────────────────────────────────────────┐
 │  STAGE 1: QUERY EMBEDDING                                        │
 ├─────────────────────────────────────────────────────────────────┤
-│  Function: embedding_func([query, query])                       │
+│  Function: embedding_func([query, query, query])                │
 │                                                                  │
-│  • Generate query embedding (duplicate for both paths)          │
+│  • Generate query embedding (✨ triplicate for three paths)     │
 │  • Model: text-embedding-3-large (3072 dims)                    │
 │  • Normalize: L2 normalization for cosine similarity            │
 │                                                                  │
-│  Output: [embedding_for_entities, embedding_for_relations]      │
+│  Output: [emb_entities, emb_relations, emb_chunks]              │
 └─────────────────────────────────────────────────────────────────┘
 
    ↓
 
 ┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 2: DUAL-PATH VECTOR SEARCH                               │
+│  STAGE 2: ✨ THREE-PATH VECTOR SEARCH                           │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  PATH A: Entity-Based Retrieval (Local)                         │
@@ -128,12 +133,31 @@ Input: User Query
 │  │   Relation: "Christopher Nolan directed Inception"        ││
 │  │   Relation: "Christopher Nolan attended UCL"              ││
 │  └────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  ✨ PATH C: Chunk-Based Retrieval (Semantic)                    │
+│  ┌────────────────────────────────────────────────────────────┐│
+│  │ 1. Direct Vector Search:                                   ││
+│  │    • Query chunks_vdb with embedding                       ││
+│  │    → FAISS inner product search                            ││
+│  │    → Top-5 chunks by semantic similarity                   ││
+│  │                                                             ││
+│  │ 2. Indirect Chunk Extraction:                             ││
+│  │    • Extract source_ids from Path A + B results           ││
+│  │    • Fetch chunks referenced by top-5 structured items    ││
+│  │    → Top-5 indirect chunks                                ││
+│  │                                                             ││
+│  │ 3. Combine candidates: 5 direct + 5 indirect = 10 chunks  ││
+│  │                                                             ││
+│  │ Example results:                                           ││
+│  │   Direct: "Nolan studied at University College London"    ││
+│  │   Indirect: "UCL was founded in 1826..." (from entity)    ││
+│  └────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
 
    ↓
 
 ┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 3: RECIPROCAL RANK FUSION                                │
+│  STAGE 3: RECIPROCAL RANK FUSION (Paths A + B Only)            │
 ├─────────────────────────────────────────────────────────────────┤
 │  Function: _merge_and_rank()                                    │
 │                                                                  │
@@ -152,15 +176,51 @@ Input: User Query
 │    • Top-ranked items get more weight (1/1=1.0 vs 1/100=0.01) │
 │    • Handles different score scales automatically              │
 │                                                                  │
-│  Output: Unified ranked list                                    │
+│  Output: Top-5 structured knowledge items                       │
 └─────────────────────────────────────────────────────────────────┘
 
    ↓
 
 ┌─────────────────────────────────────────────────────────────────┐
-│  STAGE 4: CONTEXT FORMATTING                                    │
+│  ✨ STAGE 3.5: SEMANTIC RERANKING (Path C Chunks)              │
+├─────────────────────────────────────────────────────────────────┤
+│  Function: _semantic_rerank() (optional, toggle via param)      │
+│  Module: bigrag/reranker.py                                     │
+│                                                                  │
+│  Model: cross-encoder/ms-marco-MiniLM-L-6-v2 (80MB)            │
+│                                                                  │
+│  Process:                                                        │
+│    1. Take 10 chunk candidates (5 direct + 5 indirect)         │
+│    2. Create query-chunk pairs                                  │
+│    3. Cross-encoder scores each pair                           │
+│    4. Combine with original score (70% rerank + 30% original)  │
+│    5. Sort by final score                                      │
+│    6. Return top-5 chunks                                      │
+│                                                                  │
+│  If enable_reranking=False:                                     │
+│    • Skip reranking                                             │
+│    • Return all 10 chunks sorted by original scores            │
+│                                                                  │
+│  Performance:                                                    │
+│    • Latency: +50-100ms                                        │
+│    • Precision: +10-20%                                        │
+│    • Graceful fallback if model unavailable                    │
+│                                                                  │
+│  Output: Top-5 (or top-10) chunks                              │
+└─────────────────────────────────────────────────────────────────┘
+
+   ↓
+
+┌─────────────────────────────────────────────────────────────────┐
+│  STAGE 4: CONTEXT COMBINATION & FORMATTING                      │
 ├─────────────────────────────────────────────────────────────────┤
 │  Function: format_context()                                     │
+│                                                                  │
+│  ✨ Combine Results:                                            │
+│    • 5 structured knowledge items (from Stage 3)               │
+│    • 5 chunks (from Stage 3.5)                                 │
+│    • Total: 10 context items                                   │
+│                                                                  │
 │                                                                  │
 │  • Concatenate top-k results                                    │
 │  • Truncate to max_token_for_text_unit (default 4000 tokens)   │

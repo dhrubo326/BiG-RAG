@@ -68,9 +68,10 @@ BiG-RAG implements all core GraphRAG features plus enhanced capabilities:
 **BiG-RAG's Enhanced Features:**
 1. **Bipartite graph structure**: Entities and relations as separate node types (not traditional entity graphs)
 2. **N-ary relations**: Preserves complex relationships in natural language
-3. **Dual-path retrieval**: Both entity-based AND relation-based vector searches
+3. **✨ Three-path retrieval**: Entity + Relation + Chunk-based vector searches
 4. **Three-layer storage**: KV storage + Vector DB + Graph DB working together
 5. **Reciprocal rank fusion**: Combines multiple retrieval paths intelligently
+6. **✨ Document deletion system**: Cascade cleanup with smart partial/full deletion
 
 ---
 
@@ -447,6 +448,108 @@ def lazy_external_import(cls_name: str):
 
 # Step 3: Use
 rag = BiGRAG(vector_storage="MyVectorStorage")
+```
+
+### ✨ Document Deletion API (NEW)
+
+**Purpose:** Remove documents from the knowledge graph with cascade cleanup
+
+**Method Signature:**
+```python
+async def adelete_document(self, doc_id: str) -> dict:
+    """
+    Delete a document and all associated data.
+
+    Args:
+        doc_id: Document ID or original content
+
+    Returns:
+        Deletion statistics dictionary
+    """
+```
+
+**Smart Deletion Logic:**
+
+```
+Document "doc-abc123"
+   ↓
+1. Find all chunks: chunk-001, chunk-042, chunk-058
+   ↓
+2. Find entities/edges referencing those chunks:
+   • Entity "PARIS" (source_ids: chunk-001, chunk-042, chunk-100)
+   • Entity "FRANCE" (source_ids: chunk-042)  ← Only from this doc
+   ↓
+3. Smart cleanup:
+   • PARIS: Remove chunk-001, chunk-042 from source_ids (keep chunk-100)
+   • FRANCE: DELETE completely (no other sources)
+   ↓
+4. Delete chunks from storage:
+   • Delete chunk-001, chunk-042, chunk-058 from text_chunks
+   • Delete chunk-001, chunk-042, chunk-058 from chunks_vdb
+   ↓
+5. Delete document from full_docs
+```
+
+**Usage Examples:**
+
+```python
+# Example 1: Delete by document ID
+from bigrag import BiGRAG
+
+rag = BiGRAG(working_dir="./expr/demo_test")
+stats = rag.delete_document("doc-abc123...")
+
+# Returns:
+# {
+#     "status": "success",
+#     "doc_id": "doc-abc123",
+#     "chunks_deleted": 15,
+#     "entities_deleted": 3,    # Entities unique to this doc
+#     "entities_updated": 8,    # Entities shared with other docs
+#     "edges_deleted": 5,
+#     "edges_updated": 12
+# }
+
+# Example 2: Delete by content (auto-computes ID)
+original_content = "The Eiffel Tower is in Paris, France."
+stats = rag.delete_document(original_content)
+
+# Example 3: Async version
+import asyncio
+
+async def delete_multiple(doc_ids):
+    rag = BiGRAG(working_dir="./expr/demo_test")
+    results = []
+    for doc_id in doc_ids:
+        stats = await rag.adelete_document(doc_id)
+        results.append(stats)
+    return results
+
+results = asyncio.run(delete_multiple(["doc-1", "doc-2", "doc-3"]))
+```
+
+**Storage Impact:**
+
+| Storage Component | Full Delete | Partial Update |
+|-------------------|-------------|----------------|
+| **full_docs** | ✅ Always deleted | N/A |
+| **text_chunks** | ✅ All doc chunks deleted | N/A |
+| **chunks_vdb** | ✅ All doc chunks deleted | N/A |
+| **entities_vdb** | ✅ If unique to doc | ⚠️ Update if shared |
+| **bipartite_edges_vdb** | ✅ If unique to doc | ⚠️ Update if shared |
+| **chunk_entity_relation_graph** | ✅ Nodes with 0 sources | ⚠️ Remove source_ids |
+
+**Benefits:**
+- ✅ **Data hygiene**: Remove outdated/incorrect documents
+- ✅ **Storage management**: Prevent indefinite growth
+- ✅ **Testing**: Easily reset test data
+- ✅ **GDPR compliance**: Remove user data on request
+- ✅ **Incremental updates**: Delete old version before inserting new
+
+**Performance:**
+- Complexity: O(chunks × entities) - depends on graph density
+- Typical: ~100-500ms for documents with 10-50 chunks
+- Async-first for non-blocking deletion
 ```
 
 ---

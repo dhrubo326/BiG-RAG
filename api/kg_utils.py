@@ -416,10 +416,20 @@ async def rebuild_entire_graph(dataset: str, job_id: str, rag_instance, processi
         working_dir = f"expr/{dataset}"
 
         for file in [
-            "kv_store_entities.json",
-            "kv_store_bipartite_edges.json",
+            # KV Storage files (JSON-based metadata)
             "kv_store_text_chunks.json",
             "kv_store_full_docs.json",
+            "kv_store_llm_response_cache.json",
+
+            # Vector DB files (embeddings for similarity search)
+            "vdb_entities.json",
+            "vdb_bipartite_edges.json",
+            "vdb_chunks.json",
+
+            # Graph structure file (NetworkX GraphML)
+            "graph_chunk_entity_relation.graphml",
+
+            # Legacy FAISS index files (kept for backward compatibility)
             "index_entity.bin",
             "index_bipartite_edge.bin",
             "index.bin",

@@ -72,6 +72,10 @@ class BaseVectorStorage(StorageNameSpace):
         """
         raise NotImplementedError
 
+    async def delete(self, ids: list[str]):
+        """Delete items by IDs from vector database"""
+        raise NotImplementedError
+
 
 @dataclass
 class BaseKVStorage(Generic[T], StorageNameSpace):
@@ -93,6 +97,14 @@ class BaseKVStorage(Generic[T], StorageNameSpace):
         raise NotImplementedError
 
     async def upsert(self, data: dict[str, T]):
+        raise NotImplementedError
+
+    async def delete(self, id: str):
+        """Delete a single item by ID"""
+        raise NotImplementedError
+
+    async def delete_many(self, ids: list[str]):
+        """Delete multiple items by IDs"""
         raise NotImplementedError
 
     async def drop(self):

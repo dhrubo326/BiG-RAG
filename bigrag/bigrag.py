@@ -676,53 +676,93 @@ class BiGRAG:
 
             logger.info(f"[Document Deletion] Found {len(doc_chunk_ids)} chunks to process")
 
-            # Step 4: Find all entities and edges that reference these chunks
-            entities_to_update = {}  # entity_name -> node_data
-            edges_to_update = {}     # (src, tgt) -> edge_data
+            doc_chunk_ids_set = set(doc_chunk_ids)
 
-            # Get all graph nodes
-            all_nodes = await self.chunk_entity_relation_graph.get_node_edges("")  # This might not work
-            # Alternative: iterate through entities_vdb
-            if self.entities_vdb is not None:
-                # This is tricky - we need a way to get all entities
-                # For now, let's work with what we can access through graph traversal
-                pass
+            # Step 4: Delete chunks from text_chunks KV storage
+            logger.info(f"[Document Deletion] Deleting chunks from KV storage")
+            deleted_chunks = await self.text_chunks.delete_many(doc_chunk_ids)
+            logger.info(f"[Document Deletion] Deleted {deleted_chunks} chunks from KV storage")
 
-            # Step 5: For each entity/edge, check if it references deleted chunks
-            # If yes, remove chunk reference from source_id
-            # If source_id becomes empty, delete entity/edge entirely
-
-            # This requires iterating through all entities in the graph
-            # Let's use a simpler approach: delete chunks and log orphaned entities
-            # Users can run a cleanup job separately
-
-            logger.info(f"[Document Deletion] Deleting {len(doc_chunk_ids)} chunks")
-
-            # Step 6: Delete chunks from text_chunks storage
-            for chunk_id in doc_chunk_ids:
-                # Note: BaseKVStorage doesn't have a delete method in the interface
-                # We'd need to add it. For now, log the issue.
-                logger.info(f"  - Would delete chunk: {chunk_id}")
-                # TODO: Implement delete in BaseKVStorage
-                # await self.text_chunks.delete(chunk_id)
-
-            # Step 7: Delete chunks from chunks_vdb
+            # Step 5: Delete chunks from chunks_vdb
             if self.chunks_vdb is not None:
-                logger.info(f"[Document Deletion] Removing chunks from vector DB")
-                # Similar issue - no delete method in BaseVectorStorage
-                # TODO: Implement delete in BaseVectorStorage
-                pass
+                logger.info(f"[Document Deletion] Deleting chunks from vector DB")
+                deleted_vdb = await self.chunks_vdb.delete(doc_chunk_ids)
+                logger.info(f"[Document Deletion] Deleted {deleted_vdb} chunk embeddings from VDB")
 
-            # Step 8: Delete document from full_docs
+            # Step 6: Find and process entities/edges that reference deleted chunks
+            # This implements cascade deletion with orphan cleanup
+            logger.info(f"[Document Deletion] Processing entity/edge cascade deletion")
+
+            entities_to_delete = []
+            edges_to_delete = []
+
+            # Iterate through all graph nodes to find entities/edges referencing deleted chunks
+            # We'll use NetworkX directly to iterate nodes
+            if hasattr(self.chunk_entity_relation_graph, '_graph'):
+                import networkx as nx
+                G = self.chunk_entity_relation_graph._graph
+
+                for node, attrs in G.nodes(data=True):
+                    source_id_str = str(attrs.get("source_id", ""))
+                    if not source_id_str:
+                        continue
+
+                    # Parse source_ids
+                    source_ids = source_id_str.split(GRAPH_FIELD_SEP) if GRAPH_FIELD_SEP in source_id_str else [source_id_str]
+                    source_ids_set = set(source_ids)
+
+                    # Check if this entity/edge references any deleted chunks
+                    if source_ids_set & doc_chunk_ids_set:
+                        # Remove deleted chunk references
+                        remaining_sources = source_ids_set - doc_chunk_ids_set
+
+                        if not remaining_sources:
+                            # No other chunks reference this entity/edge - delete it entirely
+                            role = attrs.get("role", "")
+                            if role == "entity":
+                                entities_to_delete.append(node)
+                            elif role == "bipartite_edge":
+                                edges_to_delete.append(node)
+                        else:
+                            # Update source_id to remove deleted chunks
+                            new_source_id = GRAPH_FIELD_SEP.join(remaining_sources)
+                            attrs["source_id"] = new_source_id
+                            # Update the node in graph
+                            await self.chunk_entity_relation_graph.upsert_node(
+                                node,
+                                node_data=attrs
+                            )
+
+            logger.info(f"[Document Deletion] Found {len(entities_to_delete)} orphaned entities")
+            logger.info(f"[Document Deletion] Found {len(edges_to_delete)} orphaned edges")
+
+            # Step 7: Delete orphaned entities from graph and VDB
+            for entity_name in entities_to_delete:
+                try:
+                    await self.chunk_entity_relation_graph.delete_node(entity_name)
+                    if self.entities_vdb is not None:
+                        entity_id = compute_mdhash_id(entity_name, prefix="ent-")
+                        await self.entities_vdb.delete([entity_id])
+                except Exception as e:
+                    logger.warning(f"Failed to delete entity {entity_name}: {e}")
+
+            # Step 8: Delete orphaned edges from graph and VDB
+            for edge_name in edges_to_delete:
+                try:
+                    await self.chunk_entity_relation_graph.delete_node(edge_name)
+                    if self.bipartite_edges_vdb is not None:
+                        edge_id = compute_mdhash_id(edge_name, prefix="edge-")
+                        await self.bipartite_edges_vdb.delete([edge_id])
+                except Exception as e:
+                    logger.warning(f"Failed to delete edge {edge_name}: {e}")
+
+            # Step 9: Delete document from full_docs
             logger.info(f"[Document Deletion] Deleting document from full_docs")
-            # TODO: Implement granular delete in BaseKVStorage
-            # await self.full_docs.delete(doc_id)
+            await self.full_docs.delete(doc_id)
 
-            logger.warning(
-                "[Document Deletion] ⚠️ PARTIAL IMPLEMENTATION: "
-                "Chunk/entity cascade deletion requires adding delete() methods to storage interfaces. "
-                "Document metadata cleared, but chunks/entities may remain. "
-                "See BiG_RAG_DESIGN.md Phase 2.2 for full specification."
+            logger.info(
+                f"[Document Deletion] ✅ Successfully deleted document {doc_id}: "
+                f"{deleted_chunks} chunks, {len(entities_to_delete)} entities, {len(edges_to_delete)} edges"
             )
 
             logger.info(f"[Document Deletion] Completed deletion for document: {doc_id}")

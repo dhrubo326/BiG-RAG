@@ -59,6 +59,27 @@ class JsonKVStorage(BaseKVStorage):
         self._data.update(left_data)
         return left_data
 
+    async def delete(self, id: str):
+        """Delete a single item by ID"""
+        if id in self._data:
+            del self._data[id]
+            await self.index_done_callback()
+            logger.info(f"Deleted {id} from KV storage {self.namespace}")
+            return True
+        return False
+
+    async def delete_many(self, ids: list[str]):
+        """Delete multiple items by IDs"""
+        deleted_count = 0
+        for id in ids:
+            if id in self._data:
+                del self._data[id]
+                deleted_count += 1
+        if deleted_count > 0:
+            await self.index_done_callback()
+            logger.info(f"Deleted {deleted_count} items from KV storage {self.namespace}")
+        return deleted_count
+
     async def drop(self):
         self._data = {}
 
@@ -132,6 +153,30 @@ class NanoVectorDBStorage(BaseVectorStorage):
             {**dp, "id": dp["__id__"], "distance": dp["__metrics__"]} for dp in results
         ]
         return results
+
+    async def delete(self, ids: list[str]):
+        """Delete items by IDs from vector database"""
+        if not ids:
+            return 0
+
+        try:
+            # Check which IDs actually exist
+            existing_ids = []
+            for id in ids:
+                if self._client.get([id]):
+                    existing_ids.append(id)
+
+            if existing_ids:
+                self._client.delete(existing_ids)
+                await self.index_done_callback()
+                logger.info(f"Deleted {len(existing_ids)} vectors from {self.namespace}")
+                return len(existing_ids)
+            else:
+                logger.info(f"No vectors found to delete in {self.namespace}")
+                return 0
+        except Exception as e:
+            logger.error(f"Error while deleting from vector DB {self.namespace}: {e}")
+            return 0
 
     @property
     def client_storage(self):

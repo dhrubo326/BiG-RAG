@@ -1308,17 +1308,24 @@ async def delete_document(document_id: str, hard_delete: bool = False):
             raise HTTPException(status_code=404, detail=f"Document not found: {document_id}")
 
         if hard_delete:
-            # Hard delete: Remove from corpus and registry
+            # Hard delete: Cascade deletion across all storage layers
             from api.kg_utils import remove_from_corpus
+
+            # Step 1: Remove from corpus.jsonl
             await remove_from_corpus(doc["dataset"], document_id)
+
+            # Step 2: Cascade delete from knowledge graph (chunks, entities, edges, VDBs)
+            await rag.adelete_document(document_id)
+
+            # Step 3: Remove from registry
             await registry.delete_document(document_id, hard=True)
 
             return DeleteResponse(
                 success=True,
-                message=f"Document {document_id} permanently deleted. Run /rebuild to update knowledge graph.",
+                message=f"Document {document_id} permanently deleted with cascade cleanup (chunks, entities, edges removed).",
                 document_id=document_id,
                 hard_delete=True,
-                rebuild_required=True
+                rebuild_required=False  # No rebuild needed - cascade deletion is complete
             )
         else:
             # Soft delete: Just mark as deleted

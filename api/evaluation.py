@@ -40,7 +40,7 @@ async def evaluate_single_retrieval(
 
     Args:
         query: Query text
-        ground_truth_docs: List of relevant document IDs
+        ground_truth_docs: List of relevant document IDs (full_doc_id format)
         rag_instance: BiGRAG instance
         mode: Retrieval mode
         top_k: Number of documents to retrieve
@@ -50,8 +50,14 @@ async def evaluate_single_retrieval(
 
     Returns:
         Dict with retrieved docs and metrics
+
+    Note:
+        Ground truth doc IDs must be full_doc_id values (e.g., "doc-abc123...")
+        from corpus.jsonl, NOT chunk IDs.
     """
-    # Query the RAG system
+    # Query the RAG system (track latency)
+    start_time = time.time()
+
     result = await rag_instance.aquery(
         query,
         param=QueryParam(
@@ -63,33 +69,50 @@ async def evaluate_single_retrieval(
         bipartite_edge_match=bipartite_edge_match
     )
 
+    latency_ms = (time.time() - start_time) * 1000  # Convert to milliseconds
+
     # Extract retrieved document IDs
-    # BiGRAG now returns: {"<knowledge>": text, "<coherence>": score, "<source_ids>": [chunk_ids]}
-    retrieved_docs = []
+    # BiGRAG returns: {"<knowledge>": text, "<coherence>": score, "<source_ids>": [chunk_ids]}
+    retrieved_docs = []  # List of unique document IDs (maintains order)
+    retrieved_doc_set = set()  # Set for deduplication
+
     if result:
         for context in result:
             # Get source IDs (chunk IDs) from the knowledge context
             source_ids = context.get('<source_ids>', [])
-            if source_ids:
-                for chunk_id in source_ids:
-                    if not chunk_id:
-                        continue
+            if not source_ids:
+                continue
 
-                    # Look up the chunk to get its full_doc_id
-                    try:
-                        chunk_data = await rag_instance.text_chunks.get_by_id(chunk_id)
-                        if chunk_data and 'full_doc_id' in chunk_data:
-                            doc_id = chunk_data['full_doc_id']
-                            if doc_id and doc_id not in retrieved_docs:
-                                retrieved_docs.append(doc_id)
-                        else:
-                            # Fallback: use chunk_id if no full_doc_id found
-                            if chunk_id not in retrieved_docs:
-                                retrieved_docs.append(chunk_id)
-                    except Exception as e:
-                        # If lookup fails, use chunk_id as fallback
-                        if chunk_id not in retrieved_docs:
-                            retrieved_docs.append(chunk_id)
+            for chunk_id in source_ids:
+                if not chunk_id:
+                    continue
+
+                # Look up the chunk to get its full_doc_id
+                try:
+                    chunk_data = await rag_instance.text_chunks.get_by_id(chunk_id)
+
+                    if chunk_data and 'full_doc_id' in chunk_data:
+                        doc_id = chunk_data['full_doc_id']
+                        if doc_id and doc_id not in retrieved_doc_set:
+                            retrieved_docs.append(doc_id)
+                            retrieved_doc_set.add(doc_id)
+                    else:
+                        # ERROR: Chunk missing full_doc_id - this should not happen
+                        # Log warning but continue (don't crash evaluation)
+                        from bigrag.utils import logger
+                        logger.warning(
+                            f"[Evaluation] Chunk '{chunk_id}' missing 'full_doc_id' field. "
+                            f"This chunk will be ignored in retrieval metrics. "
+                            f"Check your data indexing pipeline."
+                        )
+
+                except Exception as e:
+                    # ERROR: Failed to lookup chunk
+                    from bigrag.utils import logger
+                    logger.error(
+                        f"[Evaluation] Failed to lookup chunk '{chunk_id}': {e}. "
+                        f"This chunk will be ignored in retrieval metrics."
+                    )
 
     # Calculate metrics
     metric_scores = calculate_retrieval_metrics(
@@ -107,7 +130,8 @@ async def evaluate_single_retrieval(
     return {
         "retrieved_docs": retrieved_docs,
         "relevant_retrieved": relevant_retrieved,
-        "metrics": metric_scores
+        "metrics": metric_scores,
+        "latency_ms": round(latency_ms, 2)
     }
 
 
@@ -133,9 +157,45 @@ async def evaluate_retrieval(
     Returns:
         Dict with aggregate metrics and per-query results
     """
+    # Check corpus size to warn about trivial evaluation
+    from bigrag.utils import logger
+    try:
+        all_chunk_ids = await rag_instance.text_chunks.all_keys()
+
+        # Get unique document count from chunks
+        unique_docs = set()
+        for chunk_id in all_chunk_ids[:100]:  # Sample first 100 chunks
+            chunk = await rag_instance.text_chunks.get_by_id(chunk_id)
+            if chunk and 'full_doc_id' in chunk:
+                unique_docs.add(chunk['full_doc_id'])
+
+        doc_count = len(unique_docs)
+
+        if doc_count <= 5:
+            logger.warning(
+                f"\n{'='*70}\n"
+                f"⚠️  EVALUATION WARNING: Trivial Dataset Detected\n"
+                f"{'='*70}\n"
+                f"  Corpus contains only ~{doc_count} documents.\n"
+                f"  With so few documents, retrieval will likely return ground truth\n"
+                f"  documents for ANY query (even nonsense queries), resulting in\n"
+                f"  artificially high metrics (near 1.0).\n"
+                f"\n"
+                f"  For meaningful evaluation, use a dataset with:\n"
+                f"  - At least 100 documents (minimum)\n"
+                f"  - Recommended: 1000+ documents\n"
+                f"\n"
+                f"  Current dataset appears to be 'demo_test', which is only for\n"
+                f"  testing API functionality, NOT for evaluation.\n"
+                f"{'='*70}\n"
+            )
+    except Exception as e:
+        logger.debug(f"Could not check corpus size: {e}")
+
     start_time = time.time()
     per_query_results = []
     all_metrics = []
+    all_latencies = []
 
     for query_data in queries:
         question = query_data['question']
@@ -165,21 +225,59 @@ async def evaluate_retrieval(
             "question": question,
             "retrieved_docs": result["retrieved_docs"],
             "relevant_retrieved": result["relevant_retrieved"],
-            "metrics": result["metrics"]
+            "metrics": result["metrics"],
+            "latency_ms": result["latency_ms"]
         })
 
         all_metrics.append(result["metrics"])
+        all_latencies.append(result["latency_ms"])
 
     # Aggregate metrics
     aggregate = aggregate_metrics(all_metrics)
 
+    # Calculate latency statistics
+    latency_stats = None
+    if all_latencies:
+        import numpy as np
+        latencies_array = np.array(all_latencies)
+        latency_stats = {
+            "mean_ms": round(float(np.mean(latencies_array)), 2),
+            "median_ms": round(float(np.median(latencies_array)), 2),
+            "min_ms": round(float(np.min(latencies_array)), 2),
+            "max_ms": round(float(np.max(latencies_array)), 2),
+            "p95_ms": round(float(np.percentile(latencies_array, 95)), 2),
+            "p99_ms": round(float(np.percentile(latencies_array, 99)), 2),
+            "std_ms": round(float(np.std(latencies_array)), 2)
+        }
+
     evaluation_time = time.time() - start_time
+
+    # Check if results look suspiciously perfect (indicates trivial evaluation)
+    perfect_scores = 0
+    for result in per_query_results:
+        # Check if all metrics are close to 1.0
+        metrics_values = list(result["metrics"].values())
+        if metrics_values and all(v >= 0.95 for v in metrics_values):
+            perfect_scores += 1
+
+    if perfect_scores == len(queries) and len(queries) > 0:
+        from bigrag.utils import logger
+        logger.warning(
+            f"\n⚠️  SUSPICIOUS RESULTS: All {len(queries)} queries achieved near-perfect scores.\n"
+            f"   This likely indicates:\n"
+            f"   1. Corpus is too small (retrieval always finds ground truth)\n"
+            f"   2. Ground truth IDs are incorrect/duplicated\n"
+            f"   3. Dataset is trivial (e.g., demo_test with 1 document)\n"
+            f"\n"
+            f"   For reliable evaluation, use a real dataset with 100+ documents.\n"
+        )
 
     return {
         "total_queries": len(queries),
         "metrics": aggregate,
         "per_query_results": per_query_results,
-        "evaluation_time": round(evaluation_time, 2)
+        "evaluation_time": round(evaluation_time, 2),
+        "latency_stats": latency_stats
     }
 
 

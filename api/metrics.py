@@ -160,6 +160,45 @@ def mean_reciprocal_rank(retrieved: List[str], relevant: List[str]) -> float:
     return 0.0
 
 
+def hit_at_k(retrieved: List[str], relevant: List[str], k: Optional[int] = None) -> float:
+    """
+    Hit@K (Success@K): Binary metric indicating if at least one relevant doc was retrieved
+
+    Args:
+        retrieved: List of retrieved document IDs (in rank order)
+        relevant: List of relevant/ground truth document IDs
+        k: Cutoff rank (if None, uses len(retrieved))
+
+    Returns:
+        1.0 if at least one relevant doc in top-K, else 0.0
+
+    Example:
+        retrieved = ['doc2', 'doc4', 'doc1', 'doc5']
+        relevant = ['doc1', 'doc3']
+        hit_at_k(retrieved, relevant, k=3) = 1.0 (doc1 at rank 3)
+        hit_at_k(retrieved, relevant, k=2) = 0.0 (no relevant docs in top 2)
+
+    Note:
+        This is a binary metric useful for evaluating whether the system
+        retrieved ANY relevant information. It's less granular than Recall@K
+        but easier to interpret for tasks where finding at least one relevant
+        document is sufficient.
+    """
+    if not retrieved or not relevant:
+        return 0.0
+
+    k = k or len(retrieved)
+    retrieved_at_k = retrieved[:k]
+    relevant_set = set(relevant)
+
+    # Check if any retrieved doc is relevant
+    for doc_id in retrieved_at_k:
+        if doc_id in relevant_set:
+            return 1.0
+
+    return 0.0
+
+
 def dcg_at_k(retrieved: List[str], relevant: List[str], k: Optional[int] = None) -> float:
     """
     Discounted Cumulative Gain at K
@@ -441,6 +480,7 @@ def calculate_retrieval_metrics(
         'recall': lambda: recall_at_k(retrieved, relevant, k),
         'f1': lambda: f1_at_k(retrieved, relevant, k),
         'mrr': lambda: mean_reciprocal_rank(retrieved, relevant),
+        'hit': lambda: hit_at_k(retrieved, relevant, k),
         'ndcg': lambda: ndcg_at_k(retrieved, relevant, k),
         'map': lambda: average_precision(retrieved, relevant)
     }
@@ -455,7 +495,7 @@ def calculate_retrieval_metrics(
         if metric_lower in available_metrics:
             score = available_metrics[metric_lower]()
             # Format metric name with @K for rank-based metrics
-            if metric_lower in ['precision', 'recall', 'f1', 'ndcg']:
+            if metric_lower in ['precision', 'recall', 'f1', 'hit', 'ndcg']:
                 metric_name = f"{metric_lower}@{k}"
             else:
                 metric_name = metric_lower

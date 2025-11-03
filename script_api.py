@@ -1560,7 +1560,8 @@ async def evaluate_retrieval_endpoint(request: RetrievalEvalRequest):
                 question=result["question"],
                 retrieved_docs=result["retrieved_docs"],
                 relevant_retrieved=result["relevant_retrieved"],
-                metrics=result["metrics"]
+                metrics=result["metrics"],
+                latency_ms=result.get("latency_ms")
             )
             for result in eval_results["per_query_results"]
         ]
@@ -1570,7 +1571,8 @@ async def evaluate_retrieval_endpoint(request: RetrievalEvalRequest):
             total_queries=eval_results["total_queries"],
             metrics=eval_results["metrics"],
             per_query_results=per_query_models,
-            evaluation_time=eval_results["evaluation_time"]
+            evaluation_time=eval_results["evaluation_time"],
+            latency_stats=eval_results.get("latency_stats")
         )
 
     except Exception as e:

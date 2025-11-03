@@ -40,7 +40,7 @@ class RetrievalEvalRequest(BaseModel):
     mode: str = Field("hybrid", description="Retrieval mode (local, global, hybrid, naive)")
     top_k: int = Field(5, ge=1, le=100, description="Number of documents to retrieve")
     metrics: List[str] = Field(
-        ["precision", "recall", "f1", "mrr", "ndcg"],
+        ["precision", "recall", "f1", "hit", "mrr", "ndcg"],
         description="Metrics to calculate"
     )
 
@@ -56,7 +56,7 @@ class RetrievalEvalRequest(BaseModel):
                 "dataset": "demo_test",
                 "mode": "hybrid",
                 "top_k": 5,
-                "metrics": ["precision", "recall", "mrr", "ndcg"]
+                "metrics": ["precision", "recall", "hit", "mrr", "ndcg"]
             }
         }
 
@@ -131,7 +131,7 @@ class CompareEvalRequest(BaseModel):
     dataset: str = Field("demo_test", description="Dataset to query")
     configurations: List[CompareConfig] = Field(..., description="Configurations to compare")
     metrics: List[str] = Field(
-        ["precision", "recall", "mrr", "latency"],
+        ["precision", "recall", "hit", "mrr"],
         description="Metrics to calculate"
     )
 
@@ -194,6 +194,7 @@ class PerQueryRetrievalResult(BaseModel):
     retrieved_docs: List[str] = Field(..., description="Retrieved document IDs")
     relevant_retrieved: List[str] = Field(..., description="Relevant docs that were retrieved")
     metrics: Dict[str, float] = Field(..., description="Metric scores for this query")
+    latency_ms: Optional[float] = Field(None, description="Retrieval latency in milliseconds")
 
     class Config:
         json_schema_extra = {
@@ -217,6 +218,10 @@ class RetrievalEvalResponse(BaseModel):
     metrics: Dict[str, float] = Field(..., description="Aggregate metrics across all queries")
     per_query_results: List[PerQueryRetrievalResult] = Field(..., description="Per-query breakdown")
     evaluation_time: float = Field(..., description="Total evaluation time in seconds")
+    latency_stats: Optional[Dict[str, float]] = Field(
+        None,
+        description="Latency statistics (mean_ms, median_ms, p95_ms, p99_ms, min_ms, max_ms)"
+    )
 
     class Config:
         json_schema_extra = {

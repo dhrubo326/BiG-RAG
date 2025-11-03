@@ -373,7 +373,13 @@ class EmbeddingManager:
             raise
 
     def _init_flagembedding(self):
-        """Initialize FlagEmbedding mode"""
+        """
+        Initialize FlagEmbedding mode (LEGACY - for backwards compatibility)
+
+        NOTE: This is legacy code for graphs built with FAISS indices.
+        New graphs use NanoVectorDB (OpenAI mode). If you're seeing errors here,
+        your graph may be from an older version. Consider rebuilding with script_build.py.
+        """
         try:
             import faiss
             from FlagEmbedding import FlagAutoModel
@@ -391,19 +397,53 @@ class EmbeddingManager:
             self.faiss_indices["edge"] = faiss.read_index(str(self.working_dir / "index_bipartite_edge.bin"))
             logger.info("✓ FAISS indices loaded")
 
-            # Load corpus mappings
-            with open(self.working_dir / "kv_store_entities.json") as f:
-                entities = json.load(f)
-                self.corpus_entity = [entities[item]['entity_name'] for item in entities]
+            # Load corpus mappings from GraphML (new architecture) or JSON (legacy)
+            graph_file = self.working_dir / "graph_chunk_entity_relation.graphml"
+            legacy_entities_file = self.working_dir / "kv_store_entities.json"
+            legacy_edges_file = self.working_dir / "kv_store_bipartite_edges.json"
 
-            with open(self.working_dir / "kv_store_bipartite_edges.json") as f:
-                edges = json.load(f)
-                self.corpus_edge = [edges[item]['content'] for item in edges]
+            if graph_file.exists():
+                # New architecture: Read from GraphML
+                logger.info("Reading entity/edge names from GraphML file")
+                import networkx as nx
+                G = nx.read_graphml(graph_file)
+
+                self.corpus_entity = []
+                self.corpus_edge = []
+
+                for node, attrs in G.nodes(data=True):
+                    role = attrs.get("role", "")
+                    if role == "entity":
+                        self.corpus_entity.append(attrs.get("name", node))
+                    elif role == "bipartite_edge":
+                        self.corpus_edge.append(attrs.get("name", node))
+
+            elif legacy_entities_file.exists() and legacy_edges_file.exists():
+                # Legacy architecture: Read from JSON files
+                logger.warning("⚠ Using legacy JSON metadata files (consider rebuilding graph)")
+                with open(legacy_entities_file) as f:
+                    entities = json.load(f)
+                    self.corpus_entity = [entities[item]['entity_name'] for item in entities]
+
+                with open(legacy_edges_file) as f:
+                    edges = json.load(f)
+                    self.corpus_edge = [edges[item]['content'] for item in edges]
+            else:
+                raise FileNotFoundError(
+                    "No entity/edge metadata found! Expected either:\n"
+                    f"  - {graph_file} (new architecture)\n"
+                    f"  - {legacy_entities_file} + {legacy_edges_file} (legacy)\n"
+                    "Please rebuild your graph with script_build.py"
+                )
 
             logger.info(f"✓ Loaded {len(self.corpus_entity)} entities, {len(self.corpus_edge)} edges")
 
-        except ImportError:
-            logger.error("FlagEmbedding not installed! Install with: pip install FlagEmbedding faiss-cpu")
+        except ImportError as e:
+            logger.error(f"FlagEmbedding dependencies not installed: {e}")
+            logger.error("Install with: pip install FlagEmbedding faiss-cpu")
+            raise
+        except FileNotFoundError as e:
+            logger.error(str(e))
             raise
         except Exception as e:
             logger.error(f"Failed to initialize FlagEmbedding: {e}")
@@ -797,8 +837,12 @@ async def health_check():
     if expr_dir.exists():
         for dataset_dir in expr_dir.iterdir():
             if dataset_dir.is_dir() and not dataset_dir.name.startswith('.'):
-                # Check if indices exist
+                # Check if indices exist (support both new and legacy formats)
                 indices_loaded = (
+                    # New architecture (NanoVectorDB)
+                    (dataset_dir / "vdb_entities.json").exists() or
+                    (dataset_dir / "vdb_bipartite_edges.json").exists() or
+                    # Legacy architecture (FAISS)
                     (dataset_dir / "index_entity.bin").exists() or
                     (dataset_dir / "index_bipartite_edge.bin").exists()
                 )
@@ -1394,9 +1438,8 @@ async def get_graph_statistics(dataset: Optional[str] = None):
             # Get registry stats
             reg_stats = await registry.get_stats(ds)
 
-            # Get KG file counts
-            entities_file = f"{config.working_dir}/{ds}/kv_store_entities.json"
-            edges_file = f"{config.working_dir}/{ds}/kv_store_bipartite_edges.json"
+            # Get KG file counts - read from GraphML and KV storage
+            graph_file = f"{config.working_dir}/{ds}/graph_chunk_entity_relation.graphml"
             chunks_file = f"{config.working_dir}/{ds}/kv_store_text_chunks.json"
 
             entities_count = 0
@@ -1404,16 +1447,22 @@ async def get_graph_statistics(dataset: Optional[str] = None):
             chunks_count = 0
             tokens_count = 0
 
-            if os.path.exists(entities_file):
-                with open(entities_file, 'r', encoding='utf-8') as f:
-                    entities = json.load(f)
-                    entities_count = len(entities)
+            # Count entities and edges from GraphML file
+            if os.path.exists(graph_file):
+                try:
+                    import networkx as nx
+                    G = nx.read_graphml(graph_file)
 
-            if os.path.exists(edges_file):
-                with open(edges_file, 'r', encoding='utf-8') as f:
-                    edges = json.load(f)
-                    edges_count = len(edges)
+                    for node, attrs in G.nodes(data=True):
+                        role = attrs.get("role", "")
+                        if role == "entity":
+                            entities_count += 1
+                        elif role == "bipartite_edge":
+                            edges_count += 1
+                except Exception as e:
+                    logger.warning(f"Failed to read GraphML for dataset {ds}: {e}")
 
+            # Count chunks from KV storage
             if os.path.exists(chunks_file):
                 with open(chunks_file, 'r', encoding='utf-8') as f:
                     chunks = json.load(f)

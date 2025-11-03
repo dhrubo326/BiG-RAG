@@ -235,6 +235,8 @@ where state space $\mathcal{S}$ includes query, current context, and graph neigh
 
 ### 4.1 System Architecture
 
+> **Implementation Note:** This section describes the conceptual architecture. The current implementation (as of January 2025) uses **NanoVectorDB** by default instead of FAISS for the Vector Database Layer, and supports three-path retrieval (entities + relations + chunks). See [CLAUDE.md](../CLAUDE.md) and [IMPLEMENTATION_SUMMARY.md](../IMPLEMENTATION_SUMMARY.md) for current implementation details.
+
 BiG-RAG employs a distributed architecture with three specialized storage subsystems:
 
 **Graph Database Layer** stores bipartite structure $(V_E \cup V_R, E_B)$ using:

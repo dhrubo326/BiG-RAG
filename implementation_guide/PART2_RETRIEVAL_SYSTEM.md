@@ -1278,16 +1278,16 @@ print(f"Query took {time.time() - start:.2f}s")
 ```
 
 **Causes:**
-- Large FAISS index (>1M vectors)
-- Flat index (O(n) search)
+- Large vector database (>1M vectors)
+- Linear search complexity (O(n))
 - Many graph traversals
 
 **Solutions:**
 
 ```python
-# Solution 1: Use approximate FAISS index
-# Switch from IndexFlatIP to IndexIVFFlat
-# Requires reindexing
+# Solution 1: Use alternative vector database backend
+# Consider Milvus, ChromaDB, or TiDB for larger datasets
+# See bigrag/kg/ for available backends
 
 # Solution 2: Reduce top_k
 param = QueryParam(top_k=20)  # Instead of 60
@@ -1353,15 +1353,17 @@ for node, data in graph.nodes(data=True):
 # Rebuild graph if attributes missing
 ```
 
-**Error:** `RuntimeError: FAISS index not built`
+**Error:** `RuntimeError: Vector database not initialized`
 
-**Cause:** Vector storage not finalized
+**Cause:** Vector storage not properly loaded or empty
 
 ```python
-# Fix: Call index_done_callback()
-rag.entities_vdb.index_done_callback()
-rag.bipartite_edges_vdb.index_done_callback()
-rag.chunks_vdb.index_done_callback()
+# Fix: Ensure documents have been inserted
+await rag.ainsert(documents)
+
+# Or check if vector DBs are loaded
+print(f"Entities: {len(rag.entities_vdb.data) if hasattr(rag.entities_vdb, 'data') else 'N/A'}")
+print(f"Edges: {len(rag.bipartite_edges_vdb.data) if hasattr(rag.bipartite_edges_vdb, 'data') else 'N/A'}")
 ```
 
 **Error:** `ValueError: Query embedding dimension mismatch`
@@ -2065,10 +2067,10 @@ This comprehensive guide covers the **Retrieval System** in BiG-RAG:
 
 **Key Takeaways:**
 
-1. **Dual-path retrieval** captures complementary information (entities + relations)
+1. **Three-path retrieval** captures complementary information (entities + relations + chunks)
 2. **Reciprocal rank fusion** combines paths without hyperparameter tuning
-3. **Hybrid mode** is most robust for general queries
-4. **FAISS indexing** enables fast search even for large graphs (O(log V))
+3. **Hybrid mode** is most robust for general queries (combines all three paths)
+4. **Vector database indexing** enables fast similarity search for large graphs
 5. **Graph traversal** adds multi-hop reasoning capability
 
 For tool-augmented generation details, see **Part 3: Tool-Augmented Generation**.

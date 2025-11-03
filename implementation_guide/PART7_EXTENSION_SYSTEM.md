@@ -1076,12 +1076,12 @@ ValueError: Input vector dimension 384 does not match index dimension 1536
 **Solutions:**
 
 ```python
-# 1. Rebuild FAISS indices with new dimension
+# 1. Rebuild vector databases with new dimension
 import shutil
 import os
 
-# Delete old indices
-for file in ["index_entity.bin", "index_bipartite_edge.bin", "index.bin"]:
+# Delete old vector databases
+for file in ["vdb_entities.json", "vdb_bipartite_edges.json", "vdb_chunks.json"]:
     if os.path.exists(f"expr/my_kg/{file}"):
         os.remove(f"expr/my_kg/{file}")
 
@@ -1090,7 +1090,7 @@ rag = BiGRAG(
     working_dir="./expr/my_kg",
     embedding_func=custom_embed_384d  # 384-dim embeddings
 )
-await rag.ainsert(documents)  # Rebuilds indices
+await rag.ainsert(documents)  # Rebuilds vector databases
 
 # 2. Use embedding dimension parameter
 rag = BiGRAG(

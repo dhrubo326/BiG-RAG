@@ -27,7 +27,7 @@ python tests/test_setup.py
 - N-ary relation extraction
 - Bipartite edge creation
 - Storage file generation
-- FAISS index creation
+- Vector database creation (NanoVectorDB)
 
 **Prerequisites**:
 - OpenAI API key in `openai_api_key.txt`
@@ -39,12 +39,12 @@ python tests/test_build_graph.py
 ```
 
 **Expected Output**:
-- `expr/test_wiki/kv_store_entities.json`
-- `expr/test_wiki/kv_store_bipartite_edges.json`
+- `expr/test_wiki/kv_store_full_docs.json`
 - `expr/test_wiki/kv_store_text_chunks.json`
-- `expr/test_wiki/index_entity.bin`
-- `expr/test_wiki/index_bipartite_edge.bin`
-- `expr/test_wiki/index.bin`
+- `expr/test_wiki/vdb_entities.json`
+- `expr/test_wiki/vdb_bipartite_edges.json`
+- `expr/test_wiki/vdb_chunks.json`
+- `expr/test_wiki/graph_chunk_entity_relation.graphml`
 
 ### 3. `test_retrieval.py`
 **Purpose**: Test vector search and knowledge retrieval

@@ -16,13 +16,13 @@
 - ✅ `vdb_bipartite_edges` (NOT `bipartite_edges_vdb`)
 - ✅ `vdb_chunks` (NOT `chunks_vdb`)
 
-### About FAISS
+### About Vector Storage
 
-**Clarification:** BiG-RAG uses OpenAI embeddings stored in FAISS indices.
+**Clarification:** BiG-RAG uses OpenAI embeddings (or FlagEmbedding) stored in NanoVectorDB.
 - You generate embeddings with OpenAI API (or FlagEmbedding)
-- These embeddings are stored in **FAISS index files** (`index.bin`, `index_entity.bin`, `index_bipartite_edge.bin`)
-- FAISS provides fast similarity search (not an alternative to OpenAI embeddings)
-- NanoVectorDB (default storage) uses FAISS internally
+- These embeddings are stored in **NanoVectorDB JSON files** (`vdb_entities.json`, `vdb_bipartite_edges.json`, `vdb_chunks.json`)
+- NanoVectorDB provides fast cosine similarity search for vector retrieval
+- Alternative backends available: Milvus, ChromaDB, TiDB (see [bigrag/kg/](bigrag/kg/))
 
 ### System Requirements (for Phase 1)
 

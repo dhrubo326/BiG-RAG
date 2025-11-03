@@ -221,21 +221,21 @@ class BiGRAG:
             embedding_func=self.embedding_func,
         )
 
-        self.entities_vdb = self.vector_db_storage_cls(
+        self.vdb_entities = self.vector_db_storage_cls(
             namespace="entities",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
             meta_fields={"entity_name"},  # Bug #5 fix: Store entity_name for node lookup
             **self.vector_db_storage_cls_kwargs,
         )
-        self.bipartite_edges_vdb = self.vector_db_storage_cls(
+        self.vdb_bipartite_edges = self.vector_db_storage_cls(
             namespace="bipartite_edges",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
             meta_fields={"bipartite_edge_name"},  # Bug #5 fix: Store edge name for node lookup
             **self.vector_db_storage_cls_kwargs,
         )
-        self.chunks_vdb = self.vector_db_storage_cls(
+        self.vdb_chunks = self.vector_db_storage_cls(
             namespace="chunks",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
@@ -369,8 +369,8 @@ class BiGRAG:
             maybe_new_kg = await extract_entities(
                 inserting_chunks,
                 knowledge_graph_inst=self.chunk_entity_relation_graph,
-                entity_vdb=self.entities_vdb,
-                bipartite_edge_vdb=self.bipartite_edges_vdb,
+                vdb_entities=self.vdb_entities,
+                vdb_bipartite_edges=self.vdb_bipartite_edges,
                 global_config=asdict(self),
             )
             if maybe_new_kg is None:
@@ -383,7 +383,7 @@ class BiGRAG:
 
             # Phase 3.1: Index chunks to vector DB for Path C retrieval (Three-Path Retrieval)
             # This enables direct semantic search on chunks (in addition to entity/edge-based retrieval)
-            if self.chunks_vdb is not None:
+            if self.vdb_chunks is not None:
                 chunks_for_vdb = {
                     chunk_id: {
                         "content": chunk_data["content"],
@@ -391,7 +391,7 @@ class BiGRAG:
                     }
                     for chunk_id, chunk_data in inserting_chunks.items()
                 }
-                await self.chunks_vdb.upsert(chunks_for_vdb)
+                await self.vdb_chunks.upsert(chunks_for_vdb)
                 logger.info(f"[Chunks VDB] Indexed {len(chunks_for_vdb)} chunks for vector search (Path C)")
         finally:
             if update_storage:
@@ -403,9 +403,9 @@ class BiGRAG:
             self.full_docs,
             self.text_chunks,
             self.llm_response_cache,
-            self.entities_vdb,
-            self.bipartite_edges_vdb,
-            self.chunks_vdb,
+            self.vdb_entities,
+            self.vdb_bipartite_edges,
+            self.vdb_chunks,
             self.chunk_entity_relation_graph,
         ]:
             if storage_inst is None:
@@ -433,8 +433,8 @@ class BiGRAG:
                 chunk_to_source_map[source_id] = chunk_id
                 update_storage = True
 
-            if self.chunks_vdb is not None and all_chunks_data:
-                await self.chunks_vdb.upsert(all_chunks_data)
+            if self.vdb_chunks is not None and all_chunks_data:
+                await self.vdb_chunks.upsert(all_chunks_data)
             if self.text_chunks is not None and all_chunks_data:
                 await self.text_chunks.upsert(all_chunks_data)
 
@@ -521,7 +521,7 @@ class BiGRAG:
                 update_storage = True
 
             # Insert entities into vector storage if needed
-            if self.entities_vdb is not None:
+            if self.vdb_entities is not None:
                 data_for_vdb = {
                     compute_mdhash_id(dp["entity_name"], prefix="ent-"): {
                         "content": dp["entity_name"] + dp["description"],
@@ -529,10 +529,10 @@ class BiGRAG:
                     }
                     for dp in all_entities_data
                 }
-                await self.entities_vdb.upsert(data_for_vdb)
+                await self.vdb_entities.upsert(data_for_vdb)
 
             # Insert relationships into vector storage if needed
-            if self.bipartite_edges_vdb is not None:
+            if self.vdb_bipartite_edges is not None:
                 data_for_vdb = {
                     compute_mdhash_id(dp["src_id"] + dp["tgt_id"], prefix="rel-"): {
                         "src_id": dp["src_id"],
@@ -544,7 +544,7 @@ class BiGRAG:
                     }
                     for dp in all_relationships_data
                 }
-                await self.bipartite_edges_vdb.upsert(data_for_vdb)
+                await self.vdb_bipartite_edges.upsert(data_for_vdb)
         finally:
             if update_storage:
                 await self._insert_done()
@@ -556,14 +556,14 @@ class BiGRAG:
     async def aquery(self, query: str, param: QueryParam = QueryParam(), entity_match=None, bipartite_edge_match=None):
         # All query modes now pass VDB instances directly to kg_query
         # kg_query will handle querying based on param.mode
-        # Phase 3.2: Now includes chunks_vdb for Three-Path Retrieval
+        # Phase 3.2: Now includes vdb_chunks for Three-Path Retrieval
         response = await kg_query(
             query,
             self.chunk_entity_relation_graph,
-            self.entities_vdb,  # Path A: Entity vector DB
-            self.bipartite_edges_vdb,  # Path B: Bipartite edge vector DB
+            self.vdb_entities,  # Path A: Entity vector DB
+            self.vdb_bipartite_edges,  # Path B: Bipartite edge vector DB
             self.text_chunks,
-            self.chunks_vdb,  # Phase 3.2: Path C: Chunk vector DB
+            self.vdb_chunks,  # Phase 3.2: Path C: Chunk vector DB
             param,
             asdict(self),
             hashing_kv=self.llm_response_cache,
@@ -587,8 +587,8 @@ class BiGRAG:
         entity_name = f'"{entity_name.upper()}"'
 
         try:
-            await self.entities_vdb.delete_entity(entity_name)
-            await self.bipartite_edges_vdb.delete_relation(entity_name)
+            await self.vdb_entities.delete_entity(entity_name)
+            await self.vdb_bipartite_edges.delete_relation(entity_name)
             await self.chunk_entity_relation_graph.delete_node(entity_name)
 
             logger.info(
@@ -601,8 +601,8 @@ class BiGRAG:
     async def _delete_by_entity_done(self):
         tasks = []
         for storage_inst in [
-            self.entities_vdb,
-            self.bipartite_edges_vdb,
+            self.vdb_entities,
+            self.vdb_bipartite_edges,
             self.chunk_entity_relation_graph,
         ]:
             if storage_inst is None:
@@ -683,10 +683,10 @@ class BiGRAG:
             deleted_chunks = await self.text_chunks.delete_many(doc_chunk_ids)
             logger.info(f"[Document Deletion] Deleted {deleted_chunks} chunks from KV storage")
 
-            # Step 5: Delete chunks from chunks_vdb
-            if self.chunks_vdb is not None:
+            # Step 5: Delete chunks from vdb_chunks
+            if self.vdb_chunks is not None:
                 logger.info(f"[Document Deletion] Deleting chunks from vector DB")
-                deleted_vdb = await self.chunks_vdb.delete(doc_chunk_ids)
+                deleted_vdb = await self.vdb_chunks.delete(doc_chunk_ids)
                 logger.info(f"[Document Deletion] Deleted {deleted_vdb} chunk embeddings from VDB")
 
             # Step 6: Find and process entities/edges that reference deleted chunks
@@ -740,9 +740,9 @@ class BiGRAG:
             for entity_name in entities_to_delete:
                 try:
                     await self.chunk_entity_relation_graph.delete_node(entity_name)
-                    if self.entities_vdb is not None:
+                    if self.vdb_entities is not None:
                         entity_id = compute_mdhash_id(entity_name, prefix="ent-")
-                        await self.entities_vdb.delete([entity_id])
+                        await self.vdb_entities.delete([entity_id])
                 except Exception as e:
                     logger.warning(f"Failed to delete entity {entity_name}: {e}")
 
@@ -750,9 +750,9 @@ class BiGRAG:
             for edge_name in edges_to_delete:
                 try:
                     await self.chunk_entity_relation_graph.delete_node(edge_name)
-                    if self.bipartite_edges_vdb is not None:
+                    if self.vdb_bipartite_edges is not None:
                         edge_id = compute_mdhash_id(edge_name, prefix="edge-")
-                        await self.bipartite_edges_vdb.delete([edge_id])
+                        await self.vdb_bipartite_edges.delete([edge_id])
                 except Exception as e:
                     logger.warning(f"Failed to delete edge {edge_name}: {e}")
 
@@ -779,9 +779,9 @@ class BiGRAG:
         for storage_inst in [
             self.full_docs,
             self.text_chunks,
-            self.chunks_vdb,
-            self.entities_vdb,
-            self.bipartite_edges_vdb,
+            self.vdb_chunks,
+            self.vdb_entities,
+            self.vdb_bipartite_edges,
             self.chunk_entity_relation_graph,
         ]:
             if storage_inst is None:

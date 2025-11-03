@@ -292,8 +292,8 @@ async def _merge_edges_then_upsert(
 async def extract_entities(
     chunks: dict[str, TextChunkSchema],
     knowledge_graph_inst: BaseGraphStorage,
-    entity_vdb: BaseVectorStorage,
-    bipartite_edge_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
     global_config: dict,
 ) -> Union[BaseGraphStorage, None]:
     use_llm_func: callable = global_config["llm_model_func"]
@@ -513,7 +513,7 @@ async def extract_entities(
     if not len(all_relationships_data):
         logger.warning("Didn't extract any relationships")
 
-    if bipartite_edge_vdb is not None:
+    if vdb_bipartite_edges is not None:
         data_for_vdb = {
             compute_mdhash_id(dp["bipartite_edge_name"], prefix="rel-"): {
                 "content": dp["bipartite_edge_name"],
@@ -521,9 +521,9 @@ async def extract_entities(
             }
             for dp in all_bipartite_edges_data
         }
-        await bipartite_edge_vdb.upsert(data_for_vdb)
+        await vdb_bipartite_edges.upsert(data_for_vdb)
 
-    if entity_vdb is not None:
+    if vdb_entities is not None:
         data_for_vdb = {
             compute_mdhash_id(dp["entity_name"], prefix="ent-"): {
                 "content": dp["entity_name"] + dp["description"],
@@ -531,7 +531,7 @@ async def extract_entities(
             }
             for dp in all_entities_data
         }
-        await entity_vdb.upsert(data_for_vdb)
+        await vdb_entities.upsert(data_for_vdb)
 
     return knowledge_graph_inst
 
@@ -539,10 +539,10 @@ async def extract_entities(
 async def kg_query(
     query,
     knowledge_graph_inst: BaseGraphStorage,
-    entities_vdb: list,
-    bipartite_edges_vdb: list,
+    vdb_entities: list,
+    vdb_bipartite_edges: list,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
-    chunks_vdb: BaseVectorStorage,  # Phase 3.2: Added chunks_vdb parameter
+    vdb_chunks: BaseVectorStorage,  # Phase 3.2: Added vdb_chunks parameter
     query_param: QueryParam,
     global_config: dict,
     hashing_kv: BaseKVStorage = None,
@@ -554,10 +554,10 @@ async def kg_query(
     context = await _build_query_context(
         keywords,
         knowledge_graph_inst,
-        entities_vdb,
-        bipartite_edges_vdb,
+        vdb_entities,
+        vdb_bipartite_edges,
         text_chunks_db,
-        chunks_vdb,  # Phase 3.2: Pass chunks_vdb
+        vdb_chunks,  # Phase 3.2: Pass vdb_chunks
         query_param,
     )
 
@@ -568,10 +568,10 @@ async def kg_query(
 async def _build_query_context(
     query: list,
     knowledge_graph_inst: BaseGraphStorage,
-    entities_vdb: BaseVectorStorage,
-    bipartite_edges_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
-    chunks_vdb: BaseVectorStorage,  # Phase 3.2: Added chunks_vdb parameter
+    vdb_chunks: BaseVectorStorage,  # Phase 3.2: Added vdb_chunks parameter
     query_param: QueryParam,
 ):
     """
@@ -591,7 +591,7 @@ async def _build_query_context(
     knowledge_list_1 = await _get_node_data(
         ll_kewwords,
         knowledge_graph_inst,
-        entities_vdb,
+        vdb_entities,
         text_chunks_db,
         query_param,
     )
@@ -600,7 +600,7 @@ async def _build_query_context(
     knowledge_list_2 = await _get_edge_data(
         hl_keywrds,
         knowledge_graph_inst,
-        bipartite_edges_vdb,
+        vdb_bipartite_edges,
         text_chunks_db,
         query_param,
     )
@@ -619,7 +619,7 @@ async def _build_query_context(
     # Path C: Chunk retrieval (direct + indirect from Path A + B)
     knowledge_list_3 = await _get_chunk_data(
         ll_kewwords,  # Use same query as entity search
-        chunks_vdb,
+        vdb_chunks,
         text_chunks_db,
         entity_source_ids,
         edge_source_ids,
@@ -726,12 +726,12 @@ async def _build_query_context(
 async def _get_node_data(
     query,
     knowledge_graph_inst: BaseGraphStorage,
-    entities_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
 ):
     # Fixed: Actually query the vector database instead of assigning the object
-    results = await entities_vdb.query(query, top_k=query_param.top_k)
+    results = await vdb_entities.query(query, top_k=query_param.top_k)
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
     # Extract entity names from query results (Bug #5 fix: use entity_name, not hash ID)
@@ -880,12 +880,12 @@ async def _find_most_related_edges_from_entities(
 async def _get_edge_data(
     keywords,
     knowledge_graph_inst: BaseGraphStorage,
-    bipartite_edges_vdb: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
 ):
     # Fixed: Actually query the vector database instead of assigning the object
-    results = await bipartite_edges_vdb.query(keywords, top_k=query_param.top_k)
+    results = await vdb_bipartite_edges.query(keywords, top_k=query_param.top_k)
 
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
@@ -924,7 +924,7 @@ async def _get_edge_data(
 
 async def _get_chunk_data(
     query: str,
-    chunks_vdb: BaseVectorStorage,
+    vdb_chunks: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     entity_source_ids: set,
     edge_source_ids: set,
@@ -934,14 +934,14 @@ async def _get_chunk_data(
     Path C: Chunk-level retrieval (Phase 3.1 - Three-Path Retrieval)
 
     Combines two sources for 10 total candidate chunks:
-    1. Direct vector search on chunks_vdb (top-5 chunks)
+    1. Direct vector search on vdb_chunks (top-5 chunks)
     2. Indirect extraction from Path A + Path B source_ids (another 5 chunks)
 
     This provides both semantic relevance (direct) and structural relevance (indirect).
 
     Args:
         query: User query string
-        chunks_vdb: Chunk vector database
+        vdb_chunks: Chunk vector database
         text_chunks_db: Chunk metadata storage
         entity_source_ids: Set of chunk IDs from entity retrieval (Path A)
         edge_source_ids: Set of chunk IDs from edge retrieval (Path B)
@@ -950,15 +950,15 @@ async def _get_chunk_data(
     Returns:
         List of tuples: (chunk_content, [source_id])
     """
-    if chunks_vdb is None:
-        logger.warning("[Path C] chunks_vdb is None, skipping chunk retrieval")
+    if vdb_chunks is None:
+        logger.warning("[Path C] vdb_chunks is None, skipping chunk retrieval")
         return []
 
     chunk_candidates = []
 
     # Part 1: Direct vector search (top-5)
     try:
-        direct_results = await chunks_vdb.query(query, top_k=5)
+        direct_results = await vdb_chunks.query(query, top_k=5)
         if direct_results:
             for result in direct_results:
                 chunk_id = result.get("id")

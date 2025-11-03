@@ -531,14 +531,14 @@ try:
         entities_file = f"{working_dir}/vdb_entities.json"
         if os.path.exists(entities_file):
             with open(entities_file, 'r', encoding='utf-8') as f:
-                entities_vdb = json.load(f)
-            stats["entities"] = len(entities_vdb.get('data', []))
+                vdb_entities = json.load(f)
+            stats["entities"] = len(vdb_entities.get('data', []))
 
         edges_file = f"{working_dir}/vdb_bipartite_edges.json"
         if os.path.exists(edges_file):
             with open(edges_file, 'r', encoding='utf-8') as f:
-                edges_vdb = json.load(f)
-            stats["edges"] = len(edges_vdb.get('data', []))
+                vdb_bipartite_edges = json.load(f)
+            stats["edges"] = len(vdb_bipartite_edges.get('data', []))
 
     elif embedding_manager.mode == "flagembedding":
         stats["entities"] = len(embedding_manager.corpus_entity)

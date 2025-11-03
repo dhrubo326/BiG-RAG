@@ -202,9 +202,9 @@ def verify_output(working_dir: str):
             with open(output_dir / "kv_store_text_chunks.json", 'r', encoding='utf-8') as f:
                 chunks = json.load(f)
             with open(output_dir / "vdb_entities.json", 'r', encoding='utf-8') as f:
-                entities_vdb = json.load(f)
+                vdb_entities = json.load(f)
             with open(output_dir / "vdb_bipartite_edges.json", 'r', encoding='utf-8') as f:
-                edges_vdb = json.load(f)
+                vdb_bipartite_edges = json.load(f)
 
             logger.info("="*80)
             logger.info("KNOWLEDGE GRAPH STATISTICS")
@@ -212,8 +212,8 @@ def verify_output(working_dir: str):
             logger.info(f"  Text Chunks:      {len(chunks)}")
 
             # NanoVectorDB stores data in 'data' key
-            entities_count = len(entities_vdb.get('data', []))
-            edges_count = len(edges_vdb.get('data', []))
+            entities_count = len(vdb_entities.get('data', []))
+            edges_count = len(vdb_bipartite_edges.get('data', []))
 
             logger.info(f"  Entities:         {entities_count}")
             logger.info(f"  Relations:        {edges_count}")

@@ -184,19 +184,19 @@ Input: Raw Documents (corpus.jsonl)
 ├─────────────────────────────────────────────────────────────────┤
 │  Function: vector_storage.upsert() + index_done_callback()     │
 │                                                                  │
-│  FAISS Index Creation:                                           │
-│    • IndexFlatIP (inner product) for small datasets (<100K)     │
-│    • IndexIVFFlat for larger datasets                           │
+│  Vector Database Creation (NanoVectorDB):                         │
+│    • In-memory vector database with JSON persistence            │
+│    • Cosine similarity search with efficient indexing           │
 │                                                                  │
-│  Three indices:                                                  │
-│    1. index_entity.bin                                          │
-│    2. index_bipartite_edge.bin                                  │
-│    3. index.bin (chunks, for naive mode)                        │
+│  Three vector databases:                                         │
+│    1. vdb_entities.json        (entity embeddings)              │
+│    2. vdb_bipartite_edges.json (relation embeddings)            │
+│    3. vdb_chunks.json          (chunk embeddings)               │
 │                                                                  │
-│  Metadata Storage (JSON):                                        │
-│    • kv_store_entities.json                                     │
-│    • kv_store_bipartite_edges.json                             │
-│    • kv_store_text_chunks.json                                  │
+│  Metadata Storage:                                               │
+│    • kv_store_text_chunks.json      (chunk metadata)            │
+│    • kv_store_full_docs.json        (document metadata)         │
+│    • graph_chunk_entity_relation.graphml (entity/relation data) │
 └─────────────────────────────────────────────────────────────────┘
 
    ↓
@@ -220,14 +220,13 @@ Input: Raw Documents (corpus.jsonl)
    ↓
 
 Output: Knowledge Graph Files
-   ├─ kv_store_entities.json
-   ├─ kv_store_bipartite_edges.json
-   ├─ kv_store_text_chunks.json
-   ├─ index_entity.bin (FAISS)
-   ├─ index_bipartite_edge.bin (FAISS)
-   ├─ index.bin (FAISS)
-   ├─ graph_chunk_entity_relation.graphml
-   └─ llm_response_cache.json
+   ├─ kv_store_full_docs.json              (document metadata)
+   ├─ kv_store_text_chunks.json            (chunk metadata)
+   ├─ kv_store_llm_response_cache.json     (LLM cache, optional)
+   ├─ vdb_entities.json                    (entity embeddings)
+   ├─ vdb_bipartite_edges.json             (relation embeddings)
+   ├─ vdb_chunks.json                      (chunk embeddings)
+   └─ graph_chunk_entity_relation.graphml  (graph structure + metadata)
 ```
 
 **Graph Structure:**
@@ -1070,11 +1069,11 @@ def verify_graph_construction(working_dir: str):
     """Check that all expected files exist and are valid"""
 
     required_files = [
-        "kv_store_entities.json",
-        "kv_store_bipartite_edges.json",
+        "kv_store_full_docs.json",
         "kv_store_text_chunks.json",
         "vdb_entities.json",
         "vdb_bipartite_edges.json",
+        "vdb_chunks.json",
         "graph_chunk_entity_relation.graphml"
     ]
 
@@ -1795,9 +1794,9 @@ Where:
    - With chunk_size=1200, overlap=100: ~1.2MB per 1K chunks
 
 3. **Entity Nodes**: `O(N_entity × (D_len + E_dim))`
-   - Metadata: kv_store_entities.json (~100 bytes per entity)
-   - Embeddings: corpus_entity.npy (E_dim × 4 bytes per entity)
-   - Example: 10K entities × 3072 dims × 4 bytes = ~120 MB
+   - Metadata: Stored in graph_chunk_entity_relation.graphml (~200 bytes per entity)
+   - Embeddings: vdb_entities.json (E_dim × 4 bytes per entity)
+   - Example: 10K entities × 1024 dims × 4 bytes = ~40 MB
 
 4. **Bipartite Edge Nodes**: `O(N_edge × (D_len + E_dim))`
    - Similar to entities
@@ -2117,11 +2116,11 @@ def test_graph_construction_end_to_end():
         # Verify output files
         import os
         expected_files = [
-            "kv_store_entities.json",
-            "kv_store_bipartite_edges.json",
+            "kv_store_full_docs.json",
             "kv_store_text_chunks.json",
             "vdb_entities.json",
             "vdb_bipartite_edges.json",
+            "vdb_chunks.json",
             "graph_chunk_entity_relation.graphml"
         ]
 
@@ -2168,7 +2167,8 @@ def test_incremental_construction():
 
         # Check files exist
         import os
-        assert os.path.exists(os.path.join(temp_dir, "kv_store_entities.json"))
+        assert os.path.exists(os.path.join(temp_dir, "graph_chunk_entity_relation.graphml"))
+        assert os.path.exists(os.path.join(temp_dir, "vdb_entities.json"))
 
         # Second batch
         batch_2 = [{"content": "London is in England.", "title": "Doc2"}]
@@ -2213,8 +2213,11 @@ def validate_graph_integrity(working_dir: str) -> dict:
 
     # 1. Check file existence
     required_files = [
-        "kv_store_entities.json",
-        "kv_store_bipartite_edges.json",
+        "kv_store_full_docs.json",
+        "kv_store_text_chunks.json",
+        "vdb_entities.json",
+        "vdb_bipartite_edges.json",
+        "vdb_chunks.json",
         "graph_chunk_entity_relation.graphml"
     ]
 
@@ -2273,15 +2276,18 @@ def validate_graph_integrity(working_dir: str) -> dict:
     if num_components > 1:
         results["warnings"].append(f"Graph has {num_components} disconnected components")
 
-    # 7. Check metadata consistency
-    with open(os.path.join(working_dir, "kv_store_entities.json")) as f:
-        entities_metadata = json.load(f)
+    # 7. Check vector DB consistency
+    # Entity metadata is stored in the GraphML file itself, not in separate JSON
+    # Check that vector DB matches graph nodes
+    with open(os.path.join(working_dir, "vdb_entities.json")) as f:
+        vdb_entities = json.load(f)
 
-    results["stats"]["metadata_entities"] = len(entities_metadata)
+    vdb_entity_count = len(vdb_entities.get("data", []))
+    results["stats"]["vdb_entities"] = vdb_entity_count
 
-    if len(entities_metadata) != len(entity_nodes):
+    if vdb_entity_count != len(entity_nodes):
         results["warnings"].append(
-            f"Mismatch: {len(entity_nodes)} entity nodes but {len(entities_metadata)} in metadata"
+            f"Mismatch: {len(entity_nodes)} entity nodes but {vdb_entity_count} in vector DB"
         )
 
     return results

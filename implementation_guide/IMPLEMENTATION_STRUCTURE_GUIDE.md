@@ -2092,13 +2092,15 @@ class EmbeddingManager:
     def __init__(self, working_dir: str):
         self.working_dir = working_dir
 
-        # Load indices
+        # Load vector indices (NanoVectorDB)
         self.entity_index = self._load_index("vdb_entities.json")
         self.edge_index = self._load_index("vdb_bipartite_edges.json")
 
-        # Load metadata
-        self.entity_metadata = self._load_metadata("kv_store_entities.json")
-        self.edge_metadata = self._load_metadata("kv_store_bipartite_edges.json")
+        # Load metadata from GraphML
+        # Entity and relation metadata (names, descriptions, weights) are stored in the graph
+        self.graph = self._load_graph("graph_chunk_entity_relation.graphml")
+        self.entity_metadata = self._extract_entity_metadata(self.graph)
+        self.edge_metadata = self._extract_edge_metadata(self.graph)
 
         # Auto-detect embedding format
         self.embedding_format = self._detect_embedding_format()
@@ -2630,16 +2632,33 @@ graph.add_edge(
 }
 ```
 
-**FAISS Index Files:**
+**Vector Database Files (NanoVectorDB):**
 
-Files: `index_entity.bin`, `index_bipartite_edge.bin`, `index.bin`
+Files: `vdb_entities.json`, `vdb_bipartite_edges.json`, `vdb_chunks.json`
 
-Format: Binary FAISS index (IndexFlatIP or IndexIVFFlat)
+Format: JSON with embedded vectors and metadata
+
+**Structure:**
+```json
+{
+  "data": [
+    {
+      "id": "entity_123",
+      "__vector__": [0.1, 0.2, ...],  // Embedding vector
+      "metadata": {
+        "name": "Paris",
+        "description": "Capital of France",
+        "entity_type": "LOCATION"
+      }
+    }
+  ]
+}
+```
 
 **Loading:**
 ```python
-import faiss
-index = faiss.read_index("index_entity.bin")
+from bigrag.storage import NanoVectorDBStorage
+vdb = NanoVectorDBStorage(embedding_dim=1024, storage_file="vdb_entities.json")
 ```
 
 ### KV Storage Format

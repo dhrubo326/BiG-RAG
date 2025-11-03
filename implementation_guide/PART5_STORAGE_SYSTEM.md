@@ -96,25 +96,25 @@ Input: Raw Documents
    │  Implementation: bigrag/operate.py → extract_entities()
    ↓
 4. Store entities
-   ├─→ kv_store_entities.json (metadata)
-   ├─→ entities_vdb (vector embeddings)
-   └─→ chunk_entity_relation_graph (graph structure)
+   ├─→ graph_chunk_entity_relation.graphml (metadata in graph nodes)
+   ├─→ vdb_entities.json (vector embeddings via NanoVectorDB)
+   └─→ chunk_entity_relation_graph (in-memory NetworkX graph)
    │  Implementation: bigrag/operate.py → _merge_nodes_then_upsert()
    ↓
 5. Extract n-ary relations from chunks
    │  Implementation: bigrag/operate.py → extract_entities() [bipartite edges]
    ↓
 6. Store relations
-   ├─→ kv_store_bipartite_edges.json (metadata)
-   ├─→ bipartite_edges_vdb (vector embeddings)
+   ├─→ graph_chunk_entity_relation.graphml (metadata in graph nodes)
+   ├─→ vdb_bipartite_edges.json (vector embeddings via NanoVectorDB)
    └─→ chunk_entity_relation_graph (graph edges)
    │  Implementation: bigrag/operate.py → _merge_edges_then_upsert()
    ↓
-7. Build FAISS indices
-   ├─→ index_entity.bin (entity vectors)
-   ├─→ index_bipartite_edge.bin (relation vectors)
-   └─→ index.bin (chunk vectors)
-   │  Implementation: bigrag/storage.py → index_done_callback()
+7. Build vector indices
+   ├─→ vdb_entities.json (entity vectors in NanoVectorDB)
+   ├─→ vdb_bipartite_edges.json (relation vectors in NanoVectorDB)
+   └─→ vdb_chunks.json (chunk vectors in NanoVectorDB)
+   │  Implementation: bigrag/storage.py → NanoVectorDBStorage
    ↓
 Output: Complete Bipartite Graph
 ```
@@ -596,24 +596,24 @@ After running `script_build.py`, verify the following files are created in your 
 
 ```bash
 expr/2WikiMultiHopQA/
-├── kv_store_entities.json          # ✅ Entity metadata (KV storage)
-├── kv_store_bipartite_edges.json   # ✅ Relation metadata (KV storage)
-├── kv_store_text_chunks.json       # ✅ Text chunks (KV storage)
-├── index_entity.bin                # ✅ Entity vectors (FAISS)
-├── index_bipartite_edge.bin        # ✅ Relation vectors (FAISS)
-├── index.bin                       # ✅ Chunk vectors (FAISS)
-├── corpus.npy                      # ✅ Chunk embeddings (numpy)
-├── corpus_entity.npy               # ✅ Entity embeddings (numpy)
-└── corpus_bipartite_edge.npy       # ✅ Relation embeddings (numpy)
+├── kv_store_full_docs.json            # ✅ Full document metadata (KV storage)
+├── kv_store_text_chunks.json          # ✅ Text chunks (KV storage)
+├── kv_store_llm_response_cache.json   # ✅ LLM cache (optional)
+├── vdb_entities.json                  # ✅ Entity vectors (NanoVectorDB)
+├── vdb_bipartite_edges.json           # ✅ Relation vectors (NanoVectorDB)
+├── vdb_chunks.json                    # ✅ Chunk vectors (NanoVectorDB)
+└── graph_chunk_entity_relation.graphml # ✅ Graph structure + entity/relation metadata
 ```
+
+**Note**: Entity and relation **metadata** (names, descriptions, source_ids, weights) are stored in the GraphML file, not in separate JSON files.
 
 **Expected File Sizes** (for ~10K document corpus):
 
 | File | Typical Size | Purpose |
 |------|--------------|---------|
-| `kv_store_*.json` | 100KB - 10MB | Text metadata and entity/relation descriptions |
-| `index_*.bin` | 10MB - 100MB | FAISS indices for fast similarity search |
-| `corpus_*.npy` | 10MB - 100MB | Numpy arrays of embeddings |
+| `kv_store_*.json` | 100KB - 10MB | Document and chunk metadata |
+| `vdb_*.json` | 10MB - 100MB | NanoVectorDB indices with embeddings |
+| `graph_*.graphml` | 1MB - 50MB | NetworkX graph with entity/relation metadata |
 
 **How to Verify**:
 
@@ -622,13 +622,13 @@ expr/2WikiMultiHopQA/
 ls -lh expr/2WikiMultiHopQA/
 
 # Validate JSON files are readable
-python -c "import json; json.load(open('expr/2WikiMultiHopQA/kv_store_entities.json'))"
+python -c "import json; json.load(open('expr/2WikiMultiHopQA/kv_store_text_chunks.json'))"
 
-# Check FAISS indices
-python -c "import faiss; idx = faiss.read_index('expr/2WikiMultiHopQA/index_entity.bin'); print(f'Entities: {idx.ntotal}')"
+# Check vector DB contents
+python -c "import json; vdb = json.load(open('expr/2WikiMultiHopQA/vdb_entities.json')); print(f'Entities: {len(vdb[\"data\"])}')"
 
-# Check embeddings
-python -c "import numpy as np; arr = np.load('expr/2WikiMultiHopQA/corpus_entity.npy'); print(f'Shape: {arr.shape}')"
+# Check graph structure
+python -c "import networkx as nx; G = nx.read_graphml('expr/2WikiMultiHopQA/graph_chunk_entity_relation.graphml'); print(f'Nodes: {G.number_of_nodes()}, Edges: {G.number_of_edges()}')"
 ```
 
 **Expected Output**:

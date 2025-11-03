@@ -287,16 +287,16 @@ python script_build.py --data_source MyDataset --batch-size 10
 **Output Files:**
 ```
 expr/MyDataset/
-├── kv_store_entities.json          # Entity metadata
-├── kv_store_bipartite_edges.json   # Relation metadata
-├── kv_store_text_chunks.json       # Text chunk metadata
-├── index_entity.bin                # FAISS entity index
-├── index_bipartite_edge.bin        # FAISS relation index
-├── index.bin                       # FAISS chunk index
-├── corpus.npy                      # Chunk embeddings
-├── corpus_entity.npy               # Entity embeddings
-└── corpus_bipartite_edge.npy       # Relation embeddings
+├── kv_store_full_docs.json            # Full document metadata
+├── kv_store_text_chunks.json          # Text chunk metadata
+├── kv_store_llm_response_cache.json   # LLM response cache (optional)
+├── vdb_entities.json                  # Entity embeddings (NanoVectorDB)
+├── vdb_bipartite_edges.json           # Relation embeddings (NanoVectorDB)
+├── vdb_chunks.json                    # Chunk embeddings for Path C retrieval
+└── graph_chunk_entity_relation.graphml # Bipartite graph structure (NetworkX)
 ```
+
+**Note**: Entity and relation **metadata** (names, descriptions, source_ids, weights) are stored in the GraphML file, not in separate JSON files.
 
 **Time Estimate**: 10-30 minutes for ~1K documents (depends on API speed)
 
@@ -603,27 +603,27 @@ ls -lh expr/$DATASET_NAME/
 ls expr/$DATASET_NAME/
 
 # Expected output:
-# kv_store_entities.json
-# kv_store_bipartite_edges.json
+# kv_store_full_docs.json
 # kv_store_text_chunks.json
-# index_entity.bin
-# index_bipartite_edge.bin
-# index.bin
-# corpus.npy
-# corpus_entity.npy
-# corpus_bipartite_edge.npy
+# kv_store_llm_response_cache.json
+# vdb_entities.json
+# vdb_bipartite_edges.json
+# vdb_chunks.json
+# graph_chunk_entity_relation.graphml
 
 # Check statistics
 python -c "
 import json
-with open('expr/$DATASET_NAME/kv_store_entities.json') as f:
-    entities = json.load(f)
-print(f'Entities: {len(entities)}')
+import networkx as nx
 
-with open('expr/$DATASET_NAME/kv_store_bipartite_edges.json') as f:
-    edges = json.load(f)
-print(f'Relations: {len(edges)}')
+# Count entities and relations from GraphML
+G = nx.read_graphml('expr/$DATASET_NAME/graph_chunk_entity_relation.graphml')
+entities = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'entity')
+relations = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'bipartite_edge')
+print(f'Entities: {entities}')
+print(f'Relations: {relations}')
 
+# Count text chunks
 with open('expr/$DATASET_NAME/kv_store_text_chunks.json') as f:
     chunks = json.load(f)
 print(f'Text Chunks: {len(chunks)}')
@@ -892,15 +892,18 @@ split -l 1000 datasets/MyDataset/raw/corpus.jsonl corpus_part_
 
 **Fix:**
 ```python
-# Verify index files exist and are non-empty
+# Verify storage files exist and are non-empty
 import os
-import faiss
+import json
+import networkx as nx
 
 dataset = "MyDataset"
 files = {
-    "entity_index": f"expr/{dataset}/index_entity.bin",
-    "edge_index": f"expr/{dataset}/index_bipartite_edge.bin",
-    "entity_kv": f"expr/{dataset}/kv_store_entities.json"
+    "graph": f"expr/{dataset}/graph_chunk_entity_relation.graphml",
+    "entity_vdb": f"expr/{dataset}/vdb_entities.json",
+    "edge_vdb": f"expr/{dataset}/vdb_bipartite_edges.json",
+    "chunks_vdb": f"expr/{dataset}/vdb_chunks.json",
+    "text_chunks": f"expr/{dataset}/kv_store_text_chunks.json"
 }
 
 for name, path in files.items():
@@ -908,10 +911,18 @@ for name, path in files.items():
     size = os.path.getsize(path) if exists else 0
     print(f"{name}: {'✅' if exists else '❌'} ({size} bytes)")
 
-# Check FAISS index contents
-if os.path.exists(files["entity_index"]):
-    idx = faiss.read_index(files["entity_index"])
-    print(f"Entity index: {idx.ntotal} vectors, dim={idx.d}")
+# Check GraphML contents
+if os.path.exists(files["graph"]):
+    G = nx.read_graphml(files["graph"])
+    entities = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'entity')
+    relations = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'bipartite_edge')
+    print(f"Graph: {entities} entities, {relations} relations, {G.number_of_edges()} edges")
+
+# Check vector DB contents
+if os.path.exists(files["entity_vdb"]):
+    with open(files["entity_vdb"]) as f:
+        vdb_data = json.load(f)
+        print(f"Entity VDB: {len(vdb_data.get('data', []))} vectors")
 ```
 
 ### Issue 7: Training converges slowly or not at all

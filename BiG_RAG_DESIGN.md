@@ -12,9 +12,9 @@
 ### Variable Naming Convention
 
 **Throughout this document, we use the `vdb_*` prefix:**
-- ✅ `vdb_entities` (NOT `entities_vdb`)
-- ✅ `vdb_bipartite_edges` (NOT `bipartite_edges_vdb`)
-- ✅ `vdb_chunks` (NOT `chunks_vdb`)
+- ✅ `vdb_entities` (NOT `vdb_entities`)
+- ✅ `vdb_bipartite_edges` (NOT `vdb_bipartite_edges`)
+- ✅ `vdb_chunks` (NOT `vdb_chunks`)
 
 ### About Vector Storage
 
@@ -217,9 +217,9 @@ Before starting implementation, verify:
 | Document chunking | ✅ Done | `bigrag/operate.py::chunking_by_token_size()` |
 | Entity extraction | ✅ Done | `bigrag/operate.py::extract_entities()` |
 | Bipartite graph construction | ✅ Done | `bigrag/operate.py::_merge_*()` |
-| Entity embedding | ✅ Done | Indexed to `entities_vdb` |
-| Bipartite edge embedding | ✅ Done | Indexed to `bipartite_edges_vdb` |
-| Chunk embedding | ✅ Done | Indexed to `chunks_vdb` |
+| Entity embedding | ✅ Done | Indexed to `vdb_entities` |
+| Bipartite edge embedding | ✅ Done | Indexed to `vdb_bipartite_edges` |
+| Chunk embedding | ✅ Done | Indexed to `vdb_chunks` |
 | **Retrieval (Dual-Path)** | ✅ Done | `bigrag/operate.py` |
 | Path A: Entity search | ✅ Done | `_get_node_data()` |
 | Path B: Bipartite edge search | ✅ Done | `_get_edge_data()` |
@@ -243,7 +243,7 @@ Before starting implementation, verify:
 
 ### 🔄 Partially Implemented
 
-- **chunks_vdb**: Created and populated during indexing, but **NOT used during retrieval**
+- **vdb_chunks**: Created and populated during indexing, but **NOT used during retrieval**
   - Location: `bigrag/bigrag.py:238` (created), line 379 (populated)
   - Missing: Query function in `_build_query_context()`
 
@@ -437,7 +437,7 @@ mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
 - `hybrid`: Dual-path retrieval (Path A + B with RRF)
 - `naive`: Text chunk retrieval (but NOT implemented!)
 
-**Status:** 🔄 **Partially working** - `local`, `global`, `hybrid` work; `naive` mode exists but doesn't use `chunks_vdb`
+**Status:** 🔄 **Partially working** - `local`, `global`, `hybrid` work; `naive` mode exists but doesn't use `vdb_chunks`
 
 ---
 
@@ -1025,7 +1025,7 @@ async def _build_query_context(
 
 **Phase:** PHASE 3
 
-### 3.3 Update kg_query() to Pass chunks_vdb ❌
+### 3.3 Update kg_query() to Pass vdb_chunks ❌
 
 **Where to modify:** [bigrag/operate.py::kg_query():484](bigrag/operate.py#L484)
 
@@ -1064,7 +1064,7 @@ async def kg_query(
 **And update the call site in** [bigrag/bigrag.py::aquery():498](bigrag/bigrag.py#L498):
 
 ```python
-# MODIFY aquery() to pass chunks_vdb
+# MODIFY aquery() to pass vdb_chunks
 async def aquery(self, query: str, param: QueryParam = QueryParam(),
                  enable_reranking: bool = False):  # NEW parameter
     response = await kg_query(
@@ -1939,7 +1939,7 @@ Query: "Which universities in Bangladesh offer CS programs?"
 │  ✅ IMPLEMENTED     │  Search             │  Search             │
 │                     │  ✅ IMPLEMENTED     │  ❌ MISSING         │
 ├─────────────────────┼─────────────────────┼─────────────────────┤
-│ entities_vdb.query()│bipartite_edges_vdb  │chunks_vdb.query()   │
+│ vdb_entities.query()│vdb_bipartite_edges  │vdb_chunks.query()   │
 │ → top-k entities    │.query()             │→ 5 direct chunks    │
 │                     │→ top-k edges        │                     │
 │ ✅ DONE             │✅ DONE              │❌ NOT CALLED        │
@@ -2047,11 +2047,11 @@ total_time = time.time() - start  # ~100ms (max of all paths)
 async def _build_query_context(
     query: list,
     knowledge_graph_inst: BaseGraphStorage,
-    entities_vdb: BaseVectorStorage,
-    bipartite_edges_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
-    chunks_vdb: BaseVectorStorage = None,
+    vdb_chunks: BaseVectorStorage = None,
     enable_reranking: bool = False,
 ):
     ll_kewwords, hl_keywrds = query[0], query[1]
@@ -2061,14 +2061,14 @@ async def _build_query_context(
         _get_node_data(
             ll_kewwords,
             knowledge_graph_inst,
-            entities_vdb,
+            vdb_entities,
             text_chunks_db,
             query_param,
         ),
         _get_edge_data(
             hl_keywrds,
             knowledge_graph_inst,
-            bipartite_edges_vdb,
+            vdb_bipartite_edges,
             text_chunks_db,
             query_param,
         ),
@@ -2234,9 +2234,9 @@ rerank_task = asyncio.create_task(_semantic_rerank(query, chunks, top_k=5))
 
 | Component | graphr1 | BiG-RAG | Status |
 |-----------|---------|---------|--------|
-| **Entity nodes** | `entities_vdb` | `vdb_entities` | ✅ Equivalent (renamed) |
+| **Entity nodes** | `vdb_entities` | `vdb_entities` | ✅ Equivalent (renamed) |
 | **Relation edges** | `hyperedges_vdb` | `vdb_bipartite_edges` | ✅ Renamed |
-| **Text chunks** | `chunks_vdb` | `vdb_chunks` | ✅ Equivalent (renamed) |
+| **Text chunks** | `vdb_chunks` | `vdb_chunks` | ✅ Equivalent (renamed) |
 | **Graph storage** | NetworkX | NetworkX | ✅ Identical |
 | **KV storage** | JsonKVStorage | JsonKVStorage | ✅ Identical |
 | **Merging logic** | `_merge_hyperedges_then_upsert` | `_merge_bipartite_edges_then_upsert` | ✅ Renamed |
@@ -2307,7 +2307,7 @@ Step 2: Entity Extraction (LLM)
 
 Step 3: Storage (Parallel)
 ├─ Graph: await graph.upsert_node(entity_name, node_data)
-├─ Vector: await entities_vdb.upsert({entity_name: embedding})
+├─ Vector: await vdb_entities.upsert({entity_name: embedding})
 └─ KV: await text_chunks.upsert({chunk_id: chunk_content})
 ```
 
@@ -2699,7 +2699,7 @@ result = await bigrag.aquery(
 |------|------------|
 | **Latency increase** | Use parallel execution (`asyncio.gather`) |
 | **Poor chunk quality** | Verify source ID tracking before Phase 1 |
-| **Memory overhead** | chunks_vdb already populated, no new memory needed |
+| **Memory overhead** | vdb_chunks already populated, no new memory needed |
 | **Breaking changes** | Make all new features optional parameters |
 | **Reranker dependency** | Make reranking optional, work without it |
 
@@ -2954,8 +2954,8 @@ For developers familiar with the original graphr1 codebase:
 
 | ❌ Old/Incorrect | ✅ Correct (BiG-RAG) |
 |------------------|---------------------|
-| `entities_vdb` | `vdb_entities` |
-| `bipartite_edges_vdb` | `vdb_bipartite_edges` |
-| `chunks_vdb` | `vdb_chunks` |
+| `vdb_entities` | `vdb_entities` |
+| `vdb_bipartite_edges` | `vdb_bipartite_edges` |
+| `vdb_chunks` | `vdb_chunks` |
 
 **Why?** Prefix notation groups related variables together and makes intent clearer in IDE autocomplete.

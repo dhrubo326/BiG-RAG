@@ -98,7 +98,7 @@ Input: User Query
 │                                                                  │
 │  PATH A: Entity-Based Retrieval (Local)                         │
 │  ┌────────────────────────────────────────────────────────────┐│
-│  │ 1. Query entities_vdb with embedding                       ││
+│  │ 1. Query vdb_entities with embedding                       ││
 │  │    → FAISS inner product search                            ││
 │  │    → Top-k entity nodes (k=60 default)                     ││
 │  │                                                             ││
@@ -118,7 +118,7 @@ Input: User Query
 │                                                                  │
 │  PATH B: Relation-Based Retrieval (Global)                      │
 │  ┌────────────────────────────────────────────────────────────┐│
-│  │ 1. Query bipartite_edges_vdb with embedding               ││
+│  │ 1. Query vdb_bipartite_edges with embedding               ││
 │  │    → FAISS inner product search                            ││
 │  │    → Top-k relation nodes (k=60 default)                   ││
 │  │                                                             ││
@@ -137,7 +137,7 @@ Input: User Query
 │  ✨ PATH C: Chunk-Based Retrieval (Semantic)                    │
 │  ┌────────────────────────────────────────────────────────────┐│
 │  │ 1. Direct Vector Search:                                   ││
-│  │    • Query chunks_vdb with embedding                       ││
+│  │    • Query vdb_chunks with embedding                       ││
 │  │    → FAISS inner product search                            ││
 │  │    → Top-5 chunks by semantic similarity                   ││
 │  │                                                             ││
@@ -386,7 +386,7 @@ OUTPUT: results: List[Dict]
 
 PROCEDURE entity_based_retrieval(query_embedding, top_k):
     # Step 1: Vector search on entity index
-    entity_matches = entities_vdb.query(query_embedding, top_k)
+    entity_matches = vdb_entities.query(query_embedding, top_k)
     # Returns: [{id, distance, __vector__, entity_name, entity_type, ...}]
 
     results = []
@@ -442,7 +442,7 @@ OUTPUT: results: List[Dict]
 
 PROCEDURE relation_based_retrieval(query_embedding, top_k):
     # Step 1: Vector search on relation index
-    relation_matches = bipartite_edges_vdb.query(query_embedding, top_k)
+    relation_matches = vdb_bipartite_edges.query(query_embedding, top_k)
 
     results = []
 
@@ -750,9 +750,9 @@ class BiGRAG:
 ```python
 async def kg_query(
     query: str,
-    entities_vdb: BaseVectorStorage,
-    bipartite_edges_vdb: BaseVectorStorage,
-    chunks_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_chunks: BaseVectorStorage,
     graph: BaseGraphStorage,
     embedding_func: callable,
     param: QueryParam
@@ -770,7 +770,7 @@ async def kg_query(
 
 async def _get_node_data(
     query_embedding: np.ndarray,
-    entities_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
     graph: BaseGraphStorage,
     top_k: int
 ) -> List[Dict]:
@@ -779,7 +779,7 @@ async def _get_node_data(
 
 async def _get_edge_data(
     query_embedding: np.ndarray,
-    bipartite_edges_vdb: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
     graph: BaseGraphStorage,
     top_k: int
 ) -> List[Dict]:
@@ -1100,9 +1100,9 @@ query_embedding = rag.embedding_func(["What is Paris?"])
 results = asyncio.run(
     kg_query(
         query="What is Paris?",
-        entities_vdb=rag.entities_vdb,
-        bipartite_edges_vdb=rag.bipartite_edges_vdb,
-        chunks_vdb=rag.chunks_vdb,
+        vdb_entities=rag.vdb_entities,
+        vdb_bipartite_edges=rag.vdb_bipartite_edges,
+        vdb_chunks=rag.vdb_chunks,
         graph=rag.chunk_entity_relation_graph,
         embedding_func=rag.embedding_func,
         param=param
@@ -1228,7 +1228,7 @@ context = rag.query("quantum physics", param)
 # → Need to rebuild graph with better extraction
 
 # Solution 3: Inspect vector search results
-results = rag.entities_vdb.query("quantum physics", top_k=10)
+results = rag.vdb_entities.query("quantum physics", top_k=10)
 print(f"Found {len(results)} entity matches")
 
 if len(results) == 0:
@@ -1362,8 +1362,8 @@ for node, data in graph.nodes(data=True):
 await rag.ainsert(documents)
 
 # Or check if vector DBs are loaded
-print(f"Entities: {len(rag.entities_vdb.data) if hasattr(rag.entities_vdb, 'data') else 'N/A'}")
-print(f"Edges: {len(rag.bipartite_edges_vdb.data) if hasattr(rag.bipartite_edges_vdb, 'data') else 'N/A'}")
+print(f"Entities: {len(rag.vdb_entities.data) if hasattr(rag.vdb_entities, 'data') else 'N/A'}")
+print(f"Edges: {len(rag.vdb_bipartite_edges.data) if hasattr(rag.vdb_bipartite_edges, 'data') else 'N/A'}")
 ```
 
 **Error:** `ValueError: Query embedding dimension mismatch`
@@ -1376,7 +1376,7 @@ print(f"Edges: {len(rag.bipartite_edges_vdb.data) if hasattr(rag.bipartite_edges
 # Query must use: text-embedding-3-large (same dims)
 
 # Check dimensions
-print(f"Index dimension: {rag.entities_vdb.embedding_dim}")
+print(f"Index dimension: {rag.vdb_entities.embedding_dim}")
 print(f"Query dimension: {len(query_embedding)}")
 
 # Must match!
@@ -1395,8 +1395,8 @@ async def parallel_hybrid_query(query, top_k):
     embeddings = await rag.embedding_func([query, query])
 
     # Parallel retrieval
-    entity_task = _get_node_data(embeddings[0], rag.entities_vdb, rag.graph, top_k)
-    relation_task = _get_edge_data(embeddings[1], rag.bipartite_edges_vdb, rag.graph, top_k)
+    entity_task = _get_node_data(embeddings[0], rag.vdb_entities, rag.graph, top_k)
+    relation_task = _get_edge_data(embeddings[1], rag.vdb_bipartite_edges, rag.graph, top_k)
 
     entity_results, relation_results = await asyncio.gather(entity_task, relation_task)
 
@@ -1530,9 +1530,9 @@ class QueryParam:
 ```python
 async def kg_query(
     query: str,
-    entities_vdb: BaseVectorStorage,
-    bipartite_edges_vdb: BaseVectorStorage,
-    chunks_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_chunks: BaseVectorStorage,
     graph: BaseGraphStorage,
     embedding_func: callable,
     param: QueryParam
@@ -1542,9 +1542,9 @@ async def kg_query(
 
     Args:
         query: Search query string
-        entities_vdb: Entity vector storage
-        bipartite_edges_vdb: Relation vector storage
-        chunks_vdb: Chunk vector storage (for naive mode)
+        vdb_entities: Entity vector storage
+        vdb_bipartite_edges: Relation vector storage
+        vdb_chunks: Chunk vector storage (for naive mode)
         graph: Graph storage instance
         embedding_func: Embedding generation function
         param: Query parameters
@@ -1562,9 +1562,9 @@ async def kg_query(
     Example:
         >>> results = await kg_query(
         ...     query="What is Paris?",
-        ...     entities_vdb=rag.entities_vdb,
-        ...     bipartite_edges_vdb=rag.bipartite_edges_vdb,
-        ...     chunks_vdb=rag.chunks_vdb,
+        ...     vdb_entities=rag.vdb_entities,
+        ...     vdb_bipartite_edges=rag.vdb_bipartite_edges,
+        ...     vdb_chunks=rag.vdb_chunks,
         ...     graph=rag.graph,
         ...     embedding_func=rag.embedding_func,
         ...     param=QueryParam(mode="hybrid")
@@ -1573,7 +1573,7 @@ async def kg_query(
 
 async def _get_node_data(
     query_embedding: np.ndarray,
-    entities_vdb: BaseVectorStorage,
+    vdb_entities: BaseVectorStorage,
     graph: BaseGraphStorage,
     top_k: int
 ) -> List[Dict]:
@@ -1582,7 +1582,7 @@ async def _get_node_data(
 
     Args:
         query_embedding: Query embedding vector
-        entities_vdb: Entity vector storage
+        vdb_entities: Entity vector storage
         graph: Graph storage instance
         top_k: Number of results to retrieve
 
@@ -1593,7 +1593,7 @@ async def _get_node_data(
         >>> embedding = await embedding_func(["What is Paris?"])
         >>> results = await _get_node_data(
         ...     embedding[0],
-        ...     rag.entities_vdb,
+        ...     rag.vdb_entities,
         ...     rag.graph,
         ...     top_k=60
         ... )
@@ -1601,7 +1601,7 @@ async def _get_node_data(
 
 async def _get_edge_data(
     query_embedding: np.ndarray,
-    bipartite_edges_vdb: BaseVectorStorage,
+    vdb_bipartite_edges: BaseVectorStorage,
     graph: BaseGraphStorage,
     top_k: int
 ) -> List[Dict]:
@@ -1610,7 +1610,7 @@ async def _get_edge_data(
 
     Args:
         query_embedding: Query embedding vector
-        bipartite_edges_vdb: Relation vector storage
+        vdb_bipartite_edges: Relation vector storage
         graph: Graph storage instance
         top_k: Number of results to retrieve
 
@@ -1621,7 +1621,7 @@ async def _get_edge_data(
         >>> embedding = await embedding_func(["directed by"])
         >>> results = await _get_edge_data(
         ...     embedding[0],
-        ...     rag.bipartite_edges_vdb,
+        ...     rag.vdb_bipartite_edges,
         ...     rag.graph,
         ...     top_k=60
         ... )
@@ -1829,8 +1829,8 @@ async def test_entity_retrieval():
     """Test entity-based retrieval logic"""
 
     # Mock vector storage
-    entities_vdb = AsyncMock()
-    entities_vdb.query.return_value = [
+    vdb_entities = AsyncMock()
+    vdb_entities.query.return_value = [
         {
             "id": "Paris",
             "entity_name": "Paris",
@@ -1860,7 +1860,7 @@ async def test_entity_retrieval():
 
     # Test retrieval
     query_embedding = np.random.rand(3072)
-    results = await _get_node_data(query_embedding, entities_vdb, graph, top_k=10)
+    results = await _get_node_data(query_embedding, vdb_entities, graph, top_k=10)
 
     assert len(results) == 2
     assert results[0]["entity_name"] == "Paris"

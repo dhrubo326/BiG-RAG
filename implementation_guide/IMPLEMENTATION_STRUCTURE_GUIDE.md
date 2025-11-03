@@ -247,7 +247,7 @@ Output: 5 structured + 5 chunks = 10 total context items
 3. Smart deletion logic:
    - **Full delete**: Entities/edges unique to this document
    - **Partial update**: Remove this doc's chunks from shared entities/edges
-4. Delete chunks from `text_chunks` and `chunks_vdb`
+4. Delete chunks from `text_chunks` and `vdb_chunks`
 5. Delete document from `full_docs`
 6. Persist changes
 
@@ -296,7 +296,7 @@ self.chunk_entity_relation_graph = NetworkXStorage(
 )
 
 # 5. Entity embeddings (FAISS via NanoVectorDB)
-self.entities_vdb = NanoVectorDBStorage(
+self.vdb_entities = NanoVectorDBStorage(
     namespace="entities",
     global_config={
         "embedding_func": self.embedding_func,
@@ -305,10 +305,10 @@ self.entities_vdb = NanoVectorDBStorage(
 )
 
 # 6. Bipartite edge embeddings
-self.bipartite_edges_vdb = NanoVectorDBStorage(namespace="bipartite_edges")
+self.vdb_bipartite_edges = NanoVectorDBStorage(namespace="bipartite_edges")
 
 # 7. Chunk embeddings (for naive mode)
-self.chunks_vdb = NanoVectorDBStorage(namespace="chunks")
+self.vdb_chunks = NanoVectorDBStorage(namespace="chunks")
 ```
 
 ### Lazy Backend Loading
@@ -1023,7 +1023,7 @@ async def _get_node_data(
     Entity-based retrieval path
 
     Steps:
-    1. Vector search in entities_vdb
+    1. Vector search in vdb_entities
        → Get top-k entity nodes by semantic similarity
 
     2. For each entity node:
@@ -1088,7 +1088,7 @@ async def _get_edge_data(
     Relation-based retrieval path
 
     Steps:
-    1. Vector search in bipartite_edges_vdb
+    1. Vector search in vdb_bipartite_edges
        → Get top-k relation nodes by semantic similarity
 
     2. For each relation node:
@@ -1177,14 +1177,14 @@ async def _naive_query(
     Direct chunk similarity search
 
     Process:
-    1. Query chunks_vdb with query embedding
+    1. Query vdb_chunks with query embedding
     2. Return top-k chunks by cosine similarity
     3. No graph traversal
 
     Purpose: Baseline for comparison
     Performance: Usually worse than hybrid mode
     """
-    chunk_results = await self.chunks_vdb.query(query, top_k)
+    chunk_results = await self.vdb_chunks.query(query, top_k)
     return [
         {
             "content": chunk["content"],
@@ -3859,11 +3859,11 @@ G = nx.read_graphml("graph.graphml")
 
 ```python
 # List all entities
-entity_keys = await rag.entities_vdb.all_keys()
+entity_keys = await rag.vdb_entities.all_keys()
 print(f"Total entities: {len(entity_keys)}")
 
 # Inspect specific entity
-entity = await rag.entities_vdb.get_by_id("entity_id")
+entity = await rag.vdb_entities.get_by_id("entity_id")
 print(entity)
 ```
 

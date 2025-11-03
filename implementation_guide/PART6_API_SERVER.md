@@ -41,8 +41,8 @@
 │    └─ GET /                 → API info                    │
 │    ↓                                                        │
 │  BiGRAG Instance (loaded graph)                             │
-│    ├─ entities_vdb (FAISS)                                │
-│    ├─ bipartite_edges_vdb (FAISS)                         │
+│    ├─ vdb_entities (FAISS)                                │
+│    ├─ vdb_bipartite_edges (FAISS)                         │
 │    └─ graph (NetworkX)                                    │
 │    ↓                                                        │
 │  Storage Backends                                           │
@@ -403,7 +403,7 @@ async def health() -> dict:
     return {
         "status": "healthy",
         "data_source": args.data_source,
-        "entity_count": len(bigrag_instance.entities_vdb._data) if bigrag_instance else 0
+        "entity_count": len(bigrag_instance.vdb_entities._data) if bigrag_instance else 0
     }
 
 @app.get("/")

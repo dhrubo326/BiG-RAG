@@ -89,7 +89,7 @@ Input: Raw Documents
    ↓
 2. Store chunks in KV storage
    ├─→ kv_store_text_chunks.json (metadata)
-   └─→ chunks_vdb (vector embeddings)
+   └─→ vdb_chunks (vector embeddings)
    │  Implementation: bigrag/bigrag.py → text_chunks.upsert()
    ↓
 3. Extract entities from chunks (GPT-4o-mini)
@@ -128,8 +128,8 @@ Input: User Query
    │  Implementation: embedding_func() via OpenAI/FlagEmbedding
    ↓
 2. Parallel vector searches
-   ├─→ entities_vdb.query() (find similar entities)
-   └─→ bipartite_edges_vdb.query() (find similar relations)
+   ├─→ vdb_entities.query() (find similar entities)
+   └─→ vdb_bipartite_edges.query() (find similar relations)
    │  Implementation: bigrag/operate.py → _build_query_context()
    ↓
 3. For each result, traverse graph
@@ -485,7 +485,7 @@ Document "doc-abc123"
    ↓
 4. Delete chunks from storage:
    • Delete chunk-001, chunk-042, chunk-058 from text_chunks
-   • Delete chunk-001, chunk-042, chunk-058 from chunks_vdb
+   • Delete chunk-001, chunk-042, chunk-058 from vdb_chunks
    ↓
 5. Delete document from full_docs
 ```
@@ -534,9 +534,9 @@ results = asyncio.run(delete_multiple(["doc-1", "doc-2", "doc-3"]))
 |-------------------|-------------|----------------|
 | **full_docs** | ✅ Always deleted | N/A |
 | **text_chunks** | ✅ All doc chunks deleted | N/A |
-| **chunks_vdb** | ✅ All doc chunks deleted | N/A |
-| **entities_vdb** | ✅ If unique to doc | ⚠️ Update if shared |
-| **bipartite_edges_vdb** | ✅ If unique to doc | ⚠️ Update if shared |
+| **vdb_chunks** | ✅ All doc chunks deleted | N/A |
+| **vdb_entities** | ✅ If unique to doc | ⚠️ Update if shared |
+| **vdb_bipartite_edges** | ✅ If unique to doc | ⚠️ Update if shared |
 | **chunk_entity_relation_graph** | ✅ Nodes with 0 sources | ⚠️ Remove source_ids |
 
 **Benefits:**

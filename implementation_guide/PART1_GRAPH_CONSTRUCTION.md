@@ -162,15 +162,15 @@ Input: Raw Documents (corpus.jsonl)
 │  Default: OpenAI text-embedding-3-large (3072 dims)             │
 │                                                                  │
 │  Embed three collections:                                        │
-│    1. Entity nodes → entities_vdb                               │
+│    1. Entity nodes → vdb_entities                               │
 │       • Input: entity_name + type + description                 │
 │       • Batch size: 32                                          │
 │                                                                  │
-│    2. Bipartite edge nodes → bipartite_edges_vdb               │
+│    2. Bipartite edge nodes → vdb_bipartite_edges               │
 │       • Input: relation content                                 │
 │       • Batch size: 32                                          │
 │                                                                  │
-│    3. Text chunks → chunks_vdb (optional, for naive mode)      │
+│    3. Text chunks → vdb_chunks (optional, for naive mode)      │
 │       • Input: chunk content                                    │
 │       • Batch size: 32                                          │
 │                                                                  │
@@ -395,7 +395,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
     )
 
     # Stage 6: Vector Indexing
-    entities_vdb.upsert({
+    vdb_entities.upsert({
         entity.entity_name: {
             "__vector__": embedding,
             **entity_metadata
@@ -403,7 +403,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
         FOR entity, embedding IN ZIP(merged_entities, entity_embeddings)
     })
 
-    bipartite_edges_vdb.upsert({
+    vdb_bipartite_edges.upsert({
         edge.edge_id: {
             "__vector__": embedding,
             **edge_metadata
@@ -411,7 +411,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
         FOR edge, embedding IN ZIP(merged_edges, edge_embeddings)
     })
 
-    chunks_vdb.upsert({
+    vdb_chunks.upsert({
         chunk.chunk_id: {
             "__vector__": embedding,
             **chunk_metadata
@@ -420,9 +420,9 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
     })
 
     # Finalize indices
-    entities_vdb.index_done_callback()
-    bipartite_edges_vdb.index_done_callback()
-    chunks_vdb.index_done_callback()
+    vdb_entities.index_done_callback()
+    vdb_bipartite_edges.index_done_callback()
+    vdb_chunks.index_done_callback()
 
     # Stage 7: Graph Serialization
     graph = stabilize_graph(graph)
@@ -1470,7 +1470,7 @@ class NoChunkVectorStorage(BaseVectorStorage):
     async def index_done_callback(self): pass
 
 rag = BiGRAG(
-    chunks_vdb=NoChunkVectorStorage()  # Skip chunk indexing
+    vdb_chunks=NoChunkVectorStorage()  # Skip chunk indexing
 )
 ```
 

@@ -900,9 +900,9 @@ import networkx as nx
 dataset = "MyDataset"
 files = {
     "graph": f"expr/{dataset}/graph_chunk_entity_relation.graphml",
-    "entity_vdb": f"expr/{dataset}/vdb_entities.json",
-    "edge_vdb": f"expr/{dataset}/vdb_bipartite_edges.json",
-    "chunks_vdb": f"expr/{dataset}/vdb_chunks.json",
+    "vdb_entities": f"expr/{dataset}/vdb_entities.json",
+    "vdb_bipartite_edges": f"expr/{dataset}/vdb_bipartite_edges.json",
+    "vdb_chunks": f"expr/{dataset}/vdb_chunks.json",
     "text_chunks": f"expr/{dataset}/kv_store_text_chunks.json"
 }
 
@@ -919,8 +919,8 @@ if os.path.exists(files["graph"]):
     print(f"Graph: {entities} entities, {relations} relations, {G.number_of_edges()} edges")
 
 # Check vector DB contents
-if os.path.exists(files["entity_vdb"]):
-    with open(files["entity_vdb"]) as f:
+if os.path.exists(files["vdb_entities"]):
+    with open(files["vdb_entities"]) as f:
         vdb_data = json.load(f)
         print(f"Entity VDB: {len(vdb_data.get('data', []))} vectors")
 ```

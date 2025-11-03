@@ -27,6 +27,23 @@ def normalize_answer(text: str) -> str:
     3. Remove articles (a, an, the)
     4. Remove extra whitespace
     """
+    # Handle None
+    if text is None:
+        return ""
+
+    # Handle NaN (float type where value != value)
+    if isinstance(text, float):
+        # NaN is the only float where x != x
+        if text != text:  # NaN check
+            return ""
+        # Convert other floats to string
+        text = str(text)
+
+    # Convert non-string types to string
+    if not isinstance(text, str):
+        text = str(text)
+
+    # Handle empty strings
     if not text:
         return ""
 

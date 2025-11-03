@@ -372,3 +372,142 @@ class BatchEvalResponse(BaseModel):
                 "results_saved_to": "evaluation_results/eval_2025_10_30.json"
             }
         }
+
+
+# ==============================================================================
+# CSV Evaluation Models (for SingleTopic and similar datasets)
+# ==============================================================================
+
+class BatchGenerateRequest(BaseModel):
+    """Request for batch question processing with answer generation"""
+    questions_csv_path: str = Field(..., description="Path to input CSV with questions")
+    output_csv_path: str = Field(
+        "datasets/results/generation_results.csv",
+        description="Path to save results CSV"
+    )
+    llm_provider: Optional[str] = Field(None, description="LLM provider (openai, anthropic, etc.)")
+    model: str = Field("gpt-4o-mini", description="Model name")
+    temperature: float = Field(0.0, ge=0.0, le=2.0, description="Sampling temperature (0.0 = deterministic)")
+    max_tokens: int = Field(500, ge=50, le=4000, description="Maximum answer length")
+    top_k: int = Field(5, ge=1, le=20, description="Number of context items to retrieve")
+    enable_reranking: bool = Field(True, description="Use semantic reranking for chunks")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "questions_csv_path": "datasets/SingleTopic/processed/all_questions_unified.csv",
+                "output_csv_path": "datasets/SingleTopic/results/generation_results.csv",
+                "model": "gpt-4o-mini",
+                "temperature": 0.0,
+                "top_k": 5,
+                "enable_reranking": True
+            }
+        }
+
+
+class BatchGenerateResponse(BaseModel):
+    """Response from batch question processing"""
+    success: bool = Field(..., description="Whether processing succeeded")
+    total_questions: int = Field(..., description="Total number of questions processed")
+    results_saved_to: str = Field(..., description="Path to saved results CSV")
+    processing_time_seconds: float = Field(..., description="Total processing time")
+    average_latency_ms: float = Field(..., description="Average latency per question")
+    questions_by_type: Dict[str, int] = Field(..., description="Count of questions by type")
+    errors: int = Field(..., description="Number of questions that failed")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "total_questions": 120,
+                "results_saved_to": "datasets/SingleTopic/results/generation_results.csv",
+                "processing_time_seconds": 245.5,
+                "average_latency_ms": 2045.8,
+                "questions_by_type": {
+                    "multi_passage": 40,
+                    "single_passage": 40,
+                    "no_answer": 40
+                },
+                "errors": 0
+            }
+        }
+
+
+class EvaluateResultsRequest(BaseModel):
+    """Request for evaluating saved results CSV"""
+    results_csv_path: str = Field(..., description="Path to results CSV from batch_generate")
+    metrics: List[str] = Field(
+        ["em", "f1", "answer_rate"],
+        description="Metrics to calculate"
+    )
+    export_formats: List[str] = Field(
+        ["json", "csv", "markdown", "latex"],
+        description="Export formats for results"
+    )
+    output_dir: Optional[str] = Field(
+        None,
+        description="Directory for exported files (default: same as results CSV)"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "results_csv_path": "datasets/SingleTopic/results/generation_results.csv",
+                "metrics": ["em", "f1", "rouge_l", "answer_rate"],
+                "export_formats": ["json", "csv", "markdown", "latex"],
+                "output_dir": "datasets/SingleTopic/results/"
+            }
+        }
+
+
+class EvaluateResultsResponse(BaseModel):
+    """Response from results evaluation"""
+    success: bool = Field(..., description="Whether evaluation succeeded")
+    total_questions: int = Field(..., description="Total questions evaluated")
+    overall_metrics: Dict[str, Optional[float]] = Field(..., description="Overall metric scores")
+    metrics_by_type: Dict[str, Dict[str, Any]] = Field(
+        ...,
+        description="Metrics broken down by question type"
+    )
+    per_question_results: List[Dict[str, Any]] = Field(
+        ...,
+        description="Per-question results (first 10 for preview)"
+    )
+    exported_files: List[str] = Field(..., description="Paths to exported result files")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "total_questions": 120,
+                "overall_metrics": {
+                    "em": 0.4583,
+                    "f1": 0.6725,
+                    "rouge_l": 0.5892
+                },
+                "metrics_by_type": {
+                    "multi_passage": {
+                        "count": 40,
+                        "em": 0.35,
+                        "f1": 0.62
+                    },
+                    "single_passage": {
+                        "count": 40,
+                        "em": 0.55,
+                        "f1": 0.78
+                    },
+                    "no_answer": {
+                        "count": 40,
+                        "answer_refusal_rate": 72.5,
+                        "hallucination_rate": 27.5
+                    }
+                },
+                "per_question_results": [],
+                "exported_files": [
+                    "datasets/SingleTopic/results/generation_results_evaluation.json",
+                    "datasets/SingleTopic/results/generation_results_evaluation.csv",
+                    "datasets/SingleTopic/results/generation_results_evaluation.md",
+                    "datasets/SingleTopic/results/generation_results_evaluation.tex"
+                ]
+            }
+        }

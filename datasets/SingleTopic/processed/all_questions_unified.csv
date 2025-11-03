@@ -1,0 +1,161 @@
+question,golden_answer,document_index,question_type
+Which enemy types wield an AK-47?,Assault-rifle wielding Bullet and Tankers wield AK-47s.,0,multi_passage
+What makes jammed enemies different?,"Jammed Keybullet Kin drop 2 keys instead of 1, jammed Chance Kins have a chance to drop twice the loot, and jammed red-Caped Bullet Kin deal contact damage. Additionally, Jammed Keybullet Kin Jammed variations run faster and will take less time to teleport away from the player if they are not destroyed quickly.",0,multi_passage
+What enemies are encountered in the second encounter?,26 kobolds and 1 kobold inventor are encountered in the second encounter.,1,multi_passage
+What monsters are encountered in this journey?,"Ropers, kobolds, kobold inventors, fire giants, and fire giant dreadnoughts.",1,multi_passage
+What framework was chosen to execute the RAG process and what alternatives were considered?,The LangChain framework was used to orchestrate the RAG process. Llamaindex and LitGPT were also considered during development. Llmware was considered after development had finished.,2,multi_passage
+Which large language models and vector databases were shortlisted for this project?,"The tinyllama-1.1b-chat-v1.0 Q6_K, Phi 3 Q4_K_M"", bartowski/dolphin-2.8-experiment26-7b-GGUF Q3_K_L, mgonzs13/Mistroll-7B-v2.2-GGU, and QuantFactory/Meta-Llama-3-8B-Instruct Q3_K_M large language models and the Chroma, Qdrant, and Vespa vector databases were shortlisted for this project.",2,multi_passage
+What kind of model is the bling-phi-3 model,"The bling-phi-3 model is the newest and most accurate BLING/DRAGON model. BLING models are small CPU-based RAG-optimized, instruct-following 1B-3B parameter models. DRAGON models are production-grade RAG-optimized 6-7B parameter models - ""Delivering RAG on ..."" the leading foundation base models.",3,multi_passage
+In which versions were the SLIM models updated?,"The SLIM models were updated in versions 0.2.3, 0.2.6, 0.2.12, 0.3.0, and 0.3.1.",3,multi_passage
+What are the ways of grouping UI elements together?,"UI elements can be grouped together using the following methods:
+- Create an array of UI elements.
+- Create a dictionary of UI elements.
+- Embed a dynamic number of UI elements in another output.
+- Create a hstack (or vstack) of UI elements with on_change handlers.
+- Create a table column of buttons with on_change handlers
+- Create a form with multiple UI elements.",4,multi_passage
+What are the parameters for the mo.ui.text function?,The parameters for mo.ui.text are label and placeholder. These are both optional.,4,multi_passage
+What are the given examples of common challenges?,"The given examples of common challenges are: ""you create a comprehensive analysis but nobody is acting on it""; ""you ran an experiment but nobody is using the results""; ""you built a predictive model, but the team you built it for is not using it""; and ""you created a dashboard but nobody is looking at it"".",5,multi_passage
+What are the four steps to become more impact-focused?,"The four steps to become more impact-focused are: ""Step 1: Understand what impact looks like for your role and measure your success accordingly"", ""Step 2: Ensure your work solves a real business problem"", ""Step 3: Ensure there is buy-in for your work"", and ""Step 4: Focus your time on the highest-impact thing"".",5,multi_passage
+What are the risk classifications for AI?,"The risk classifications are: ""minimal risk"", ""high-risk"", ""unacceptable risk"", and ""specific transparency risk""",6,multi_passage
+What are the rules for developing general purpose AI models?,"General purpose AI models that were trained using a total computing power of more than 10^25 FLOPs are considered to carry systemic risks. 12 months after the AI Act enters into force, the obligations for general purpose AI governance become applicable. Providers of general purpose AI models, which are trained on large data amounts and therefore prone to high energy consumption, are required to disclose energy consumption. Providers of free and open-source models are exempted from most of obligations, but this exemption does not cover obligations for providers of general purpose AI models with systemic risks.",6,multi_passage
+What are the emperor's aliases?,"The emperor has also known as the ""Dream Guardian"", the ""Dream Visitor"", and ""Balduran"".",7,multi_passage
+Who was Duke Stelmane?,"Duke Stelmane was a major figure of the Knights of the Shield, a lawful and neutral evil conglomerate of politicians and merchants manipulating events behind the scenes, acting as the Emperor's envoy while it secretly kept her enthralled. Duke Belynne Stelmane dies recently.",7,multi_passage
+Where was I offered desserts?,"You ate a delightful puff pastry and custard-filled local treat, and a slice of Basque cheesecake at Otaegui, and you were beckoned with cake in the camino.",8,multi_passage
+What forms of exercise did we do?,You did hiking and surfing.,8,multi_passage
+Who is in the family that this film is about?,"The film takes the perspective of the Hoss family. The Hoss family consists of: the patriarch Rudolf and his wife, Hedwig;their two sons and three daughters, the youngest still a baby; and Hedwig's mother.",9,multi_passage
+What items do Rudolf's family take from the Jews and who takes them?,"Rudolf's wife, Hedwig, often receives luxury and expensive items taken from the Jews. On one occasion, she is seen receiving a fancy fur coat with lipstick lying inside one of the pockets. The Rudolf's children are also seen collecting and playing with gold teeth taken from the remains of the dead Jews.",9,multi_passage
+What are the proposed changes that affect healthcare?,"The proposed changes that affect healthcare are: any possible schemes thought up by Government, Council , NHS etc,  such as closure of Hosptitals, workplace parking levy etc will be preceded with a Public Consultation which we will then ignore; in an effort to reduce the problems faced by the NHS , it is proposed to reduce pregnancy from nine to seven months; and with Government helped finance, AstraZeneca should buy out Pfizer, then, as we would have the rights to Viagra, the economy may stay up longer.",10,multi_passage
+What versions of the Manicfesto are there?,"There is the Manicfesto proposals, the General Election 2022 Manicfesto, and the General Election 2019 Manicfesto.",10,multi_passage
+"Other than this blog post, what has the author written?",The author has also written: a paper about the emergence of instabilities in large language models and a more accessible blog post on the same topic; a LLM.int8() paper; a sparse training blog post; a TPU vs GPU blog post; and a paper about k-bit inference scaling laws.,11,multi_passage
+In what contexts is BERT mentioned?,"It is mentioned that for BERT large during training, the input and weight matrix of any matrix multiplication fit neatly into the L2 cache of Ada (but not other Us). The author also mentions that they benchmarked the time for 500 mini-batches for BERT Large during inference (excluding the softmax layer) on the 4x RTX 2080 Ti system. They chose BERT Large inference since, from their experience, this is the deep learning model that stresses the GPU the most.",11,multi_passage
+What data structures does Gleam natively support?,"Gleam supports strings, tuples, lists, and dictionaries.",12,multi_passage
+What things will cause a compilation error in Gleam?,"In Gleam, let and = can be used for pattern matching, but you’ll get compile errors if there’s a type mismatch. Functions can optionally have their argument and return types annotated in Gleam. These type annotations will always be checked by the compiler and throw a compilation error if not valid.
+
+The following code will also throw a compilation error:
+let list = [2, 3, 4]
+let list = [1, ..list]
+let [1, second_element, ..] = list
+[1.0, ..list] // compile error, type mismatch",12,multi_passage
+Where is broadcasting used?,"Broadcasting is used to do the < comparision between the column vector [0, 1, 2, 3] and the row vector [0, 1, 2, 3], which is one of the steps to make a causal language modelling mask. Broadcasting is also used to add pos_emb and tok_emb elementwise to get the new representations of the tokens with positional information.",13,multi_passage
+What is Karpathy known for?,Karpathy A is listed as the author of the Tiny Shakespeare dataset and the creator of an 'exellent GPT from scratch tutorial'.,13,multi_passage
+What things did Jackie remember differently to what she saw?,"In her and Perry's childhood home, Jackie didn't remember having a projector room and she remembered the doorway to the kitchen being on the other side of the living room. She also remembered that she had almost killed her brother, Perry, seven hundred and thirty days ago in a car accident, when she actually did kill her brother in that accident.",14,multi_passage
+What references to alcohol are there,"The narrator, Jackie, had been sober for seven hundred and thirty days. Seven hundred and thirty days ago, Jackie and Perry had gotten into a car accident that almost killed the two because Jackie had been driving after drinking Bacardi Limon.
+
+Jackie saw a translucent memmory of her dad sitting motionless at a table with an empty glass of Apple-Schnapple and an empty bottle of Jim Beam. Jackie also remembered he father giving her beer as a child and her mother ignoring this.
+
+She used the death of her parents as an excuse for her alcoholism for so long, because admitting that they helped create the monster she would eventually become was like a knife to the heart. And knowing she had been too weak to conquer the addiction from her own volition just made the weapon twist in her chest.
+
+Finally, at the end of the story, Jackie licked the cracks on her lips as her eyes closed shut, imagining the oaky comfort of bourbon on her tongue. She felt herself drift, which she thought a good thing, because she needed the rest.",14,multi_passage
+Where does the Doctor say that he is a time lord?,The Doctor declares that he is the last of the time lords in the Tardis and in a memory in the airlock door.,15,multi_passage
+Who are the characters in this script?,"The characters in this script are: RUBY, DOCTOR, CARLA, ERIC, BABIES, POPPY, MARCEL?, ADJANI?, SANDRA?, NAN-E, JOCELYN, COMPUTER, and the Bogeyman.",15,multi_passage
+What can moss be used for?,Harvesting moss gives 1 foraging exp per moss and speed gro requires five moss.,16,multi_passage
+What are all of the sources of battery packs that have ever existed?,Weeds in the Mutant Bug Lair used to turn into battery battery packs in the winter and the solar panels currently slowly generate battery packs when left in the sun.,16,multi_passage
+What things does Scratch do?,"Scratch: re-edited the ""Return"" novel manuscript into a horror story, making it take effect in reality; escapes Cauldron Lake; kills Jaakko and escapes from captivity, unsuccessfully attempting to take the Clicker from Saga; possesses Casey, steals the Clicker, and throws Saga into the Dark Place; and posseses Alan again before being killed.",17,multi_passage
+What is Alan tricked into believing by his wife?,"Alan believes that while being possessed by the Dark Presence, he torments Alice with visions of his alter ego, Scratch, which eventually leading to her suicide. Alice had actually tricked Alan into thinking she had committing suicide by choosing to return the Dark Place as part of a plan to help him eventually escape, explaining that the only way he can escape the loops is through ""ascension.""",17,multi_passage
+Which books have dragons in them?,"The books 'To Shape a Dragon’s Breath', 'FOURTH WING', and 'Day of the Fallen Night' have dragons in them.",18,multi_passage
+Which books contain multiple narratives?,"The books 'Same Bed Different Dreams', 'EVERY DROP IS A MAN’S NIGHTMARE', 'The Museum of Human History', 'Witch King', and 'The Terraformers' each use multiple narratives.",18,multi_passage
+What is the recommended way to index text for question-answering?,"It is recommended to first apply text normalization processes such as tokenization, stemming, and the removal of stop words to enhance the text’s suitability for indexing. Pretrained LMs can then be used to generate semantic vector representations of texts. These vectors are stored, enabling rapid and precise retrieval from extensive data collections, significantly enhancing retrieval efficiency. Sentence-level indexing is more appropriate than document-level indexing for summarizing documents to precisely locate answers.",19,multi_passage
+What are the advantages and disadvantages of the BM25 algorithm?,"The advantage of BM25 is that it is efficient. The disadvantage of the BM25 algorithm is that it focuses on term frequency and presence for document algorithm, so it often overlooks the semantic information of queries.",19,multi_passage
+What do keybullet kin drop?,Keybullet kin drop a key upon death.,0,single_passage
+What kind of gun does the bandana bullet kin use?,The bandana bullet kin wields a machine pistol.,0,single_passage
+What do the giants look like?,"One giant is burly, grey-skinned, and 20 feet tall. It wears heavy dark iron armour covered in metal torns. It is leaning against a chamber wall, carrying what looks to be two tower shields nearly as tall as itself, both bearing
+menacing spikes.
+
+The other giant  stands a tall giant in more mobile iron, clutching a dangerous-looking maul the size of Yasha, also leaning and looking disinterested.",1,single_passage
+What happens on day 2?,"After a few miles of winding tunnel, you emerge in a smaller grotto of stalactites and stalagmites dripping with condensation. Unsure if the same underground river, or another water source, is nearby, you can see quite a bit of ground water does funnel down into this area.
+
+You encounter 2 ropers seeking the next burrowed entrance left by the Kryn.",1,single_passage
+What were the requirements for the project?,"The tool had the following requirements:
+- Chatbot that you can ask questions and get answers in response (conversational memory is not required).
+- Information is taken from an unstructured text file.
+- It must be able to tell me if it doesn’t know the answer to my question.
+- Fast.
+- Efficient enough to run on my MacBook with other programs without any performance issues.
+- Locally run for privacy and to ensure it will always be free, runnable, and consistent.",2,single_passage
+What data did was used to test the prototype?,Grace Hopper's Wikipedia page and Alan Turing's Wikipedia page were used to test the prototype.,2,single_passage
+How do the data storage options compare?,"For fast start: use SQLite3 and ChromaDB (File-based) out-of-the-box - no install required.
+For speed + scale: use MongoDB (text collection) and Milvus (vector db) - install with Docker Compose
+For postgres: use Postgres for both text collection and vector DB - install with Docker Compose
+For mix-and-match: LLMWare supports 3 text collection databases (Mongo, Postgres, SQLite) and 10 vector databases (Milvus, PGVector-Postgres, Neo4j, Redis, Mongo-Atlas, Qdrant, Faiss, LanceDB, ChromaDB and Pinecone).",3,single_passage
+When was UTF-8 support added for European languages?,UTF-8 support was added for European languages on Wednesday 3rd April in the v0.2.7 Update.,3,single_passage
+How do I make a button?,"import marimo as mo
+
+button = mo.ui.run_button()
+button
+
+mo.stop(not button.value, ""Click 'run' to generate a random number"")
+
+import random
+random.randint(0, 1000).",4,single_passage
+When might I use caching?,"You might use caching when, for example, your notebook computes t-SNE, UMAP, or PyMDE embeddings.",4,single_passage
+What are the key topics of this article?,"The key topics of this article are: ""why prioritizing impact matters not just for managers, but also ICs""; ""why focusing on impact is hard""; ""how to maximize your impact""; and ""how to overcome common challenges in driving real impact"".",5,single_passage
+Do I have to do something all by myself to be acknowledged for it?,"You don’t have to be solely responsible for something in order to take (partial) credit for it. If you provided the analysis that resulted in a pricing change that saved the company millions, then you deserve part of the credit for that impact.",5,single_passage
+What kinds of models would need to be officially registered?,"High-risk AI systems that are deployed by public authorities or entities acting on their behalf will have to be registered in a public EU database, unless those systems are used for law enforcement and migration. The latter will have to be registered in a non-public part of the database that will be only accessible to relevant supervisory authorities.",6,single_passage
+"What kinds of AI carry ""systematic risks""?","For now, general purpose AI models that were trained using a total computing power of more than 10^25 FLOPs are considered to carry systemic risks, given that models trained with larger compute tend to be more powerful. The AI Office (established within the Commission) may update this threshold in light of technological advances, and may furthermore in specific cases designate other models as such based on further criteria (e.g. number of users, or the degree of autonomy of the model).",6,single_passage
+Which quest does the emperor give the player?,"The emperor gives the player the ""Visit the Emperor's Old Hideout"" quest.",7,single_passage
+Who ambushes the party at Wyrm's lookout?,"On the way to Baldur's Gate, the party will be ambushed by a group of Gish'ra warriors while resting at Wyrm's Lookout.",7,single_passage
+What did I drink at the pintxo bars?,You drank txakoli at the pintxo bars.,8,single_passage
+Which part of the trip did I like the most?,Your favourite part of the trip was your four days on the Camino.,8,single_passage
+What is the meaning behind the infrared scenes?,"The significance of the use of infrared might be in stating how the Polish family cannot be themselves as soon as they step out of their house or into the open balcony as well. Although the girl takes on the dangerous responsibility of helping the prisoners, she still cannot express her true self in public, leading to her being shown in infrared. Another perspective is that the girl and her mother truly stand out in this horrific world solely because of their generous actions. Therefore, in a film like this, in which the Nazis and the enablers are the “normal” people, anyone with any sense of humanity has to be visually differentiated from the Hoss family members.",9,single_passage
+How do the people who commit atrocious acts and those that are complicit in these acts differ?,The Zone of Interest does not really differentiate between evil-doers and those supporting such evil.,9,single_passage
+What is the policy on Tai Chi?,"In order to calm down the passions and stresses currently exhibited in Parliament, the Loony Party would make all M.P’s have half an hours compulsory Tai chi everyday.",10,single_passage
+What is the proposed change for the British museum,The British Museum should have a Daddy’s section alongside the current Mummy exhibition.,10,single_passage
+How much faster is the Tesla A100 compared to the Tesla V100?,"When measured on the SE-ResNeXt101 deep learning architecture, the Tesla A100 was 1.43x faster than the Tesla V100. When measured on the Masked-R-CNN deep learning architecture the Tesla A100 was 1.47x faster than the Tesla V100. When measured on the Transformer (12 layer, Machine Translation, WMT14 en-de) deep learning architecture, the Tesla A100 was 1.70x faster than the Tesla V100.",11,single_passage
+For what work did I receive criticism for my reduction of FLOPS?,You received criticism for your research on sparse network training.,11,single_passage
+How does function exporting differ between Gleam and Python?,"In Python, top level functions are exported by default. There is no notion of private module-level functions. In Gleam, functions are private by default and need the pub keyword to be public.",12,single_passage
+What is the syntax for pipe,The operator for Pipe in Gleam is '|>'.,12,single_passage
+Why are the top-right values in the raw attention weights set to negative infinity?,A mask of negative infinity is applied to the upper right entries of the raw attention weights to ensure they will zero out after softmax.,13,single_passage
+How can I freeze a variable during training in MLX?,"To freeze an attribute during training, you can add '_' as a prefix to the attribute name, which signals to mlx that it is not a parameter and should not be updated during training.",13,single_passage
+How is the narrator related to Perry,Perry is the narrator's brother.,14,single_passage
+How long has the narrator been sober for?,The author had been sober for seven hundred and thirty days.,14,single_passage
+What is the name of the space station?,"The space station is called ""Babystation Beta"".",15,single_passage
+What languages do the people of Pacifico del Rio speak?,All of the humans speak a single language that is similar to Cantonese.,15,single_passage
+In which patch was pet adoption added?,The ability to adopt pets from Marnie's shop from year two was added in patch 1.6.3.,16,single_passage
+When did mushroom trees stop dropping wood?,Mushroom trees stopped dropping wood in patch 1.4.0.,16,single_passage
+Where was Alan Wake 2 officially announced?,Alan Wake 2 was officially announced at The Game Awards 2021.,17,single_passage
+When is this game set?,"This game is set in 2023, thirteen years after the events of Alan Wake.",17,single_passage
+Who wrote 'Divine Rivals'?,Rebecca Ross wrote 'Divine Rivals'.,18,single_passage
+Who was resurrected with a group of other murder victims?,Lou was resurrected along with a handful of other women murdered by a single serial killer.,18,single_passage
+What categories does this paper split the RAG technique paradigm into?,"This paper organizes the RAG paradigm into four categories: pre-retrieval, retrieval, post-retrieval, and generation.",19,single_passage
+In what way can including unrelated documents affect the RAG system?,"Noise Power (Cuconasu et al., 2024) provide a comprehensive analysis of the impact of IR components on RAG systems, revealing that the inclusion of irrelevant documents can significantly improve accuracy.",19,single_passage
+How much health does the Mutant Bullet Kin have?,,0,no_answer
+Where can bishops be found?,,0,no_answer
+What happened on day 10?,,1,no_answer
+What did the goblins say?,,1,no_answer
+Why was the H100 GPU chosen for computation?,,2,no_answer
+Which masked language model was chosen for the AI?,,2,no_answer
+When was GPT 4 made available,,3,no_answer
+What Tensorflow features are supported?,,3,no_answer
+How can I create graphs?,,4,no_answer
+What is the name of the Java version of marimo?,,4,no_answer
+What is step 5?,,5,no_answer
+What is the advice for data scientists in finance companies?,,5,no_answer
+What obligations are robots expected to follow?,,6,no_answer
+How long are the minimum prison sentences for rule breakers?,,6,no_answer
+What needs to be done to kiss the Emperor?,,7,no_answer
+How many wings did Balduran have?,,7,no_answer
+What is the author's favourite thing about Barcelona?,,8,no_answer
+Did the author prefer Madrid or San Sebastian?,,8,no_answer
+Who plays the boy in striped pyjamas?,,9,no_answer
+What relgion are the members of the Hoss family?,,9,no_answer
+What is the policy on semi-skimmed milk?,,10,no_answer
+What kind of pumps will be given to people to solve inflation?,,10,no_answer
+Which TPU is recommended?,,11,no_answer
+What is the rest temperature of the RTX 4090 GPU?,,11,no_answer
+What does the ++ operator do in Gleam?,,12,no_answer
+How do sets in Python compare to sets in Gleam?,,12,no_answer
+How many parameters does the transformer model have?,,13,no_answer
+What is the advantage of transformers other other models?,,13,no_answer
+What brand of bourbon did the narrator drink?,,14,no_answer
+Who is Perry and Jackie's sibling?,,14,no_answer
+What colour is Nan-E?,,15,no_answer
+"What does Robby, the baby, say to the Doctor?",,15,no_answer
+In what version was the velociraptor introduced?,,16,no_answer
+What was added in version 1.5.7?,,16,no_answer
+Why did Saga stab Scratch?,,17,no_answer
+What caliber is the bullet of light?,,17,no_answer
+"In 'he who drowned the world', why did Gong Li sacrifice her brother?",,18,no_answer
+Which book is the best?,,18,no_answer
+Which paper by Hinton et. al. was used in this paper?,,19,no_answer
+Why was hardware such a limiting factor in this research?,,19,no_answer

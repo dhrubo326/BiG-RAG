@@ -63,7 +63,10 @@ from api.models_eval import (
     AnswerEvalRequest, AnswerEvalResponse,
     CompareEvalRequest, CompareEvalResponse,
     BatchEvalRequest, BatchEvalResponse,
-    PerQueryRetrievalResult, PerQuestionAnswerResult, BatchEvalPerformance
+    PerQueryRetrievalResult, PerQuestionAnswerResult, BatchEvalPerformance,
+    # CSV Evaluation models
+    BatchGenerateRequest, BatchGenerateResponse,
+    EvaluateResultsRequest, EvaluateResultsResponse
 )
 
 # ============================================================================
@@ -1824,6 +1827,139 @@ async def batch_evaluation_endpoint(request: BatchEvalRequest):
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Batch evaluation failed: {str(e)}")
+
+
+@app.post("/eval/batch_generate", response_model=BatchGenerateResponse, tags=["Evaluation"])
+async def batch_generate(request: BatchGenerateRequest):
+    """
+    Batch process questions CSV and generate answers with retrieval context.
+
+    This endpoint:
+    1. Loads questions from CSV (question, golden_answer, document_index, question_type)
+    2. For each question:
+       - Retrieves relevant context from knowledge graph
+       - Generates answer using LLM
+       - Tracks latency
+    3. Saves results to CSV with all fields for later evaluation
+
+    **Use Case**: Process SingleTopic or similar datasets systematically
+
+    **Input CSV Schema**:
+    ```csv
+    question,golden_answer,document_index,question_type
+    "What is X?","Answer to X",0,single_passage
+    ```
+
+    **Output CSV Schema**:
+    ```csv
+    question,golden_answer,generated_answer,retrieval_context,document_index,question_type,latency_ms
+    ```
+
+    **Example**:
+    ```bash
+    curl -X POST http://localhost:8001/eval/batch_generate \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "questions_csv_path": "datasets/SingleTopic/processed/all_questions_unified.csv",
+        "output_csv_path": "datasets/SingleTopic/results/generation_results.csv",
+        "model": "gpt-4o-mini",
+        "temperature": 0.0,
+        "enable_reranking": true
+      }'
+    ```
+    """
+    try:
+        from api.csv_evaluation import batch_generate_endpoint
+
+        result = await batch_generate_endpoint(
+            questions_csv_path=request.questions_csv_path,
+            output_csv_path=request.output_csv_path,
+            rag_instance=rag,
+            llm_manager=llm_manager,
+            embedding_manager=embedding_manager,
+            llm_provider=request.llm_provider,
+            model=request.model,
+            temperature=request.temperature,
+            max_tokens=request.max_tokens,
+            top_k=request.top_k,
+            enable_reranking=request.enable_reranking
+        )
+
+        return BatchGenerateResponse(**result)
+
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Batch generation failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Batch generation failed: {str(e)}")
+
+
+@app.post("/eval/evaluate_results", response_model=EvaluateResultsResponse, tags=["Evaluation"])
+async def evaluate_results(request: EvaluateResultsRequest):
+    """
+    Evaluate saved results CSV for accuracy.
+
+    This endpoint:
+    1. Loads results CSV (output from /eval/batch_generate)
+    2. Calculates metrics per question:
+       - EM (Exact Match)
+       - F1 (Token F1)
+       - ROUGE-L (optional)
+       - Answer Rate (for no-answer questions)
+    3. Aggregates metrics overall and by question type
+    4. Exports results in multiple formats (JSON, CSV, Markdown, LaTeX)
+
+    **Use Case**: Evaluate BiG-RAG accuracy on standard datasets
+
+    **Metrics**:
+    - **EM**: Exact match rate (0.0-1.0)
+    - **F1**: Token-level F1 score (0.0-1.0)
+    - **ROUGE-L**: Longest common subsequence similarity (requires rouge_score package)
+    - **Answer Rate**: % of no-answer questions where model refused to answer
+
+    **Example**:
+    ```bash
+    curl -X POST http://localhost:8001/eval/evaluate_results \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "results_csv_path": "datasets/SingleTopic/results/generation_results.csv",
+        "metrics": ["em", "f1", "rouge_l", "answer_rate"],
+        "export_formats": ["json", "csv", "markdown", "latex"],
+        "output_dir": "datasets/SingleTopic/results/"
+      }'
+    ```
+
+    **Exported Files**:
+    - `{basename}_evaluation.json`: Full results with all metrics
+    - `{basename}_evaluation.csv`: Spreadsheet-friendly format
+    - `{basename}_evaluation.md`: Markdown table for documentation
+    - `{basename}_evaluation.tex`: LaTeX table for papers
+    """
+    try:
+        from api.csv_evaluation import evaluate_results_endpoint
+
+        result = await evaluate_results_endpoint(
+            results_csv_path=request.results_csv_path,
+            metrics=request.metrics,
+            export_formats=request.export_formats,
+            output_dir=request.output_dir
+        )
+
+        return EvaluateResultsResponse(**result)
+
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Results evaluation failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Results evaluation failed: {str(e)}")
 
 
 @app.post("/ask", response_model=AskResponse, tags=["Q&A"])

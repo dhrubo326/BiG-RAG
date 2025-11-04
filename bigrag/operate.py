@@ -139,7 +139,7 @@ async def _handle_single_hyperrelation_extraction(
     record_attributes: list[str],
     chunk_key: str,
 ):
-    if len(record_attributes) < 3 or record_attributes[0] != '"hyper-relation"':
+    if len(record_attributes) < 3 or record_attributes[0] != '"bipartite_edge"':
         return None
     # add this record as edge
     knowledge_fragment = clean_str(record_attributes[1])

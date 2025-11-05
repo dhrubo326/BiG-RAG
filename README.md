@@ -49,7 +49,7 @@ python -m spacy download en_core_web_sm
 python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 ```
 
-> **Note:** For detailed setup instructions, see [SETUP_VENV.md](SETUP_VENV.md)
+> **Note:** For detailed setup instructions, see [docs/technical/SETUP_VENV.md](docs/technical/SETUP_VENV.md)
 
 ---
 
@@ -87,10 +87,22 @@ This will:
 ### Step 3: Start Retrieval Server
 
 ```bash
-python script_api.py --data_source your_dataset
+# NEW: Use backend/server.py
+cd backend
+python server.py --data_source your_dataset
 ```
 
 The API server runs on `http://localhost:8001`
+
+**Or use the React UI (NEW):**
+```bash
+# Terminal 1: Start backend
+cd backend && python server.py --data_source your_dataset
+
+# Terminal 2: Start frontend
+cd frontend && npm run dev
+```
+Then open `http://localhost:5173` in your browser
 
 ### Step 4: Use BiG-RAG in Your Code
 
@@ -111,20 +123,84 @@ print(result)
 
 ---
 
+## 📁 Project Structure
+
+BiG-RAG has been reorganized for better clarity and scalability:
+
+```
+BiG-RAG/
+├── README.md                    # This file
+├── CLAUDE.md                    # Claude Code assistant instructions
+├── BIGRAG_UI_PLAN.md           # UI implementation plan
+├── IMPLEMENTATION_STATUS.md     # Current development status
+│
+├── backend/                     # FastAPI server (NEW)
+│   ├── api/                    # API modules
+│   ├── server.py               # Main server (was script_api.py)
+│   └── README.md               # Backend documentation
+│
+├── frontend/                    # React UI (NEW - Nov 2025)
+│   ├── src/                    # React 19 + TypeScript + Tailwind v4
+│   ├── package.json            # Latest dependencies
+│   └── README.md               # Frontend documentation
+│
+├── bigrag/                      # Core Python library
+│   ├── bigrag.py               # Main BiGRAG class
+│   ├── operate.py              # Graph operations
+│   ├── reranker.py             # Semantic reranking
+│   └── ...                     # Other modules
+│
+├── docs/                        # Documentation (NEW)
+│   ├── README.md               # Documentation index
+│   ├── technical/              # Design specs, setup guides
+│   ├── reports/                # Test & evaluation reports
+│   └── updates/                # Change logs
+│
+├── test_scripts/                # Test & validation scripts (NEW)
+│   ├── README.md               # Test documentation
+│   ├── test_*.py               # Various test scripts
+│   └── validate_*.py           # Validation scripts
+│
+├── datasets/                    # QA datasets and corpora
+├── expr/                        # Built knowledge graphs
+├── script_build.py             # Build knowledge graph
+├── script_process.py           # Process datasets
+└── setup.py                    # Package setup
+```
+
+**Key Changes:**
+- ✅ `api/` → `backend/api/` for clear separation
+- ✅ `script_api.py` → `backend/server.py` with path fixes
+- ✅ `frontend/` added with React 19 + TypeScript + Tailwind CSS v4
+- ✅ `docs/` organized into technical/, reports/, updates/
+- ✅ `test_scripts/` consolidates all test files
+- ✅ Root directory clean with only 4 markdown files
+
+See [`docs/README.md`](docs/README.md) for complete documentation index.
+
+---
+
 ## Testing BiG-RAG
 
-We provide a complete test suite to verify your installation:
+We provide a complete test suite in [`test_scripts/`](test_scripts/):
 
 ```bash
-# Build a demo knowledge graph
-python test_build_graph.py
+cd test_scripts
 
-# Test retrieval functionality
-python test_retrieval.py
+# Test all retrieval modes
+python test_all_retrieval_modes.py
 
-# Test end-to-end RAG pipeline
-python test_end_to_end.py
+# Test Phase 2-4 improvements
+python test_improvements.py
+
+# Validate SingleTopic dataset
+python validate_singletopic_dataset.py
+
+# Run complete evaluation
+python run_singletopic_evaluation.py
 ```
+
+See [`test_scripts/README.md`](test_scripts/README.md) for all available tests.
 
 ---
 
@@ -221,7 +297,7 @@ Fixed 5 critical bugs:
 
 **All bugs are now fixed. System is production-ready.**
 
-For complete details, see [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)
+For complete details, see [docs/updates/IMPLEMENTATION_SUMMARY.md](docs/updates/IMPLEMENTATION_SUMMARY.md)
 
 ---
 

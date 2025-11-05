@@ -1,0 +1,181 @@
+import api from './api';
+import type { QueryParams, QueryResponse, RetrievedContext } from '../types';
+import { API_ENDPOINTS } from '../utils/constants';
+
+/**
+ * Ask a question and get a response with retrieval
+ */
+export const askQuestion = async (params: QueryParams): Promise<QueryResponse> => {
+  const response = await api.post(API_ENDPOINTS.ASK, {
+    question: params.query,
+    top_k: params.top_k,
+    mode: params.mode,
+    enable_reranking: params.enable_reranking,
+    dataset: params.dataset,
+    model: params.model,
+    temperature: params.temperature,
+    max_tokens: params.max_tokens,
+  });
+
+  // Transform response to match our QueryResponse type
+  const data = response.data;
+
+  return {
+    answer: data.answer || data.response || '',
+    contexts: data.contexts || [],
+    thinking: data.thinking,
+    metadata: {
+      model: data.model || params.model || 'unknown',
+      retrieval_time: data.retrieval_time || 0,
+      generation_time: data.generation_time || 0,
+      total_tokens: data.total_tokens,
+    },
+  };
+};
+
+/**
+ * Stream chat response (for real-time streaming)
+ */
+export const streamChat = async (
+  params: QueryParams,
+  onChunk: (chunk: string) => void,
+  onContexts?: (contexts: RetrievedContext[]) => void,
+  abortSignal?: AbortSignal
+): Promise<void> => {
+  const response = await fetch(`${api.defaults.baseURL}${API_ENDPOINTS.ASK}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      question: params.query,
+      top_k: params.top_k,
+      mode: params.mode,
+      enable_reranking: params.enable_reranking,
+      model: params.model,
+      temperature: params.temperature,
+      stream: true, // Enable streaming
+    }),
+    signal: abortSignal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Response body is not readable');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullResponse = '';
+  let contexts: RetrievedContext[] = [];
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Process lines in buffer
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (line.trim() === '') continue;
+
+        // Parse SSE format
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+
+          if (data === '[DONE]') {
+            return;
+          }
+
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.type === 'context') {
+              // Retrieved contexts
+              contexts = parsed.contexts || [];
+              if (onContexts) {
+                onContexts(contexts);
+              }
+            } else if (parsed.type === 'chunk') {
+              // Text chunk
+              const chunk = parsed.content || '';
+              fullResponse += chunk;
+              onChunk(fullResponse);
+            } else if (parsed.type === 'error') {
+              throw new Error(parsed.message || 'Stream error');
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE data:', e);
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+};
+
+/**
+ * Get suggested questions based on current context
+ */
+export const getSuggestedQuestions = async (
+  context?: string,
+  limit: number = 5
+): Promise<string[]> => {
+  try {
+    const response = await api.post('/api/suggest', {
+      context,
+      limit,
+    });
+
+    return response.data.suggestions || [];
+  } catch {
+    // Return default suggestions if API fails
+    return [
+      'What are the main topics in the knowledge graph?',
+      'Can you summarize the key information?',
+      'What relationships exist between entities?',
+      'Show me recent updates to the knowledge base',
+      'What questions can I ask about this data?',
+    ];
+  }
+};
+
+/**
+ * Get chat history
+ */
+export const getChatHistory = async (
+  limit: number = 50
+): Promise<{ messages: any[]; total: number }> => {
+  const response = await api.get('/api/chat/history', {
+    params: { limit },
+  });
+
+  return {
+    messages: response.data.messages || [],
+    total: response.data.total || 0,
+  };
+};
+
+/**
+ * Save chat feedback
+ */
+export const saveFeedback = async (
+  messageId: string,
+  feedback: 'positive' | 'negative',
+  comment?: string
+): Promise<void> => {
+  await api.post('/api/chat/feedback', {
+    message_id: messageId,
+    feedback,
+    comment,
+  });
+};

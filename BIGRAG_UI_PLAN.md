@@ -457,7 +457,7 @@ BiG-RAG/
 |----------|-----------|---------|---------------|
 | **Frontend Framework** | React | **19.2.0** | Latest stable with Activity API, useEffectEvent |
 | **Type Safety** | TypeScript | **5.9.3** | Latest with expandable hovers, better DOM docs |
-| **Build Tool** | Vite | **7.1.12** | Latest with Node.js 20+ support, ESM-only |
+| **Build Tool** | Vite | **7.2.0** | Latest with Node.js 20+ support, ESM-only |
 | **Graph Visualization** | Cytoscape.js | **3.33.0** | Latest with WebGL support, TypeScript, circular text |
 | | react-cytoscapejs | 2.0+ | React wrapper for Cytoscape |
 | | cytoscape-cose-bilkent | 4.1+ | Layout for bipartite graphs |
@@ -541,8 +541,8 @@ BiG-RAG/
     "eslint-plugin-react-hooks": "^5.1.0",
 
     // Vite
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^7.1.12",
+    "@vitejs/plugin-react": "^5.1.0",
+    "vite": "^7.2.0",
 
     // PostCSS (for Tailwind v4)
     "postcss": "^8.4.49",
@@ -553,7 +553,7 @@ BiG-RAG/
 
 **Key Updates:**
 - ✅ **React 19.2.0**: Latest with Activity API and useEffectEvent
-- ✅ **Vite 7.1.12**: Requires Node.js 20+, ESM-only
+- ✅ **Vite 7.2.0**: Requires Node.js 20+, ESM-only
 - ✅ **Tailwind CSS 4.1.16**: CSS-first configuration, 5x faster builds
 - ✅ **Zustand 5.0.8**: useSyncExternalStore optimization, smaller bundle
 - ✅ **React Router 7.9.5**: Simplified imports, RSC support
@@ -606,8 +606,7 @@ BiG-RAG/
 │                                                             │
 │  📈 Recent Evaluations                                      │
 │  ┌─────────────────────────────────────────────────────────┐│
-│  │ SingleTopic | EM: 1.67% | F1: 15.33% | 2 hrs ago      ││
-│  │ 2WikiMulti  | EM: 4.20% | F1: 23.10% | 1 day ago      ││
+│  │ SingleTopic | EM: 1.67% | F1: 15.33% | 2 hrs ago        ││
 │  └─────────────────────────────────────────────────────────┘│
 │                                                             │
 │  💬 Recent Queries                                          │
@@ -620,7 +619,7 @@ BiG-RAG/
 
 **Features:**
 - Real-time API connection status (green dot if connected)
-- Dataset selector dropdown (SingleTopic, 2WikiMultiHopQA, etc.)
+- Dataset selector dropdown (SingleTopic, etc.)
 - Quick stats: document count, entity count, relation count
 - Recent evaluation results (last 5 runs)
 - Recent chat queries (last 10)
@@ -887,10 +886,8 @@ BiG-RAG/
 │  │  Top-k:   [5     ]       │  │  2 hours ago             │ │
 │  │  Rerank:  [✓]            │  │  [View Details]          │ │
 │  │  Questions: [All     ]   │  │                          │ │
-│  │                          │  │  Run #2: 2WikiMultiHop   │ │
-│  │  [▶ Start Evaluation]    │  │  EM: 4.20% | F1: 23.10% │ │
-│  └──────────────────────────┘  │  1 day ago               │ │
-│                                │  [View Details]          │ │
+│  │                          │
+│  └──────────────────────────┘
 │                                └──────────────────────────┘ │
 │                                                             │
 │  📈 Results (Run #1)                                        │
@@ -1006,7 +1003,6 @@ BiG-RAG/
 │  │                                                         ││
 │  │ Available Datasets:                                     ││
 │  │  ✓ SingleTopic (20 docs, 120 questions)                ││
-│  │  ✓ 2WikiMultiHopQA (1000 docs, 500 questions)          ││
 │  │  ☐ HotpotQA (not built)                                ││
 │  │                                                         ││
 │  │ [Build New Dataset] [Import Dataset]                    ││
@@ -1551,9 +1547,9 @@ touch e2e/graph-viz.spec.ts
 
 ## 9. Implementation Timeline
 
-### Phase 1: Setup & Infrastructure (Week 1)
+### Phase 1: Setup & Infrastructure 
 
-**Days 1-2: Project Reorganization**
+**Project Reorganization**
 - [ ] Rename `api/` to `backend/`
 - [ ] Create `frontend/` directory
 - [ ] Initialize React + Vite + TypeScript
@@ -1561,7 +1557,7 @@ touch e2e/graph-viz.spec.ts
 - [ ] Configure TailwindCSS
 - [ ] Set up shadcn/ui
 
-**Days 3-5: Base Components & Routing**
+**Base Components & Routing**
 - [ ] Create page components (Dashboard, Chat, Graph, Docs, Eval, Settings)
 - [ ] Set up React Router
 - [ ] Create navigation component
@@ -1569,16 +1565,16 @@ touch e2e/graph-viz.spec.ts
 - [ ] Create API service layer
 - [ ] Test API connection with backend
 
-**Days 6-7: Dashboard Page**
+**Dashboard Page**
 - [ ] Implement system status display
 - [ ] Add recent evaluations list
 - [ ] Add recent queries list
 - [ ] Add quick action buttons
 - [ ] Test integration with backend API
 
-### Phase 2: Core Features (Week 2)
+### Phase 2: Core Features 
 
-**Days 8-10: Graph Visualization**
+**Graph Visualization**
 - [ ] Integrate Cytoscape.js with React
 - [ ] Implement graph canvas component
 - [ ] Add layout algorithms (cose-bilkent, dagre, etc.)
@@ -1588,7 +1584,7 @@ touch e2e/graph-viz.spec.ts
 - [ ] Add export (PNG, JSON, GraphML)
 - [ ] Test with SingleTopic dataset
 
-**Days 11-12: Chat Interface**
+**Chat Interface**
 - [ ] Create chat window component
 - [ ] Implement message bubbles
 - [ ] Add markdown rendering (react-markdown)
@@ -1597,7 +1593,7 @@ touch e2e/graph-viz.spec.ts
 - [ ] Add source citations
 - [ ] Test with `/ask` endpoint
 
-**Days 13-14: Document Management**
+**Document Management**
 - [ ] Create document list component
 - [ ] Add search and filters
 - [ ] Implement document preview
@@ -1606,9 +1602,9 @@ touch e2e/graph-viz.spec.ts
 - [ ] Add bulk operations
 - [ ] Test with `/documents` endpoints
 
-### Phase 3: Advanced Features (Week 3)
+### Phase 3: Advanced Features
 
-**Days 15-17: Evaluation Dashboard**
+**Evaluation Dashboard**
 - [ ] Create evaluation run form
 - [ ] Implement results display
 - [ ] Add charts (EM/F1 over time)
@@ -1617,7 +1613,7 @@ touch e2e/graph-viz.spec.ts
 - [ ] Add export functionality (CSV, JSON, LaTeX)
 - [ ] Test with `/eval` endpoints
 
-**Days 18-19: Settings Page**
+**Settings Page**
 - [ ] Create settings tabs (General, API Keys, Datasets, Advanced)
 - [ ] Implement settings persistence (localStorage)
 - [ ] Add API key management
@@ -1625,7 +1621,7 @@ touch e2e/graph-viz.spec.ts
 - [ ] Implement theme switcher (light/dark)
 - [ ] Add language selector (i18next)
 
-**Days 20-21: Polish & Optimization**
+**Polish & Optimization**
 - [ ] Implement loading states
 - [ ] Add error boundaries
 - [ ] Add toast notifications (Sonner)
@@ -1634,9 +1630,9 @@ touch e2e/graph-viz.spec.ts
 - [ ] Responsive design for mobile/tablet
 - [ ] Accessibility improvements (ARIA labels, keyboard nav)
 
-### Phase 4: Testing & Documentation (Week 4)
+### Phase 4: Testing & Documentation 
 
-**Days 22-24: Testing**
+**Testing**
 - [ ] Write unit tests for stores
 - [ ] Write component tests
 - [ ] Write API service tests
@@ -1644,14 +1640,14 @@ touch e2e/graph-viz.spec.ts
 - [ ] Cross-browser testing (Chrome, Firefox, Safari)
 - [ ] Mobile testing
 
-**Days 25-26: Documentation**
+**Documentation**
 - [ ] Write frontend README
 - [ ] Update main README with UI instructions
 - [ ] Create user guide (docs/USER_GUIDE.md)
 - [ ] Add inline code comments
 - [ ] Create demo video/screenshots
 
-**Days 27-28: Deployment**
+**Deployment**
 - [ ] Set up Docker Compose
 - [ ] Test production build
 - [ ] Deploy to staging environment
@@ -1662,7 +1658,7 @@ touch e2e/graph-viz.spec.ts
 
 ## 10. Future Enhancements (Post-Launch)
 
-### Short-term (Next 1-3 months)
+### Short-term 
 
 1. **Real-time Updates** - WebSocket support for live evaluation progress
 2. **Comparison Mode** - Side-by-side graph comparison (retrieved vs expected)
@@ -1670,7 +1666,7 @@ touch e2e/graph-viz.spec.ts
 4. **Advanced Search** - Semantic search with vector similarity
 5. **User Accounts** - Authentication, saved queries, shared evaluations
 
-### Medium-term (3-6 months)
+### Medium-term
 
 1. **Collaborative Features** - Share graphs, annotate nodes, comments
 2. **Graph Analytics** - Centrality measures, community detection
@@ -1678,7 +1674,7 @@ touch e2e/graph-viz.spec.ts
 4. **LLM Playground** - Test different models side-by-side
 5. **Dataset Builder** - UI for creating custom datasets
 
-### Long-term (6-12 months)
+### Long-term 
 
 1. **Graph Editing** - Manually add/edit entities, relations
 2. **Auto-Repair** - Suggest fixes for broken retrieval paths

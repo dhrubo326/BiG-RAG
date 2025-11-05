@@ -101,7 +101,7 @@ export const useDocuments = () => {
       }
 
       const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-      if (!UI_CONFIG.ALLOWED_FILE_TYPES.includes(fileExtension)) {
+      if (!UI_CONFIG.ALLOWED_FILE_TYPES.includes(fileExtension as any)) {
         toast.error(
           `File type not allowed. Allowed types: ${UI_CONFIG.ALLOWED_FILE_TYPES.join(', ')}`
         );

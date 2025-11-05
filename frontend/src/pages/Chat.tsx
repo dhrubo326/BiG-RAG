@@ -177,7 +177,7 @@ export function Chat() {
             temperature={temperature}
             topK={topK}
             enableReranking={enableReranking}
-            queryMode={queryMode}
+            queryMode={queryMode || 'hybrid'}
             onModelChange={setModel}
             onTemperatureChange={setTemperature}
             onTopKChange={setTopK}

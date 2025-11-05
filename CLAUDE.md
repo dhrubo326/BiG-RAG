@@ -186,8 +186,9 @@ expr/2WikiMultiHopQA/
 #### Step 3: Start Retrieval Server
 
 ```bash
-# Start server (must run during training)
-nohup python -u script_api.py --data_source 2WikiMultiHopQA > api.log 2>&1 &
+# NEW: Use backend/server.py (script_api.py moved to backend/)
+cd backend
+nohup python -u server.py --data_source 2WikiMultiHopQA > api.log 2>&1 &
 
 # Verify server is running
 curl http://localhost:8001/docs  # Opens FastAPI docs
@@ -205,6 +206,19 @@ curl -X POST http://localhost:8001/search \
 - Remains running throughout the training process
 
 **Important**: Server MUST be running before starting training, or training will fail/hang.
+
+**React UI Alternative (NEW - November 2025):**
+```bash
+# Terminal 1: Start backend
+cd backend
+python server.py --data_source 2WikiMultiHopQA
+
+# Terminal 2: Start frontend
+cd frontend
+npm run dev
+
+# Open http://localhost:5173 in browser
+```
 
 #### Step 4: Run RL Training
 
@@ -701,10 +715,13 @@ All bugs are now fixed and tested. The system is production-ready.
 
 Run the comprehensive test suite:
 ```bash
+cd test_scripts
 python test_improvements.py
 ```
 
 Tests all improvements: metadata preservation, document deletion, three-path retrieval, and reranking.
+
+**All test scripts are now in `test_scripts/` directory.**
 
 ---
 
@@ -1084,29 +1101,95 @@ reward = em_weight * EM + f1_weight * F1
 
 ---
 
+## 📁 Project Structure (November 2025)
+
+BiG-RAG has been reorganized for better clarity and scalability:
+
+```
+BiG-RAG/
+├── README.md                    # Main README
+├── CLAUDE.md                    # This file
+├── BIGRAG_UI_PLAN.md           # UI implementation plan
+├── IMPLEMENTATION_STATUS.md     # Current development status
+│
+├── backend/                     # FastAPI server (NEW)
+│   ├── api/                    # API modules (moved from root)
+│   ├── server.py               # Main server (was script_api.py)
+│   └── README.md               # Backend documentation
+│
+├── frontend/                    # React UI (NEW - Nov 2025)
+│   ├── src/                    # React 19 + TypeScript + Tailwind v4
+│   ├── package.json            # Latest dependencies
+│   └── README.md               # Frontend documentation
+│
+├── bigrag/                      # Core Python library
+│   ├── bigrag.py               # Main BiGRAG class
+│   ├── operate.py              # Graph operations
+│   ├── reranker.py             # Semantic reranking
+│   └── ...
+│
+├── docs/                        # Documentation (NEW)
+│   ├── README.md               # Documentation index
+│   ├── technical/              # Design specs, setup guides
+│   ├── reports/                # Test & evaluation reports
+│   └── updates/                # Change logs
+│
+├── test_scripts/                # Test & validation scripts (NEW)
+│   ├── README.md               # Test documentation
+│   ├── test_*.py               # Various test scripts
+│   └── validate_*.py           # Validation scripts
+│
+├── datasets/                    # QA datasets and corpora
+├── expr/                        # Built knowledge graphs
+├── script_build.py             # Build knowledge graph
+├── script_process.py           # Process datasets
+└── setup.py                    # Package setup
+```
+
+**Key Changes:**
+- ✅ `api/` → `backend/api/` for clear separation
+- ✅ `script_api.py` → `backend/server.py` with path fixes
+- ✅ `frontend/` added with React 19 + TypeScript + Tailwind CSS v4
+- ✅ `docs/` organized into technical/, reports/, updates/
+- ✅ `test_scripts/` consolidates all test files
+- ✅ Root directory clean with only 4 markdown files
+
+See [docs/README.md](docs/README.md) for complete documentation index.
+
+---
+
 ## Related Documentation
 
 ### Core Documentation
 - **[README.md](README.md)** - Project overview and quick start guide
 - **[CLAUDE.md](CLAUDE.md)** - This file: AI assistant guidance and comprehensive reference
-- **[SETUP_VENV.md](SETUP_VENV.md)** - Setup guide for Python venv (lightweight mode)
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - ⭐ **NEW**: Recent improvements summary (Jan 2025)
+- **[BIGRAG_UI_PLAN.md](BIGRAG_UI_PLAN.md)** - UI/Frontend implementation plan
+- **[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)** - Current development status
+- **[CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md)** - Directory cleanup summary
 
-### Design & Planning
-- **[BiG_RAG_DESIGN.md](BiG_RAG_DESIGN.md)** - Comprehensive design document
-- **[BiG_RAG_TECHNICAL_SPEC.md](BiG_RAG_TECHNICAL_SPEC.md)** - Technical specification
-- **[BiG_RAG_IMPLEMENTATION_CHECKLIST.md](BiG_RAG_IMPLEMENTATION_CHECKLIST.md)** - Implementation checklist
+### Design & Planning (docs/technical/)
+- **[docs/technical/BiG_RAG_DESIGN.md](docs/technical/BiG_RAG_DESIGN.md)** - Comprehensive design document
+- **[docs/technical/BiG_RAG_TECHNICAL_SPEC.md](docs/technical/BiG_RAG_TECHNICAL_SPEC.md)** - Technical specification
+- **[docs/technical/BiG_RAG_IMPLEMENTATION_CHECKLIST.md](docs/technical/BiG_RAG_IMPLEMENTATION_CHECKLIST.md)** - Implementation checklist
+- **[docs/technical/SETUP_VENV.md](docs/technical/SETUP_VENV.md)** - Setup guide for Python venv (lightweight mode)
+- **[docs/technical/ENV_SETUP_GUIDE.md](docs/technical/ENV_SETUP_GUIDE.md)** - Complete environment setup
 
-### Technical Notes (docs/)
-- **[docs/DATASET_AND_CORPUS_GUIDE.md](docs/DATASET_AND_CORPUS_GUIDE.md)** - Dataset preparation and corpus building
-- **[docs/GRAPHML_EXPLAINED.md](docs/GRAPHML_EXPLAINED.md)** - GraphML format explanation
-- **[docs/RETRIEVAL_PROCESS_EXPLAINED.md](docs/RETRIEVAL_PROCESS_EXPLAINED.md)** - Detailed retrieval process
-- **[docs/STORAGE_AND_MODE_ANALYSIS.md](docs/STORAGE_AND_MODE_ANALYSIS.md)** - Storage backends and query modes
+### Updates & Improvements (docs/updates/)
+- **[docs/updates/IMPLEMENTATION_SUMMARY.md](docs/updates/IMPLEMENTATION_SUMMARY.md)** - Recent improvements summary (Jan 2025)
+- **[docs/updates/API_UPDATES_2025.md](docs/updates/API_UPDATES_2025.md)** - API updates
+- **[docs/updates/RERANKING_CONFIG_UPDATE.md](docs/updates/RERANKING_CONFIG_UPDATE.md)** - Reranking configuration
+
+### Test Reports (docs/reports/)
+- **[docs/reports/GRAPH_CONSTRUCTION_TEST_REPORT.md](docs/reports/GRAPH_CONSTRUCTION_TEST_REPORT.md)** - Graph construction tests
+- **[docs/reports/COMPREHENSIVE_QA_REPORT.md](docs/reports/COMPREHENSIVE_QA_REPORT.md)** - QA testing results
+- **[docs/reports/SINGLETOPIC_EVALUATION_DIAGNOSIS.md](docs/reports/SINGLETOPIC_EVALUATION_DIAGNOSIS.md)** - SingleTopic diagnosis
 
 ### Component Documentation
+- **[backend/README.md](backend/README.md)** - Backend API documentation
+- **[frontend/README.md](frontend/README.md)** - Frontend UI documentation
+- **[test_scripts/README.md](test_scripts/README.md)** - Test scripts documentation
 - **[evaluation/README.md](evaluation/README.md)** - Evaluation metrics and testing
 - **[inference/README.md](inference/README.md)** - Model inference and deployment
-- **[test_improvements.py](test_improvements.py)** - ⭐ **NEW**: Test suite for recent improvements
 
 ---
 
@@ -1124,31 +1207,44 @@ Thanks to all these projects for their wonderful contributions to the field!
 
 ## Quick Reference
 
-### File Paths Cheatsheet
+### File Paths Cheatsheet (UPDATED)
 
 ```
 BiG-RAG/
-├── bigrag/                      # Core library
-│   ├── bigrag.py               # Main BiGRAG class
-│   ├── operate.py              # Graph operations
-│   └── kg/                     # Storage backends
+├── backend/                   # FastAPI server (NEW)
+│   ├── api/                  # API modules
+│   ├── server.py             # Main server (was script_api.py)
+│   └── README.md
+├── frontend/                  # React UI (NEW)
+│   ├── src/                  # React 19 + TypeScript
+│   └── package.json
+├── bigrag/                    # Core library
+│   ├── bigrag.py             # Main BiGRAG class
+│   ├── operate.py            # Graph operations
+│   └── kg/                   # Storage backends
+├── docs/                      # Documentation (NEW)
+│   ├── technical/            # Design docs
+│   ├── reports/              # Test reports
+│   └── updates/              # Change logs
+├── test_scripts/              # All tests (NEW)
+│   ├── test_*.py             # Test scripts
+│   └── validate_*.py         # Validation scripts
 ├── datasets/{name}/
-│   ├── raw/                    # Raw data
-│   │   ├── corpus.jsonl       # Knowledge base
-│   │   └── qa_*.json          # QA pairs
-│   └── processed/             # Parquet files
-├── expr/{name}/               # Built graphs
-│   ├── kv_store_*.json       # Metadata
-│   └── index*.bin            # FAISS indices
-├── verl/                      # RL training
+│   ├── raw/                  # Raw data
+│   │   ├── corpus.jsonl     # Knowledge base
+│   │   └── qa_*.json        # QA pairs
+│   └── processed/           # Parquet files
+├── expr/{name}/              # Built graphs
+│   ├── kv_store_*.json      # Metadata
+│   └── vdb_*.json           # Vector DBs
+├── verl/                     # RL training
 │   ├── trainer/
-│   │   ├── main_ppo.py       # Training entry point
-│   │   └── config/           # Hydra configs
-│   └── utils/reward_score/   # Metrics
-├── script_process.py          # Step 1: Preprocess
-├── script_build.py            # Step 2: Build graph
-├── script_api.py              # Step 3: Start server
-└── run_*.sh                   # Step 4: Train
+│   │   ├── main_ppo.py      # Training entry point
+│   │   └── config/          # Hydra configs
+│   └── utils/reward_score/  # Metrics
+├── script_process.py         # Step 1: Preprocess
+├── script_build.py           # Step 2: Build graph
+└── run_*.sh                  # Step 4: Train
 ```
 
 ### Command Cheatsheet
@@ -1160,8 +1256,9 @@ python script_process.py --data_source 2WikiMultiHopQA
 # 2. Build graph
 python script_build.py --data_source 2WikiMultiHopQA
 
-# 3. Start server
-python script_api.py --data_source 2WikiMultiHopQA &
+# 3. Start server (NEW: use backend/server.py)
+cd backend
+python server.py --data_source 2WikiMultiHopQA &
 
 # 4. Train
 bash run_grpo.sh -p Qwen/Qwen2.5-3B-Instruct -m qwen3b -d 2WikiMultiHopQA
@@ -1173,8 +1270,140 @@ nvidia-smi -l 1
 
 # 6. Stop
 ray stop
-fuser -k 8001/tcp
+# Linux/macOS: fuser -k 8001/tcp
+# Windows: netstat -ano | findstr :8001 then taskkill /PID <pid> /F
 ```
+
+### UI Development Commands (NEW)
+
+```bash
+# Start backend
+cd backend
+python server.py --data_source SingleTopic
+
+# Start frontend (separate terminal)
+cd frontend
+npm run dev
+
+# Access UI
+# Open http://localhost:5173 in browser
+```
+
+---
+
+## 🎨 React UI (NEW - November 2025)
+
+BiG-RAG now includes a modern web interface built with:
+- **React 19.2.0** - Latest with Activity API
+- **TypeScript 5.9.3** - Type-safe development
+- **Vite 7.1.12** - Lightning-fast build tool
+- **Tailwind CSS 4.1.16** - CSS-first utility framework
+- **Cytoscape.js 3.33.0** - Graph visualization with WebGL
+
+### UI Features
+
+1. **Dashboard** - System overview, quick actions, recent activity
+2. **Chat Interface** - Ask questions with real-time retrieval visualization
+3. **Graph Visualization** - Interactive Cytoscape canvas with 5 layout algorithms
+4. **Document Management** - Upload, search, delete documents with drag-and-drop
+5. **Evaluation Dashboard** - Run evaluations, view results, compare runs
+6. **Settings** - API keys, dataset selector, theme switcher
+
+See [BIGRAG_UI_PLAN.md](BIGRAG_UI_PLAN.md) and [frontend/README.md](frontend/README.md) for details.
+
+---
+
+## ⚠️ Important Notes
+
+### Emoji Usage in Scripts
+
+**WARNING**: Do NOT use emojis in Python test scripts or output!
+
+**Reason**: Windows CMD/PowerShell will throw `UnicodeEncodeError` when running scripts with emoji characters.
+
+**Bad** (causes errors):
+```python
+print("✅ Test passed!")
+print("❌ Test failed!")
+```
+
+**Good** (works everywhere):
+```python
+print("[OK] Test passed!")
+print("[FAIL] Test failed!")
+```
+
+**This applies to:**
+- Print statements in test scripts
+- Log messages
+- Error messages
+- Comments (if they're ever printed)
+
+**Exception**: Emojis are OK in:
+- Documentation files (.md)
+- React UI components (browser handles Unicode)
+- README files
+
+### Common Gotchas (UPDATED)
+
+1. **Retrieval server not running**: Training will fail/hang if port 8001 is not responding
+   - **Check**: `curl http://localhost:8001/docs`
+   - **Fix**: `cd backend && python server.py --data_source {dataset}`
+
+2. **Wrong server path**: Use `backend/server.py` NOT `script_api.py`
+   - **Old**: `python script_api.py` ❌
+   - **New**: `cd backend && python server.py` ✅
+
+3. **Test scripts moved**: All test files now in `test_scripts/`
+   - **Old**: `python test_improvements.py` ❌
+   - **New**: `cd test_scripts && python test_improvements.py` ✅
+
+4. **Documentation moved**: Technical docs now in `docs/technical/`
+   - **Old**: `SETUP_VENV.md` ❌
+   - **New**: `docs/technical/SETUP_VENV.md` ✅
+
+---
+
+## ✅ System Readiness Checklist
+
+Before starting development, verify:
+
+### Backend Ready
+```bash
+cd backend
+python server.py --help
+# Should show usage without errors
+```
+
+### Frontend Ready (if developing UI)
+```bash
+cd frontend
+npm run dev
+# Should start dev server on port 5173
+```
+
+### Framework Ready
+```bash
+python -c "from bigrag import BiGRAG; print('BiGRAG OK')"
+# Should print "BiGRAG OK"
+```
+
+### Dataset Ready (example: SingleTopic)
+```bash
+# Check corpus exists
+ls datasets/SingleTopic/raw/corpus.jsonl
+
+# Build if needed
+python script_build.py --data_source SingleTopic
+```
+
+### All Systems Go
+If all above pass, you're ready to:
+- Build knowledge graphs
+- Start backend API server
+- Develop React UI
+- Run tests and evaluations
+- Train RL models (if GPUs available)
 
 ---
 

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { FileText, MoreVertical, Eye, Trash2, Download, ChevronUp, ChevronDown } from 'lucide-react';
 import type { Document } from '../../types';
 import { formatRelativeTime, formatLargeNumber } from '../../utils/formatters';
@@ -31,6 +32,13 @@ const DocumentList: React.FC<DocumentListProps> = ({
 }) => {
   const allSelected = documents.length > 0 && documents.every(doc => selectedIds.has(doc.id));
   const someSelected = documents.some(doc => selectedIds.has(doc.id));
+  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = !allSelected && someSelected;
+    }
+  }, [allSelected, someSelected]);
 
   const getSortIcon = (field: string) => {
     if (sortBy !== field) return null;
@@ -53,9 +61,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
             <tr className="border-b border-gray-200 dark:border-gray-700">
               <th className="p-4 text-left">
                 <input
+                  ref={checkboxRef}
                   type="checkbox"
                   checked={allSelected}
-                  indeterminate={!allSelected && someSelected}
                   onChange={onSelectAll}
                   className="rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                 />

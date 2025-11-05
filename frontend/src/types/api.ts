@@ -30,6 +30,7 @@ export interface Document {
 }
 
 export interface DocumentMetadata {
+  title?: string;
   source?: string;
   category?: string;
   tags?: string[];

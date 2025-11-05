@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useCallback, memo } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
-import cytoscape, { Core, EventObject } from 'cytoscape';
+import cytoscape, { type Core, type EventObject } from 'cytoscape';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import dagre from 'cytoscape-dagre';
 import fcose from 'cytoscape-fcose';
@@ -246,7 +246,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         elements={elements}
         stylesheet={stylesheet}
         style={{ width: '100%', height: '100%' }}
-        cy={(cy) => handleCyReady(cy)}
+        cy={(cy: Core) => handleCyReady(cy)}
         wheelSensitivity={0.2}
       />
     </div>

@@ -58,7 +58,7 @@ const UploadDialog: React.FC<UploadDialogProps> = ({
 
     // Validate file type
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-    if (!UI_CONFIG.ALLOWED_FILE_TYPES.includes(fileExtension)) {
+    if (!UI_CONFIG.ALLOWED_FILE_TYPES.includes(fileExtension as any)) {
       setError(`File type not allowed. Allowed types: ${UI_CONFIG.ALLOWED_FILE_TYPES.join(', ')}`);
       return;
     }

@@ -234,4 +234,43 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
+###############################################################################
+# Frontend (React + Vite)
+###############################################################################
+
+# Node modules
+frontend/node_modules/
+node_modules/
+
+# Build outputs
+frontend/dist/
+frontend/build/
+
+# Environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Vite cache
+frontend/.vite/
+
+# TypeScript
+frontend/*.tsbuildinfo
+
+# Package lock files (keep one, ignore others)
+frontend/package-lock.json
+# frontend/pnpm-lock.yaml
+# frontend/yarn.lock
+
+###############################################################################
+# Backend (FastAPI)
+###############################################################################
+
+# Backend environment
+backend/.env
+backend/.env.local
+
+# Backend cache
+backend/__pycache__/
+
 CHANGELOG.md

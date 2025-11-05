@@ -1,8 +1,9 @@
 # BiG-RAG UI/Frontend Plan
 
-**Version:** 1.0
-**Date:** January 2025
-**Status:** Planning Phase
+**Version:** 1.1
+**Date:** November 2025
+**Status:** Ready for Implementation
+**Last Updated:** Latest package versions as of November 5, 2025
 
 ---
 
@@ -22,6 +23,309 @@ The architecture maintains **strict separation** between:
 - **Framework**: BiG-RAG Python library - already exists
 
 All three components can be run **independently** for development, testing, and deployment.
+
+---
+
+## 0. Pre-Implementation: Directory Re-arrangement
+
+Before starting frontend development, we need to reorganize the project structure to maintain clean separation between backend, frontend, and framework.
+
+### 0.1 Current Structure Issues
+
+```
+BiG-RAG/
+├── api/                    # ❌ Needs to be renamed to "backend/"
+├── bigrag/                 # ✅ OK (core framework)
+├── datasets/               # ✅ OK
+├── expr/                   # ✅ OK (built graphs)
+├── script_api.py           # ❌ Should move to backend/
+├── script_build.py         # ✅ OK (framework script)
+├── script_process.py       # ✅ OK (framework script)
+└── ... (other files)
+```
+
+**Problems:**
+1. `api/` folder name is ambiguous - doesn't clearly indicate it's the backend
+2. `script_api.py` is at root level - should be in backend folder
+3. No frontend folder exists yet
+4. Mixed responsibilities at root level
+
+### 0.2 Target Structure
+
+```
+BiG-RAG/
+├── backend/                          # ← Backend API (FastAPI server)
+│   ├── api/                          # API modules (moved from root api/)
+│   │   ├── __init__.py
+│   │   ├── jobs.py
+│   │   ├── registry.py
+│   │   ├── kg_utils.py
+│   │   ├── evaluation.py
+│   │   ├── answer_generation.py
+│   │   ├── csv_evaluation.py
+│   │   ├── export.py
+│   │   ├── ground_truth.py
+│   │   ├── metrics.py
+│   │   ├── models.py
+│   │   ├── models_eval.py
+│   │   ├── stats.py
+│   │   └── utils.py
+│   ├── server.py                     # ← Renamed from script_api.py
+│   ├── requirements.txt              # ← NEW: Backend-specific dependencies
+│   ├── README.md                     # ← NEW: Backend documentation
+│   └── .env.example                  # ← NEW: Environment variables template
+│
+├── frontend/                         # ← NEW: React application
+│   ├── public/
+│   │   ├── vite.svg
+│   │   └── bigrag-logo.svg
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── App.tsx
+│   │   │   └── Router.tsx
+│   │   ├── pages/
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── Chat.tsx
+│   │   │   ├── GraphViz.tsx
+│   │   │   ├── Documents.tsx
+│   │   │   ├── Evaluation.tsx
+│   │   │   └── Settings.tsx
+│   │   ├── components/
+│   │   │   ├── ui/                   # shadcn/ui components
+│   │   │   ├── graph/
+│   │   │   ├── chat/
+│   │   │   ├── documents/
+│   │   │   └── layout/
+│   │   ├── stores/
+│   │   │   ├── graph.ts
+│   │   │   ├── chat.ts
+│   │   │   ├── documents.ts
+│   │   │   └── settings.ts
+│   │   ├── services/
+│   │   │   ├── api.ts
+│   │   │   ├── graph.ts
+│   │   │   ├── chat.ts
+│   │   │   ├── documents.ts
+│   │   │   └── evaluation.ts
+│   │   ├── hooks/
+│   │   │   ├── useGraph.ts
+│   │   │   ├── useChat.ts
+│   │   │   └── useDocuments.ts
+│   │   ├── types/
+│   │   │   ├── graph.ts
+│   │   │   ├── api.ts
+│   │   │   └── index.ts
+│   │   ├── utils/
+│   │   │   ├── formatters.ts
+│   │   │   └── constants.ts
+│   │   ├── i18n/
+│   │   │   ├── en.json
+│   │   │   ├── zh.json
+│   │   │   └── index.ts
+│   │   ├── main.tsx
+│   │   └── index.css
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── components.json              # shadcn/ui config
+│   ├── .env.example
+│   └── README.md
+│
+├── bigrag/                          # ← Framework (unchanged)
+│   ├── __init__.py
+│   ├── bigrag.py
+│   ├── operate.py
+│   ├── reranker.py
+│   ├── storage.py
+│   ├── base.py
+│   ├── llm.py
+│   ├── prompt.py
+│   ├── utils.py
+│   ├── config.py
+│   └── kg/
+│
+├── datasets/                        # ← Datasets (unchanged)
+├── expr/                            # ← Built graphs (unchanged)
+├── docs/                            # ← Documentation (unchanged)
+├── tests/                           # ← Tests (unchanged)
+├── scripts/                         # ← NEW: Utility scripts
+│   ├── migrate_to_new_structure.py # Migration helper
+│   └── setup_dev_env.sh            # Development setup
+│
+├── script_build.py                  # ← Framework scripts (unchanged)
+├── script_process.py
+├── run_singletopic_evaluation.py
+├── validate_singletopic_dataset.py
+├── test_improvements.py
+│
+├── .gitignore
+├── README.md                        # ← UPDATE: New structure
+├── BIGRAG_UI_PLAN.md               # ← This file
+├── CLAUDE.md
+├── requirements.txt                 # ← Framework dependencies
+└── setup.py
+```
+
+### 0.3 Migration Steps
+
+**Step 1: Create new directories**
+```bash
+mkdir backend
+mkdir frontend
+mkdir scripts
+```
+
+**Step 2: Move backend files**
+```bash
+# Move api folder
+mv api backend/api
+
+# Move and rename script_api.py
+mv script_api.py backend/server.py
+```
+
+**Step 3: Update imports in backend/server.py**
+```python
+# OLD (script_api.py at root):
+from api.jobs import processing_jobs
+from api.registry import registry
+from api.kg_utils import get_document_stats_from_kg
+
+# NEW (backend/server.py):
+from api.jobs import processing_jobs
+from api.registry import registry
+from api.kg_utils import get_document_stats_from_kg
+# No changes needed - relative imports work the same!
+```
+
+**Step 4: Create backend requirements.txt**
+```bash
+cd backend
+cat > requirements.txt << 'EOF'
+# Backend API dependencies
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+python-multipart==0.0.12
+
+# Import BiG-RAG framework (from parent directory)
+# pip install -e ..
+EOF
+```
+
+**Step 5: Create backend README.md**
+```bash
+cat > README.md << 'EOF'
+# BiG-RAG Backend API
+
+FastAPI server for BiG-RAG knowledge graph retrieval.
+
+## Installation
+
+```bash
+# Install backend dependencies
+pip install -r requirements.txt
+
+# Install BiG-RAG framework
+pip install -e ..
+```
+
+## Running
+
+```bash
+# Start API server
+python server.py --data_source SingleTopic
+
+# API will be available at http://localhost:8001
+# Swagger docs at http://localhost:8001/docs
+```
+
+## Endpoints
+
+See main README.md for complete API documentation.
+EOF
+```
+
+**Step 6: Update root README.md**
+
+Add section about new structure:
+```markdown
+## Project Structure
+
+- `backend/` - FastAPI server (port 8001)
+- `frontend/` - React UI (port 5173)
+- `bigrag/` - Core Python library
+- `datasets/` - QA datasets and corpora
+- `expr/` - Built knowledge graphs
+- `docs/` - Documentation
+
+## Running the Application
+
+**Backend:**
+```bash
+cd backend
+python server.py --data_source SingleTopic
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+**Framework:**
+```bash
+python script_build.py --data_source SingleTopic
+```
+```
+
+**Step 7: Update .gitignore**
+```bash
+cat >> .gitignore << 'EOF'
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# Backend
+backend/__pycache__/
+backend/.env
+
+# Build artifacts
+*.pyc
+*.pyo
+EOF
+```
+
+### 0.4 Verification
+
+After migration, verify structure:
+```bash
+# Check backend
+cd backend
+python server.py --help
+# Should see: usage: server.py [-h] [--data_source DATA_SOURCE] [--port PORT]
+
+# Check framework still works
+cd ..
+python script_build.py --help
+
+# Check git status
+git status
+# Should show moved files, not deleted/added
+```
+
+### 0.5 Benefits of New Structure
+
+✅ **Clear Separation**: Backend, frontend, framework are distinct
+✅ **Independent Development**: Each part can be developed/tested separately
+✅ **Easy Deployment**: Clear build/deploy boundaries
+✅ **Better Documentation**: Each folder has its own README
+✅ **Scalability**: Easy to add new components (mobile app, CLI, etc.)
 
 ---
 
@@ -147,97 +451,114 @@ BiG-RAG/
 
 ## 2. Tech Stack
 
-### 2.1 Core Technologies
+### 2.1 Core Technologies (Latest Versions - November 2025)
 
 | Category | Technology | Version | Justification |
 |----------|-----------|---------|---------------|
-| **Frontend Framework** | React | 18.3+ | Industry standard, large ecosystem |
-| **Type Safety** | TypeScript | 5.3+ | Catch errors early, better DX |
-| **Build Tool** | Vite | 5.0+ | Fast HMR, optimized builds |
-| **Graph Visualization** | Cytoscape.js | 3.28+ | Best for bipartite graphs, rich API |
+| **Frontend Framework** | React | **19.2.0** | Latest stable with Activity API, useEffectEvent |
+| **Type Safety** | TypeScript | **5.9.3** | Latest with expandable hovers, better DOM docs |
+| **Build Tool** | Vite | **7.1.12** | Latest with Node.js 20+ support, ESM-only |
+| **Graph Visualization** | Cytoscape.js | **3.33.0** | Latest with WebGL support, TypeScript, circular text |
 | | react-cytoscapejs | 2.0+ | React wrapper for Cytoscape |
 | | cytoscape-cose-bilkent | 4.1+ | Layout for bipartite graphs |
 | | cytoscape-dagre | 2.5+ | Hierarchical layout |
-| **State Management** | Zustand | 4.5+ | Lightweight, no boilerplate |
-| **Routing** | React Router | 6.21+ | De facto standard for React |
-| **HTTP Client** | Axios | 1.6+ | Better than fetch(), interceptors |
-| **UI Components** | shadcn/ui | Latest | Accessible, customizable, copy-paste |
-| **Styling** | TailwindCSS | 3.4+ | Utility-first, fast development |
+| **State Management** | Zustand | **5.0.8** | Latest V5 with useSyncExternalStore, 3KB size |
+| **Routing** | React Router | **7.9.5** | Latest with simplified imports, RSC support |
+| **HTTP Client** | Axios | 1.7+ | Better than fetch(), interceptors |
+| **UI Components** | shadcn/ui | **Latest (canary)** | React 19 + Tailwind v4 support |
+| **Styling** | TailwindCSS | **4.1.16** | Latest v4 with CSS-first config, 5x faster |
 | | Class Variance Authority | 0.7+ | Component variant management |
-| **Icons** | Lucide React | 0.300+ | Beautiful, consistent icons |
-| **Notifications** | Sonner | 1.3+ | Beautiful toast notifications |
-| **Search** | MiniSearch | 6.3+ | Client-side full-text search |
+| **Icons** | Lucide React | 0.460+ | Beautiful, consistent icons |
+| **Notifications** | Sonner | 1.6+ | Beautiful toast notifications |
+| **Search** | MiniSearch | 7.1+ | Client-side full-text search |
 | **Markdown** | react-markdown | 9.0+ | Render markdown in chat |
 | | remark-gfm | 4.0+ | GitHub Flavored Markdown |
-| **Internationalization** | i18next | 23.7+ | Multi-language support |
-| | react-i18next | 14.0+ | React integration |
+| **Internationalization** | i18next | 23.16+ | Multi-language support |
+| | react-i18next | 15.1+ | React integration |
 
-### 2.2 Additional Libraries
+### 2.2 Additional Libraries (Updated for November 2025)
 
 ```json
 {
   "dependencies": {
-    // Core
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.21.3",
+    // Core - React 19.2.0 (latest)
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router": "^7.9.5",
 
-    // State Management
-    "zustand": "^4.5.0",
+    // State Management - Zustand V5
+    "zustand": "^5.0.8",
 
-    // Graph Visualization
-    "cytoscape": "^3.28.1",
+    // Graph Visualization - Latest Cytoscape with WebGL
+    "cytoscape": "^3.33.0",
     "react-cytoscapejs": "^2.0.0",
     "cytoscape-cose-bilkent": "^4.1.0",
     "cytoscape-dagre": "^2.5.0",
     "cytoscape-fcose": "^2.2.0",
 
     // HTTP & API
-    "axios": "^1.6.5",
-    "swr": "^2.2.4",
+    "axios": "^1.7.9",
+    "swr": "^2.2.5",
 
-    // UI Components
-    "@radix-ui/react-dialog": "^1.0.5",
-    "@radix-ui/react-dropdown-menu": "^2.0.6",
-    "@radix-ui/react-select": "^2.0.0",
-    "@radix-ui/react-tabs": "^1.0.4",
-    "@radix-ui/react-tooltip": "^1.0.7",
+    // UI Components - Radix UI (for shadcn/ui)
+    "@radix-ui/react-dialog": "^1.1.4",
+    "@radix-ui/react-dropdown-menu": "^2.1.4",
+    "@radix-ui/react-select": "^2.1.4",
+    "@radix-ui/react-tabs": "^1.1.4",
+    "@radix-ui/react-tooltip": "^1.1.4",
 
-    // Styling
-    "tailwindcss": "^3.4.1",
-    "clsx": "^2.1.0",
-    "class-variance-authority": "^0.7.0",
-    "tailwind-merge": "^2.2.0",
+    // Styling - Tailwind v4.1
+    "tailwindcss": "^4.1.16",
+    "@tailwindcss/vite": "^4.1.16",
+    "clsx": "^2.1.1",
+    "class-variance-authority": "^0.7.1",
+    "tailwind-merge": "^2.6.0",
 
     // Icons & Assets
-    "lucide-react": "^0.300.0",
+    "lucide-react": "^0.460.0",
 
     // Utilities
-    "sonner": "^1.3.1",
-    "minisearch": "^6.3.0",
+    "sonner": "^1.6.1",
+    "minisearch": "^7.1.0",
     "react-markdown": "^9.0.1",
     "remark-gfm": "^4.0.0",
-    "date-fns": "^3.0.6",
+    "date-fns": "^4.1.0",
 
     // i18n
-    "i18next": "^23.7.16",
-    "react-i18next": "^14.0.0"
+    "i18next": "^23.16.8",
+    "react-i18next": "^15.1.3"
   },
   "devDependencies": {
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.0",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.17",
-    "eslint": "^8.56.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "postcss": "^8.4.33",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.11"
+    // TypeScript
+    "@types/react": "^19.0.6",
+    "@types/react-dom": "^19.0.2",
+    "typescript": "^5.9.3",
+
+    // ESLint
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^9.16.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+
+    // Vite
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^7.1.12",
+
+    // PostCSS (for Tailwind v4)
+    "postcss": "^8.4.49",
+    "autoprefixer": "^10.4.20"
   }
 }
 ```
+
+**Key Updates:**
+- ✅ **React 19.2.0**: Latest with Activity API and useEffectEvent
+- ✅ **Vite 7.1.12**: Requires Node.js 20+, ESM-only
+- ✅ **Tailwind CSS 4.1.16**: CSS-first configuration, 5x faster builds
+- ✅ **Zustand 5.0.8**: useSyncExternalStore optimization, smaller bundle
+- ✅ **React Router 7.9.5**: Simplified imports, RSC support
+- ✅ **Cytoscape 3.33.0**: WebGL rendering, TypeScript support
+- ✅ **TypeScript 5.9.3**: Expandable hovers, better DOM documentation
 
 ### 2.3 Tech Stack Modifications
 

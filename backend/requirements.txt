@@ -1,0 +1,15 @@
+# BiG-RAG Backend API Dependencies
+# FastAPI server for knowledge graph retrieval
+
+# Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Data Validation
+pydantic==2.9.2
+
+# File Upload
+python-multipart==0.0.12
+
+# Note: BiG-RAG framework must be installed separately
+# From parent directory: pip install -e ..

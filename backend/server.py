@@ -23,7 +23,12 @@ import sys
 from pathlib import Path
 
 # Add parent directory to path for bigrag imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+# Load environment variables from root .env file
+from dotenv import load_dotenv
+load_dotenv(PROJECT_ROOT / '.env')
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import JSONResponse
@@ -499,7 +504,9 @@ parser.add_argument('--llm_provider', default=config.llm_provider,
 args = parser.parse_args()
 
 # Initialize managers
-working_dir = f"{config.working_dir}/{args.data_source}"
+# Use configurable working directory from environment
+working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+working_dir = str(PROJECT_ROOT / working_dir_base / args.data_source)
 print(f"\n[INFO] Initializing BiG-RAG for dataset: {args.data_source}")
 print(f"[INFO] Working directory: {working_dir}\n")
 
@@ -673,7 +680,9 @@ async def add_document_to_corpus(
     metadata: Optional[Dict[str, Any]] = None
 ):
     """Add a document to the corpus.jsonl file"""
-    corpus_file = Path(f"{config.input_dir}/{data_source}/raw/corpus.jsonl")
+    # Use configurable input directory from environment
+    input_dir_base = os.getenv('INPUT_DIR', './datasets').lstrip('./')
+    corpus_file = PROJECT_ROOT / input_dir_base / data_source / "raw" / "corpus.jsonl"
 
     # Create directory if doesn't exist
     corpus_file.parent.mkdir(parents=True, exist_ok=True)
@@ -711,7 +720,9 @@ async def rebuild_knowledge_graph_incremental(data_source: str, new_documents: L
 
     Phase 2.1 Enhancement: Now passes metadata to BiGRAG for improved entity extraction
     """
-    working_dir = f"{config.working_dir}/{data_source}"
+    # Use configurable working directory from environment
+    working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+    working_dir = str(PROJECT_ROOT / working_dir_base / data_source)
 
     try:
         # Use the existing RAG instance to insert new documents
@@ -840,7 +851,8 @@ async def health_check():
 
     # Get active RAG instances
     rag_instances_info = {}
-    expr_dir = Path("expr")
+    working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+    expr_dir = PROJECT_ROOT / working_dir_base
     if expr_dir.exists():
         for dataset_dir in expr_dir.iterdir():
             if dataset_dir.is_dir() and not dataset_dir.name.startswith('.'):
@@ -1085,7 +1097,9 @@ async def rebuild_graph(
     """
     try:
         target_dataset = data_source or args.data_source
-        corpus_file = Path(f"{config.input_dir}/{target_dataset}/raw/corpus.jsonl")
+        # Use configurable input directory from environment
+        input_dir_base = os.getenv('INPUT_DIR', './datasets').lstrip('./')
+        corpus_file = PROJECT_ROOT / input_dir_base / target_dataset / "raw" / "corpus.jsonl"
 
         if not corpus_file.exists():
             raise HTTPException(status_code=404, detail=f"Corpus file not found: {corpus_file}")
@@ -1425,7 +1439,8 @@ async def get_graph_statistics(dataset: Optional[str] = None):
             datasets_to_query = [dataset]
         else:
             # Get all datasets
-            expr_dir = Path("expr")
+            working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+            expr_dir = PROJECT_ROOT / working_dir_base
             if expr_dir.exists():
                 datasets_to_query = [
                     d.name for d in expr_dir.iterdir()
@@ -1446,8 +1461,10 @@ async def get_graph_statistics(dataset: Optional[str] = None):
             reg_stats = await registry.get_stats(ds)
 
             # Get KG file counts - read from GraphML and KV storage
-            graph_file = f"{config.working_dir}/{ds}/graph_chunk_entity_relation.graphml"
-            chunks_file = f"{config.working_dir}/{ds}/kv_store_text_chunks.json"
+            # Use configurable working directory from environment
+            working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+            graph_file = str(PROJECT_ROOT / working_dir_base / ds / "graph_chunk_entity_relation.graphml")
+            chunks_file = str(PROJECT_ROOT / working_dir_base / ds / "kv_store_text_chunks.json")
 
             entities_count = 0
             edges_count = 0

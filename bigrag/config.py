@@ -19,44 +19,62 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass, field
 
+# Try to use python-dotenv if available, otherwise use custom loader
+try:
+    from dotenv import load_dotenv
+    # load_dotenv will automatically search for .env in parent directories
+    load_dotenv()
+except ImportError:
+    # Fallback to custom loader if python-dotenv not installed
+    def load_env_file(env_path: str = ".env") -> None:
+        """
+        Load environment variables from .env file
 
-def load_env_file(env_path: str = ".env") -> None:
-    """
-    Load environment variables from .env file
+        Args:
+            env_path: Path to .env file (default: searches for .env up the directory tree)
+        """
+        # Try to find .env in current or parent directories
+        current = Path.cwd()
+        env_file = None
 
-    Args:
-        env_path: Path to .env file (default: .env in current directory)
-    """
-    env_file = Path(env_path)
+        # Search up the directory tree for .env
+        while current != current.parent:
+            potential_env = current / env_path
+            if potential_env.exists():
+                env_file = potential_env
+                break
+            current = current.parent
 
-    if not env_file.exists():
-        return
+        # Fallback to current directory
+        if env_file is None:
+            env_file = Path(env_path)
+            if not env_file.exists():
+                return
 
-    with open(env_file, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
 
-            # Skip comments and empty lines
-            if not line or line.startswith('#'):
-                continue
+                # Skip comments and empty lines
+                if not line or line.startswith('#'):
+                    continue
 
-            # Parse KEY=VALUE
-            if '=' in line:
-                key, value = line.split('=', 1)
-                key = key.strip()
-                value = value.strip()
+                # Parse KEY=VALUE
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip()
 
-                # Remove quotes if present
-                if value.startswith(("'", '"')) and value.endswith(("'", '"')):
-                    value = value[1:-1]
+                    # Remove quotes if present
+                    if value.startswith(("'", '"')) and value.endswith(("'", '"')):
+                        value = value[1:-1]
 
-                # Only set if not already in environment
-                if key not in os.environ:
-                    os.environ[key] = value
+                    # Only set if not already in environment
+                    if key not in os.environ:
+                        os.environ[key] = value
 
-
-# Load .env file on module import
-load_env_file()
+    # Load .env file on module import
+    load_env_file()
 
 
 @dataclass

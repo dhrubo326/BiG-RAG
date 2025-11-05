@@ -6,8 +6,16 @@ Helper functions for querying and manipulating the knowledge graph
 
 import json
 import os
+from pathlib import Path
 from typing import Dict, List, Optional
 import logging
+
+# Get project root directory (2 levels up from api/)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+# Load environment variables from root .env file
+from dotenv import load_dotenv
+load_dotenv(PROJECT_ROOT / '.env')
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +40,10 @@ async def get_document_content_from_corpus(
     Returns:
         Document content or None if not found
     """
-    corpus_file = f"datasets/{data_source}/raw/corpus.jsonl"
+    input_dir_base = os.getenv('INPUT_DIR', './datasets').lstrip('./')
+    corpus_file = PROJECT_ROOT / input_dir_base / data_source / "raw" / "corpus.jsonl"
 
-    if not os.path.exists(corpus_file):
+    if not corpus_file.exists():
         logger.warning(f"Corpus file not found: {corpus_file}")
         return None
 
@@ -64,8 +73,9 @@ async def get_document_stats_from_kg(
     Returns:
         {chunks, entities, edges, tokens}
     """
-    chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
-    graph_file = f"expr/{data_source}/graph_chunk_entity_relation.graphml"
+    working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+    chunks_file = PROJECT_ROOT / working_dir_base / data_source / "kv_store_text_chunks.json"
+    graph_file = PROJECT_ROOT / working_dir_base / data_source / "graph_chunk_entity_relation.graphml"
 
     stats = {
         "chunks": 0,
@@ -76,7 +86,7 @@ async def get_document_stats_from_kg(
 
     # Count chunks - use correct field name "full_doc_id"
     doc_chunk_ids = set()  # Track chunk IDs for this document
-    if os.path.exists(chunks_file):
+    if chunks_file.exists():
         try:
             with open(chunks_file, encoding='utf-8') as f:
                 chunks = json.load(f)
@@ -96,7 +106,7 @@ async def get_document_stats_from_kg(
             logger.error(f"Error reading chunks file: {e}")
 
     # Count entities and edges from GraphML file (Bug Fix: was looking for non-existent KV files)
-    if os.path.exists(graph_file) and doc_chunk_ids:
+    if graph_file.exists() and doc_chunk_ids:
         try:
             import networkx as nx
             G = nx.read_graphml(graph_file)
@@ -148,16 +158,17 @@ async def get_document_entities(
     Returns:
         List of {name, type, weight} dicts
     """
-    graph_file = f"expr/{data_source}/graph_chunk_entity_relation.graphml"
-    chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
+    working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+    graph_file = PROJECT_ROOT / working_dir_base / data_source / "graph_chunk_entity_relation.graphml"
+    chunks_file = PROJECT_ROOT / working_dir_base / data_source / "kv_store_text_chunks.json"
 
-    if not os.path.exists(graph_file):
+    if not graph_file.exists():
         return []
 
     try:
         # First, get all chunk IDs for this document
         doc_chunk_ids = set()
-        if os.path.exists(chunks_file):
+        if chunks_file.exists():
             with open(chunks_file, encoding='utf-8') as f:
                 chunks = json.load(f)
             doc_chunk_ids = set(
@@ -215,10 +226,11 @@ async def find_related_documents(
     Returns:
         List of {id, title, similarity} dicts
     """
-    graph_file = f"expr/{data_source}/graph_chunk_entity_relation.graphml"
-    chunks_file = f"expr/{data_source}/kv_store_text_chunks.json"
+    working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+    graph_file = PROJECT_ROOT / working_dir_base / data_source / "graph_chunk_entity_relation.graphml"
+    chunks_file = PROJECT_ROOT / working_dir_base / data_source / "kv_store_text_chunks.json"
 
-    if not os.path.exists(graph_file) or not os.path.exists(chunks_file):
+    if not graph_file.exists() or not chunks_file.exists():
         return []
 
     try:
@@ -336,9 +348,10 @@ async def get_document_title(data_source: str, document_id: str) -> str:
         logger.warning(f"Error accessing registry: {e}")
 
     # Fallback to corpus
-    corpus_file = f"datasets/{data_source}/raw/corpus.jsonl"
+    input_dir_base = os.getenv('INPUT_DIR', './datasets').lstrip('./')
+    corpus_file = PROJECT_ROOT / input_dir_base / data_source / "raw" / "corpus.jsonl"
 
-    if os.path.exists(corpus_file):
+    if corpus_file.exists():
         try:
             with open(corpus_file, encoding='utf-8') as f:
                 for line in f:
@@ -361,10 +374,11 @@ async def remove_from_corpus(data_source: str, document_id: str):
         data_source: Dataset name
         document_id: Document ID to remove
     """
-    corpus_file = f"datasets/{data_source}/raw/corpus.jsonl"
-    temp_file = f"{corpus_file}.tmp"
+    input_dir_base = os.getenv('INPUT_DIR', './datasets').lstrip('./')
+    corpus_file = PROJECT_ROOT / input_dir_base / data_source / "raw" / "corpus.jsonl"
+    temp_file = corpus_file.with_suffix('.jsonl.tmp')
 
-    if not os.path.exists(corpus_file):
+    if not corpus_file.exists():
         logger.warning(f"Corpus file not found: {corpus_file}")
         return
 
@@ -378,13 +392,13 @@ async def remove_from_corpus(data_source: str, document_id: str):
                         f_out.write(line)
 
         # Replace original
-        os.replace(temp_file, corpus_file)
+        temp_file.replace(corpus_file)
         logger.info(f"Removed document {document_id} from corpus")
     except Exception as e:
         logger.error(f"Error removing from corpus: {e}")
         # Clean up temp file if it exists
-        if os.path.exists(temp_file):
-            os.remove(temp_file)
+        if temp_file.exists():
+            temp_file.unlink()
         raise
 
 
@@ -413,7 +427,8 @@ async def rebuild_entire_graph(dataset: str, job_id: str, rag_instance, processi
 
     try:
         # Clear existing graph files
-        working_dir = f"expr/{dataset}"
+        working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+        working_dir = PROJECT_ROOT / working_dir_base / dataset
 
         for file in [
             # KV Storage files (JSON-based metadata)
@@ -437,15 +452,16 @@ async def rebuild_entire_graph(dataset: str, job_id: str, rag_instance, processi
             "corpus_entity.npy",
             "corpus_bipartite_edge.npy"
         ]:
-            path = os.path.join(working_dir, file)
-            if os.path.exists(path):
-                os.remove(path)
+            path = working_dir / file
+            if path.exists():
+                path.unlink()
                 logger.info(f"Removed {file}")
 
         # Reload all documents from corpus
-        corpus_file = f"datasets/{dataset}/raw/corpus.jsonl"
+        input_dir_base = os.getenv('INPUT_DIR', './datasets').lstrip('./')
+        corpus_file = PROJECT_ROOT / input_dir_base / dataset / "raw" / "corpus.jsonl"
 
-        if not os.path.exists(corpus_file):
+        if not corpus_file.exists():
             raise FileNotFoundError(f"Corpus file not found: {corpus_file}")
 
         documents = []

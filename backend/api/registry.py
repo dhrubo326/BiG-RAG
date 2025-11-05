@@ -12,6 +12,13 @@ from datetime import datetime
 from pathlib import Path
 import logging
 
+# Get project root directory (2 levels up from api/)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+# Load environment variables from root .env file
+from dotenv import load_dotenv
+load_dotenv(PROJECT_ROOT / '.env')
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,8 +29,13 @@ class DocumentRegistry:
     Stores metadata in: expr/{data_source}/documents_registry.json
     """
 
-    def __init__(self, working_dir: str = "expr"):
-        self.working_dir = working_dir
+    def __init__(self, working_dir: str = None):
+        # Use configurable working directory from environment
+        if working_dir is None:
+            working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+            self.working_dir = str(PROJECT_ROOT / working_dir_base)
+        else:
+            self.working_dir = working_dir
 
     def _get_registry_path(self, dataset: str) -> Path:
         """Get registry file path for dataset"""

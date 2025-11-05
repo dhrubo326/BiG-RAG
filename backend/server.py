@@ -1465,6 +1465,7 @@ async def get_graph_statistics(dataset: Optional[str] = None):
             working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
             graph_file = str(PROJECT_ROOT / working_dir_base / ds / "graph_chunk_entity_relation.graphml")
             chunks_file = str(PROJECT_ROOT / working_dir_base / ds / "kv_store_text_chunks.json")
+            full_docs_file = str(PROJECT_ROOT / working_dir_base / ds / "kv_store_full_docs.json")
 
             entities_count = 0
             edges_count = 0
@@ -1493,10 +1494,24 @@ async def get_graph_statistics(dataset: Optional[str] = None):
                     chunks_count = len(chunks)
                     tokens_count = sum(c.get("tokens", 0) for c in chunks.values())
 
+            # Check if we need to count documents from kv_store_full_docs.json
+            # This handles knowledge graphs built from corpus files (not via API uploads)
+            doc_count = reg_stats["total"]
+            if doc_count == 0 and os.path.exists(full_docs_file):
+                try:
+                    with open(full_docs_file, 'r', encoding='utf-8') as f:
+                        full_docs = json.load(f)
+                        doc_count = len(full_docs)
+                        # Since these are corpus-built docs, they're all indexed
+                        reg_stats["indexed"] = doc_count
+                        reg_stats["total"] = doc_count
+                except Exception as e:
+                    logger.debug(f"Could not read full_docs file: {e}")
+
             # Create dataset stats
             ds_stats = DatasetStats(
                 dataset=ds,
-                total_documents=reg_stats["total"],
+                total_documents=doc_count,
                 indexed_documents=reg_stats["indexed"],
                 pending_documents=reg_stats["pending"],
                 failed_documents=reg_stats["failed"],
@@ -1509,7 +1524,7 @@ async def get_graph_statistics(dataset: Optional[str] = None):
             dataset_stats_list.append(ds_stats)
 
             # Add to global totals
-            global_totals["total_documents"] += reg_stats["total"]
+            global_totals["total_documents"] += doc_count  # Use the corrected doc_count
             global_totals["total_entities"] += entities_count
             global_totals["total_edges"] += edges_count
             global_totals["total_chunks"] += chunks_count

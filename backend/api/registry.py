@@ -101,6 +101,34 @@ class DocumentRegistry:
 
         if dataset:
             registry = await self._load_registry(dataset)
+
+            # If not in registry, check kv_store_full_docs.json
+            if document_id not in registry:
+                full_docs_path = Path(self.working_dir) / dataset / "kv_store_full_docs.json"
+                if full_docs_path.exists():
+                    try:
+                        with open(full_docs_path, 'r', encoding='utf-8') as f:
+                            full_docs = json.load(f)
+                            if document_id in full_docs:
+                                doc_data = full_docs[document_id]
+                                # Convert to registry format
+                                return {
+                                    "document_id": document_id,
+                                    "filename": doc_data.get("metadata", {}).get("filename", "corpus_document"),
+                                    "title": doc_data.get("metadata", {}).get("title", document_id),
+                                    "content_length": len(doc_data.get("content", "")),
+                                    "upload_date": doc_data.get("metadata", {}).get("upload_date", "corpus"),
+                                    "indexed_date": doc_data.get("metadata", {}).get("indexed_date", "corpus"),
+                                    "last_modified": doc_data.get("metadata", {}).get("last_modified", "corpus"),
+                                    "status": "indexed",
+                                    "dataset": dataset,
+                                    "metadata": doc_data.get("metadata", {}),
+                                    "job_id": "corpus_build",
+                                    "stats": {}
+                                }
+                    except Exception as e:
+                        logger.debug(f"Could not load from full_docs: {e}")
+
             return registry.get(document_id)
         else:
             # Search across all datasets
@@ -114,6 +142,31 @@ class DocumentRegistry:
                     registry = await self._load_registry(dataset_dir.name)
                     if document_id in registry:
                         return registry[document_id]
+
+                    # Also check kv_store_full_docs.json
+                    full_docs_path = dataset_dir / "kv_store_full_docs.json"
+                    if full_docs_path.exists():
+                        try:
+                            with open(full_docs_path, 'r', encoding='utf-8') as f:
+                                full_docs = json.load(f)
+                                if document_id in full_docs:
+                                    doc_data = full_docs[document_id]
+                                    return {
+                                        "document_id": document_id,
+                                        "filename": doc_data.get("metadata", {}).get("filename", "corpus_document"),
+                                        "title": doc_data.get("metadata", {}).get("title", document_id),
+                                        "content_length": len(doc_data.get("content", "")),
+                                        "upload_date": doc_data.get("metadata", {}).get("upload_date", "corpus"),
+                                        "indexed_date": doc_data.get("metadata", {}).get("indexed_date", "corpus"),
+                                        "last_modified": doc_data.get("metadata", {}).get("last_modified", "corpus"),
+                                        "status": "indexed",
+                                        "dataset": dataset_dir.name,
+                                        "metadata": doc_data.get("metadata", {}),
+                                        "job_id": "corpus_build",
+                                        "stats": {}
+                                    }
+                        except Exception as e:
+                            logger.debug(f"Could not load from full_docs: {e}")
             return None
 
     async def update_document(self, document_id: str, **kwargs):
@@ -188,6 +241,32 @@ class DocumentRegistry:
         for ds in datasets:
             registry = await self._load_registry(ds)
 
+            # If registry is empty, try to load from kv_store_full_docs.json (corpus-built KG)
+            if not registry:
+                full_docs_path = Path(self.working_dir) / ds / "kv_store_full_docs.json"
+                if full_docs_path.exists():
+                    try:
+                        with open(full_docs_path, 'r', encoding='utf-8') as f:
+                            full_docs = json.load(f)
+                            # Convert to registry format
+                            for doc_id, doc_data in full_docs.items():
+                                registry[doc_id] = {
+                                    "document_id": doc_id,
+                                    "filename": doc_data.get("metadata", {}).get("filename", "corpus_document"),
+                                    "title": doc_data.get("metadata", {}).get("title", doc_id),
+                                    "content_length": len(doc_data.get("content", "")),
+                                    "upload_date": doc_data.get("metadata", {}).get("upload_date", "corpus"),
+                                    "indexed_date": doc_data.get("metadata", {}).get("indexed_date", "corpus"),
+                                    "last_modified": doc_data.get("metadata", {}).get("last_modified", "corpus"),
+                                    "status": "indexed",  # Corpus docs are already indexed
+                                    "dataset": ds,
+                                    "metadata": doc_data.get("metadata", {}),
+                                    "job_id": "corpus_build",
+                                    "stats": {}
+                                }
+                    except Exception as e:
+                        logger.debug(f"Could not load full_docs for {ds}: {e}")
+
             for doc_id, doc in registry.items():
                 # Apply filters
                 if status and doc.get("status") != status:
@@ -225,6 +304,18 @@ class DocumentRegistry:
         failed = sum(1 for d in registry.values() if d.get("status") == "failed")
         processing = sum(1 for d in registry.values() if d.get("status") == "processing")
         pending = sum(1 for d in registry.values() if d.get("status") == "pending")
+
+        # If registry is empty, check kv_store_full_docs.json for corpus-built documents
+        if total == 0:
+            full_docs_path = Path(self.working_dir) / dataset / "kv_store_full_docs.json"
+            if full_docs_path.exists():
+                try:
+                    with open(full_docs_path, 'r', encoding='utf-8') as f:
+                        full_docs = json.load(f)
+                        total = len(full_docs)
+                        indexed = total  # All corpus docs are indexed
+                except Exception as e:
+                    logger.debug(f"Could not load full_docs stats: {e}")
 
         return {
             "total": total,

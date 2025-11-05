@@ -222,7 +222,7 @@ def main():
 
         if not results['imports']:
             print("  1. Install dependencies:")
-            print("     pip install -r requirements_test.txt")
+            print("     pip install -r requirements.txt")
             print("     OR run: install_test_dependencies.bat")
             print("")
 

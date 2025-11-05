@@ -42,7 +42,7 @@ python -m pip install --upgrade pip
 pip install torch torchvision torchaudio
 
 # 5. Install BiG-RAG dependencies
-pip install -r requirements_graphrag_only.txt
+pip install -r requirements.txt
 
 # 6. Download NLP models
 python -m spacy download en_core_web_sm

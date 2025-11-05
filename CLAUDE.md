@@ -72,7 +72,7 @@ venv\Scripts\activate
 pip install torch torchvision torchaudio
 
 # Install BiG-RAG dependencies
-pip install -r requirements_graphrag_only.txt
+pip install -r requirements.txt
 
 # Download NLP models
 python -m spacy download en_core_web_sm
@@ -99,7 +99,7 @@ pip3 install flash-attn --no-build-isolation
 
 # Install BiG-RAG package and dependencies
 pip3 install -e .
-pip3 install -r requirements.txt
+pip3 install -r requirements-rl.txt
 ```
 
 ### GPU Requirements

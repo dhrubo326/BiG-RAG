@@ -18,7 +18,8 @@ import GraphCanvas from '../components/graph/GraphCanvas';
 import GraphToolbar from '../components/graph/GraphToolbar';
 import NodeInfoPanel from '../components/graph/NodeInfoPanel';
 import GraphErrorBoundary from '../components/graph/GraphErrorBoundary'; // ✅ PHASE 2
-import type { GraphLayout } from '../types';
+import GraphTooltip from '../components/graph/GraphTooltip'; // ✅ PHASE 4.2
+import type { GraphLayout, CytoscapeNode } from '../types';
 
 export function GraphViz() {
   const {
@@ -31,7 +32,9 @@ export function GraphViz() {
     error,
     searchQuery,
     stats,
+    canLoadMore, // ✅ PHASE 4.1
     loadGraph,
+    loadMoreNodes, // ✅ PHASE 4.1
     selectNode,
     setLayout,
     updateFilters,
@@ -45,6 +48,11 @@ export function GraphViz() {
 
   const [cyInstance, setCyInstance] = useState<Core | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+
+  // ✅ PHASE 4.2: Tooltip state
+  const [hoveredNode, setHoveredNode] = useState<CytoscapeNode | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipConnectionCount, setTooltipConnectionCount] = useState<number | undefined>();
 
   // Load graph on mount with performance-optimized settings
   useEffect(() => {
@@ -78,6 +86,34 @@ export function GraphViz() {
   const handleCyReady = (cy: Core) => {
     setCyInstance(cy);
     initializeCytoscape(cy);
+
+    // ✅ PHASE 4.2: Add tooltip event listeners
+    cy.on('mouseover', 'node', (evt) => {
+      const node = evt.target;
+      const renderedPosition = node.renderedPosition();
+
+      // Get connection count
+      const degree = node.degree();
+
+      setHoveredNode({
+        data: node.data(),
+        position: node.position(),
+      });
+      setTooltipPosition({
+        x: renderedPosition.x,
+        y: renderedPosition.y,
+      });
+      setTooltipConnectionCount(degree);
+    });
+
+    cy.on('mouseout', 'node', () => {
+      setHoveredNode(null);
+    });
+
+    // Hide tooltip when panning/zooming
+    cy.on('viewport', () => {
+      setHoveredNode(null);
+    });
   };
 
   // Handle zoom controls
@@ -212,6 +248,13 @@ export function GraphViz() {
           className="w-full h-full"
         />
 
+        {/* ✅ PHASE 4.2: Tooltip on hover */}
+        <GraphTooltip
+          node={hoveredNode}
+          position={tooltipPosition}
+          connectionCount={tooltipConnectionCount}
+        />
+
         {/* Node Info Panel */}
         {selectedNode && (
           <NodeInfoPanel
@@ -226,36 +269,51 @@ export function GraphViz() {
 
         {/* ✨ IMPROVED: Stats Badge with better design */}
         {stats && (
-          <div className="absolute bottom-4 left-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 text-sm">
-            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Graph Stats</h4>
-            </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-400 text-xs">Nodes:</span>
-                <span className="font-bold text-gray-900 dark:text-gray-100">{stats.totalNodes.toLocaleString()}</span>
+          <div className="absolute bottom-4 left-4 space-y-2">
+            <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 text-sm">
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100">Graph Stats</h4>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 dark:text-gray-400 text-xs">Edges:</span>
-                <span className="font-bold text-gray-900 dark:text-gray-100">{stats.totalEdges.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{stats.entities.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 transform rotate-45"></div>
-                <span className="font-medium text-gray-900 dark:text-gray-100">{stats.relations.toLocaleString()}</span>
-              </div>
-              {stats.chunks > 0 && (
-                <div className="flex items-center gap-2 col-span-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
-                  <span className="text-gray-500 dark:text-gray-400 text-xs">Chunks:</span>
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{stats.chunks.toLocaleString()}</span>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs">Nodes:</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{stats.totalNodes.toLocaleString()}</span>
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs">Edges:</span>
+                  <span className="font-bold text-gray-900 dark:text-gray-100">{stats.totalEdges.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{stats.entities.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 transform rotate-45"></div>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{stats.relations.toLocaleString()}</span>
+                </div>
+                {stats.chunks > 0 && (
+                  <div className="flex items-center gap-2 col-span-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                    <span className="text-gray-500 dark:text-gray-400 text-xs">Chunks:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{stats.chunks.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* ✅ PHASE 4.1: Load More Button */}
+            {canLoadMore && !isLoading && (
+              <button
+                onClick={() => loadMoreNodes()}
+                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Load More Nodes
+              </button>
+            )}
           </div>
         )}
 

@@ -15,8 +15,13 @@ export const useGraph = () => {
     error,
     searchQuery,
     stats,
+    currentDataset,
+    currentOffset,
+    canLoadMore,
     setNodes,
     setEdges,
+    appendNodes,
+    appendEdges,
     selectNode,
     setLayout,
     updateFilters,
@@ -24,6 +29,9 @@ export const useGraph = () => {
     setLoading,
     setError,
     setStats,
+    setCurrentDataset,
+    setCurrentOffset,
+    setCanLoadMore,
     clearGraph,
     getFilteredNodes,
     getFilteredEdges,
@@ -48,6 +56,13 @@ export const useGraph = () => {
           setEdges(data.edges);
           setStats(data.stats || null);
 
+          // ✅ PHASE 4.1: Track progressive loading state
+          setCurrentDataset(dataSource);
+          setCurrentOffset(data.nodes.length);
+          // Can load more if we got full batch and there are more nodes in total
+          const totalNodes = data.stats?.totalNodes || 0;
+          setCanLoadMore(data.nodes.length >= (options.limit || 1000) && data.nodes.length < totalNodes);
+
           // Don't show success toast if sampling notification was already shown
           if (!data.samplingInfo?.sampling_applied) {
             toast.success(`Graph loaded: ${data.nodes.length} nodes`);
@@ -64,7 +79,73 @@ export const useGraph = () => {
         setLoading(false);
       }
     },
-    [setNodes, setEdges, setStats, setLoading, setError]
+    [setNodes, setEdges, setStats, setLoading, setError, setCurrentDataset, setCurrentOffset, setCanLoadMore]
+  );
+
+  // ✅ PHASE 4.1: Load more nodes (progressive loading)
+  const loadMoreNodes = useCallback(
+    async (batchSize = 500) => {
+      if (!currentDataset) {
+        toast.error('No dataset loaded');
+        return;
+      }
+
+      if (!canLoadMore) {
+        toast.info('All nodes already loaded');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        console.log(`[useGraph] Loading more nodes from offset ${currentOffset}`);
+
+        const data = await getGraphData(currentDataset, {
+          limit: batchSize,
+          offset: currentOffset,
+          sampleStrategy: 'top_weighted',
+        });
+
+        if (data.nodes && data.edges) {
+          console.log(`[useGraph] Loaded ${data.nodes.length} more nodes, ${data.edges.length} more edges`);
+
+          // Append new nodes/edges to existing graph
+          appendNodes(data.nodes);
+          appendEdges(data.edges);
+
+          // Update offset and canLoadMore
+          setCurrentOffset(currentOffset + data.nodes.length);
+
+          const totalNodes = data.stats?.totalNodes || 0;
+          const totalLoaded = currentOffset + data.nodes.length;
+          setCanLoadMore(data.nodes.length >= batchSize && totalLoaded < totalNodes);
+
+          toast.success(`Loaded ${data.nodes.length} more nodes (${totalLoaded} / ${totalNodes} total)`);
+
+          // Re-run layout to position new nodes
+          if (cytoscapeInstance) {
+            applyLayout();
+          }
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load more nodes';
+        console.error('[useGraph] Error loading more nodes:', err);
+        toast.error(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      currentDataset,
+      currentOffset,
+      canLoadMore,
+      appendNodes,
+      appendEdges,
+      setCurrentOffset,
+      setCanLoadMore,
+      setLoading,
+      cytoscapeInstance,
+    ]
   );
 
   // Load subgraph for a query
@@ -527,10 +608,12 @@ export const useGraph = () => {
     error,
     searchQuery,
     stats,
+    canLoadMore, // ✅ PHASE 4.1
 
     // Actions
     loadGraph,
     loadSubgraph,
+    loadMoreNodes, // ✅ PHASE 4.1
     selectNode,
     setLayout,
     updateFilters,

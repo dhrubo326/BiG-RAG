@@ -26,9 +26,16 @@ interface GraphState {
   error: string | null;
   searchQuery: string;
 
+  // ✅ PHASE 4.1: Progressive loading state
+  currentDataset: string | null;
+  currentOffset: number;
+  canLoadMore: boolean;
+
   // Actions
   setNodes: (nodes: CytoscapeNode[]) => void;
   setEdges: (edges: CytoscapeEdge[]) => void;
+  appendNodes: (nodes: CytoscapeNode[]) => void; // ✅ PHASE 4.1: Append instead of replace
+  appendEdges: (edges: CytoscapeEdge[]) => void; // ✅ PHASE 4.1: Append instead of replace
   selectNode: (node: CytoscapeNode | null) => void;
   hoverNode: (node: CytoscapeNode | null) => void;
   setLayout: (layout: GraphLayout) => void;
@@ -37,6 +44,9 @@ interface GraphState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setStats: (stats: GraphStats | null) => void;
+  setCurrentDataset: (dataset: string | null) => void; // ✅ PHASE 4.1
+  setCurrentOffset: (offset: number) => void; // ✅ PHASE 4.1
+  setCanLoadMore: (canLoadMore: boolean) => void; // ✅ PHASE 4.1
   clearGraph: () => void;
 
   // Computed
@@ -65,9 +75,31 @@ const useGraphStore = create<GraphState>()(
       error: null,
       searchQuery: '',
 
+      // ✅ PHASE 4.1: Progressive loading initial state
+      currentDataset: null,
+      currentOffset: 0,
+      canLoadMore: false,
+
       // Actions
       setNodes: (nodes) => set({ nodes }),
       setEdges: (edges) => set({ edges }),
+
+      // ✅ PHASE 4.1: Append actions for progressive loading
+      appendNodes: (newNodes) =>
+        set((state) => {
+          // Filter out duplicate nodes
+          const existingIds = new Set(state.nodes.map((n) => n.data.id));
+          const uniqueNewNodes = newNodes.filter((n) => !existingIds.has(n.data.id));
+          return { nodes: [...state.nodes, ...uniqueNewNodes] };
+        }),
+
+      appendEdges: (newEdges) =>
+        set((state) => {
+          // Filter out duplicate edges
+          const existingIds = new Set(state.edges.map((e) => e.data.id));
+          const uniqueNewEdges = newEdges.filter((e) => !existingIds.has(e.data.id));
+          return { edges: [...state.edges, ...uniqueNewEdges] };
+        }),
 
       selectNode: (node) => set({ selectedNode: node }),
       hoverNode: (node) => set({ hoveredNode: node }),
@@ -85,6 +117,11 @@ const useGraphStore = create<GraphState>()(
       setError: (error) => set({ error }),
       setStats: (stats) => set({ stats }),
 
+      // ✅ PHASE 4.1: Progressive loading setters
+      setCurrentDataset: (dataset) => set({ currentDataset: dataset }),
+      setCurrentOffset: (offset) => set({ currentOffset: offset }),
+      setCanLoadMore: (canLoadMore) => set({ canLoadMore }),
+
       clearGraph: () =>
         set({
           nodes: [],
@@ -93,6 +130,8 @@ const useGraphStore = create<GraphState>()(
           hoveredNode: null,
           stats: null,
           error: null,
+          currentOffset: 0,
+          canLoadMore: false,
         }),
 
       // Computed getters

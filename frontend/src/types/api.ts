@@ -85,6 +85,7 @@ export interface QueryParams {
   model?: string;
   temperature?: number;
   max_tokens?: number;
+  llm_provider?: string;
 }
 
 export interface QueryResponse {

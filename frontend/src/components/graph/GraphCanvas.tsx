@@ -4,6 +4,7 @@ import cytoscape, { type Core, type EventObject } from 'cytoscape';
 import coseBilkent from 'cytoscape-cose-bilkent';
 import dagre from 'cytoscape-dagre';
 import fcose from 'cytoscape-fcose';
+import cola from 'cytoscape-cola';
 import { GRAPH_COLORS } from '../../utils/constants';
 import type { CytoscapeNode, CytoscapeEdge } from '../../types';
 
@@ -11,6 +12,7 @@ import type { CytoscapeNode, CytoscapeEdge } from '../../types';
 cytoscape.use(coseBilkent);
 cytoscape.use(dagre);
 cytoscape.use(fcose);
+cytoscape.use(cola);
 
 interface GraphCanvasProps {
   nodes: CytoscapeNode[];
@@ -35,9 +37,9 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
   const isInitialized = useRef(false);
   const previousLayout = useRef(layout);
 
-  // ✅ IMPROVED: Enhanced stylesheet with LARGER nodes and smooth transitions
+  // ✅ PHASE 3: Enhanced stylesheet with DYNAMIC sizing based on weight
   const stylesheet = [
-    // Default node styles - BIGGER and more visible
+    // Default node styles - DYNAMIC sizing by weight
     {
       selector: 'node',
       style: {
@@ -49,13 +51,32 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
           const type = ele.data('type');
           return GRAPH_COLORS[type as keyof typeof GRAPH_COLORS] || GRAPH_COLORS.entity;
         },
-        // ✅ FIXED: LARGER nodes - 32px default (was 20px)
-        width: 32,
-        height: 32,
+        // ✅ PHASE 3: DYNAMIC node size based on weight (20px - 50px range)
+        width: (ele: any) => {
+          const weight = ele.data('weight') || 0.5;
+          const minSize = 20;
+          const maxSize = 50;
+          // Normalize weight to 0-1 range (assuming max weight ~1.0)
+          const normalized = Math.min(weight, 1.0);
+          return minSize + (normalized * (maxSize - minSize));
+        },
+        height: (ele: any) => {
+          const weight = ele.data('weight') || 0.5;
+          const minSize = 20;
+          const maxSize = 50;
+          const normalized = Math.min(weight, 1.0);
+          return minSize + (normalized * (maxSize - minSize));
+        },
         'text-wrap': 'wrap' as any,
         'text-max-width': '80px',
-        // ✅ FIXED: LARGER text - 10px (was 9px)
-        'font-size': '10px',
+        // ✅ PHASE 3: Dynamic font size based on node size
+        'font-size': (ele: any) => {
+          const weight = ele.data('weight') || 0.5;
+          const minFont = 8;
+          const maxFont = 12;
+          const normalized = Math.min(weight, 1.0);
+          return `${minFont + (normalized * (maxFont - minFont))}px`;
+        },
         'font-weight': '600',
         'color': '#111',
         'text-outline-color': '#fff',
@@ -80,16 +101,28 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         'border-color': '#2563eb',
       },
     },
-    // Relation nodes - Red diamonds (LARGER)
+    // Relation nodes - Red diamonds (DYNAMIC sizing)
     {
       selector: 'node[type="relation"]',
       style: {
         shape: 'diamond',
         'background-color': GRAPH_COLORS.relation,
         'border-color': '#dc2626',
-        // ✅ FIXED: LARGER relation nodes - 38px (was 22px)
-        width: 38,
-        height: 38,
+        // ✅ PHASE 3: Relations slightly larger than entities (dynamic)
+        width: (ele: any) => {
+          const weight = ele.data('weight') || 0.5;
+          const minSize = 22;
+          const maxSize = 55;
+          const normalized = Math.min(weight, 1.0);
+          return minSize + (normalized * (maxSize - minSize));
+        },
+        height: (ele: any) => {
+          const weight = ele.data('weight') || 0.5;
+          const minSize = 22;
+          const maxSize = 55;
+          const normalized = Math.min(weight, 1.0);
+          return minSize + (normalized * (maxSize - minSize));
+        },
       },
     },
     // Chunk nodes - Green rectangles
@@ -145,11 +178,19 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         'border-color': '#FF6B35',
       },
     },
-    // ✅ IMPROVED: Visible edges with transitions
+    // ✅ PHASE 3: Edges with DYNAMIC width based on weight
     {
       selector: 'edge',
       style: {
-        width: 2,
+        // ✅ PHASE 3: Dynamic edge width based on weight (1px - 5px range)
+        width: (ele: any) => {
+          const weight = ele.data('weight') || 1.0;
+          const minWidth = 1;
+          const maxWidth = 5;
+          // Normalize weight (assuming max ~100)
+          const normalized = Math.min(weight / 100, 1.0);
+          return minWidth + (normalized * (maxWidth - minWidth));
+        },
         'line-color': '#64748b',
         'target-arrow-color': '#64748b',
         'target-arrow-shape': 'triangle' as any,
@@ -246,7 +287,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
     }
   }, [onNodeHover]);
 
-  // ✅ CRITICAL: Run layout function
+  // ✅ PHASE 3: Enhanced layout function with all algorithms
   const runLayout = useCallback((cy: Core, layoutName: string) => {
     console.log('[GraphCanvas] Running layout:', layoutName, 'with', cy.nodes().length, 'nodes');
 
@@ -266,16 +307,70 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
       }),
       ...(layoutName === 'dagre' && {
         rankDir: 'TB',
-        nodeSep: 50,
-        edgeSep: 10,
-        rankSep: 100,
+        nodeSep: 80,        // Increased from 50
+        edgeSep: 20,        // Increased from 10
+        rankSep: 150,       // Increased from 100
+        ranker: 'longest-path',
+        align: undefined,
       }),
       ...(layoutName === 'fcose' && {
-        idealEdgeLength: 80,
-        nodeRepulsion: 4500,
+        idealEdgeLength: 100,      // Increased from 80
+        nodeRepulsion: 8000,       // Increased from 4500
         edgeElasticity: 0.45,
-        numIter: 2500,
+        numIter: 3000,             // Increased from 2500
         tile: true,
+        quality: 'proof',
+        gravity: 0.25,
+        gravityRange: 3.8,
+      }),
+      // ✅ PHASE 3: Cola force-directed layout
+      ...(layoutName === 'cola' && {
+        nodeSpacing: 80,            // Increased from 50
+        edgeLength: 120,            // Increased from 100
+        animate: true,
+        randomize: false,
+        maxSimulationTime: 4000,    // Increased from 3000
+        convergenceThreshold: 0.01,
+        flow: { axis: 'y', minSeparation: 60 },
+      }),
+      // ✅ PHASE 3: Concentric radial layout (by weight)
+      ...(layoutName === 'concentric' && {
+        concentric: (node: any) => {
+          const weight = node.data('weight') || 0.5;
+          return weight * 100; // Scale weight for better distribution
+        },
+        levelWidth: () => 3,         // Increased from 2
+        minNodeSpacing: 60,          // Increased from 40
+        spacingFactor: 1.5,
+        equidistant: false,
+        startAngle: 0,
+        sweep: undefined,
+      }),
+      // ✅ PHASE 3: Circle layout
+      ...(layoutName === 'circle' && {
+        radius: undefined,
+        spacingFactor: 2.0,          // Increased from 1.5
+        startAngle: Math.PI / 4,     // Start at 45 degrees
+        sweep: undefined,
+      }),
+      // ✅ PHASE 3: Breadthfirst tree layout
+      ...(layoutName === 'breadthfirst' && {
+        directed: true,
+        spacingFactor: 2.0,          // Increased from 1.5
+        roots: undefined,
+        grid: false,
+        avoidOverlap: true,
+        nodeDimensionsIncludeLabels: true,
+      }),
+      // ✅ PHASE 3: Grid layout
+      ...(layoutName === 'grid' && {
+        rows: undefined,
+        cols: undefined,
+        position: undefined,
+        avoidOverlap: true,
+        avoidOverlapPadding: 20,
+        nodeDimensionsIncludeLabels: true,
+        spacingFactor: 1.5,
       }),
     };
 

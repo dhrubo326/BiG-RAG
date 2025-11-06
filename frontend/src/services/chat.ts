@@ -4,31 +4,66 @@ import { API_ENDPOINTS } from '../utils/constants';
 
 /**
  * Ask a question and get a response with retrieval
+ * Uses /chat/completions endpoint for full RAG pipeline (retrieval + answer generation)
  */
 export const askQuestion = async (params: QueryParams): Promise<QueryResponse> => {
-  const response = await api.post(API_ENDPOINTS.ASK, {
-    question: params.query,
-    top_k: params.top_k,
-    mode: params.mode,
+  const response = await api.post(API_ENDPOINTS.CHAT_COMPLETIONS, {
+    model: params.model || 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'user',
+        content: params.query,
+      },
+    ],
+    temperature: params.temperature || 0.7,
+    max_tokens: params.max_tokens || 4096,
+    llm_provider: params.llm_provider,
+    use_rag: true, // Enable RAG for knowledge retrieval
     enable_reranking: params.enable_reranking,
-    dataset: params.dataset,
-    model: params.model,
-    temperature: params.temperature,
-    max_tokens: params.max_tokens,
   });
 
-  // Transform response to match our QueryResponse type
+  // Transform OpenAI-compatible response to our QueryResponse type
   const data = response.data;
+  const content = data.choices?.[0]?.message?.content || '';
+
+  // Since /chat/completions returns the final answer, we need to extract contexts separately
+  // For now, we'll use a separate call to /ask for contexts if needed
+  let contexts: any[] = [];
+
+  // Optionally fetch contexts for display (non-blocking)
+  try {
+    const contextResponse = await api.post(API_ENDPOINTS.ASK, {
+      question: params.query,
+      top_k: params.top_k || 5,
+      mode: params.mode || 'hybrid',
+      enable_reranking: params.enable_reranking,
+    });
+
+    // Map retrieved_contexts from backend to our RetrievedContext type
+    const retrievedContexts = contextResponse.data.retrieved_contexts || [];
+    contexts = retrievedContexts.map((ctx: any, index: number) => ({
+      content: ctx.context || '',
+      score: ctx.coherence_score || 0,
+      source: `Source ${ctx.rank || index + 1}`,
+      type: 'chunk' as const, // Default type
+      metadata: {
+        rank: ctx.rank || index + 1,
+        ...ctx.metadata,
+      },
+    }));
+  } catch (err) {
+    console.warn('Failed to fetch contexts for display:', err);
+  }
 
   return {
-    answer: data.answer || data.response || '',
-    contexts: data.contexts || [],
-    thinking: data.thinking,
+    answer: content,
+    contexts: contexts,
+    thinking: undefined,
     metadata: {
       model: data.model || params.model || 'unknown',
-      retrieval_time: data.retrieval_time || 0,
-      generation_time: data.generation_time || 0,
-      total_tokens: data.total_tokens,
+      retrieval_time: 0,
+      generation_time: 0,
+      total_tokens: data.usage?.total_tokens || 0,
     },
   };
 };

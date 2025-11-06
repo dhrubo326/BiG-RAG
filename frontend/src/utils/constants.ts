@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
 
   // Chat & Search
   ASK: '/ask',
+  CHAT_COMPLETIONS: '/chat/completions',
   SEARCH: '/search',
 
   // Documents

@@ -18,13 +18,43 @@ interface GraphData {
 
 export interface GraphLoadOptions {
   limit?: number;
+  offset?: number; // ✅ PHASE 4.1
   nodeTypes?: string;
   minWeight?: number;
   sampleStrategy?: 'top_weighted' | 'random' | 'diverse';
 }
 
+// ✅ PHASE 4.4: Cache for API responses
+interface CacheEntry {
+  data: GraphData;
+  timestamp: number;
+}
+
+const graphCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
+/**
+ * Clear expired cache entries
+ */
+const clearExpiredCache = () => {
+  const now = Date.now();
+  for (const [key, entry] of graphCache.entries()) {
+    if (now - entry.timestamp > CACHE_TTL) {
+      graphCache.delete(key);
+    }
+  }
+};
+
+/**
+ * Generate cache key from request parameters
+ */
+const getCacheKey = (dataSource: string, options: GraphLoadOptions): string => {
+  return `${dataSource}-${JSON.stringify(options)}`;
+};
+
 /**
  * Get the full graph data for a dataset with optional sampling and filtering
+ * ✅ PHASE 4.4: Now with caching support
  */
 export const getGraphData = async (
   dataSource: string,
@@ -32,17 +62,29 @@ export const getGraphData = async (
 ): Promise<GraphData> => {
   const {
     limit = 1000, // Default to 1000 nodes for performance
+    offset = 0, // ✅ PHASE 4.1
     nodeTypes,
     minWeight = 0.0,
     sampleStrategy = 'top_weighted',
   } = options;
 
-  console.log(`[Graph Service] Loading graph: ${dataSource}, limit: ${limit}, strategy: ${sampleStrategy}`);
+  // ✅ PHASE 4.4: Check cache first
+  clearExpiredCache();
+  const cacheKey = getCacheKey(dataSource, options);
+  const cached = graphCache.get(cacheKey);
+
+  if (cached) {
+    console.log(`[Graph Service] Using cached data for ${dataSource}`);
+    return cached.data;
+  }
+
+  console.log(`[Graph Service] Loading graph: ${dataSource}, limit: ${limit}, offset: ${offset}, strategy: ${sampleStrategy}`);
 
   const response = await api.get(API_ENDPOINTS.GRAPH_EXPORT, {
     params: {
       data_source: dataSource,
       limit,
+      offset, // ✅ PHASE 4.1
       node_types: nodeTypes,
       min_weight: minWeight,
       sample_strategy: sampleStrategy,
@@ -98,12 +140,20 @@ export const getGraphData = async (
     documents: nodes.filter(n => n.data.type === 'document').length,
   };
 
-  return {
+  const result = {
     nodes,
     edges,
     stats,
     samplingInfo: graphData.sampling_info,
   };
+
+  // ✅ PHASE 4.4: Store in cache
+  graphCache.set(cacheKey, {
+    data: result,
+    timestamp: Date.now(),
+  });
+
+  return result;
 };
 
 /**

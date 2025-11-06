@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, memo, useState } from 'react';
+import React, { useEffect, useRef, useCallback, memo } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape, { type Core, type EventObject } from 'cytoscape';
 import coseBilkent from 'cytoscape-cose-bilkent';
@@ -32,38 +32,43 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
   className = '',
 }) => {
   const cyRef = useRef<Core | null>(null);
+  const isInitialized = useRef(false);
+  const previousLayout = useRef(layout);
 
-  // ✅ FIXED: Simple, clean stylesheet with SMALL nodes and VISIBLE edges
+  // ✅ IMPROVED: Enhanced stylesheet with LARGER nodes and smooth transitions
   const stylesheet = [
-    // Default node styles - MUCH SMALLER
+    // Default node styles - BIGGER and more visible
     {
       selector: 'node',
       style: {
         label: 'data(label)',
         'text-valign': 'bottom' as any,
         'text-halign': 'center' as any,
-        'text-margin-y': 3,
+        'text-margin-y': 4,
         'background-color': (ele: any) => {
           const type = ele.data('type');
           return GRAPH_COLORS[type as keyof typeof GRAPH_COLORS] || GRAPH_COLORS.entity;
         },
-        // ✅ FIXED: Much smaller nodes - 20-25px only!
-        width: 20,
-        height: 20,
-        // ✅ FIXED: Smaller text to match
+        // ✅ FIXED: LARGER nodes - 32px default (was 20px)
+        width: 32,
+        height: 32,
         'text-wrap': 'wrap' as any,
-        'text-max-width': '60px',
-        'font-size': '9px',
+        'text-max-width': '80px',
+        // ✅ FIXED: LARGER text - 10px (was 9px)
+        'font-size': '10px',
         'font-weight': '600',
         'color': '#111',
         'text-outline-color': '#fff',
-        'text-outline-width': 1,
-        'text-background-color': 'rgba(255, 255, 255, 0.8)',
+        'text-outline-width': 1.5,
+        'text-background-color': 'rgba(255, 255, 255, 0.9)',
         'text-background-opacity': 1,
-        'text-background-padding': '2px',
-        // ✅ FIXED: Thin borders
-        'border-width': 1.5,
+        'text-background-padding': '3px',
+        'border-width': 2,
         'border-color': '#555',
+        // ✅ NEW: Smooth transitions
+        'transition-property': 'background-color, border-color, border-width, width, height',
+        'transition-duration': '0.2s',
+        'transition-timing-function': 'ease-in-out',
       },
     },
     // Entity nodes - Blue circles
@@ -75,15 +80,16 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         'border-color': '#2563eb',
       },
     },
-    // Relation nodes - Red diamonds
+    // Relation nodes - Red diamonds (LARGER)
     {
       selector: 'node[type="relation"]',
       style: {
         shape: 'diamond',
         'background-color': GRAPH_COLORS.relation,
         'border-color': '#dc2626',
-        width: 22, // Slightly larger for visibility
-        height: 22,
+        // ✅ FIXED: LARGER relation nodes - 38px (was 22px)
+        width: 38,
+        height: 38,
       },
     },
     // Chunk nodes - Green rectangles
@@ -104,13 +110,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         'border-color': '#7c3aed',
       },
     },
-    // Selected node
+    // ✅ IMPROVED: Selected node with smooth animation
     {
       selector: 'node:selected',
       style: {
-        'border-width': 3,
-        'border-color': '#000',
+        'border-width': 4,
+        'border-color': '#f59e0b',
         'background-color': GRAPH_COLORS.selected,
+        'z-index': 999,
       },
     },
     // Hovered node
@@ -138,23 +145,26 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         'border-color': '#FF6B35',
       },
     },
-    // ✅ FIXED: THICK, VISIBLE edges!
+    // ✅ IMPROVED: Visible edges with transitions
     {
       selector: 'edge',
       style: {
-        width: 2, // Thick enough to see clearly
-        'line-color': '#64748b', // Darker slate gray - very visible!
+        width: 2,
+        'line-color': '#64748b',
         'target-arrow-color': '#64748b',
         'target-arrow-shape': 'triangle' as any,
         'arrow-scale': 1.2,
         'curve-style': 'bezier' as any,
         'line-style': 'solid',
         opacity: 0.7,
-        label: '', // Hide labels by default
+        label: '',
         'font-size': '8px',
         'text-background-color': '#fff',
         'text-background-opacity': 1,
         'text-background-padding': '2px',
+        // ✅ NEW: Smooth transitions
+        'transition-property': 'line-color, width, opacity',
+        'transition-duration': '0.2s',
       },
     },
     // Edge on hover - show label
@@ -191,10 +201,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
     },
   ];
 
-  // Handle node selection
+  // ✅ FIX: Prevent graph reset on node selection
   const handleNodeTap = useCallback((evt: EventObject) => {
     const node = evt.target;
     if (node && node.isNode && node.isNode()) {
+      // ✅ FIXED: Don't trigger re-render that causes layout reset
+      evt.preventDefault();
+      evt.stopPropagation();
+
       const nodeData: CytoscapeNode = {
         data: node.data(),
         position: node.position(),
@@ -204,8 +218,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
   }, [onNodeSelect]);
 
   // Handle background tap (deselect)
-  const handleBackgroundTap = useCallback(() => {
-    onNodeSelect?.(null);
+  const handleBackgroundTap = useCallback((evt: EventObject) => {
+    // Only deselect if clicking on background, not on node
+    if (evt.target === cyRef.current) {
+      onNodeSelect?.(null);
+    }
   }, [onNodeSelect]);
 
   // Handle node hover
@@ -229,9 +246,58 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
     }
   }, [onNodeHover]);
 
-  // Initialize Cytoscape
+  // ✅ CRITICAL: Run layout function
+  const runLayout = useCallback((cy: Core, layoutName: string) => {
+    console.log('[GraphCanvas] Running layout:', layoutName, 'with', cy.nodes().length, 'nodes');
+
+    const layoutOptions = {
+      name: layoutName,
+      animate: true,
+      animationDuration: 1000,
+      animationEasing: 'ease-in-out-cubic',
+      ...(layoutName === 'cose-bilkent' && {
+        idealEdgeLength: 80,
+        nodeRepulsion: 200000,
+        edgeElasticity: 0.45,
+        nestingFactor: 0.1,
+        gravity: 0.25,
+        numIter: 2500,
+        tile: true,
+      }),
+      ...(layoutName === 'dagre' && {
+        rankDir: 'TB',
+        nodeSep: 50,
+        edgeSep: 10,
+        rankSep: 100,
+      }),
+      ...(layoutName === 'fcose' && {
+        idealEdgeLength: 80,
+        nodeRepulsion: 4500,
+        edgeElasticity: 0.45,
+        numIter: 2500,
+        tile: true,
+      }),
+    };
+
+    const layoutInstance = cy.layout(layoutOptions as any);
+
+    // ✅ NEW: Auto-fit graph after layout completes
+    layoutInstance.on('layoutstop', () => {
+      console.log('[GraphCanvas] Layout complete, fitting graph to view');
+      cy.fit(undefined, 50); // Fit with 50px padding
+    });
+
+    layoutInstance.run();
+  }, []);
+
+  // ✅ FIX: Initialize Cytoscape only once
   const handleCyReady = useCallback((cy: Core) => {
+    // Skip if already initialized
+    if (isInitialized.current) return;
+
+    console.log('[GraphCanvas] Initializing Cytoscape instance');
     cyRef.current = cy;
+    isInitialized.current = true;
 
     // Enable user interactions
     cy.userZoomingEnabled(true);
@@ -249,7 +315,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
     // Mobile touch support
     cy.on('taphold', 'node', handleNodeTap);
 
-    // Double-tap to zoom
+    // ✅ IMPROVED: Double-tap to zoom in on node
     let lastTap = 0;
     cy.on('tap', 'node', (evt: EventObject) => {
       const now = Date.now();
@@ -258,8 +324,9 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         if (node && node.isNode && node.isNode()) {
           cy.animate({
             center: { eles: node },
-            zoom: cy.zoom() * 1.5,
+            zoom: Math.min(cy.zoom() * 1.5, 3),
             duration: 300,
+            easing: 'ease-in-out-cubic',
           });
         }
       }
@@ -269,44 +336,40 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
     // Call parent's onReady
     onReady?.(cy);
 
-    // Run initial layout
-    const layoutOptions = {
-      name: layout,
-      animate: true,
-      animationDuration: 1000,
-      ...(layout === 'cose-bilkent' && {
-        idealEdgeLength: 80,
-        nodeRepulsion: 200000,
-        edgeElasticity: 0.45,
-        nestingFactor: 0.1,
-        gravity: 0.25,
-        numIter: 2500,
-        tile: true,
-      }),
-      ...(layout === 'dagre' && {
-        rankDir: 'TB',
-        nodeSep: 50,
-        edgeSep: 10,
-        rankSep: 100,
-      }),
-      ...(layout === 'fcose' && {
-        idealEdgeLength: 80,
-        nodeRepulsion: 4500,
-        edgeElasticity: 0.45,
-        numIter: 2500,
-        tile: true,
-      }),
-    };
+    console.log('[GraphCanvas] Initialization complete');
+  }, [handleNodeTap, handleBackgroundTap, handleNodeMouseOver, handleNodeMouseOut, onReady]);
 
-    cy.layout(layoutOptions as any).run();
-  }, [handleNodeTap, handleBackgroundTap, handleNodeMouseOver, handleNodeMouseOut, onReady, layout]);
+  // ✅ CRITICAL FIX: Run layout when elements are loaded OR layout changes
+  useEffect(() => {
+    if (!cyRef.current || !isInitialized.current) {
+      console.log('[GraphCanvas] Cytoscape not ready yet');
+      return;
+    }
+
+    if (nodes.length === 0 && edges.length === 0) {
+      console.log('[GraphCanvas] No nodes/edges yet, skipping layout');
+      return;
+    }
+
+    // Check if layout changed
+    if (previousLayout.current !== layout) {
+      console.log('[GraphCanvas] Layout changed from', previousLayout.current, 'to', layout);
+      previousLayout.current = layout;
+    }
+
+    // Always run layout when nodes/edges change or layout type changes
+    console.log('[GraphCanvas] Running layout with', nodes.length, 'nodes and', edges.length, 'edges');
+    runLayout(cyRef.current, layout);
+  }, [layout, nodes.length, edges.length, runLayout]);
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
       if (cyRef.current) {
         cyRef.current.removeAllListeners();
+        cyRef.current.destroy();
       }
+      isInitialized.current = false;
     };
   }, []);
 
@@ -320,8 +383,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
       edges: edges.length,
       elements: elements.length,
     });
-    if (edges.length > 0) {
-      console.log('[GraphCanvas] Sample edge:', edges[0]);
+    if (edges.length > 0 && edges.length < 5) {
+      console.log('[GraphCanvas] Sample edges:', edges);
     }
   }, [nodes, edges, elements]);
 

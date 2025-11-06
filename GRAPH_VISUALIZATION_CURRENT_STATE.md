@@ -469,17 +469,32 @@ fastapi>=0.100.0
 
 ---
 
-## Known Issues
+## Recent UX Improvements (January 2025)
 
-### 1. Graph Resets on Node Click
-**Symptom**: Clicking a node causes the graph to reset position/zoom
-**Status**: Needs fix
-**Location**: [frontend/src/components/graph/GraphCanvas.tsx](frontend/src/components/graph/GraphCanvas.tsx)
+### 1. ✅ Fixed: Graph Reset on Node Click
+**Issue**: Clicking a node caused the graph to reset position/zoom
+**Solution**:
+- Added `isInitialized` ref to prevent re-initialization
+- Separated layout changes from node selection events
+- Added `evt.preventDefault()` and `evt.stopPropagation()` in node tap handler
+- Layout now only runs on initial mount or when layout type changes explicitly
 
-### 2. Node Info Panel Overlap
-**Symptom**: NodeInfoPanel overlaps with node types card
-**Status**: Needs UX adjustment
-**Location**: [frontend/src/pages/GraphViz.tsx](frontend/src/pages/GraphViz.tsx)
+### 2. ✅ Fixed: NodeInfoPanel Overlap
+**Issue**: NodeInfoPanel overlapped with node types card
+**Solution**:
+- Changed from absolute to fixed positioning (`fixed top-0 right-0 h-full`)
+- Panel now floats above all content with z-index 50
+- Added smooth slide-in animation (300ms transform transition)
+- Added backdrop overlay for mobile devices
+- Panel width increased to 384px (w-96) for better readability
+
+### 3. ✅ Enhanced: Smooth Transitions
+**Improvements**:
+- Added CSS transitions to nodes (`transition-duration: 0.2s`)
+- Smooth border, color, and size changes on hover/select
+- Improved double-tap zoom with easing (`ease-in-out-cubic`)
+- Slide-in animation for NodeInfoPanel
+- Gradient backgrounds throughout the UI
 
 ---
 

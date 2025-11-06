@@ -329,6 +329,17 @@ The following components will be released when fully ready:
 
 ---
 
+## 📚 Documentation
+
+- **[CLAUDE.md](CLAUDE.md)** - AI assistant guidance and comprehensive system reference
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development status, implementation notes, and technical guides
+- **[BIGRAG_UI_PLAN.md](BIGRAG_UI_PLAN.md)** - Frontend UI implementation plan
+- **[docs/](docs/)** - Detailed technical documentation, guides, and reports
+- **[frontend/README.md](frontend/README.md)** - Frontend setup and development
+- **[backend/README.md](backend/README.md)** - Backend API documentation
+
+---
+
 ## License
 
 See [LICENSE](LICENSE) file for details.

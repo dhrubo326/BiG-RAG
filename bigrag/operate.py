@@ -654,14 +654,29 @@ async def _build_query_context(
         if source_ids:
             know_sources[k].update(source_ids if isinstance(source_ids, (list, set)) else [source_ids])
 
-    # Path C contributions (chunks get separate treatment to maintain diversity)
+    # Path C contributions with weighted RRF scoring (Modified Approach 2)
     chunk_knowledge = []
-    for i, (k, source_ids) in enumerate(knowledge_list_3):
+
+    # Sort chunk candidates by their original scores (cosine for direct, 0.5 for indirect)
+    # This ensures better chunks appear first regardless of source
+    sorted_candidates = sorted(knowledge_list_3,
+                              key=lambda x: x.get("score", 0),
+                              reverse=True)
+
+    # Apply weighted RRF based on source type
+    for i, chunk in enumerate(sorted_candidates):
+        if chunk["source"] == "direct_vector":
+            # Direct chunks get full RRF weight (semantic relevance)
+            score = 1.0 * (1/(i+1))
+        else:  # indirect_graph
+            # Indirect chunks get 70% weight (structural relevance)
+            score = 0.7 * (1/(i+1))
+
         chunk_knowledge.append({
-            "content": k,
-            "score": 1/(i+1),
-            "sources": list(source_ids) if source_ids else [],
-            "type": "chunk"
+            "content": chunk["content"],
+            "score": score,
+            "sources": [chunk["source_id"]],
+            "type": chunk["source"]  # Preserve source type for debugging
         })
 
     # Phase 3.4: Apply semantic reranking to chunks if enabled
@@ -995,13 +1010,10 @@ async def _get_chunk_data(
 
         logger.info(f"[Path C] Added {len([c for c in chunk_candidates if c['source'] == 'indirect_graph'])} indirect chunks from graph traversal")
 
-    # Format as knowledge list (compatible with existing structure)
-    knowledge_list = []
-    for chunk in chunk_candidates:
-        knowledge_list.append((chunk["content"], [chunk["source_id"]]))
-
-    logger.info(f"[Path C] Total: {len(knowledge_list)} chunk candidates")
-    return knowledge_list
+    # Return full chunk candidates with metadata for proper scoring
+    # Modified to preserve source type and original scores for weighted RRF
+    logger.info(f"[Path C] Total: {len(chunk_candidates)} chunk candidates")
+    return chunk_candidates
 
 
 async def _find_most_related_entities_from_relationships(

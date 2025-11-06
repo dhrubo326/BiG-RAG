@@ -45,16 +45,17 @@
 | **Hypergraph RAG** | Hyperedges connect multiple entities | Expressive | Complex traversal, hard to scale | Simplified to bipartite |
 | **Knowledge Graphs** | Entity-entity triples (SPO) | Explicit facts | Requires structured data | Extracted from unstructured |
 | **HippoRAG** | Personalized PageRank on KG | Hippocampus-inspired | Heavyweight, slower | Hybrid with vector search |
-| **GraphRAG** | Community detection on entities | Global reasoning | Expensive preprocessing | Faster dual-path |
-| **BiG-RAG (Ours)** | **Bipartite: Entity Nodes ↔ Bipartite Edge Nodes** | **Clean structure, fast retrieval, dual-path** | **Requires LLM extraction** | **Our contribution** |
+| **GraphRAG** | Community detection on entities | Global reasoning | Expensive preprocessing | Faster three-path |
+| **BiG-RAG (Ours)** | **Bipartite: Entity Nodes ↔ Bipartite Edge Nodes** | **Clean structure, fast retrieval, three-path** | **Requires LLM extraction** | **Our contribution** |
 
 **Key Advantages of Bipartite Structure:**
 
 1. **Semantic Clarity**: Relations are first-class citizens (not just edges)
 2. **Efficient Storage**: Bipartite structure reduces edge complexity
-3. **Dual-Path Retrieval**: Can traverse from entities OR from relations
-4. **Scalability**: FAISS indexing on both layers enables fast search
+3. **Three-Path Retrieval**: Can traverse from entities, relations, OR direct chunks
+4. **Scalability**: NanoVectorDB (FAISS-based) indexing on all three layers enables fast search
 5. **Incremental Construction**: Add documents without rebuilding entire graph
+6. **Document Management**: Support for cascade deletion without full rebuild
 
 ### High-Level Architecture
 
@@ -669,7 +670,7 @@ class NetworkXStorage(BaseGraphStorage):
     # Implementation: bigrag/storage.py lines 180-318
 
 class NanoVectorDBStorage(BaseVectorStorage):
-    """Vector storage with FAISS backend"""
+    """Vector storage with NanoVectorDB (FAISS-based) backend"""
     # Implementation: bigrag/storage.py lines 90-178
 
 class JsonKVStorage(BaseKVStorage):
@@ -2397,8 +2398,9 @@ This comprehensive guide covers the **Graph Construction System** in BiG-RAG:
 
 1. **Multi-turn gleaning** improves entity coverage by 15-25%
 2. **LLM response caching** reduces costs by 60-70%
-3. **Bipartite structure** enables dual-path retrieval
+3. **Bipartite structure** enables three-path retrieval
 4. **Incremental construction** allows processing large corpora
 5. **Pluggable backends** support enterprise deployment
+6. **Metadata preservation** improves extraction accuracy by 2-3 F1 points
 
 For retrieval and query functionality, see **Part 2: Retrieval System**.

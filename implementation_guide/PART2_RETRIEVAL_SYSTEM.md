@@ -21,12 +21,12 @@
 
 ### What Problem Does This Solve?
 
-**Problem:** Single-path and dual-path retrieval systems struggle with:
+**Problem:** Single-path and two-path retrieval systems struggle with:
 - **Context fragmentation**: Missing related information across chunks
 - **Semantic ambiguity**: Query terms with multiple meanings
 - **Multi-hop reasoning**: Requiring traversal of entity relationships
 - **Ranking quality**: No way to combine different retrieval signals
-- **✨ Missing semantic chunks**: Dual-path only retrieves structured knowledge, missing raw chunk context
+- **✨ Missing semantic chunks**: Two-path only retrieves structured knowledge, missing raw chunk context
 
 **Example Query:** "What university did the director of Inception attend?"
 
@@ -59,7 +59,7 @@
 **Key Advantages:**
 
 1. **✨ Three-Path Coverage**: Entity-based + Relation-based + Chunk-based retrieval capture different aspects
-2. **Fast Multi-Hop**: FAISS vector search O(log V) instead of graph traversal O(V × E)
+2. **Fast Multi-Hop**: NanoVectorDB (FAISS-based) vector search O(log V) instead of graph traversal O(V × E)
 3. **Reciprocal Rank Fusion**: No hyperparameter tuning for score combination (Paths A + B)
 4. **✨ Semantic Reranking**: Cross-encoder reranks chunk candidates for +10-20% precision
 5. **Scalable**: Index-based retrieval scales to millions of entities
@@ -99,7 +99,7 @@ Input: User Query
 │  PATH A: Entity-Based Retrieval (Local)                         │
 │  ┌────────────────────────────────────────────────────────────┐│
 │  │ 1. Query vdb_entities with embedding                       ││
-│  │    → FAISS inner product search                            ││
+│  │    → NanoVectorDB inner product search                     ││
 │  │    → Top-k entity nodes (k=60 default)                     ││
 │  │                                                             ││
 │  │ 2. For each entity node:                                   ││
@@ -119,7 +119,7 @@ Input: User Query
 │  PATH B: Relation-Based Retrieval (Global)                      │
 │  ┌────────────────────────────────────────────────────────────┐│
 │  │ 1. Query vdb_bipartite_edges with embedding               ││
-│  │    → FAISS inner product search                            ││
+│  │    → NanoVectorDB inner product search                     ││
 │  │    → Top-k relation nodes (k=60 default)                   ││
 │  │                                                             ││
 │  │ 2. For each relation node:                                 ││
@@ -138,7 +138,7 @@ Input: User Query
 │  ┌────────────────────────────────────────────────────────────┐│
 │  │ 1. Direct Vector Search:                                   ││
 │  │    • Query vdb_chunks with embedding                       ││
-│  │    → FAISS inner product search                            ││
+│  │    → NanoVectorDB inner product search                     ││
 │  │    → Top-5 chunks by semantic similarity                   ││
 │  │                                                             ││
 │  │ 2. Indirect Chunk Extraction:                             ││
@@ -256,8 +256,8 @@ BiG-RAG supports 4 retrieval modes:
 │     Query → Relation vector search → Connected entities      │
 │     Best for: Relationship queries ("What connects X to Y?") │
 │                                                               │
-│  3. HYBRID (Dual-Path - Default)                             │
-│     Query → Both paths → Reciprocal rank fusion              │
+│  3. HYBRID (Three-Path - Default)                            │
+│     Query → All three paths → Reciprocal rank fusion         │
 │     Best for: General queries (most robust)                   │
 │                                                               │
 │  4. NAIVE (Baseline)                                          │
@@ -269,13 +269,13 @@ BiG-RAG supports 4 retrieval modes:
 
 **⚠️ Current Implementation Note:**
 
-In the current codebase (`bigrag/operate.py:484-553`), the `kg_query()` function **always executes both entity-based and relation-based retrieval paths**, regardless of the `mode` parameter specified in `QueryParam`. The results from both paths are then combined using Reciprocal Rank Fusion (RRF).
+In the current codebase (`bigrag/operate.py:484-553`), the `kg_query()` function executes different retrieval paths based on the `mode` parameter:
 
 **What this means:**
-- **`mode="local"`**: Currently behaves the same as `mode="hybrid"` (executes both paths)
-- **`mode="global"`**: Currently behaves the same as `mode="hybrid"` (executes both paths)
-- **`mode="hybrid"`**: Explicit dual-path retrieval (same as above)
-- **`mode="naive"`**: Different - uses direct chunk vector search without graph traversal
+- **`mode="local"`**: Entity-based retrieval only (Path A)
+- **`mode="global"`**: Relation-based retrieval only (Path B)
+- **`mode="hybrid"`**: Three-path retrieval with RRF fusion (Paths A + B + C) - **Recommended**
+- **`mode="naive"`**: Direct chunk vector search without graph traversal (Path C only)
 
 The `mode` parameter is **reserved for future differentiation** where single-path modes may be optimized separately. For now, `"hybrid"` mode is effectively used for all graph-based queries.
 
@@ -300,7 +300,7 @@ async def kg_query(...):
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│         DUAL-PATH TRAVERSAL ON BIPARTITE GRAPH               │
+│         THREE-PATH TRAVERSAL ON BIPARTITE GRAPH              │
 ├──────────────────────────────────────────────────────────────┤
 │                                                               │
 │  Entity Layer            Relation Layer                       │
@@ -683,7 +683,7 @@ class QueryParam:
     # Retrieval mode
     # "local": Entity-based only
     # "global": Relation-based only
-    # "hybrid": Dual-path with RRF (recommended)
+    # "hybrid": Three-path with RRF (recommended)
     # "naive": Direct chunk search (baseline)
 
     top_k: int = 60
@@ -800,11 +800,11 @@ def _merge_and_rank(
 class NanoVectorDBStorage(BaseVectorStorage):
     async def query(self, query: str, top_k: int) -> List[Dict]:
         """
-        FAISS-based vector search
+        NanoVectorDB (FAISS-based) vector search
 
         Flow:
         1. Embed query
-        2. FAISS search with cosine similarity
+        2. NanoVectorDB search with cosine similarity
         3. Filter by threshold (default 0.2)
         4. Return top-k with metadata
         """
@@ -830,7 +830,7 @@ param = QueryParam(mode="global", top_k=60)
 # Best for: "What connects X and Y?", "How does X relate to Y?"
 # Characteristics: Relation-focused, captures interactions
 
-# Hybrid mode (dual-path, default)
+# Hybrid mode (three-path, default)
 param = QueryParam(mode="hybrid", top_k=60)
 # Best for: General queries, multi-hop reasoning
 # Characteristics: Most robust, combines both signals
@@ -902,7 +902,7 @@ param = QueryParam(
 
 ### Vector Search Configuration
 
-**FAISS Index Types:**
+**NanoVectorDB Index Types (using FAISS internally):**
 
 ```python
 # Default: IndexFlatIP (exact search)
@@ -1312,7 +1312,7 @@ def cached_query(query, param):
 - Quality varies widely between similar queries
 
 **Causes:**
-- Randomness in FAISS approximate search
+- Randomness in NanoVectorDB approximate search
 - Graph stabilization not applied
 - Non-deterministic node traversal
 
@@ -1502,7 +1502,7 @@ class QueryParam:
     Retrieval mode:
     - local: Entity-based retrieval
     - global: Relation-based retrieval
-    - hybrid: Dual-path with reciprocal rank fusion (recommended)
+    - hybrid: Three-path with reciprocal rank fusion (recommended)
     - naive: Direct chunk similarity (baseline)
     """
 
@@ -1632,7 +1632,7 @@ def _merge_and_rank(
     relation_results: List[Dict]
 ) -> List[Dict]:
     """
-    Reciprocal rank fusion of dual-path results
+    Reciprocal rank fusion of three-path results
 
     Args:
         entity_results: Results from entity-based retrieval
@@ -1678,9 +1678,9 @@ Where:
 1. **Embedding**: `O(E_time)` where E_time = API latency (~50-100ms)
 
 2. **Entity Vector Search**: `O(log V)` with HNSW/IVF, `O(V)` with flat
-   - FAISS IndexFlatIP: O(V × dim) = O(V) for fixed dimensions
-   - FAISS IndexIVFFlat: O(nprobe × cluster_size) ≈ O(log V)
-   - FAISS IndexHNSW: O(log V)
+   - NanoVectorDB IndexFlatIP: O(V × dim) = O(V) for fixed dimensions
+   - NanoVectorDB IndexIVFFlat: O(nprobe × cluster_size) ≈ O(log V)
+   - NanoVectorDB IndexHNSW: O(log V)
 
 3. **Relation Vector Search**: Same as entity search
 
@@ -1807,7 +1807,7 @@ stats.print_stats(20)
 
 **Expected Bottlenecks:**
 1. Embedding API calls (if not batched): 40-50%
-2. FAISS vector search: 30-40%
+2. NanoVectorDB vector search: 30-40%
 3. Graph traversal: 10-15%
 4. Everything else: <10%
 
@@ -2056,7 +2056,7 @@ print(f"SLA violations: {stats['sla_violations']}")
 
 This comprehensive guide covers the **Retrieval System** in BiG-RAG:
 
-- **Conceptual Overview**: Dual-path retrieval with reciprocal rank fusion
+- **Conceptual Overview**: Three-path retrieval with reciprocal rank fusion
 - **Implementation Details**: Entity/relation-based algorithms, RRF mathematics
 - **Configuration**: Query modes, top-k tuning, token limits
 - **Usage Examples**: Basic to advanced scenarios with real patterns

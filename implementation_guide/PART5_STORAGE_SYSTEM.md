@@ -16,7 +16,7 @@
 
 **BiG-RAG Solution:** Pluggable storage architecture with abstract base classes:
 - **Graph Storage**: NetworkX (dev) → Neo4J (prod) → Oracle (enterprise)
-- **Vector Storage**: FAISS (dev) → Milvus (prod) → Oracle (enterprise)
+- **Vector Storage**: NanoVectorDB/FAISS (dev) → Milvus (prod) → Oracle (enterprise)
 - **KV Storage**: JSON (dev) → MongoDB (prod) → TiDB (enterprise)
 
 ### Architecture
@@ -36,7 +36,7 @@
 │  Implementations                                           │
 │    ├─ Default (bigrag/storage.py)                         │
 │    │   ├─ NetworkXStorage (in-memory graph)              │
-│    │   ├─ NanoVectorDBStorage (FAISS)                    │
+│    │   ├─ NanoVectorDBStorage (FAISS-based)             │
 │    │   └─ JsonKVStorage (file-based)                     │
 │    │                                                       │
 │    └─ Enterprise (bigrag/kg/)                             │
@@ -230,7 +230,7 @@ class NetworkXStorage(BaseGraphStorage):
 **NanoVectorDBStorage:**
 ```python
 class NanoVectorDBStorage(BaseVectorStorage):
-    """FAISS-based vector storage"""
+    """NanoVectorDB (FAISS-based) vector storage"""
 
     async def query(self, query: str, top_k: int) -> list[dict]:
         # Embed query

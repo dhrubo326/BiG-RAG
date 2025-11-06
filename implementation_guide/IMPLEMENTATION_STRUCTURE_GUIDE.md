@@ -275,7 +275,7 @@ stats = rag.delete_document("The original document text...")
 
 ### Storage Component Initialization
 
-**Five Storage Instances:**
+**Seven Storage Instances:**
 ```python
 # 1. LLM cache (cost optimization)
 self.llm_response_cache = JsonKVStorage(
@@ -618,13 +618,16 @@ class QueryParam:
     max_token_for_text_unit: int = 4000
     max_token_for_global_context: int = 4000
     max_token_for_local_context: int = 4000
+
+    # ✨ Semantic reranking toggle
+    enable_reranking: bool = True
 ```
 
 **Mode Descriptions:**
-- `local`: Entity-based retrieval (query → entities → relations → descriptions)
-- `global`: Relation-based retrieval (query → relations → entities → descriptions)
-- `hybrid`: Combined dual-path with unified ranking (default, best performance)
-- `naive`: Direct text chunk similarity (baseline for comparison)
+- `local`: Entity-based retrieval (Path A only: query → entities → relations → descriptions)
+- `global`: Relation-based retrieval (Path B only: query → relations → entities → descriptions)
+- `hybrid`: Combined three-path retrieval with unified ranking (Path A + B + C, default, best performance)
+- `naive`: Direct text chunk similarity (Path C only, baseline for comparison)
 
 ---
 
@@ -976,7 +979,7 @@ async def kg_query(
     Modes:
     - local: Entity-based retrieval
     - global: Relation-based retrieval
-    - hybrid: Combined dual-path (default)
+    - hybrid: Combined three-path (default)
     - naive: Direct chunk similarity
 
     Returns: List of context dicts with content and relevance scores
@@ -986,25 +989,35 @@ async def kg_query(
 **Hybrid Mode Implementation** (lines 372-401):
 
 ```python
-# 1. Embed query twice (for entity and edge indices)
-query_embedding = await embedding_func([query, query])
+# 1. Embed query three times (for entity, edge, and chunk indices)
+query_embedding = await embedding_func([query, query, query])
 
-# 2. Entity-based retrieval
+# 2. Entity-based retrieval (Path A)
 entity_results = await _get_node_data(
     query_embedding[0],
     top_k=param.top_k
 )
 
-# 3. Relation-based retrieval
+# 3. Relation-based retrieval (Path B)
 relation_results = await _get_edge_data(
     query_embedding[1],
     top_k=param.top_k
 )
 
-# 4. Combine with reciprocal rank scoring
-combined = _merge_and_rank(entity_results, relation_results)
+# 4. Chunk-based retrieval (Path C)
+chunk_results = await vdb_chunks.query(
+    query_embedding[2],
+    top_k=10  # Get candidates for reranking
+)
 
-# 5. Format and return top-k
+# 5. Optional semantic reranking
+if param.enable_reranking:
+    chunk_results = await rerank_chunks(chunk_results, query)
+
+# 6. Combine with reciprocal rank scoring
+combined = _merge_and_rank(entity_results, relation_results, chunk_results)
+
+# 7. Format and return top-k
 return combined[:param.top_k]
 ```
 
@@ -1122,10 +1135,11 @@ async def _get_edge_data(
 ```python
 def _merge_and_rank(
     entity_results: list[dict],
-    relation_results: list[dict]
+    relation_results: list[dict],
+    chunk_results: list[dict]
 ) -> list[dict]:
     """
-    Combine dual-path results with unified scoring
+    Combine three-path results with unified scoring
 
     Reciprocal Rank Formula:
         score = sum(1 / (rank + 1) for all occurrences)
@@ -1133,14 +1147,16 @@ def _merge_and_rank(
     Example:
         Item appears at rank 3 in entity results: 1/4 = 0.25
         Item appears at rank 7 in relation results: 1/8 = 0.125
-        Combined score: 0.25 + 0.125 = 0.375
+        Item appears at rank 1 in chunk results: 1/2 = 0.5
+        Combined score: 0.25 + 0.125 + 0.5 = 0.875
 
     Process:
     1. Assign ranks to entity results (0, 1, 2, ...)
     2. Assign ranks to relation results (0, 1, 2, ...)
-    3. Calculate reciprocal rank score for each item
-    4. Merge and deduplicate by content hash
-    5. Sort by combined score (descending)
+    3. Assign ranks to chunk results (0, 1, 2, ...)
+    4. Calculate reciprocal rank score for each item
+    5. Merge and deduplicate by content hash
+    6. Sort by combined score (descending)
 
     Returns: Unified ranked list
     """
@@ -3659,9 +3675,9 @@ final_output = output[:13]
    - Best for: Relationship queries ("What connects X and Y?")
    - Traversal: query → relations → entities
 
-3. **hybrid**: Combined dual-path (default)
+3. **hybrid**: Combined three-path (default)
    - Best for: General questions (most robust)
-   - Traversal: Both paths + reciprocal rank fusion
+   - Traversal: All three paths (A+B+C) + reciprocal rank fusion
 
 4. **naive**: Direct chunk similarity
    - Best for: Baseline comparison only
@@ -3997,7 +4013,7 @@ This comprehensive guide covers the complete A-to-Z implementation of the BiG-RA
 ### Core Implementation (Sections 1-10)
 1. **Core Architecture**: Async-first, pluggable storage, lazy loading
 2. **Graph Construction**: Multi-turn extraction, bipartite structure, merging strategies
-3. **Retrieval System**: Dual-path querying, reciprocal rank fusion, FAISS indices
+3. **Retrieval System**: Three-path querying, reciprocal rank fusion, FAISS indices
 4. **Tool Integration**: Active masking, batch execution, environment management
 5. **Extension Points**: Adding backends, tools, embeddings, customizing extraction
 

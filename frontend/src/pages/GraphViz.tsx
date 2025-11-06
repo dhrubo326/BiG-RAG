@@ -44,9 +44,13 @@ export function GraphViz() {
   const [cyInstance, setCyInstance] = useState<Core | null>(null);
   const [showHelp, setShowHelp] = useState(false);
 
-  // Load graph on mount
+  // Load graph on mount with performance-optimized settings
   useEffect(() => {
-    loadGraph('SingleTopic'); // Default dataset
+    // Load with sampling for large graphs (default: top 1000 nodes)
+    loadGraph('SingleTopic', {
+      limit: 1000, // Show top 1000 nodes by weight
+      sampleStrategy: 'top_weighted', // Get most important nodes
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle Cytoscape initialization

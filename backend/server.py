@@ -1556,6 +1556,404 @@ async def get_graph_statistics(dataset: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"Failed to get graph statistics: {str(e)}")
 
 
+@app.get("/graph/export", tags=["Graph Management"])
+async def export_graph(
+    data_source: str,
+    limit: Optional[int] = 1000,
+    node_types: Optional[str] = None,
+    min_weight: Optional[float] = 0.0,
+    sample_strategy: Optional[str] = "top_weighted"
+):
+    """
+    Export the knowledge graph for a dataset in Cytoscape-compatible format.
+
+    **OPTIMIZED FOR LARGE GRAPHS** - Implements sampling and filtering to prevent browser freezing.
+
+    **Parameters:**
+    - data_source: Dataset name (e.g., "SingleTopic", "HotpotQA")
+    - limit: Maximum nodes to return (default: 1000, max: 5000)
+    - node_types: Comma-separated node types to include (e.g., "entity,relation")
+    - min_weight: Minimum node weight threshold (0.0-1.0)
+    - sample_strategy: "top_weighted" (highest weight), "random", "diverse" (balanced types)
+
+    **Returns:**
+    - nodes: Sampled list of graph nodes
+    - edges: Edges connecting sampled nodes
+    - stats: Full graph statistics (unsampled)
+    - sampling_info: Information about sampling applied
+
+    **Example usage:**
+    ```bash
+    # Get top 1000 nodes (default)
+    curl "http://localhost:8001/graph/export?data_source=SingleTopic"
+
+    # Get top 500 entities and relations only
+    curl "http://localhost:8001/graph/export?data_source=SingleTopic&limit=500&node_types=entity,relation"
+
+    # Get high-weight nodes (> 0.5)
+    curl "http://localhost:8001/graph/export?data_source=SingleTopic&min_weight=0.5"
+    ```
+    """
+    try:
+        import networkx as nx
+        import random
+
+        # Enforce maximum limit for browser performance
+        MAX_LIMIT = 5000
+        if limit and limit > MAX_LIMIT:
+            limit = MAX_LIMIT
+            logger.warning(f"Limit exceeded max, capping at {MAX_LIMIT}")
+
+        # Get graph file path
+        working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+        graph_file = str(PROJECT_ROOT / working_dir_base / data_source / "graph_chunk_entity_relation.graphml")
+        chunks_file = str(PROJECT_ROOT / working_dir_base / data_source / "kv_store_text_chunks.json")
+
+        if not os.path.exists(graph_file):
+            raise HTTPException(
+                status_code=404,
+                detail=f"Graph file not found for dataset '{data_source}'. "
+                       f"Please ensure the dataset is built. Path: {graph_file}"
+            )
+
+        # Read the graph
+        logger.info(f"Loading graph from {graph_file}")
+        G = nx.read_graphml(graph_file)
+        total_nodes = G.number_of_nodes()
+        total_edges = G.number_of_edges()
+        logger.info(f"Graph loaded: {total_nodes} nodes, {total_edges} edges")
+
+        # Parse node type filter
+        allowed_types = None
+        if node_types:
+            type_map = {
+                'entity': 'entity',
+                'relation': 'bipartite_edge',
+                'chunk': 'chunk'
+            }
+            requested_types = [t.strip().lower() for t in node_types.split(',')]
+            allowed_types = [type_map.get(t, t) for t in requested_types]
+
+        # First pass: collect all nodes with metadata (lightweight)
+        all_nodes = []
+        entity_count = 0
+        relation_count = 0
+        chunk_count = 0
+
+        for node_id, attrs in G.nodes(data=True):
+            role = attrs.get("role", "")
+            node_type = "entity"  # default
+
+            if role == "entity":
+                node_type = "entity"
+                entity_count += 1
+            elif role == "bipartite_edge":
+                node_type = "relation"
+                relation_count += 1
+            elif role == "chunk" or node_id.startswith("chunk-"):
+                node_type = "chunk"
+                chunk_count += 1
+
+            # Apply filters
+            if allowed_types and role not in allowed_types:
+                continue
+
+            weight = float(attrs.get("weight", 0.0))
+            if weight < min_weight:
+                continue
+
+            # Lightweight node object (no descriptions yet)
+            node = {
+                "id": node_id,
+                "label": attrs.get("name", node_id),
+                "name": attrs.get("name", node_id),
+                "type": node_type,
+                "description": "",  # Load later for sampled nodes only
+                "weight": weight,
+                "source_id": attrs.get("source_id", ""),
+                "role": role,
+                "metadata": {
+                    "entity_type": attrs.get("entity_type", ""),
+                    "role": role,
+                }
+            }
+            all_nodes.append(node)
+
+        logger.info(f"After filtering: {len(all_nodes)} nodes")
+
+        # Apply sampling strategy
+        sampled_nodes = all_nodes
+        sampling_applied = False
+
+        if len(all_nodes) > limit:
+            sampling_applied = True
+            logger.info(f"Applying {sample_strategy} sampling to get {limit} nodes from {len(all_nodes)}")
+
+            if sample_strategy == "top_weighted":
+                # Sort by weight descending, take top N
+                sampled_nodes = sorted(all_nodes, key=lambda x: x["weight"], reverse=True)[:limit]
+
+            elif sample_strategy == "random":
+                # Random sampling
+                sampled_nodes = random.sample(all_nodes, limit)
+
+            elif sample_strategy == "diverse":
+                # Balanced sampling across node types
+                entities = [n for n in all_nodes if n["type"] == "entity"]
+                relations = [n for n in all_nodes if n["type"] == "relation"]
+                chunks = [n for n in all_nodes if n["type"] == "chunk"]
+
+                # Allocate proportionally
+                total = len(all_nodes)
+                entity_limit = int(limit * len(entities) / total) if total > 0 else 0
+                relation_limit = int(limit * len(relations) / total) if total > 0 else 0
+                chunk_limit = limit - entity_limit - relation_limit
+
+                sampled_entities = sorted(entities, key=lambda x: x["weight"], reverse=True)[:entity_limit]
+                sampled_relations = sorted(relations, key=lambda x: x["weight"], reverse=True)[:relation_limit]
+                sampled_chunks = sorted(chunks, key=lambda x: x["weight"], reverse=True)[:chunk_limit]
+
+                sampled_nodes = sampled_entities + sampled_relations + sampled_chunks
+
+            logger.info(f"Sampled {len(sampled_nodes)} nodes")
+
+        # Get node IDs for edge filtering
+        sampled_node_ids = {node["id"] for node in sampled_nodes}
+
+        # Load chunk metadata only if we're including chunks (memory optimization)
+        chunks_data = {}
+        if any(n["type"] == "chunk" for n in sampled_nodes) and os.path.exists(chunks_file):
+            logger.info(f"Loading chunk descriptions from {chunks_file}")
+            with open(chunks_file, 'r', encoding='utf-8') as f:
+                chunks_data = json.load(f)
+
+        # Load descriptions only for sampled nodes (performance optimization)
+        for node in sampled_nodes:
+            if node["type"] == "chunk" and node["id"] in chunks_data:
+                node["description"] = chunks_data[node["id"]].get("content", "")[:500]
+            else:
+                # Get from GraphML if not in chunks_data
+                node_attrs = G.nodes[node["id"]]
+                node["description"] = node_attrs.get("description", "")[:500]
+
+        # Extract edges only between sampled nodes
+        edges = []
+        for source, target, attrs in G.edges(data=True):
+            if source in sampled_node_ids and target in sampled_node_ids:
+                edge = {
+                    "id": f"{source}_{target}",
+                    "source": source,
+                    "target": target,
+                    "label": attrs.get("label", ""),
+                    "weight": float(attrs.get("weight", 1.0)),
+                    "type": attrs.get("type", "")
+                }
+                edges.append(edge)
+
+        # Calculate full stats (unsampled)
+        stats = {
+            "totalNodes": total_nodes,
+            "totalEdges": total_edges,
+            "entities": entity_count,
+            "relations": relation_count,
+            "chunks": chunk_count,
+            "documents": chunk_count,
+        }
+
+        # Sampling info
+        sampling_info = {
+            "sampling_applied": sampling_applied,
+            "strategy": sample_strategy if sampling_applied else None,
+            "requested_limit": limit,
+            "nodes_returned": len(sampled_nodes),
+            "edges_returned": len(edges),
+            "filters_applied": {
+                "node_types": node_types,
+                "min_weight": min_weight
+            }
+        }
+
+        logger.info(f"Graph export complete: {len(sampled_nodes)} nodes, {len(edges)} edges (sampled: {sampling_applied})")
+
+        return {
+            "success": True,
+            "dataset": data_source,
+            "nodes": sampled_nodes,
+            "edges": edges,
+            "stats": stats,
+            "sampling_info": sampling_info
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export graph: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to export graph: {str(e)}")
+
+
+@app.get("/graph/subgraph/neighbors", tags=["Graph Management"])
+async def get_node_neighbors(node_id: str, depth: int = 1, data_source: Optional[str] = None):
+    """
+    Get the subgraph containing a node and its neighbors.
+
+    **Parameters:**
+    - node_id: ID of the central node
+    - depth: Number of hops to traverse (default: 1)
+    - data_source: Dataset name (optional, uses default if not provided)
+
+    **Returns:**
+    - nodes: List of nodes in the subgraph
+    - edges: List of edges connecting the nodes
+
+    **Example usage:**
+    ```bash
+    curl "http://localhost:8001/graph/subgraph/neighbors?node_id=entity_123&depth=2"
+    ```
+    """
+    try:
+        import networkx as nx
+
+        if not data_source:
+            data_source = rag_instance_name  # Use currently loaded dataset
+
+        # Get graph file path
+        working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+        graph_file = str(PROJECT_ROOT / working_dir_base / data_source / "graph_chunk_entity_relation.graphml")
+
+        if not os.path.exists(graph_file):
+            raise HTTPException(status_code=404, detail=f"Graph file not found for dataset '{data_source}'")
+
+        # Read the graph
+        G = nx.read_graphml(graph_file)
+
+        if node_id not in G:
+            raise HTTPException(status_code=404, detail=f"Node '{node_id}' not found in graph")
+
+        # Get neighbors up to specified depth
+        subgraph_nodes = {node_id}
+        current_layer = {node_id}
+
+        for _ in range(depth):
+            next_layer = set()
+            for node in current_layer:
+                neighbors = set(G.neighbors(node))
+                next_layer.update(neighbors)
+            subgraph_nodes.update(next_layer)
+            current_layer = next_layer
+
+        # Create subgraph
+        H = G.subgraph(subgraph_nodes)
+
+        # Extract nodes and edges
+        nodes = []
+        for node, attrs in H.nodes(data=True):
+            role = attrs.get("role", "")
+            node_type = "entity" if role == "entity" else "relation" if role == "bipartite_edge" else "chunk"
+
+            nodes.append({
+                "id": node,
+                "label": attrs.get("name", node),
+                "type": node_type,
+                "description": attrs.get("description", ""),
+                "weight": float(attrs.get("weight", 0.0)),
+            })
+
+        edges = []
+        for source, target, attrs in H.edges(data=True):
+            edges.append({
+                "id": f"{source}_{target}",
+                "source": source,
+                "target": target,
+                "label": attrs.get("label", ""),
+                "weight": float(attrs.get("weight", 1.0)),
+            })
+
+        return {
+            "success": True,
+            "central_node": node_id,
+            "depth": depth,
+            "nodes": nodes,
+            "edges": edges
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get node neighbors: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get node neighbors: {str(e)}")
+
+
+@app.get("/graph/subgraph/search", tags=["Graph Management"])
+async def search_nodes(q: str, limit: int = 20, data_source: Optional[str] = None):
+    """
+    Search for nodes in the graph by text query.
+
+    **Parameters:**
+    - q: Search query (searches node names and descriptions)
+    - limit: Maximum number of results (default: 20)
+    - data_source: Dataset name (optional)
+
+    **Returns:**
+    - nodes: List of matching nodes
+
+    **Example usage:**
+    ```bash
+    curl "http://localhost:8001/graph/subgraph/search?q=machine+learning&limit=10"
+    ```
+    """
+    try:
+        import networkx as nx
+
+        if not data_source:
+            data_source = rag_instance_name
+
+        # Get graph file path
+        working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
+        graph_file = str(PROJECT_ROOT / working_dir_base / data_source / "graph_chunk_entity_relation.graphml")
+
+        if not os.path.exists(graph_file):
+            raise HTTPException(status_code=404, detail=f"Graph file not found for dataset '{data_source}'")
+
+        # Read the graph
+        G = nx.read_graphml(graph_file)
+
+        # Search nodes (simple substring match, can be improved)
+        query_lower = q.lower()
+        matching_nodes = []
+
+        for node, attrs in G.nodes(data=True):
+            name = attrs.get("name", "").lower()
+            description = attrs.get("description", "").lower()
+
+            if query_lower in name or query_lower in description:
+                role = attrs.get("role", "")
+                node_type = "entity" if role == "entity" else "relation" if role == "bipartite_edge" else "chunk"
+
+                matching_nodes.append({
+                    "id": node,
+                    "label": attrs.get("name", node),
+                    "type": node_type,
+                    "description": attrs.get("description", ""),
+                    "weight": float(attrs.get("weight", 0.0)),
+                })
+
+                if len(matching_nodes) >= limit:
+                    break
+
+        return {
+            "success": True,
+            "query": q,
+            "total": len(matching_nodes),
+            "nodes": matching_nodes
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to search nodes: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to search nodes: {str(e)}")
+
+
 # ==============================================================================
 # Evaluation Endpoints
 # ==============================================================================

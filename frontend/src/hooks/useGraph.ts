@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import useGraphStore from '../stores/graph';
-import { getGraphData, getSubgraph, exportGraph } from '../services/graph';
+import { getGraphData, getSubgraph, exportGraph, type GraphLoadOptions } from '../services/graph';
 import type { GraphExportOptions } from '../types';
 import { toast } from 'sonner';
 
@@ -31,25 +31,33 @@ export const useGraph = () => {
 
   const [cytoscapeInstance, setCytoscapeInstance] = useState<any>(null);
 
-  // Load full graph data
+  // Load full graph data with optional sampling/filtering
   const loadGraph = useCallback(
-    async (dataSource: string) => {
+    async (dataSource: string, options: GraphLoadOptions = {}) => {
       setLoading(true);
       setError(null);
 
+      console.log('[useGraph] Loading graph:', dataSource, 'with options:', options);
+
       try {
-        const data = await getGraphData(dataSource);
+        const data = await getGraphData(dataSource, options);
 
         if (data.nodes && data.edges) {
+          console.log(`[useGraph] Loaded ${data.nodes.length} nodes, ${data.edges.length} edges`);
           setNodes(data.nodes);
           setEdges(data.edges);
           setStats(data.stats || null);
-          toast.success('Graph loaded successfully');
+
+          // Don't show success toast if sampling notification was already shown
+          if (!data.samplingInfo?.sampling_applied) {
+            toast.success(`Graph loaded: ${data.nodes.length} nodes`);
+          }
         } else {
           throw new Error('Invalid graph data format');
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to load graph';
+        console.error('[useGraph] Error loading graph:', err);
         setError(message);
         toast.error(message);
       } finally {

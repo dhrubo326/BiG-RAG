@@ -1,23 +1,68 @@
 import api from './api';
 import type { CytoscapeNode, CytoscapeEdge, GraphStats } from '../types';
 import { API_ENDPOINTS } from '../utils/constants';
+import { toast } from 'sonner';
 
 interface GraphData {
   nodes: CytoscapeNode[];
   edges: CytoscapeEdge[];
   stats?: GraphStats;
+  samplingInfo?: {
+    sampling_applied: boolean;
+    strategy?: string;
+    requested_limit: number;
+    nodes_returned: number;
+    edges_returned: number;
+  };
+}
+
+export interface GraphLoadOptions {
+  limit?: number;
+  nodeTypes?: string;
+  minWeight?: number;
+  sampleStrategy?: 'top_weighted' | 'random' | 'diverse';
 }
 
 /**
- * Get the full graph data for a dataset
+ * Get the full graph data for a dataset with optional sampling and filtering
  */
-export const getGraphData = async (dataSource: string): Promise<GraphData> => {
+export const getGraphData = async (
+  dataSource: string,
+  options: GraphLoadOptions = {}
+): Promise<GraphData> => {
+  const {
+    limit = 1000, // Default to 1000 nodes for performance
+    nodeTypes,
+    minWeight = 0.0,
+    sampleStrategy = 'top_weighted',
+  } = options;
+
+  console.log(`[Graph Service] Loading graph: ${dataSource}, limit: ${limit}, strategy: ${sampleStrategy}`);
+
   const response = await api.get(API_ENDPOINTS.GRAPH_EXPORT, {
-    params: { data_source: dataSource },
+    params: {
+      data_source: dataSource,
+      limit,
+      node_types: nodeTypes,
+      min_weight: minWeight,
+      sample_strategy: sampleStrategy,
+    },
+    timeout: 60000, // 60 second timeout for large graphs
   });
 
   // Transform the data to Cytoscape format
   const graphData = response.data;
+
+  console.log(`[Graph Service] Received ${graphData.nodes?.length || 0} nodes, ${graphData.edges?.length || 0} edges`);
+
+  // Show sampling notification if applied
+  if (graphData.sampling_info?.sampling_applied) {
+    const info = graphData.sampling_info;
+    toast.info(
+      `Graph sampled: Showing top ${info.nodes_returned} of ${graphData.stats?.totalNodes || 'many'} nodes`,
+      { duration: 5000 }
+    );
+  }
 
   const nodes: CytoscapeNode[] = (graphData.nodes || []).map((node: any) => ({
     data: {
@@ -43,7 +88,7 @@ export const getGraphData = async (dataSource: string): Promise<GraphData> => {
     },
   }));
 
-  // Calculate stats if not provided
+  // Use stats from backend (includes full graph stats)
   const stats: GraphStats = graphData.stats || {
     totalNodes: nodes.length,
     totalEdges: edges.length,
@@ -53,7 +98,12 @@ export const getGraphData = async (dataSource: string): Promise<GraphData> => {
     documents: nodes.filter(n => n.data.type === 'document').length,
   };
 
-  return { nodes, edges, stats };
+  return {
+    nodes,
+    edges,
+    stats,
+    samplingInfo: graphData.sampling_info,
+  };
 };
 
 /**

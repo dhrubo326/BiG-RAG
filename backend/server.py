@@ -32,6 +32,7 @@ load_dotenv(PROJECT_ROOT / '.env')
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 from typing import List, Optional, Dict, Any, Literal
@@ -576,6 +577,20 @@ app = FastAPI(
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
+)
+
+# ============================================================================
+# CORS Configuration - Allow all origins in test phase
+# ============================================================================
+
+# Configure CORS to allow all origins during testing
+# In production, replace ["*"] with specific allowed origins like ["http://localhost:5173"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins - change to specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],  # Allows all headers
 )
 
 # ============================================================================

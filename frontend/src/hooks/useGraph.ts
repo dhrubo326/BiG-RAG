@@ -178,56 +178,222 @@ export const useGraph = () => {
     [cytoscapeInstance]
   );
 
-  // Expand node neighbors
+  // ✅ PHASE 2: Expand node neighbors - fetch and merge into existing graph
   const expandNode = useCallback(
-    async (nodeId: string) => {
-      if (!selectedNode) return;
+    async (nodeId: string, depth: number = 1) => {
+      if (!cytoscapeInstance) {
+        toast.error('Graph not initialized');
+        return;
+      }
 
       try {
-        // In a real implementation, this would fetch additional neighbors from the backend
-        toast.info('Expanding node neighbors...');
-        // await loadNodeNeighbors(nodeId);
+        setLoading(true);
+        toast.info('Fetching neighbors...');
+
+        // Import the getNodeNeighbors function from graph service
+        const { getNodeNeighbors } = await import('../services/graph');
+
+        const neighborData = await getNodeNeighbors(nodeId, depth);
+
+        if (!neighborData.nodes || neighborData.nodes.length === 0) {
+          toast.warning('No new neighbors found');
+          return;
+        }
+
+        // Get existing node IDs to avoid duplicates
+        const existingNodeIds = new Set(nodes.map(n => n.data.id));
+        const existingEdgeIds = new Set(edges.map(e => e.data.id));
+
+        // Filter out nodes and edges that already exist
+        const newNodes = neighborData.nodes.filter(n => !existingNodeIds.has(n.data.id));
+        const newEdges = neighborData.edges.filter(e => !existingEdgeIds.has(e.data.id));
+
+        if (newNodes.length === 0 && newEdges.length === 0) {
+          toast.info('All neighbors already visible');
+          return;
+        }
+
+        // Add new nodes and edges to the store
+        setNodes([...nodes, ...newNodes]);
+        setEdges([...edges, ...newEdges]);
+
+        // Add new elements to Cytoscape instance
+        newNodes.forEach(node => {
+          cytoscapeInstance.add({ group: 'nodes', data: node.data });
+        });
+        newEdges.forEach(edge => {
+          cytoscapeInstance.add({ group: 'edges', data: edge.data });
+        });
+
+        // Run layout on new elements
+        const newElements = cytoscapeInstance.$(
+          newNodes.map(n => `#${n.data.id}`).join(', ')
+        );
+
+        // Apply incremental layout
+        const layoutOptions = {
+          name: 'cose-bilkent',
+          animate: true,
+          animationDuration: 500,
+          fit: false, // Don't fit entire graph, just position new nodes
+          randomize: false,
+        };
+
+        cytoscapeInstance.layout(layoutOptions as any).run();
+
+        // Highlight the expanded node and its new neighbors
+        cytoscapeInstance.$(`#${nodeId}`).addClass('highlighted');
+        newElements.addClass('highlighted');
+
+        // Remove highlight after 2 seconds
+        setTimeout(() => {
+          cytoscapeInstance.$('.highlighted').removeClass('highlighted');
+        }, 2000);
+
+        toast.success(`Added ${newNodes.length} nodes, ${newEdges.length} edges`);
       } catch (err) {
-        toast.error('Failed to expand node');
+        const message = err instanceof Error ? err.message : 'Failed to expand node';
+        console.error('[useGraph] Error expanding node:', err);
+        toast.error(message);
+      } finally {
+        setLoading(false);
       }
     },
-    [selectedNode]
+    [cytoscapeInstance, nodes, edges, setNodes, setEdges, setLoading]
   );
 
-  // Search for nodes
+  // ✅ PHASE 2: Enhanced search with better highlighting and navigation
   const searchNodes = useCallback(
     (query: string) => {
       setSearchQuery(query);
 
-      if (cytoscapeInstance && query) {
+      if (!cytoscapeInstance) return;
+
+      if (!query || query.trim().length === 0) {
+        // Clear all highlights if search is empty
+        cytoscapeInstance.nodes().removeClass('highlighted');
+        cytoscapeInstance.edges().removeClass('highlighted');
+        return;
+      }
+
+      try {
+        const searchTerm = query.toLowerCase().trim();
+
         // Highlight matching nodes
         const matching = cytoscapeInstance.nodes().filter((node: any) => {
           const label = node.data('label') || '';
           const description = node.data('description') || '';
+          const type = node.data('type') || '';
+          const sourceId = node.data('source_id') || '';
+
           return (
-            label.toLowerCase().includes(query.toLowerCase()) ||
-            description.toLowerCase().includes(query.toLowerCase())
+            label.toLowerCase().includes(searchTerm) ||
+            description.toLowerCase().includes(searchTerm) ||
+            type.toLowerCase().includes(searchTerm) ||
+            sourceId.toLowerCase().includes(searchTerm)
           );
         });
 
-        // Reset all nodes first
+        // Reset all highlights first
         cytoscapeInstance.nodes().removeClass('highlighted');
+        cytoscapeInstance.edges().removeClass('highlighted');
+
+        if (matching.length === 0) {
+          toast.warning('No nodes found matching your search');
+          return;
+        }
 
         // Highlight matching nodes
         matching.addClass('highlighted');
 
-        // Center on first match if any
-        if (matching.length > 0) {
-          cytoscapeInstance.animate({
-            center: { eles: matching[0] },
-            zoom: 2,
-            duration: 500,
-          });
-        }
+        // Also highlight edges connected to matching nodes
+        const connectedEdges = matching.connectedEdges();
+        connectedEdges.addClass('highlighted');
+
+        // Dim non-matching nodes for better focus
+        cytoscapeInstance.nodes().not(matching).style('opacity', 0.3);
+        cytoscapeInstance.edges().not(connectedEdges).style('opacity', 0.2);
+
+        // Show bounding box around all matching nodes
+        const bbox = matching.boundingBox();
+        cytoscapeInstance.animate({
+          fit: {
+            eles: matching,
+            padding: 50,
+          },
+          duration: 500,
+        });
+
+        // Show toast with search results
+        toast.success(`Found ${matching.length} matching node${matching.length !== 1 ? 's' : ''}`);
+
+        // Store matched nodes for navigation (next/previous)
+        (cytoscapeInstance as any)._searchResults = matching;
+        (cytoscapeInstance as any)._searchIndex = 0;
+
+      } catch (err) {
+        console.error('[useGraph] Error searching nodes:', err);
+        toast.error('Search failed');
       }
     },
     [cytoscapeInstance, setSearchQuery]
   );
+
+  // ✅ PHASE 2: Navigate through search results
+  const navigateSearchResults = useCallback(
+    (direction: 'next' | 'prev') => {
+      if (!cytoscapeInstance) return;
+
+      const results = (cytoscapeInstance as any)._searchResults;
+      let currentIndex = (cytoscapeInstance as any)._searchIndex || 0;
+
+      if (!results || results.length === 0) {
+        toast.warning('No search results to navigate');
+        return;
+      }
+
+      // Update index
+      if (direction === 'next') {
+        currentIndex = (currentIndex + 1) % results.length;
+      } else {
+        currentIndex = (currentIndex - 1 + results.length) % results.length;
+      }
+
+      (cytoscapeInstance as any)._searchIndex = currentIndex;
+
+      // Center on current result
+      const currentNode = results[currentIndex];
+      cytoscapeInstance.animate({
+        center: { eles: currentNode },
+        zoom: Math.max(cytoscapeInstance.zoom(), 1.5),
+        duration: 300,
+      });
+
+      // Pulse animation on current node
+      currentNode.addClass('pulse');
+      setTimeout(() => {
+        currentNode.removeClass('pulse');
+      }, 1000);
+
+      toast.info(`Result ${currentIndex + 1} of ${results.length}`);
+    },
+    [cytoscapeInstance]
+  );
+
+  // Clear search highlights
+  const clearSearch = useCallback(() => {
+    if (!cytoscapeInstance) return;
+
+    cytoscapeInstance.nodes().removeClass('highlighted');
+    cytoscapeInstance.edges().removeClass('highlighted');
+    cytoscapeInstance.nodes().style('opacity', 1);
+    cytoscapeInstance.edges().style('opacity', 1);
+
+    (cytoscapeInstance as any)._searchResults = null;
+    (cytoscapeInstance as any)._searchIndex = 0;
+
+    setSearchQuery('');
+  }, [cytoscapeInstance, setSearchQuery]);
 
   // Apply layout
   const applyLayout = useCallback(
@@ -378,5 +544,9 @@ export const useGraph = () => {
     centerOnNode,
     expandNode,
     applyLayout,
+
+    // ✅ PHASE 2: New search navigation functions
+    navigateSearchResults,
+    clearSearch,
   };
 };

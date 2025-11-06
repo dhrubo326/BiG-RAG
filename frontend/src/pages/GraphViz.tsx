@@ -17,6 +17,7 @@ import { useGraph } from '../hooks/useGraph';
 import GraphCanvas from '../components/graph/GraphCanvas';
 import GraphToolbar from '../components/graph/GraphToolbar';
 import NodeInfoPanel from '../components/graph/NodeInfoPanel';
+import GraphErrorBoundary from '../components/graph/GraphErrorBoundary'; // ✅ PHASE 2
 import type { GraphLayout } from '../types';
 
 export function GraphViz() {
@@ -39,6 +40,7 @@ export function GraphViz() {
     initializeCytoscape,
     fitGraph,
     applyLayout,
+    clearGraph, // ✅ PHASE 2: For error recovery
   } = useGraph();
 
   const [cyInstance, setCyInstance] = useState<Core | null>(null);
@@ -47,11 +49,30 @@ export function GraphViz() {
   // Load graph on mount with performance-optimized settings
   useEffect(() => {
     // Load with sampling for large graphs (default: top 1000 nodes)
-    loadGraph('SingleTopic', {
-      limit: 1000, // Show top 1000 nodes by weight
-      sampleStrategy: 'top_weighted', // Get most important nodes
-    });
+    const loadGraphData = async () => {
+      try {
+        await loadGraph('SingleTopic', {
+          limit: 1000, // Show top 1000 nodes
+          sampleStrategy: 'diverse', // Get balanced mix of entities, relations, chunks
+        });
+      } catch (err) {
+        console.error('[GraphViz] Failed to load graph:', err);
+        toast.error('Failed to load graph. Please try again.');
+      }
+    };
+
+    loadGraphData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ✅ PHASE 2: Handle error boundary reset
+  const handleErrorReset = () => {
+    // Clear graph state and reload
+    clearGraph();
+    loadGraph('SingleTopic', {
+      limit: 1000,
+      sampleStrategy: 'diverse',
+    });
+  };
 
   // Handle Cytoscape initialization
   const handleCyReady = (cy: Core) => {
@@ -131,7 +152,8 @@ export function GraphViz() {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col relative">
+    <GraphErrorBoundary onReset={handleErrorReset}>
+      <div className="h-[calc(100vh-8rem)] flex flex-col relative">
       {/* Toolbar */}
       <GraphToolbar
         layout={layout}
@@ -150,20 +172,33 @@ export function GraphViz() {
 
       {/* Main Content Area */}
       <div className="flex-1 relative">
-        {/* Loading State */}
+        {/* ✨ IMPROVED: Loading State with better design */}
         {isLoading && (
-          <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 flex items-center justify-center z-20">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-              <p className="text-sm text-gray-600 dark:text-gray-400">Loading graph...</p>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/95 to-gray-50/95 dark:from-gray-900/95 dark:to-gray-800/95 backdrop-blur-sm flex items-center justify-center z-20">
+            <div className="flex flex-col items-center gap-4 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
+              <div className="relative">
+                <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+                <div className="absolute inset-0 w-12 h-12 animate-ping text-blue-300 opacity-20">
+                  <Loader2 className="w-full h-full" />
+                </div>
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-base font-semibold text-gray-900 dark:text-gray-100">Loading Graph</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Building visualization...</p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Error State */}
+        {/* ✨ IMPROVED: Error State with better design */}
         {error && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 px-4 py-2 rounded-lg z-20">
-            {error}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 animate-in slide-in-from-top duration-300">
+            <div className="bg-red-100 dark:bg-red-900/70 backdrop-blur-sm text-red-800 dark:text-red-200 px-6 py-3 rounded-xl shadow-lg border border-red-300 dark:border-red-700 flex items-center gap-3 max-w-md">
+              <div className="flex-shrink-0">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              </div>
+              <p className="text-sm font-medium">{error}</p>
+            </div>
           </div>
         )}
 
@@ -185,44 +220,66 @@ export function GraphViz() {
             onViewDocument={handleViewDocument}
             onFindSimilar={handleFindSimilar}
             onExpandNode={handleExpandNode}
+            cytoscapeInstance={cyInstance} // ✅ PHASE 2: Pass Cytoscape instance for connection stats
           />
         )}
 
-        {/* Stats Badge */}
+        {/* ✨ IMPROVED: Stats Badge with better design */}
         {stats && (
-          <div className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 text-sm">
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-              <span className="text-gray-500">Nodes:</span>
-              <span className="font-medium">{stats.totalNodes}</span>
-              <span className="text-gray-500">Edges:</span>
-              <span className="font-medium">{stats.totalEdges}</span>
-              <span className="text-gray-500">Entities:</span>
-              <span className="font-medium">{stats.entities}</span>
-              <span className="text-gray-500">Relations:</span>
-              <span className="font-medium">{stats.relations}</span>
+          <div className="absolute bottom-4 left-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 text-sm">
+            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100">Graph Stats</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 dark:text-gray-400 text-xs">Nodes:</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">{stats.totalNodes.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 dark:text-gray-400 text-xs">Edges:</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">{stats.totalEdges.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{stats.entities.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 transform rotate-45"></div>
+                <span className="font-medium text-gray-900 dark:text-gray-100">{stats.relations.toLocaleString()}</span>
+              </div>
+              {stats.chunks > 0 && (
+                <div className="flex items-center gap-2 col-span-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                  <span className="text-gray-500 dark:text-gray-400 text-xs">Chunks:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{stats.chunks.toLocaleString()}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Legend */}
-        <div className="absolute bottom-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 text-sm">
-          <div className="font-medium mb-2">Legend</div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-              <span>Entity</span>
+        {/* ✨ IMPROVED: Legend with better design */}
+        <div className="absolute bottom-4 right-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 text-sm">
+          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100">Node Types</h4>
+          </div>
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-3 group hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded transition-colors">
+              <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full border-2 border-blue-700 shadow-sm"></div>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">Entity</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 transform rotate-45"></div>
-              <span>Relation</span>
+            <div className="flex items-center gap-3 group hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors">
+              <div className="w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 border-2 border-red-700 shadow-sm transform rotate-45"></div>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">Relation</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500"></div>
-              <span>Chunk</span>
+            <div className="flex items-center gap-3 group hover:bg-green-50 dark:hover:bg-green-900/20 px-2 py-1 rounded transition-colors">
+              <div className="w-5 h-5 bg-gradient-to-br from-green-500 to-green-600 rounded border-2 border-green-700 shadow-sm"></div>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">Chunk</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-purple-500 rounded-sm"></div>
-              <span>Document</span>
+            <div className="flex items-center gap-3 group hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded transition-colors">
+              <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-purple-600 rounded-md border-2 border-purple-700 shadow-sm"></div>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">Document</span>
             </div>
           </div>
         </div>
@@ -273,6 +330,7 @@ export function GraphViz() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </GraphErrorBoundary>
   );
 }

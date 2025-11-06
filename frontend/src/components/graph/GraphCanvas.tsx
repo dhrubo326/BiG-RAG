@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, memo } from 'react';
+import React, { useEffect, useRef, useCallback, memo, useState } from 'react';
 import CytoscapeComponent from 'react-cytoscapejs';
 import cytoscape, { type Core, type EventObject } from 'cytoscape';
 import coseBilkent from 'cytoscape-cose-bilkent';
@@ -33,108 +33,160 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
 }) => {
   const cyRef = useRef<Core | null>(null);
 
-  // Cytoscape stylesheet
+  // ✅ FIXED: Simple, clean stylesheet with SMALL nodes and VISIBLE edges
   const stylesheet = [
-    // Node styles
+    // Default node styles - MUCH SMALLER
     {
       selector: 'node',
       style: {
         label: 'data(label)',
-        'text-valign': 'center' as any,
+        'text-valign': 'bottom' as any,
         'text-halign': 'center' as any,
+        'text-margin-y': 3,
         'background-color': (ele: any) => {
           const type = ele.data('type');
           return GRAPH_COLORS[type as keyof typeof GRAPH_COLORS] || GRAPH_COLORS.entity;
         },
-        width: (ele: any) => 30 + (ele.data('weight') || 0) * 20,
-        height: (ele: any) => 30 + (ele.data('weight') || 0) * 20,
+        // ✅ FIXED: Much smaller nodes - 20-25px only!
+        width: 20,
+        height: 20,
+        // ✅ FIXED: Smaller text to match
         'text-wrap': 'wrap' as any,
-        'text-max-width': '100px',
-        'font-size': '12px',
-        'border-width': 2,
-        'border-color': '#666',
+        'text-max-width': '60px',
+        'font-size': '9px',
+        'font-weight': '600',
+        'color': '#111',
+        'text-outline-color': '#fff',
+        'text-outline-width': 1,
+        'text-background-color': 'rgba(255, 255, 255, 0.8)',
+        'text-background-opacity': 1,
+        'text-background-padding': '2px',
+        // ✅ FIXED: Thin borders
+        'border-width': 1.5,
+        'border-color': '#555',
       },
     },
-    // Entity nodes
+    // Entity nodes - Blue circles
     {
       selector: 'node[type="entity"]',
       style: {
         shape: 'ellipse',
         'background-color': GRAPH_COLORS.entity,
+        'border-color': '#2563eb',
       },
     },
-    // Relation nodes (bipartite edges in the graph)
+    // Relation nodes - Red diamonds
     {
       selector: 'node[type="relation"]',
       style: {
         shape: 'diamond',
         'background-color': GRAPH_COLORS.relation,
+        'border-color': '#dc2626',
+        width: 22, // Slightly larger for visibility
+        height: 22,
       },
     },
-    // Chunk nodes
+    // Chunk nodes - Green rectangles
     {
       selector: 'node[type="chunk"]',
       style: {
-        shape: 'rectangle',
+        shape: 'roundrectangle',
         'background-color': GRAPH_COLORS.chunk,
+        'border-color': '#059669',
       },
     },
-    // Document nodes
+    // Document nodes - Purple rectangles
     {
       selector: 'node[type="document"]',
       style: {
         shape: 'roundrectangle',
         'background-color': GRAPH_COLORS.document,
+        'border-color': '#7c3aed',
       },
     },
     // Selected node
     {
       selector: 'node:selected',
       style: {
-        'background-color': GRAPH_COLORS.selected,
         'border-width': 3,
         'border-color': '#000',
+        'background-color': GRAPH_COLORS.selected,
       },
     },
     // Hovered node
     {
       selector: 'node.hover',
       style: {
-        'background-color': GRAPH_COLORS.hover,
         'border-width': 3,
-        'border-color': '#333',
+        'border-color': GRAPH_COLORS.hover,
       },
     },
     // Highlighted node (from search)
     {
       selector: 'node.highlighted',
       style: {
-        'border-width': 4,
-        'border-color': '#FFD700',
-        'background-color': '#FFA500',
+        'border-width': 3,
+        'border-color': '#f59e0b',
+        'background-color': '#fbbf24',
       },
     },
-    // Edge styles
+    // Pulse animation for search navigation
+    {
+      selector: 'node.pulse',
+      style: {
+        'border-width': 4,
+        'border-color': '#FF6B35',
+      },
+    },
+    // ✅ FIXED: THICK, VISIBLE edges!
     {
       selector: 'edge',
       style: {
-        width: (ele: any) => 1 + (ele.data('weight') || 0) * 3,
-        'line-color': '#ccc',
-        'target-arrow-color': '#ccc',
+        width: 2, // Thick enough to see clearly
+        'line-color': '#64748b', // Darker slate gray - very visible!
+        'target-arrow-color': '#64748b',
         'target-arrow-shape': 'triangle' as any,
+        'arrow-scale': 1.2,
         'curve-style': 'bezier' as any,
+        'line-style': 'solid',
+        opacity: 0.7,
+        label: '', // Hide labels by default
+        'font-size': '8px',
+        'text-background-color': '#fff',
+        'text-background-opacity': 1,
+        'text-background-padding': '2px',
+      },
+    },
+    // Edge on hover - show label
+    {
+      selector: 'edge:hover',
+      style: {
         label: 'data(label)',
-        'font-size': '10px',
-        'text-rotation': 'autorotate' as any,
+        width: 3,
+        'line-color': '#475569',
+        'target-arrow-color': '#475569',
+        opacity: 1,
       },
     },
     // Selected edge
     {
       selector: 'edge:selected',
       style: {
+        label: 'data(label)',
+        width: 3,
         'line-color': GRAPH_COLORS.selected,
         'target-arrow-color': GRAPH_COLORS.selected,
+        opacity: 1,
+      },
+    },
+    // Highlighted edges
+    {
+      selector: 'edge.highlighted',
+      style: {
         width: 3,
+        'line-color': '#f59e0b',
+        'target-arrow-color': '#f59e0b',
+        opacity: 1,
       },
     },
   ];
@@ -181,16 +233,38 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
   const handleCyReady = useCallback((cy: Core) => {
     cyRef.current = cy;
 
+    // Enable user interactions
+    cy.userZoomingEnabled(true);
+    cy.userPanningEnabled(true);
+    cy.boxSelectionEnabled(true);
+    cy.minZoom(0.1);
+    cy.maxZoom(3);
+
     // Set up event listeners
     cy.on('tap', 'node', handleNodeTap);
     cy.on('tap', handleBackgroundTap);
     cy.on('mouseover', 'node', handleNodeMouseOver);
     cy.on('mouseout', 'node', handleNodeMouseOut);
 
-    // Enable user interactions
-    cy.userZoomingEnabled(true);
-    cy.userPanningEnabled(true);
-    cy.boxSelectionEnabled(true);
+    // Mobile touch support
+    cy.on('taphold', 'node', handleNodeTap);
+
+    // Double-tap to zoom
+    let lastTap = 0;
+    cy.on('tap', 'node', (evt: EventObject) => {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        const node = evt.target;
+        if (node && node.isNode && node.isNode()) {
+          cy.animate({
+            center: { eles: node },
+            zoom: cy.zoom() * 1.5,
+            duration: 300,
+          });
+        }
+      }
+      lastTap = now;
+    });
 
     // Call parent's onReady
     onReady?.(cy);
@@ -200,10 +274,9 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
       name: layout,
       animate: true,
       animationDuration: 1000,
-      // Layout-specific options
       ...(layout === 'cose-bilkent' && {
-        idealEdgeLength: 100,
-        nodeRepulsion: 400000,
+        idealEdgeLength: 80,
+        nodeRepulsion: 200000,
         edgeElasticity: 0.45,
         nestingFactor: 0.1,
         gravity: 0.25,
@@ -217,7 +290,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         rankSep: 100,
       }),
       ...(layout === 'fcose' && {
-        idealEdgeLength: 100,
+        idealEdgeLength: 80,
         nodeRepulsion: 4500,
         edgeElasticity: 0.45,
         numIter: 2500,
@@ -240,12 +313,44 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
   // Prepare elements for Cytoscape
   const elements = [...nodes, ...edges];
 
+  // Debug logging
+  useEffect(() => {
+    console.log('[GraphCanvas] Rendering:', {
+      nodes: nodes.length,
+      edges: edges.length,
+      elements: elements.length,
+    });
+    if (edges.length > 0) {
+      console.log('[GraphCanvas] Sample edge:', edges[0]);
+    }
+  }, [nodes, edges, elements]);
+
   return (
-    <div className={`w-full h-full ${className}`}>
+    <div className={`w-full h-full ${className} relative`}>
+      {/* Professional background with grid pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(156, 163, 175, 0.1) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(156, 163, 175, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '30px 30px'
+          }}
+        />
+      </div>
+
+      {/* Graph canvas */}
       <CytoscapeComponent
         elements={elements}
         stylesheet={stylesheet}
-        style={{ width: '100%', height: '100%' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+          zIndex: 1,
+        }}
         cy={(cy: Core) => handleCyReady(cy)}
         wheelSensitivity={0.2}
       />

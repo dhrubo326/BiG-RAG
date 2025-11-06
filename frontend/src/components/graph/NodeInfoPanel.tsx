@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, ExternalLink, Search, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, ExternalLink, Search, FileText, Network, TrendingUp } from 'lucide-react';
 import type { CytoscapeNode } from '../../types';
 import { capitalize, formatScore } from '../../utils/formatters';
 
@@ -9,6 +9,18 @@ interface NodeInfoPanelProps {
   onViewDocument?: (docId: string) => void;
   onFindSimilar?: (nodeId: string) => void;
   onExpandNode?: (nodeId: string) => void;
+  // ✅ PHASE 2: Add Cytoscape instance for querying connections
+  cytoscapeInstance?: any;
+}
+
+interface ConnectionStats {
+  neighbors: number;
+  incomingEdges: number;
+  outgoingEdges: number;
+  totalEdges: number;
+  connectedEntities: number;
+  connectedRelations: number;
+  connectedChunks: number;
 }
 
 const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({
@@ -17,7 +29,52 @@ const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({
   onViewDocument,
   onFindSimilar,
   onExpandNode,
+  cytoscapeInstance,
 }) => {
+  const [connectionStats, setConnectionStats] = useState<ConnectionStats | null>(null);
+
+  // ✅ PHASE 2: Calculate connection statistics
+  useEffect(() => {
+    if (!node || !cytoscapeInstance) {
+      setConnectionStats(null);
+      return;
+    }
+
+    try {
+      const cyNode = cytoscapeInstance.$(`#${node.data.id}`);
+      if (!cyNode || cyNode.length === 0) {
+        setConnectionStats(null);
+        return;
+      }
+
+      // Get connected elements
+      const connectedEdges = cyNode.connectedEdges();
+      const neighbors = cyNode.neighborhood('node');
+
+      // Count by type
+      const connectedEntities = neighbors.filter('[type="entity"]').length;
+      const connectedRelations = neighbors.filter('[type="relation"]').length;
+      const connectedChunks = neighbors.filter('[type="chunk"]').length;
+
+      // Incoming/outgoing edges
+      const incomingEdges = cyNode.connectedEdges('[target="' + node.data.id + '"]').length;
+      const outgoingEdges = cyNode.connectedEdges('[source="' + node.data.id + '"]').length;
+
+      setConnectionStats({
+        neighbors: neighbors.length,
+        incomingEdges,
+        outgoingEdges,
+        totalEdges: connectedEdges.length,
+        connectedEntities,
+        connectedRelations,
+        connectedChunks,
+      });
+    } catch (err) {
+      console.error('Error calculating connection stats:', err);
+      setConnectionStats(null);
+    }
+  }, [node, cytoscapeInstance]);
+
   if (!node) return null;
 
   const { data } = node;
@@ -142,6 +199,72 @@ const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({
             <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
               X: {Math.round(node.position.x)}, Y: {Math.round(node.position.y)}
             </p>
+          </div>
+        )}
+
+        {/* ✅ PHASE 2: Connection Statistics */}
+        {connectionStats && (
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Network className="w-4 h-4 text-blue-500" />
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Connections
+              </label>
+            </div>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Neighbors:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {connectionStats.neighbors}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Total Edges:</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {connectionStats.totalEdges}
+                </span>
+              </div>
+              {connectionStats.incomingEdges > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Incoming:</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    {connectionStats.incomingEdges}
+                  </span>
+                </div>
+              )}
+              {connectionStats.outgoingEdges > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Outgoing:</span>
+                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                    {connectionStats.outgoingEdges}
+                  </span>
+                </div>
+              )}
+              {connectionStats.connectedEntities > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Entities:</span>
+                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                    {connectionStats.connectedEntities}
+                  </span>
+                </div>
+              )}
+              {connectionStats.connectedRelations > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Relations:</span>
+                  <span className="font-medium text-red-600 dark:text-red-400">
+                    {connectionStats.connectedRelations}
+                  </span>
+                </div>
+              )}
+              {connectionStats.connectedChunks > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Chunks:</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    {connectionStats.connectedChunks}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

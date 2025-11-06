@@ -1556,6 +1556,33 @@ async def get_graph_statistics(dataset: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"Failed to get graph statistics: {str(e)}")
 
 
+def _extract_relation_text(node_id: str) -> str:
+    """
+    Extract clean relation text from bipartite_edge node IDs.
+
+    Example:
+        Input: '<bipartite_edge>"Netflix is an American streaming service"'
+        Output: 'Netflix is an American streaming service'
+    """
+    import html
+
+    # Remove <bipartite_edge> prefix if present
+    text = node_id
+    if text.startswith("<bipartite_edge>"):
+        text = text[len("<bipartite_edge>"):]
+
+    # Decode HTML entities (e.g., &quot; -> ")
+    text = html.unescape(text)
+
+    # Remove surrounding quotes
+    if text.startswith('"') and text.endswith('"'):
+        text = text[1:-1]
+    elif text.startswith("'") and text.endswith("'"):
+        text = text[1:-1]
+
+    return text.strip()
+
+
 @app.get("/graph/export", tags=["Graph Management"])
 async def export_graph(
     data_source: str,
@@ -1662,11 +1689,19 @@ async def export_graph(
             if weight < min_weight:
                 continue
 
+            # Extract label based on node type
+            if node_type == "relation":
+                # For relation nodes, extract text from node_id
+                label = _extract_relation_text(node_id)
+            else:
+                # For entity/chunk nodes, use name attribute or node_id
+                label = attrs.get("name", node_id)
+
             # Lightweight node object (no descriptions yet)
             node = {
                 "id": node_id,
-                "label": attrs.get("name", node_id),
-                "name": attrs.get("name", node_id),
+                "label": label,
+                "name": label,
                 "type": node_type,
                 "description": "",  # Load later for sampled nodes only
                 "weight": weight,
@@ -1731,6 +1766,9 @@ async def export_graph(
         for node in sampled_nodes:
             if node["type"] == "chunk" and node["id"] in chunks_data:
                 node["description"] = chunks_data[node["id"]].get("content", "")[:500]
+            elif node["type"] == "relation":
+                # For relation nodes, the label IS the description
+                node["description"] = node["label"]
             else:
                 # Get from GraphML if not in chunks_data
                 node_attrs = G.nodes[node["id"]]

@@ -190,16 +190,21 @@ Input: User Query
 │  Model: cross-encoder/ms-marco-MiniLM-L-6-v2 (80MB)            │
 │                                                                  │
 │  Process:                                                        │
-│    1. Take 10 chunk candidates (5 direct + 5 indirect)         │
-│    2. Create query-chunk pairs                                  │
-│    3. Cross-encoder scores each pair                           │
-│    4. Combine with original score (70% rerank + 30% original)  │
-│    5. Sort by final score                                      │
-│    6. Return top-5 chunks                                      │
+│    1. Take chunk candidates (direct + indirect)                │
+│    2. Apply Weighted RRF scoring (Modified Approach 2):        │
+│       - Direct chunks: 1.0 × (1/position) weight               │
+│       - Indirect chunks: 0.7 × (1/position) weight             │
+│    3. Sort by weighted RRF scores                              │
 │                                                                  │
-│  If enable_reranking=False:                                     │
-│    • Skip reranking                                             │
-│    • Return all 10 chunks sorted by original scores            │
+│  If enable_reranking=True:                                      │
+│    • Create query-chunk pairs from top candidates              │
+│    • Cross-encoder scores each pair (replaces RRF scores)      │
+│    • Sort by cross-encoder scores                              │
+│    • Return top-5 chunks                                       │
+│                                                                  │
+│  If enable_reranking=False (default):                           │
+│    • Use weighted RRF scores (no neural reranking)             │
+│    • Return top-5 chunks sorted by weighted RRF                │
 │                                                                  │
 │  Performance:                                                    │
 │    • Latency: +50-100ms                                        │
@@ -281,20 +286,95 @@ The `mode` parameter is **reserved for future differentiation** where single-pat
 
 **Code Reference:**
 ```python
-# bigrag/operate.py lines 484-553
-async def kg_query(...):
-    # Always executes both paths:
-    knowledge_list_1 = await _get_node_data(...)      # Entity path
-    knowledge_list_2 = await _get_edge_data(...)       # Relation path
+# bigrag/operate.py - Three-Path Retrieval with Weighted RRF
+async def _build_query_context(...):
+    # Path A: Entity-based retrieval
+    knowledge_list_1 = await _get_node_data(...)
 
-    # Combine via RRF
-    for i, k in enumerate(knowledge_list_1):
-        score = 1/(i+1)
+    # Path B: Relation-based retrieval
+    knowledge_list_2 = await _get_edge_data(...)
+
+    # Path C: Chunk-based retrieval
+    knowledge_list_3 = await _get_chunk_data(...)
+
+    # Combine Paths A + B via standard RRF
+    know_score = dict()
+    for i, (k, source_ids) in enumerate(knowledge_list_1):
+        score = 1/(i+1)  # Standard RRF
         know_score[k] += score
-    for i, k in enumerate(knowledge_list_2):
-        score = 1/(i+1)
+
+    for i, (k, source_ids) in enumerate(knowledge_list_2):
+        score = 1/(i+1)  # Standard RRF
         know_score[k] += score
+
+    # Path C: Weighted RRF for chunks (Modified Approach 2)
+    chunk_knowledge = []
+    sorted_candidates = sorted(knowledge_list_3,
+                               key=lambda x: x.get("score", 0),
+                               reverse=True)
+
+    for i, chunk in enumerate(sorted_candidates):
+        if chunk["source"] == "direct_vector":
+            # Direct chunks: full RRF weight (semantic relevance)
+            score = 1.0 * (1/(i+1))
+        else:  # indirect_graph
+            # Indirect chunks: 70% weight (structural relevance)
+            score = 0.7 * (1/(i+1))
+
+        chunk_knowledge.append({
+            "content": chunk["content"],
+            "score": score,
+            "type": chunk["source"]
+        })
+
+    # Top-5 structured (A+B) + Top-5 chunks (C) = 10 total
+    return structured_knowledge[:5] + chunk_knowledge[:5]
 ```
+
+---
+
+### 🔧 Weighted RRF for Chunks (Modified Approach 2)
+
+**Why Weighted RRF?**
+
+Path C retrieval produces two types of chunks:
+1. **Direct chunks**: From vector similarity search (semantic relevance)
+2. **Indirect chunks**: From graph traversal via matched entities/relations (structural relevance)
+
+**The Problem:**
+Without weighted scoring, indirect chunks were unfairly penalized:
+- They were appended after direct chunks in the list
+- Position-based RRF scoring gave them low scores (1/6, 1/7, etc.)
+- Many indirect chunks were excluded from final top-5 despite having structural importance
+
+**The Solution:**
+Apply **weighted RRF** based on chunk source type:
+
+```
+Direct chunks (semantic match):     score = 1.0 × (1/position)
+Indirect chunks (structural match): score = 0.7 × (1/position)
+```
+
+**Example Scoring:**
+
+| Position | Source    | Original Score | Weighted RRF | Final Score |
+|----------|-----------|----------------|--------------|-------------|
+| 1        | Direct    | 0.92 (cosine)  | 1.0 × 1/1    | 1.000       |
+| 2        | Indirect  | 0.50 (default) | 0.7 × 1/2    | 0.350       |
+| 3        | Direct    | 0.85 (cosine)  | 1.0 × 1/3    | 0.333       |
+| 4        | Indirect  | 0.50 (default) | 0.7 × 1/4    | 0.175       |
+| 5        | Direct    | 0.78 (cosine)  | 1.0 × 1/5    | 0.200       |
+
+**Key Benefits:**
+- ✅ **Fair scoring**: Indirect chunks valued but not over-weighted
+- ✅ **Better coverage**: Both semantic and structural information preserved
+- ✅ **Tunable**: The 0.7 weight can be adjusted based on empirical results
+- ✅ **Reranking compatible**: When `enable_reranking=True`, cross-encoder replaces all scores seamlessly
+
+**When Reranking is Enabled:**
+The weighted RRF scores are completely replaced by cross-encoder semantic scores (0.0-1.0), providing a unified scoring mechanism across all chunks regardless of source.
+
+---
 
 **Bipartite Graph Traversal:**
 

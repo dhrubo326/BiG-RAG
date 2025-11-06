@@ -19,12 +19,16 @@ from bigrag.llm import gpt_4o_mini_complete, openai_embedding
 from bigrag.utils import logger
 from bigrag.config import config
 
+# Ensure logs directory exists
+logs_dir = os.path.join(os.getcwd(), "logs")
+os.makedirs(logs_dir, exist_ok=True)
+
 # Configure logging (UTF-8 encoding for Windows console)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('build_graph.log', encoding='utf-8'),
+        logging.FileHandler(os.path.join(logs_dir, 'build_graph.log'), encoding='utf-8'),
         logging.StreamHandler()
     ]
 )

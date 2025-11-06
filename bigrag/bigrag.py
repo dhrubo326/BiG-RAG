@@ -169,7 +169,11 @@ class BiGRAG:
     convert_response_to_json_func: callable = convert_response_to_json
 
     def __post_init__(self):
-        log_file = os.path.join("bigrag.log")
+        # Ensure logs directory exists
+        logs_dir = os.path.join(os.getcwd(), "logs")
+        os.makedirs(logs_dir, exist_ok=True)
+
+        log_file = os.path.join(logs_dir, "bigrag.log")
         set_logger(log_file)
         logger.setLevel(self.log_level)
 

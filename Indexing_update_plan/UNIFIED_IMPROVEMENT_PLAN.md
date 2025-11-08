@@ -29,18 +29,81 @@ Industry-standard patterns from LightRAG that improve maintainability (3 recomme
 
 ## Table of Contents
 
-1. [Current State Assessment](#1-current-state-assessment)
-2. [Category A: Indexing Structure Fixes](#2-category-a-indexing-structure-fixes)
-3. [Category B: LightRAG Best Practices](#3-category-b-lightrag-best-practices)
-4. [Implementation Roadmap](#4-implementation-roadmap)
-5. [Risk Assessment](#5-risk-assessment)
-6. [Success Criteria](#6-success-criteria)
+1. [BiG-RAG Architecture Fundamentals](#1-bigrag-architecture-fundamentals)
+2. [Current State Assessment](#2-current-state-assessment)
+3. [Category A: Indexing Structure Fixes](#3-category-a-indexing-structure-fixes)
+4. [Category B: LightRAG Best Practices](#4-category-b-lightrag-best-practices)
+5. [Implementation Roadmap](#5-implementation-roadmap)
+6. [Risk Assessment](#6-risk-assessment)
+7. [Success Criteria](#7-success-criteria)
+8. [Implementation Order](#8-implementation-order-recommended)
+9. [Release & Rollout](#9-release--rollout)
+10. [What NOT to Implement](#10-what-not-to-implement)
+11. [Related Documents](#11-related-documents)
+12. [Conclusion](#12-conclusion)
 
 ---
 
-## 1. Current State Assessment
+## 1. BiG-RAG Architecture Fundamentals
 
-### 1.1 What BiG-RAG Already Has ✅
+### 1.1 Bipartite Graph Structure
+
+BiG-RAG uses a **true bipartite graph** where relations are **first-class citizens** (nodes), not edge attributes.
+
+**Three Types in GraphML:**
+
+**Type 1: Bipartite Edge Node (Relation Node)**
+```xml
+<node id="rel-abc123xyz">
+  <data key="d0">bipartite_edge</data>
+  <data key="content">Messi scored 11 goals for Inter Miami in 2024.</data>
+  <data key="d1">22.0</data>  <!-- weight -->
+  <data key="d2">chunk-xyz</data>  <!-- source_id -->
+</node>
+```
+- **Why a NODE?** Relations can be embedded, queried, weighted, and ranked independently
+- Enables semantic search: `vdb_bipartite_edges.query("who scored goals for Miami?")`
+
+**Type 2: Entity Node**
+```xml
+<node id="LIONEL MESSI">
+  <data key="d0">entity</data>
+  <data key="d3">person</data>  <!-- entity_type -->
+  <data key="d4">Lionel Messi is a professional footballer.</data>
+  <data key="d1">270.0</data>  <!-- weight -->
+</node>
+```
+
+**Type 3: Graph Edge (Connector)**
+```xml
+<edge source="rel-abc123xyz" target="LIONEL MESSI">
+  <data key="d5">22.0</data>  <!-- weight -->
+</edge>
+```
+- Connects: `bipartite_edge ↔ entity` (never `entity ↔ entity`)
+- This enforces the bipartite constraint
+
+### 1.2 Why "Bipartite Edge" is Confusing
+
+The term appears in **two contexts**:
+1. `<node role="bipartite_edge">` → A **NODE** representing a relation
+2. `<edge>` → A **graph edge** connecting nodes
+
+**Historical naming from GraphR1 framework.** The relation NODE is called "bipartite_edge" because it connects two layers of the bipartite structure.
+
+### 1.3 Key Benefits
+
+1. **Relations are First-Class Citizens**: Can be embedded, queried, ranked independently
+2. **Three-Path Retrieval**: Query entities (Path A) + relations (Path B) + chunks (Path C)
+3. **Multi-Hop Reasoning**: Graph traversal enables complex queries
+4. **Incremental Updates**: Add documents without rebuilding entire graph
+5. **Provenance Tracking**: `source_id` links back to original chunks
+
+---
+
+## 2. Current State Assessment
+
+### 2.1 What BiG-RAG Already Has ✅
 
 After code inspection, BiG-RAG already implements several "recommended" features:
 
@@ -55,7 +118,7 @@ After code inspection, BiG-RAG already implements several "recommended" features
 
 **Conclusion**: BiG-RAG already has **excellent infrastructure**. The LightRAG analysis unknowingly recommended things that already exist!
 
-### 1.2 What Needs Fixing ❌
+### 2.2 What Needs Fixing ❌
 
 **From BiG-RAG Analysis (3 valid issues):**
 
@@ -91,7 +154,7 @@ After code inspection, BiG-RAG already implements several "recommended" features
 
 ---
 
-## 2. Category A: Indexing Structure Fixes
+## 3. Category A: Indexing Structure Fixes
 
 ### Issue A1: Hash-Based Node IDs (HIGH PRIORITY)
 
@@ -120,8 +183,6 @@ After code inspection, BiG-RAG already implements several "recommended" features
 - Standards-compliant
 - Consistent with vector DB (already uses hash IDs)
 
-**Implementation**: See [BIPARTITE_EDGE_NODE_ID_REFACTORING_PLAN.md](BIPARTITE_EDGE_NODE_ID_REFACTORING_PLAN.md)
-
 **Files to Modify**:
 - `bigrag/operate.py:151` - Generate hash ID instead of `"<bipartite_edge>"+content`
 - `bigrag/operate.py:157-188` - Update `_merge_bipartite_edges_then_upsert()`
@@ -129,25 +190,113 @@ After code inspection, BiG-RAG already implements several "recommended" features
 - `bigrag/operate.py:518-520` - Remove redundant hashing in VDB upsertion
 - `bigrag/storage.py:246-249` - Skip uppercase transformation for hash IDs
 
-**Code Change**:
+**Implementation Details (7 Phases)**:
+
+**Phase 1**: Node Creation (`bigrag/operate.py:142-154`)
 ```python
-# bigrag/operate.py:151 (BEFORE)
+# BEFORE
 return dict(
     hyper_relation="<bipartite_edge>"+knowledge_fragment,
     weight=weight,
     source_id=edge_source_id,
 )
 
-# bigrag/operate.py:151 (AFTER)
+# AFTER
 from .utils import compute_mdhash_id
+from .constants import BIPARTITE_EDGE_PREFIX
 
-edge_id = compute_mdhash_id(knowledge_fragment, prefix="rel-")
+edge_id = compute_mdhash_id(knowledge_fragment, prefix=BIPARTITE_EDGE_PREFIX)
 return dict(
-    hyper_relation=edge_id,  # Hash ID
+    hyper_relation=edge_id,  # "rel-abc123xyz"
     hyper_relation_content=knowledge_fragment,  # Store content separately
     weight=weight,
     source_id=edge_source_id,
 )
+```
+
+**Phase 2**: Node Merging (`bigrag/operate.py:157-186`)
+- Change function signature to accept both `bipartite_edge_id` (hash) and `bipartite_edge_content` (text)
+- Store content as node attribute: `"content": bipartite_edge_content`
+- Use hash ID for graph operations
+
+**Phase 3**: Caller Updates (`bigrag/operate.py:~400`)
+- Extract content from first item in group: `edge_content = group_data[0]["hyper_relation_content"]`
+- Pass both ID and content to merge function
+
+**Phase 4**: Vector DB Updates (`bigrag/operate.py:518-520`)
+- Remove redundant hashing: `dp["bipartite_edge_name"]` is already hash ID
+- Use `dp["bipartite_edge_content"]` for content field
+
+**Phase 5**: Query Updates (`bigrag/operate.py:~890-920`)
+- Use `"content"` field instead of `"description"` when processing edge data
+- Fallback: `content = edge_data.get("content", edge_data.get("description", ""))`
+
+**Phase 6**: Display Formatting (`bigrag/operate.py:~776`)
+- Remove `<bipartite_edge>` prefix stripping (no longer needed)
+- Use content field directly
+
+**Phase 7**: GraphML Stabilization (`bigrag/storage.py:246-249`)
+- Skip uppercase transformation for hash IDs
+- Check if node starts with `"rel-"`, `"ent-"`, or `"chunk-"` prefix
+
+**Migration Strategy**:
+
+**Option A: Clean Break (Recommended)**
+- Require graph rebuild after upgrade
+- Provide version check script:
+```python
+# check_graph_version.py
+import networkx as nx
+import sys
+
+graph = nx.read_graphml("expr/demo_test/graph_chunk_entity_relation.graphml")
+for node in graph.nodes():
+    if node.startswith("<BIPARTITE_EDGE>") or "<bipartite_edge>" in node.lower():
+        print("ERROR: Old graph format detected!")
+        print("Please rebuild: python script_build.py --data_source YOUR_DATASET")
+        sys.exit(1)
+print("Graph format OK (v2.0+)")
+```
+
+**Testing Checklist**:
+- [ ] Unit tests for `_pack_hyper_relations()` (verify hash IDs)
+- [ ] Integration test: build graph, verify all bipartite nodes use `rel-*` IDs
+- [ ] File size validation: measure 30-40% reduction
+- [ ] Performance benchmark: measure 5-10x speedup in node lookups
+- [ ] Regression test: ensure retrieval still works correctly
+
+**Hash Function Specification**:
+```python
+def compute_mdhash_id(content: str, prefix: str = "") -> str:
+    """Generate MD5 hash-based ID: {prefix}{32-char-md5-hex}"""
+    import hashlib
+    hash_obj = hashlib.md5(content.encode('utf-8'))
+    return f"{prefix}{hash_obj.hexdigest()}"
+```
+- Deterministic: Same input → same output
+- Fixed length: 32 hex chars + prefix (e.g., "rel-")
+- Fast: ~1 microsecond per hash
+
+**Estimated Impact**:
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| GraphML file size | 109 KB | ~75 KB | -31% |
+| Average node ID length | ~200 chars | 36 chars | -82% |
+| Node lookup time | ~0.08 ms | ~0.01 ms | 8x faster |
+| Memory usage | ~2.5 MB | ~1.8 MB | -28% |
+
+**GraphML Schema Changes**:
+
+**Before (v1.x)**:
+```xml
+<key id="d4" for="node" attr.name="description" attr.type="string"/>
+```
+
+**After (v2.0)**:
+```xml
+<key id="d3" for="node" attr.name="content" attr.type="string"/>      <!-- NEW -->
+<key id="d4" for="node" attr.name="description" attr.type="string"/>  <!-- Deprecated -->
 ```
 
 **Effort**: 2 days (code + testing)
@@ -196,8 +345,6 @@ def normalize_entity_type(extracted_type: str, allowed_types: list = None) -> st
     return "category"
 ```
 
-**Implementation**: See [ENTITY_TYPE_VALIDATION_PLAN.md](ENTITY_TYPE_VALIDATION_PLAN.md)
-
 **Effort**: 0.5 days
 **Breaking Change**: NO (backward compatible)
 
@@ -235,7 +382,31 @@ Interpretation:
   - 5-9: Single mention
 ```
 
-**Implementation**: See [WEIGHT_SEMANTICS_DOCUMENTATION_PLAN.md](WEIGHT_SEMANTICS_DOCUMENTATION_PLAN.md)
+**Why Not Normalize Weights?**
+
+BiG-RAG intentionally uses **unnormalized weights** for three reasons:
+
+1. **Frequency Signal Preservation**:
+   - Weight 400 vs 100 shows entity mentioned 4x more often
+   - Helps identify central vs peripheral entities
+   - Normalized weights lose this information
+
+2. **Incremental Construction**:
+   - Adding new documents: `weight_new = weight_old + new_score`
+   - Normalized weights require recalculating ALL entities
+   - Unnormalized supports incremental updates
+
+3. **Ranking Flexibility**:
+   - Raw weights allow query-time normalization strategies
+   - Can apply linear, log-scale, or custom ranking
+   - Different use cases need different treatments
+
+**If you need normalized weights**, calculate at query time:
+```python
+max_weight = max(entity['weight'] for entity in entities)
+for entity in entities:
+    entity['normalized'] = entity['weight'] / max_weight
+```
 
 **Files to Update**:
 - `CLAUDE.md` (add Weight Semantics section)
@@ -248,7 +419,7 @@ Interpretation:
 
 ---
 
-## 3. Category B: LightRAG Best Practices
+## 4. Category B: LightRAG Best Practices
 
 ### Rec B1: Improve Entity Extraction Prompts (PRIORITY 1)
 
@@ -516,7 +687,7 @@ async def extract_entities(...):
 
 ---
 
-## 4. Implementation Roadmap
+## 5. Implementation Roadmap
 
 ### Critical Fixes (Days 1-3)
 
@@ -570,9 +741,9 @@ async def extract_entities(...):
 
 ---
 
-## 5. Risk Assessment
+## 6. Risk Assessment
 
-### 5.1 Breaking Changes
+### 6.1 Breaking Changes
 
 | Change | Breaking | Mitigation |
 |--------|----------|------------|
@@ -588,7 +759,7 @@ async def extract_entities(...):
 
 ---
 
-### 5.2 Testing Strategy
+### 6.2 Testing Strategy
 
 **For Each Change**:
 1. **Unit Tests**: Test in isolation
@@ -602,7 +773,7 @@ async def extract_entities(...):
 
 ---
 
-### 5.3 Rollback Plan
+### 6.3 Rollback Plan
 
 **Issue A1 (Hash IDs)**:
 - Keep backup of old graphs
@@ -615,7 +786,7 @@ async def extract_entities(...):
 
 ---
 
-## 6. Success Criteria
+## 7. Success Criteria
 
 ### Category A: Indexing Fixes
 
@@ -668,7 +839,7 @@ async def extract_entities(...):
 
 ---
 
-## 7. Implementation Order (Recommended)
+## 8. Implementation Order (Recommended)
 
 **Priority 1: Must Do (Days 1-3)**
 1. A1: Hash-Based Node IDs (2 days)
@@ -689,7 +860,88 @@ async def extract_entities(...):
 
 ---
 
-## 8. What NOT to Implement
+## 9. Release & Rollout
+
+### 9.1 Pre-Release Checklist (Issue A1)
+
+- [ ] All 7 phases implemented and tested
+- [ ] Unit tests passing
+- [ ] Integration tests passing
+- [ ] File size reduction validated (30-40%)
+- [ ] Performance improvement measured (5-10x)
+- [ ] Migration guide written
+- [ ] Version check script created (`check_graph_version.py`)
+- [ ] Release notes drafted
+- [ ] Documentation updated (CLAUDE.md, README.md)
+
+### 9.2 Release Notes Template (v2.0)
+
+```markdown
+# BiG-RAG v2.0 - Breaking Change: Hash-Based Node IDs
+
+## Summary
+Refactored bipartite edge node IDs from raw content strings to hash-based
+identifiers, resulting in 30-40% smaller GraphML files and 5-10x faster queries.
+
+## Breaking Changes
+⚠️ **Graphs built with BiG-RAG < v2.0 are incompatible with this version.**
+
+You must rebuild your knowledge graphs after upgrading.
+
+## Migration Steps
+1. Backup existing graphs:
+   ```bash
+   cp -r expr/YOUR_DATASET expr/YOUR_DATASET_backup
+   ```
+
+2. Update BiG-RAG:
+   ```bash
+   git pull
+   pip install -e .
+   ```
+
+3. Rebuild graphs:
+   ```bash
+   python script_build.py --data_source YOUR_DATASET
+   ```
+
+4. Verify new format:
+   ```bash
+   python check_graph_version.py
+   ```
+
+## Improvements
+- **File Size**: 30-40% reduction
+- **Performance**: 5-10x faster node lookups
+- **Standards**: GraphML-compliant node IDs
+- **Consistency**: Aligned with vector DB implementation
+
+## Estimated Rebuild Time
+- Small (1K docs): 30 minutes
+- Medium (10K docs): 3-4 hours
+- Large (100K docs): 1-2 days
+```
+
+### 9.3 FAQ
+
+**Q: Can I keep my old graphs?**
+A: No, you must rebuild. The new code cannot read old-format graphs.
+
+**Q: Will this affect my vector DBs?**
+A: No, vector DBs already use hash IDs. Only GraphML changes.
+
+**Q: Can I roll back?**
+A: Yes, keep backup of old graphs and old BiG-RAG version.
+
+**Q: Do entity nodes also use hash IDs?**
+A: No, entity nodes still use entity names as IDs (e.g., "LIONEL MESSI"). Only bipartite edge nodes change.
+
+**Q: Why not use UUIDs instead of MD5 hashes?**
+A: Hashes are deterministic (same content → same ID), which is important for deduplication. UUIDs are random.
+
+---
+
+## 10. What NOT to Implement
 
 Based on current BiG-RAG state, **do NOT implement**:
 
@@ -705,22 +957,27 @@ Based on current BiG-RAG state, **do NOT implement**:
 
 ---
 
-## 9. Related Documents
+## 11. Related Documents
 
-### Implementation Details:
-- [BIPARTITE_EDGE_NODE_ID_REFACTORING_PLAN.md](BIPARTITE_EDGE_NODE_ID_REFACTORING_PLAN.md) - Issue A1
-- [ENTITY_TYPE_VALIDATION_PLAN.md](ENTITY_TYPE_VALIDATION_PLAN.md) - Issue A2
-- [WEIGHT_SEMANTICS_DOCUMENTATION_PLAN.md](WEIGHT_SEMANTICS_DOCUMENTATION_PLAN.md) - Issue A3
-- [LIGHTRAG_ANALYSIS_AND_RECOMMENDATIONS.md](LIGHTRAG_ANALYSIS_AND_RECOMMENDATIONS.md) - Full analysis
+### This Document Consolidates:
 
-### Summaries:
+This unified plan consolidates insights from multiple analysis documents:
+- ✅ **BiG-RAG Indexing Analysis** → Category A (Section 3)
+- ✅ **LightRAG Best Practices Analysis** → Category B (Section 4)
+- ✅ **Implementation roadmaps** → Section 5
+- ✅ **Risk assessments** → Section 6
+- ✅ **Architecture fundamentals** → Section 1
+
+All recommendations are implementation-ready with code samples and effort estimates.
+
+### Supporting Documents:
 - [KNOWLEDGE_GRAPH_IMPROVEMENTS_SUMMARY.md](KNOWLEDGE_GRAPH_IMPROVEMENTS_SUMMARY.md) - BiG-RAG issues summary
-- [LIGHTRAG_QUICK_SUMMARY.md](LIGHTRAG_QUICK_SUMMARY.md) - LightRAG recommendations summary
+- [LIGHTRAG_QUICK_SUMMARY.md](LIGHTRAG_QUICK_SUMMARY.md) - LightRAG recommendations quick reference
 - [SESSION_2025_01_08_SUMMARY.md](SESSION_2025_01_08_SUMMARY.md) - Session context
 
 ---
 
-## 10. Conclusion
+## 12. Conclusion
 
 ### BiG-RAG is Fundamentally Sound
 

@@ -11,6 +11,7 @@ Comprehensive testing framework for BiG-RAG to ensure production-ready quality.
 ```cmd
 cd tests
 pip install -r requirements-test.txt
+pip install -e ..
 ```
 
 ### 2. Set Environment Variables (Optional)
@@ -26,18 +27,105 @@ REM To enable verbose logging
 set BIGRAG_LOG_LEVEL=DEBUG
 ```
 
-### 3. Run Tests
+### 3. Run Tests (SYSTEMATIC APPROACH - RECOMMENDED)
+
+**IMPORTANT: Follow this order for proper validation**
 
 ```cmd
-REM Run all tests
-pytest
+REM PHASE 1: Critical Path (MUST PASS BEFORE PROCEEDING)
+pytest tests/e2e/test_full_pipeline.py tests/regression/test_bug_fixes.py -v
+REM If any test fails, STOP and fix immediately
 
-REM Run with coverage report
-pytest --cov=bigrag --cov-report=html
+REM PHASE 2: Unit Tests (Core Component Validation)
+pytest tests/unit/ -v --cov=bigrag --cov-report=html
+REM Target: >=95% pass rate, 85%+ coverage
 
-REM Run specific phase (recommended for first-time)
-pytest tests/e2e/test_full_pipeline.py -v
+REM PHASE 3: Integration Tests (Component Interactions)
+pytest tests/integration/ -v
+REM Target: >=90% pass rate
+
+REM PHASE 4: End-to-End Tests (Complete Workflows)
+pytest tests/e2e/ -v
+REM Target: >=90% pass rate
+
+REM PHASE 5: API Tests (Requires Backend Running)
+REM Terminal 1: cd backend && python server.py --data_source demo_test
+REM Terminal 2: pytest tests/api/ -v
+
+REM PHASE 6: Performance & Edge Cases (Robustness)
+pytest tests/performance/ tests/edge_cases/ -v
 ```
+
+---
+
+## Serious Testing Protocol (Production Readiness)
+
+### Pre-Deployment Validation Checklist
+
+**Before declaring BiGRAG production-ready, complete ALL steps:**
+
+#### Step 1: Clean Environment Setup
+```cmd
+cd tests
+python -m venv test_venv
+test_venv\Scripts\activate
+pip install -r requirements-test.txt
+pip install -e ..
+```
+
+#### Step 2: Critical Path Validation (ZERO TOLERANCE)
+```cmd
+pytest tests/e2e/test_full_pipeline.py::test_complete_pipeline -v
+pytest tests/regression/test_bug_fixes.py -v
+```
+**SUCCESS CRITERIA: 100% pass rate. Any failure is a BLOCKER.**
+
+#### Step 3: Comprehensive Unit Test Coverage
+```cmd
+pytest tests/unit/ -v --cov=bigrag --cov-report=html --cov-report=term
+```
+**SUCCESS CRITERIA:**
+- Pass rate >= 95%
+- Code coverage >= 85% (check htmlcov/index.html)
+- All 6 bug fixes validated in regression tests
+- New features (chunking, graph building, embedding, retrieval) all tested
+
+#### Step 4: Integration & E2E Validation
+```cmd
+pytest tests/integration/ tests/e2e/ -v --durations=10
+```
+**SUCCESS CRITERIA:**
+- Pass rate >= 90%
+- No unexpected failures
+- Document any skipped tests with justification
+
+#### Step 5: API & Performance Validation
+```cmd
+REM Terminal 1: Start backend
+cd backend
+python server.py --data_source demo_test
+
+REM Terminal 2: Run API tests
+cd tests
+pytest tests/api/ -v
+
+REM Performance & stress tests
+pytest tests/performance/ tests/edge_cases/ -v
+```
+**SUCCESS CRITERIA:**
+- All API tests pass
+- API response time < 2 seconds (95th percentile)
+- No crashes with 1000+ documents
+- Edge cases handled gracefully
+
+#### Step 6: Generate Test Report
+```cmd
+pytest --cov=bigrag --cov-report=html --html=test_report.html --self-contained-html
+```
+**DELIVERABLES:**
+- htmlcov/index.html (coverage report)
+- test_report.html (test results)
+- Document pass rates and coverage metrics
 
 ---
 
@@ -58,9 +146,13 @@ tests/
 |
 |-- unit/                          # Unit tests (60% coverage)
 |   |-- test_base.py               # Base classes and schemas
+|   |-- test_chunking.py           # NEW: Comprehensive chunking tests
 |   |-- test_config.py             # Configuration management
+|   |-- test_embedding.py          # NEW: Embedding preparation tests
+|   |-- test_graph_building.py     # NEW: Graph construction tests
 |   |-- test_operate.py            # Graph operations
 |   |-- test_reranker.py           # Semantic reranking
+|   |-- test_retrieval.py          # NEW: Retrieval logic tests (RRF, paths)
 |   |-- test_storage.py            # Storage layer
 |   `-- test_utils.py              # Utility functions
 |
@@ -519,12 +611,18 @@ pytest --html=report.html --self-contained-html
 
 ## Test Suite Statistics
 
-- **Total Test Files:** 21
-- **Estimated Test Count:** 150+
+- **Total Test Files:** 25 (4 NEW unit tests added)
+- **Estimated Test Count:** 200+
 - **Execution Time:** ~15-30 minutes (full suite)
-- **Code Coverage Target:** 80%+
+- **Code Coverage Target:** 85%+ (increased with new tests)
 - **Platform:** Windows (primary), Linux (untested)
 - **Python Version:** 3.11+
+
+### New Test Coverage (Added 2025-01-09)
+- **test_chunking.py**: 40+ tests for document chunking logic
+- **test_graph_building.py**: 30+ tests for graph construction
+- **test_embedding.py**: 35+ tests for embedding preparation
+- **test_retrieval.py**: 40+ tests for retrieval logic (RRF, paths A/B/C)
 
 ---
 

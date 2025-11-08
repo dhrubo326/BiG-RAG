@@ -55,7 +55,7 @@
 
 | Test Type | Files | Coverage Target | Priority |
 |-----------|-------|-----------------|----------|
-| Unit Tests | 6 files | 60% of tests | HIGH |
+| Unit Tests | 10 files (+4 NEW) | 60% of tests | HIGH |
 | Integration Tests | 4 files | 30% of tests | HIGH |
 | End-to-End Tests | 3 files | 10% of tests | CRITICAL |
 | Regression Tests | 1 file | 6 bug fixes | CRITICAL |
@@ -64,7 +64,17 @@
 | Performance Tests | 2 files | Stress testing | MEDIUM |
 | Edge Cases | 1 file | Error handling | HIGH |
 
-**Total Test Files:** 21+
+**Total Test Files:** 25+ (4 new unit tests added 2025-01-09)
+
+### NEW Unit Tests (2025-01-09)
+1. **test_chunking.py** - Comprehensive chunking tests (40+ tests)
+   - Basic chunking, metadata preservation, edge cases
+2. **test_graph_building.py** - Graph construction tests (30+ tests)
+   - Node creation, weight aggregation, graph structure
+3. **test_embedding.py** - Embedding preparation tests (35+ tests)
+   - Function wrapping, batch processing, dimensions
+4. **test_retrieval.py** - Retrieval logic tests (40+ tests)
+   - RRF scoring, paths A/B/C, weighted retrieval
 
 ---
 

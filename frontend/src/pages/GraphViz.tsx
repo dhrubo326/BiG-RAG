@@ -20,6 +20,8 @@ import NodeInfoPanel from '../components/graph/NodeInfoPanel';
 import GraphErrorBoundary from '../components/graph/GraphErrorBoundary'; // ✅ PHASE 2
 import GraphTooltip from '../components/graph/GraphTooltip'; // ✅ PHASE 4.2
 import type { GraphLayout, CytoscapeNode } from '../types';
+import api from '../services/api';
+import type { HealthResponse } from '../types/api';
 
 export function GraphViz() {
   const {
@@ -49,17 +51,49 @@ export function GraphViz() {
   const [cyInstance, setCyInstance] = useState<Core | null>(null);
   const [showHelp, setShowHelp] = useState(false);
 
+  // Dataset selection state
+  const [selectedDataset, setSelectedDataset] = useState<string>('SingleTopic');
+  const [serverDataset, setServerDataset] = useState<string>('SingleTopic');
+  const [availableDatasets] = useState<string[]>([
+    'SingleTopic',
+    'demo_test',
+    '2WikiMultiHopQA',
+    'HotpotQA',
+    'Musique',
+    'NQ',
+    'PopQA',
+    'TriviaQA'
+  ]);
+
   // ✅ PHASE 4.2: Tooltip state
   const [hoveredNode, setHoveredNode] = useState<CytoscapeNode | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipConnectionCount, setTooltipConnectionCount] = useState<number | undefined>();
+
+  // Fetch server's default dataset from health check
+  useEffect(() => {
+    const fetchServerDataset = async () => {
+      try {
+        const response = await api.get<HealthResponse>('/');
+        if (response.data.data_source) {
+          setServerDataset(response.data.data_source);
+          setSelectedDataset(response.data.data_source); // Use server's dataset as default
+        }
+      } catch (error) {
+        console.error('Failed to fetch server dataset:', error);
+        // Keep default 'SingleTopic' if fetch fails
+      }
+    };
+
+    fetchServerDataset();
+  }, []);
 
   // Load graph on mount with performance-optimized settings
   useEffect(() => {
     // Load with sampling for large graphs (default: top 1000 nodes)
     const loadGraphData = async () => {
       try {
-        await loadGraph('SingleTopic', {
+        await loadGraph(selectedDataset, {
           limit: 1000, // Show top 1000 nodes
           sampleStrategy: 'diverse', // Get balanced mix of entities, relations, chunks
         });
@@ -70,16 +104,22 @@ export function GraphViz() {
     };
 
     loadGraphData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedDataset, loadGraph]); // Reload when dataset changes
 
   // ✅ PHASE 2: Handle error boundary reset
   const handleErrorReset = () => {
     // Clear graph state and reload
     clearGraph();
-    loadGraph('SingleTopic', {
+    loadGraph(selectedDataset, {
       limit: 1000,
       sampleStrategy: 'diverse',
     });
+  };
+
+  // Handle dataset change
+  const handleDatasetChange = (newDataset: string) => {
+    setSelectedDataset(newDataset);
+    toast.info(`Switching to ${newDataset} dataset...`);
   };
 
   // Handle Cytoscape initialization
@@ -190,6 +230,30 @@ export function GraphViz() {
   return (
     <GraphErrorBoundary onReset={handleErrorReset}>
       <div className="h-[calc(100vh-8rem)] flex flex-col relative">
+      {/* Dataset Selector */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Dataset:
+          </label>
+          <select
+            value={selectedDataset}
+            onChange={(e) => handleDatasetChange(e.target.value)}
+            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+            {availableDatasets.map((dataset) => (
+              <option key={dataset} value={dataset}>
+                {dataset}
+                {dataset === serverDataset && ' (Server Default)'}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            Server using: <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{serverDataset}</span>
+          </span>
+        </div>
+      </div>
+
       {/* Toolbar */}
       <GraphToolbar
         layout={layout}

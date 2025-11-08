@@ -271,6 +271,55 @@ npm install cytoscape-cose-bilkent cytoscape-dagre cytoscape-fcose cytoscape-col
 **Status:** Low priority, non-blocking
 **Solution:** Add ThemeProvider wrapper (15 min task)
 
+#### 4. Graph Dataset Selection (FIXED - Nov 8, 2025)
+**Issue:** Graph visualization was hardcoded to 'SingleTopic' dataset
+**Impact:** Couldn't view graphs for other datasets (demo_test, 2WikiMultiHopQA, etc.)
+**Solution:** ✅ Added dataset dropdown directly on Graph page
+**Files Changed:** [frontend/src/pages/GraphViz.tsx](frontend/src/pages/GraphViz.tsx)
+
+**How it Works:**
+1. Fetches server's default dataset from health check API (`GET /`)
+2. Displays dropdown with all available datasets
+3. Auto-selects server's dataset on page load
+4. Allows quick switching between datasets
+5. Shows "Server Default" label next to current server dataset
+
+**How to Use:**
+- Navigate to Graph page
+- Use dropdown at top to switch between datasets
+- Graph reloads automatically when dataset changes
+
+**Available Datasets:**
+- SingleTopic
+- demo_test
+- 2WikiMultiHopQA
+- HotpotQA
+- Musique
+- NQ
+- PopQA
+- TriviaQA
+
+**Future Enhancement:** Once Settings page is fixed, this will sync with Settings → Default Dataset
+
+#### 5. Settings Page Field Mismatch (TODO - Nov 8, 2025)
+**Issue:** Settings.tsx uses fields that don't exist in settings store
+**Impact:** Settings may not persist correctly to localStorage
+**Status:** Needs fixing
+
+**Mismatched Fields:**
+- Settings.tsx uses: `dataset` → Should use: `activeDataset`
+- Settings.tsx uses: `apiEndpoint` → Doesn't exist in store
+- Settings.tsx uses: `openaiApiKey` → Should use: `apiKeys.openai`
+- Settings.tsx uses: `setDataset` → Should use: `setActiveDataset`
+- Settings.tsx uses: `setApiEndpoint` → Doesn't exist
+- Settings.tsx uses: `setOpenaiApiKey` → Should use: `setApiKey('openai', key)`
+
+**Files to Fix:**
+- [frontend/src/pages/Settings.tsx](frontend/src/pages/Settings.tsx)
+- [frontend/src/stores/settings.ts](frontend/src/stores/settings.ts) (optionally add missing fields)
+
+**Recommendation:** Align Settings.tsx with actual store interface from settings.ts
+
 ### Backend Issues
 
 #### 1. Large Graph Loading

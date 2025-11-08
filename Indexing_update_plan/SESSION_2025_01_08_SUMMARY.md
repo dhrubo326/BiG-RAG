@@ -157,7 +157,7 @@ Weight Interpretation:
 
 ### Created:
 - `implementation_guide/BIPARTITE_ARCHITECTURE_EXPLAINED.md` (NEW)
-- `implementation_guide/SESSION_2025_01_08_SUMMARY.md` (THIS FILE)
+- `indexing_update_plan/SESSION_2025_01_08_SUMMARY.md` (THIS FILE)
 
 ### Modified:
 - `implementation_guide/IMPLEMENTATION_STRUCTURE_GUIDE.md` (v3.0 → v3.1)

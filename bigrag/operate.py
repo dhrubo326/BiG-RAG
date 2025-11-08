@@ -728,8 +728,8 @@ async def extract_entities(
 async def kg_query(
     query,
     knowledge_graph_inst: BaseGraphStorage,
-    vdb_entities: list,
-    vdb_bipartite_edges: list,
+    vdb_entities: BaseVectorStorage,  # Bug #6 Fix: Correct type annotation
+    vdb_bipartite_edges: BaseVectorStorage,  # Bug #6 Fix: Correct type annotation
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     vdb_chunks: BaseVectorStorage,  # Phase 3.2: Added vdb_chunks parameter
     query_param: QueryParam,
@@ -938,8 +938,9 @@ async def _get_node_data(
     results = await vdb_entities.query(query, top_k=query_param.top_k)
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
+    # Bug #4 Fix: Use defensive dict access to prevent KeyError
     # Extract entity names from query results (Bug #5 fix: use entity_name, not hash ID)
-    results = [r["entity_name"] for r in results]
+    results = [r.get("entity_name") for r in results if "entity_name" in r]
     # get entity information
     node_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]
@@ -1122,8 +1123,9 @@ async def _get_edge_data(
 
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
+    # Bug #4 Fix: Use defensive dict access to prevent KeyError
     # Extract edge names from query results (Bug #5 fix: use bipartite_edge_name, not hash ID)
-    results = [r["bipartite_edge_name"] for r in results]
+    results = [r.get("bipartite_edge_name") for r in results if "bipartite_edge_name" in r]
 
     edge_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]

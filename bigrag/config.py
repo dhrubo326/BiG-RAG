@@ -363,6 +363,12 @@ def get_config() -> BiGRAGConfig:
 def reload_config() -> BiGRAGConfig:
     """Reload configuration from environment"""
     global config
-    load_env_file()
+    # Bug #3 Fix: load_env_file() only exists when python-dotenv is NOT installed
+    # Try dotenv first, fall back to custom loader
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        load_env_file()
     config = BiGRAGConfig()
     return config

@@ -55,8 +55,11 @@ class JsonKVStorage(BaseKVStorage):
         return set([s for s in data if s not in self._data])
 
     async def upsert(self, data: dict[str, dict]):
+        # Bug #5 Fix: Make this a true upsert (update OR insert)
+        # Track which keys are new for logging purposes
         left_data = {k: v for k, v in data.items() if k not in self._data}
-        self._data.update(left_data)
+        # Update ALL data (both new and existing keys)
+        self._data.update(data)
         return left_data
 
     async def delete(self, id: str):

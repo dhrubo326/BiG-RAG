@@ -677,8 +677,8 @@ class BiGRAG:
 
             if not doc_chunk_ids:
                 logger.warning(f"No chunks found for document {doc_id}")
-                # Still delete from full_docs
-                await self.full_docs.drop()  # This might not be granular enough
+                # Bug #2 Fix: Use delete() to remove only this document, not drop() which deletes ALL
+                await self.full_docs.delete(doc_id)
                 logger.info(f"[Document Deletion] Deleted document {doc_id} from full_docs")
                 return
 
@@ -759,8 +759,9 @@ class BiGRAG:
                 try:
                     await self.chunk_entity_relation_graph.delete_node(edge_name)
                     if self.vdb_bipartite_edges is not None:
-                        edge_id = compute_mdhash_id(edge_name, prefix="edge-")
-                        await self.vdb_bipartite_edges.delete([edge_id])
+                        # Bug #1 Fix: edge_name is already a hash ID (rel-abc123...)
+                        # No need to compute hash again
+                        await self.vdb_bipartite_edges.delete([edge_name])
                 except Exception as e:
                     logger.warning(f"Failed to delete edge {edge_name}: {e}")
 

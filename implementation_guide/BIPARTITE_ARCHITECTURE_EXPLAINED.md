@@ -68,7 +68,7 @@ When examining a BiG-RAG GraphML file, you'll see three distinct types:
 ```xml
 <node id="&quot;COPA AMERICA 2024&quot;">
   <data key="d0">entity</data>                 <!-- role -->
-  <data key="d3">"EVENT"</data>                <!-- entity_type -->
+  <data key="d3">"event"</data>                <!-- entity_type -->
   <data key="d4">"Copa America 2024 is a major football tournament."</data>  <!-- description -->
   <data key="d2">chunk-e49712eeee6924aff48e2b17e18aa973</data>  <!-- source_id -->
   <data key="d1">170.0</data>                  <!-- weight -->
@@ -79,10 +79,12 @@ When examining a BiG-RAG GraphML file, you'll see three distinct types:
 
 **Attributes:**
 - `role="entity"`: Identifies this as an entity node
-- `entity_type`: Category (PERSON, ORGANIZATION, GEO, EVENT, CATEGORY)
+- `entity_type`: Category (person, organization, geo, event, category) - always lowercase, normalized via TYPE_NORMALIZATION_MAP
 - `description`: Human-readable description (may be aggregated from multiple chunks)
 - `weight`: Cumulative importance score
 - `source_id`: Chunk ID(s) where this entity appears
+
+**Entity Type Normalization:** BiG-RAG normalizes entity types extracted from LLMs (e.g., "TEAM" → "organization", "PLAYER" → "person") to ensure consistency across the knowledge graph. The normalization map contains 40+ mappings to standardized types.
 
 ### Type 3: Graph Edge (Connector)
 

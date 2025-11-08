@@ -242,12 +242,21 @@ rag.insert(
 
 **✨ Three-Path Architecture:**
 ```
-Query → Path A (Entities)  → top-60 entities → RRF
-     → Path B (Relations) → top-60 edges   → RRF → top-5 structured
-     → Path C (Chunks)    → 10 candidates  → rerank → top-5 chunks
+Query → Path A (Entities)  → top-60 entities → RRF → top-5 structured
+     → Path B (Relations) → top-60 edges   → RRF
+     → Path C (Chunks)    → dual-source collection → weighted RRF → rerank → top-5 chunks
+                            │
+                            ├─ Direct: 5 chunks from vdb_chunks (weight=1.0)
+                            └─ Indirect: 5 chunks from Path A+B source_ids (weight=0.7)
 
 Output: 5 structured + 5 chunks = 10 total context items
 ```
+
+**Path C Dual-Source Strategy:**
+- **Direct chunks**: Vector search on vdb_chunks (semantic relevance) → RRF weight = 1.0
+- **Indirect chunks**: Extract from Path A+B source_ids (structural relevance) → RRF weight = 0.7
+- **Weighted RRF scoring**: `score = weight × (1 / (rank + 1))`
+- **Rationale**: Direct chunks have strong semantic match; indirect chunks provide graph-connected context
 
 **Performance Impact:**
 - With reranking: +10-20% precision, ~50-100ms latency
@@ -1031,15 +1040,44 @@ relation_results = await _get_edge_data(
     top_k=param.top_k
 )
 
-# 4. Chunk-based retrieval (Path C)
-chunk_results = await vdb_chunks.query(
+# 4. Chunk-based retrieval (Path C) - Dual-source collection
+# 4a. Direct chunks from vector search
+direct_chunks = await vdb_chunks.query(
     query_embedding[2],
-    top_k=10  # Get candidates for reranking
+    top_k=5  # Top-5 by semantic similarity
 )
 
-# 5. Optional semantic reranking
+# 4b. Indirect chunks from Path A + Path B source_ids
+indirect_chunk_ids = set()
+for result in entity_results + relation_results:
+    indirect_chunk_ids.update(result.get("source_ids", []))
+
+indirect_chunks = await fetch_chunks_by_ids(list(indirect_chunk_ids)[:5])
+
+# 4c. Combine with weighted RRF scoring
+chunk_candidates = []
+for i, chunk in enumerate(direct_chunks):
+    chunk_candidates.append({
+        "content": chunk["content"],
+        "score": 1.0 * (1 / (i + 1)),  # Full weight for semantic relevance
+        "source": "direct_vector"
+    })
+
+for i, chunk in enumerate(indirect_chunks):
+    chunk_candidates.append({
+        "content": chunk["content"],
+        "score": 0.7 * (1 / (i + 1)),  # Reduced weight for structural relevance
+        "source": "indirect_graph"
+    })
+
+# Sort by weighted score
+chunk_candidates.sort(key=lambda x: x["score"], reverse=True)
+
+# 5. Optional semantic reranking (top-10 candidates → top-5)
 if param.enable_reranking:
-    chunk_results = await rerank_chunks(chunk_results, query)
+    chunk_results = await rerank_chunks(chunk_candidates[:10], query)
+else:
+    chunk_results = chunk_candidates[:5]
 
 # 6. Combine with reciprocal rank scoring
 combined = _merge_and_rank(entity_results, relation_results, chunk_results)
@@ -1194,6 +1232,26 @@ def _merge_and_rank(
 - Naturally combines rankings from different sources
 - No hyperparameter tuning needed
 - Robust to different scale distributions
+
+**Weighted RRF for Chunks:**
+
+Path C uses a weighted variant to distinguish between direct and indirect chunks:
+
+```python
+# Direct chunks (vector search): Full RRF weight
+for i, chunk in enumerate(direct_chunks):
+    score = 1.0 * (1 / (i + 1))  # Semantic relevance
+
+# Indirect chunks (graph traversal): Reduced weight
+for i, chunk in enumerate(indirect_chunks):
+    score = 0.7 * (1 / (i + 1))  # Structural relevance
+```
+
+**Rationale:**
+- Direct chunks have strong semantic match to query (vector similarity)
+- Indirect chunks provide graph-connected context (may be less directly relevant)
+- Weight factor (0.7) balances semantic vs. structural information
+- Both sources contribute to final ranking based on their relevance type
 
 **Deduplication:**
 ```python

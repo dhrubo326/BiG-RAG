@@ -8,7 +8,7 @@
 
 Retrieval-Augmented Generation systems enhance large language models with external knowledge but face critical limitations: conventional approaches fragment complex multi-entity relationships into binary triples, losing semantic integrity, while existing graph-based methods employ fixed retrieval strategies unsuited to diverse query complexities. We present **BiG-RAG** (Bipartite Graph Retrieval-Augmented Generation), a unified framework addressing both challenges through n-ary relational representation and adaptive multi-turn reasoning. Recent enhancements include three-path retrieval combining entity, relation, and chunk-based search, semantic reranking using cross-encoders, and dynamic document management with cascade deletion.
 
-BiG-RAG employs bipartite graph encoding where one node partition represents entities and another represents n-ary relational facts, preserving complete semantic context through natural language descriptions. Our dual-path retrieval mechanism combines entity-centric and relation-centric search with reciprocal rank fusion, achieving comprehensive coverage while maintaining $O(\deg(v))$ query complexity. The system supports two operational modes: (1) **Algorithmic Mode** using linguistic parsing and graph algorithms for zero-training deployment with large commercial LLMs, and (2) **Reinforcement Learning Mode** training compact models (1.5B-7B parameters) via end-to-end policy optimization with Group Relative Policy Optimization (GRPO).
+BiG-RAG employs bipartite graph encoding where one node partition represents entities and another represents n-ary relational facts, preserving complete semantic context through natural language descriptions. Our retrieval mechanism combines entity-centric and relation-centric search with reciprocal rank fusion, extended with chunk-based retrieval for comprehensive three-path coverage while maintaining $O(\deg(v))$ query complexity. The system supports two operational modes: (1) **Algorithmic Mode** using linguistic parsing and graph algorithms for zero-training deployment with large commercial LLMs, and (2) **Reinforcement Learning Mode** training compact models (1.5B-7B parameters) via end-to-end policy optimization with Group Relative Policy Optimization (GRPO).
 
 Experiments across six knowledge-intensive benchmarks demonstrate BiG-RAG's effectiveness: Algorithmic Mode achieves competitive performance with zero training overhead, while RL Mode reaches substantial improvements—surpassing traditional RAG systems and demonstrating efficient knowledge utilization. This dual-mode architecture provides practitioners flexibility to balance deployment speed, accuracy requirements, and computational resources while maintaining production-grade reliability through deterministic graph operations and interpretable retrieval paths.
 
@@ -502,10 +502,27 @@ BiG-RAG employs a sophisticated **three-path retrieval mechanism** that combines
 - Follows edges to retrieve documents containing these relations
 
 **Path C: Chunk-Based Retrieval (Direct Context)**
-- Performs direct similarity search on document chunk embeddings
-- Retrieves candidate chunks without entity/relation intermediaries
-- Provides fallback for queries that may not match specific entities or relations
-- Enables retrieval of relevant context even for abstract or general queries
+
+Path C employs a **dual-source collection strategy** to gather chunks from both semantic and structural perspectives:
+
+1. **Direct chunks** (5 chunks): Vector search on document chunk embeddings
+   - Pure semantic similarity without entity/relation intermediaries
+   - Provides fallback for queries that may not match specific entities
+
+2. **Indirect chunks** (5 chunks): Extracted from source_ids of Path A + B results
+   - Graph-connected context from entity and relation traversal
+   - Ensures structural relevance to matched entities/relations
+
+The 10 chunk candidates undergo **weighted Reciprocal Rank Fusion (RRF)**:
+
+```
+score_direct = 1.0 × (1 / (rank + 1))       // Full weight for semantic relevance
+score_indirect = 0.7 × (1 / (rank + 1))     // Reduced weight for structural relevance
+```
+
+This weighting balances semantic match strength (direct) with graph-structural context (indirect), with the top-5 chunks selected after optional cross-encoder reranking.
+
+**Combined Three-Path RRF:**
 
 The three paths operate in parallel and their results are combined using **Reciprocal Rank Fusion (RRF)**:
 

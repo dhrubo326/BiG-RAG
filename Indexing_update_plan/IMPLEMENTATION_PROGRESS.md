@@ -262,7 +262,29 @@
 - ✅ Type safety maintained (dataclasses, type hints)
 - ✅ No syntax errors, compiles successfully
 
-**Review Finding**: All implementations are correct and complete. No missing code or major errors detected.
+**Review Finding**: Found and fixed 2 critical retrieval bugs during hash ID deep review (2025-01-08).
+
+### Hash ID Retrieval Bugs Fixed (2025-01-08)
+
+During comprehensive hash ID flow verification, found 2 critical bugs in retrieval paths:
+
+**Bug #1: `_get_edge_data()` returning hash IDs instead of content**
+- **Location**: [bigrag/operate.py:1119](../bigrag/operate.py#L1119)
+- **Problem**: Was using `s["bipartite_edge"]` (hash ID) as knowledge content
+- **Fix**: Now extracts `s.get("content", s["bipartite_edge"])` from node attribute
+- **Impact**: Path B (relation-based retrieval) now returns actual knowledge fragments
+- **Status**: ✅ FIXED
+
+**Bug #2: `_find_most_related_edges_from_entities()` using hash IDs as descriptions**
+- **Location**: [bigrag/operate.py:1074-1109](../bigrag/operate.py#L1074-L1109)
+- **Problem**: Was setting `description: k[1]` where `k[1]` is hash ID, not content
+- **Fix**: Now fetches bipartite node data and extracts content attribute
+- **Impact**: Path A (entity→edge traversal) now returns actual content
+- **Status**: ✅ FIXED
+
+**Total Changes**: +40 lines added to properly fetch and extract content from hash-based nodes
+
+**Verification Status**: Complete creation and retrieval flow verified correct ✅
 
 ### Testing Required: ⚠️ PENDING
 - [ ] Rebuild demo_test dataset with new hash ID system

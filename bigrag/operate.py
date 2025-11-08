@@ -962,7 +962,8 @@ async def _get_node_data(
     # Extract knowledge and source IDs together for evaluation
     knowledge_list = []
     for s in use_relations:
-        description = s["description"].replace("<bipartite_edge>", "")
+        # A1 Fix: Description now contains actual content from _find_most_related_edges_from_entities
+        description = s["description"]
         # Extract source_ids from the relation (chunks where this relation appears)
         source_ids = []
         if "source_id" in s and s["source_id"]:
@@ -1070,11 +1071,39 @@ async def _find_most_related_edges_from_entities(
     all_edges_degree = await asyncio.gather(
         *[knowledge_graph_inst.edge_degree(e[0], e[1]) for e in all_edges]
     )
-    all_edges_data = [
-        {"src_tgt": k, "rank": d, "description": k[1], **v}
-        for k, v, d in zip(all_edges, all_edges_pack, all_edges_degree)
-        if v is not None
-    ]
+
+    # A1 Fix: Fetch node data for bipartite edge nodes to get content
+    # k[1] could be entity or bipartite edge node - need to check which
+    bipartite_edge_ids = [k[1] for k in all_edges if k[1].startswith("rel-")]
+    bipartite_node_data = {}
+    if bipartite_edge_ids:
+        nodes = await asyncio.gather(
+            *[knowledge_graph_inst.get_node(node_id) for node_id in bipartite_edge_ids]
+        )
+        bipartite_node_data = {
+            node_id: node for node_id, node in zip(bipartite_edge_ids, nodes)
+            if node is not None
+        }
+
+    all_edges_data = []
+    for k, v, d in zip(all_edges, all_edges_pack, all_edges_degree):
+        if v is None:
+            continue
+        # A1 Fix: If target is bipartite edge node, get content from node data
+        target_id = k[1]
+        if target_id.startswith("rel-") and target_id in bipartite_node_data:
+            description = bipartite_node_data[target_id].get("content", target_id)
+        else:
+            # Entity node or fallback - use node ID
+            description = target_id
+
+        all_edges_data.append({
+            "src_tgt": k,
+            "rank": d,
+            "description": description,
+            **v
+        })
+
     all_edges_data = sorted(
         all_edges_data, key=lambda x: (x["rank"], x["weight"]), reverse=True
     )
@@ -1116,13 +1145,15 @@ async def _get_edge_data(
     # Extract knowledge and source IDs together for evaluation
     knowledge_list = []
     for s in edge_datas:
-        bipartite_edge = s["bipartite_edge"].replace("<bipartite_edge>", "")
+        # A1 Fix: Extract content from node (hash IDs store content in 'content' attribute)
+        # Fallback to hash ID for backward compatibility (though content should always exist)
+        bipartite_edge_content = s.get("content", s["bipartite_edge"]).replace("<bipartite_edge>", "")
         # Extract source_ids from the edge (chunks where this edge appears)
         source_ids = []
         if "source_id" in s and s["source_id"]:
             # source_id may contain multiple IDs separated by GRAPH_FIELD_SEP
             source_ids = s["source_id"].split(GRAPH_FIELD_SEP) if isinstance(s["source_id"], str) else [s["source_id"]]
-        knowledge_list.append((bipartite_edge, source_ids))
+        knowledge_list.append((bipartite_edge_content, source_ids))
     return knowledge_list
 
 

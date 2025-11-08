@@ -1,0 +1,38 @@
+# BiG-RAG Test Dependencies
+# Install with: pip install -r requirements-test.txt
+
+# Core testing framework
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-timeout==2.3.1
+pytest-xdist==3.6.1              # Parallel test execution
+
+# Coverage reporting
+pytest-cov==6.0.0
+coverage==7.6.9
+
+# Mocking and fixtures
+pytest-mock==3.14.0
+faker==30.8.2                    # Generate synthetic test data
+
+# API testing
+httpx==0.28.1                    # Async HTTP client for API tests
+requests==2.32.3                 # Sync HTTP client (fallback)
+
+# Performance testing
+pytest-benchmark==5.1.0
+memory-profiler==0.61.0
+
+# HTML reports (optional - can comment out in production)
+pytest-html==4.1.1
+
+# Frontend testing (optional - can comment out if no frontend)
+selenium==4.27.1
+playwright==1.49.1
+
+# Data validation
+pydantic==2.10.3
+
+# Utilities
+python-dotenv==1.0.1             # Load test environment variables
+colorama==0.4.6                  # Colored output for Windows terminal

@@ -286,13 +286,41 @@ During comprehensive hash ID flow verification, found 2 critical bugs in retriev
 
 **Verification Status**: Complete creation and retrieval flow verified correct ✅
 
+### Entity Type Validation Bypass Bugs Fixed (2025-01-08)
+
+During comprehensive entity type normalization flow verification, found 2 bypass paths where normalization was not applied:
+
+**Bug #3: Manual entity insertion bypassing normalization**
+- **Location**: [bigrag/bigrag.py:449-452](../bigrag/bigrag.py#L449-L452)
+- **Problem**: Custom KG insertion accepts user-provided entity_type without normalization
+- **Fix**: Added normalize_entity_type() call before storing
+- **Impact**: Manual entity insertions now use consistent entity types
+- **Status**: ✅ FIXED
+
+**Bug #4: Auto-created nodes using unnormalized "UNKNOWN" type**
+- **Location**: [bigrag/bigrag.py:507](../bigrag/bigrag.py#L507)
+- **Problem**: Nodes auto-created for missing relationship endpoints use uppercase "UNKNOWN"
+- **Fix**: Wrapped with normalize_entity_type() which maps "UNKNOWN" → "category"
+- **Impact**: All auto-created nodes now have normalized entity types
+- **Status**: ✅ FIXED
+
+**Additional Change**: Added normalize_entity_type import to bigrag.py (line 16)
+
+**Total Changes**: +5 lines to ensure consistent entity type normalization across all creation paths
+
+**Verification Status**: All entity creation paths now apply normalization ✅
+
 ### Testing Required: ⚠️ PENDING
 - [ ] Rebuild demo_test dataset with new hash ID system
 - [ ] Verify graphml file size reduction (expect 30-40%)
 - [ ] Test retrieval quality (should be same or better)
 - [ ] Test document deletion with new hash IDs
 - [ ] Test three-path retrieval with new structure
-- [ ] Validate entity type normalization (check entity_type distribution)
+- [ ] Validate entity type normalization:
+  - [ ] Check all entity types are lowercase
+  - [ ] Verify no "TEAM", "PLAYER", "STATISTIC", "UNKNOWN" in raw form
+  - [ ] Confirm all types in allowed list or mapped to category
+- [ ] Test manual entity insertion with unnormalized types (should auto-normalize)
 - [ ] Test retry wrapper with simulated VDB failures
 - [ ] Test semaphore control with large dataset (100+ documents to verify no rate limit errors)
 

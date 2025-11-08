@@ -13,6 +13,7 @@ from .llm import (
 from .operate import (
     chunking_by_token_size,
     extract_entities,
+    normalize_entity_type,  # A2: Entity type validation
     # local_query,global_query,hybrid_query,
     kg_query
 )
@@ -446,7 +447,9 @@ class BiGRAG:
             all_entities_data = []
             for entity_data in custom_kg.get("entities", []):
                 entity_name = f'"{entity_data["entity_name"].upper()}"'
-                entity_type = entity_data.get("entity_type", "UNKNOWN")
+                # A2 Fix: Normalize entity type from user input
+                raw_entity_type = entity_data.get("entity_type", "UNKNOWN")
+                entity_type = normalize_entity_type(raw_entity_type)
                 description = entity_data.get("description", "No description provided")
                 # source_id = entity_data["source_id"]
                 source_chunk_id = entity_data.get("source_id", "UNKNOWN")
@@ -460,7 +463,7 @@ class BiGRAG:
 
                 # Prepare node data
                 node_data = {
-                    "entity_type": entity_type,
+                    "entity_type": entity_type,  # Now normalized
                     "description": description,
                     "source_id": source_id,
                 }
@@ -495,12 +498,13 @@ class BiGRAG:
                     if not (
                         await self.chunk_entity_relation_graph.has_node(need_insert_id)
                     ):
+                        # A2 Fix: Normalize "UNKNOWN" entity type for auto-created nodes
                         await self.chunk_entity_relation_graph.upsert_node(
                             need_insert_id,
                             node_data={
                                 "source_id": source_id,
                                 "description": "UNKNOWN",
-                                "entity_type": "UNKNOWN",
+                                "entity_type": normalize_entity_type("UNKNOWN"),  # Will map to "category"
                             },
                         )
 

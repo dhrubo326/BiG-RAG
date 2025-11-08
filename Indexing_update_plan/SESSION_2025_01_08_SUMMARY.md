@@ -238,3 +238,27 @@ The architecture is now fully documented and understood. We are ready to proceed
 ---
 
 **End of Session Summary**
+
+---
+
+## ADDENDUM: LightRAG Analysis
+
+After documenting BiG-RAG architecture, analyzed the light-rag codebase to identify beneficial practices.
+
+**Documents Created:**
+- [LIGHTRAG_ANALYSIS_AND_RECOMMENDATIONS.md](LIGHTRAG_ANALYSIS_AND_RECOMMENDATIONS.md) - 600+ line analysis
+- [LIGHTRAG_QUICK_SUMMARY.md](LIGHTRAG_QUICK_SUMMARY.md) - Quick reference
+
+**7 Improvements Identified:**
+1. Improved entity extraction prompts (4-6h) - Priority 1
+2. Centralized constants file (2-3h) - Priority 1  
+3. Retry mechanism for VDB ops (3-4h) - Priority 1
+4. QueryParam as dataclass (4-6h) - Priority 2
+5. Logging infrastructure (3-4h) - Priority 2
+6. Environment variable helper (2-3h) - Priority 2
+7. Semaphore control (4-6h) - Priority 3
+
+**Key Finding:** LightRAG's binary graph differs from BiG-RAG's bipartite, but infrastructure patterns are fully transferable.
+
+**Recommendation:** Start with Priority 1 improvements (10-13 hours total) for immediate code quality benefits.
+

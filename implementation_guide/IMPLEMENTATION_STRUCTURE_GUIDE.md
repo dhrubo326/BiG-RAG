@@ -1,7 +1,7 @@
 # BiG-RAG Implementation and Feature Structure Guide
 
-**Version:** 3.1
-**Last Updated:** 2025-01-08
+**Version:** 3.2
+**Last Updated:** 2025-01-08 (Post-Implementation)
 **Purpose:** Comprehensive A-to-Z implementation reference for BiG-RAG framework development, maintenance, testing, debugging, and optimization
 
 **✨ Latest Updates (Jan 2025):**
@@ -11,6 +11,14 @@
 - ✅ Semantic reranking with cross-encoder
 - ✅ Reranking toggle for performance optimization
 - ✅ Bipartite architecture documentation (NEW - Jan 8, 2025)
+- ✅ **Hash-based node IDs** for bipartite edges (30-40% file size reduction) - Jan 8, 2025
+- ✅ **Entity type normalization** with 40+ mappings (consistent typing) - Jan 8, 2025
+- ✅ **Semaphore control** for LLM API calls (prevents rate limits) - Jan 8, 2025
+- ✅ **Weight documentation** with comprehensive semantics guide - Jan 8, 2025
+- ✅ **Improved prompts** with Role/Instructions/Examples structure - Jan 8, 2025
+- ✅ **Retry wrapper** with exponential backoff for transient failures - Jan 8, 2025
+- ✅ **Logging infrastructure** with rotating file handler - Jan 8, 2025
+- ✅ **Constants file** for centralized code-level defaults - Jan 8, 2025
 
 ---
 
@@ -70,9 +78,10 @@ BiG-RAG Framework
 │   ├── reranker.py           # ✨ NEW: Semantic reranking module
 │   ├── storage.py            # Default storage implementations
 │   ├── base.py               # Abstract storage interfaces (with metadata)
+│   ├── constants.py          # ✨ NEW: Code-level constants (Jan 2025)
 │   ├── llm.py                # LLM and embedding integrations
 │   ├── prompt.py             # Extraction prompt templates
-│   ├── utils.py              # Utilities (caching, encoding)
+│   ├── utils.py              # Utilities (caching, encoding, retry, logging)
 │   └── kg/                   # Optional storage backends
 │       ├── graph_impl/       # Neo4J, Oracle, MongoDB
 │       └── vectordb_impl/    # Milvus, ChromaDB, TiDB

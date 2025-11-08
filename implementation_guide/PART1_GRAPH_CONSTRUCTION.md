@@ -2,6 +2,12 @@
 
 **Deep-Dive Documentation for BiG-RAG Framework**
 
+**Last Updated:** 2025-01-08
+
+**📖 See Also:**
+- **[Bipartite Architecture Explained](BIPARTITE_ARCHITECTURE_EXPLAINED.md)** - Complete explanation of graph structure, node types, and design decisions
+- **[Implementation Structure Guide](IMPLEMENTATION_STRUCTURE_GUIDE.md)** - Overall framework structure
+
 ---
 
 ## Table of Contents
@@ -34,6 +40,8 @@
 - **Graph edges** connecting entity nodes to bipartite edge nodes (NOT traditional entity-to-entity edges)
 
 **⚠️ Important Terminology:** In BiG-RAG, "bipartite edges" (semantic relations) are stored as **nodes** in the graph, not as traditional graph edges. The actual graph edges are undirected connections between entity nodes and bipartite edge nodes. This design allows relations to be first-class citizens with their own embeddings and metadata.
+
+**📖 Detailed Explanation:** For a comprehensive explanation of why we have "three types" in the GraphML file and the benefits of this architecture, see **[BIPARTITE_ARCHITECTURE_EXPLAINED.md](BIPARTITE_ARCHITECTURE_EXPLAINED.md)**.
 
 ### Why This Approach vs. Alternatives?
 

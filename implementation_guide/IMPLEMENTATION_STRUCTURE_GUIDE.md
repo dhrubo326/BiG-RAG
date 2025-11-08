@@ -1,7 +1,7 @@
 # BiG-RAG Implementation and Feature Structure Guide
 
-**Version:** 3.0
-**Last Updated:** 2025-01-02
+**Version:** 3.1
+**Last Updated:** 2025-01-08
 **Purpose:** Comprehensive A-to-Z implementation reference for BiG-RAG framework development, maintenance, testing, debugging, and optimization
 
 **✨ Latest Updates (Jan 2025):**
@@ -10,6 +10,7 @@
 - ✅ Document deletion system with cascade cleanup
 - ✅ Semantic reranking with cross-encoder
 - ✅ Reranking toggle for performance optimization
+- ✅ Bipartite architecture documentation (NEW - Jan 8, 2025)
 
 ---
 
@@ -32,6 +33,11 @@
 15. [Debugging Tips](#debugging-tips)
 16. [Known Issues and Solutions](#known-issues-and-solutions)
 17. [Future Development Ideas](#future-development-ideas)
+
+**📖 Related Documentation:**
+- **[Bipartite Architecture Explained](BIPARTITE_ARCHITECTURE_EXPLAINED.md)** - Deep dive into graph structure and design decisions
+- **[Part 1: Graph Construction](PART1_GRAPH_CONSTRUCTION.md)** - Detailed graph construction pipeline
+- **[Implementation Summary](../docs/updates/IMPLEMENTATION_SUMMARY.md)** - Recent improvements and features
 
 ---
 
@@ -802,6 +808,8 @@ await llm_response_cache.upsert({cache_key: response})
 - Transparent to caller (no API changes)
 
 ### Bipartite Graph Construction (bigrag/operate.py)
+
+**📖 For detailed bipartite architecture explanation, see [BIPARTITE_ARCHITECTURE_EXPLAINED.md](BIPARTITE_ARCHITECTURE_EXPLAINED.md)**
 
 **Function:** `_merge_nodes_then_upsert()` (lines 397-518)
 

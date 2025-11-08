@@ -518,7 +518,7 @@ async def extract_entities(...):
 
 ## 4. Implementation Roadmap
 
-### Week 1: Critical Fixes (Days 1-3)
+### Critical Fixes (Days 1-3)
 
 **Day 1: Hash-Based Node IDs**
 - Morning: Code changes (operate.py, storage.py)
@@ -542,7 +542,7 @@ async def extract_entities(...):
 
 ---
 
-### Week 2: Quality Improvements (Days 4-5)
+### Quality Improvements (Days 4-5)
 
 **Day 4: Prompts + Constants**
 - Morning: Create constants.py
@@ -562,7 +562,7 @@ async def extract_entities(...):
 
 ---
 
-### Optional: Advanced Features (Week 3+)
+### Optional: Advanced Features 
 
 **Only if needed:**
 - Semaphore control (Rec B5)

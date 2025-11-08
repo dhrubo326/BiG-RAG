@@ -243,9 +243,19 @@ class NetworkXStorage(BaseGraphStorage):
 
         graph = graph.copy()
         graph = cast(nx.Graph, largest_connected_component(graph))
-        node_mapping = {
-            node: html.unescape(node.upper().strip()) for node in graph.nodes()
-        }  # type: ignore
+
+        # A1: Skip uppercase transformation for hash IDs (rel-, ent-, chunk-)
+        # Hash IDs must remain lowercase to match vector DB keys
+        node_mapping = {}
+        for node in graph.nodes():
+            # Check if node is a hash ID (starts with known prefixes)
+            if node.startswith(("rel-", "ent-", "chunk-")):
+                # Keep hash IDs as-is (lowercase)
+                node_mapping[node] = node
+            else:
+                # Transform entity names to uppercase (legacy behavior)
+                node_mapping[node] = html.unescape(node.upper().strip())
+
         graph = nx.relabel_nodes(graph, node_mapping)
         return NetworkXStorage._stabilize_graph(graph)
 

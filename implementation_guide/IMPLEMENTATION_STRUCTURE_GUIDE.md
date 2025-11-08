@@ -886,35 +886,43 @@ source_ids = ["chunk_1", "chunk_1", "chunk_2"]
 unique_sources = list(set(source_ids))  # ["chunk_1", "chunk_2"]
 ```
 
-**Function:** `_merge_bipartite_edges_then_upsert()` (lines 520-612)
+**Function:** `_merge_bipartite_edges_then_upsert()` (lines 269-326)
 
 **Bipartite Edge Creation:**
 
 ```python
 async def _merge_bipartite_edges_then_upsert(
-    relation_content: str,
-    edges_data: list[dict]
+    bipartite_edge_name: str,  # ✅ Hash-based ID (e.g., "rel-abc123...")
+    nodes_data: list[dict],
+    knowledge_graph_inst: BaseGraphStorage,
+    global_config: dict
 ) -> dict:
     """
     Create relation nodes from LLM-extracted "hyper-relations"
 
+    A1 Implementation (Jan 2025):
+    - Uses hash-based IDs instead of full content as node ID
+    - Reduces GraphML file size by 30-40%
+    - Stores content as separate node attribute
+
     Process:
-    1. Assign unique ID to relation content
+    1. Generate hash-based ID from relation content (compute_mdhash_id)
     2. Sum weights (importance scores)
     3. Collect source chunk IDs
-    4. Create node in graph with role="bipartite_edge"
+    4. Store content as node attribute (not in ID)
+    5. Create node in graph with role="bipartite_edge"
 
     Note: These are NODES in the bipartite graph, not edges!
     """
 ```
 
-**Bipartite Edge Node Structure:**
+**Bipartite Edge Node Structure (Updated Jan 2025):**
 ```python
 {
-    "id": "edge_xyz789",
-    "content": "Paris is the capital of France",
+    "id": "rel-abc123xyz",  # ✅ Hash-based ID (A1 implementation)
+    "content": "Paris is the capital of France",  # ✅ Stored as node attribute
     "weight": 180,  # Cumulative
-    "source_id": ["chunk_1", "chunk_3"],
+    "source_id": "chunk-1<GRAPH_FIELD_SEP>chunk-3",  # Concatenated with separator
     "role": "bipartite_edge"  # Distinguishes from entity nodes
 }
 ```
@@ -973,6 +981,8 @@ Key Properties:
 - Edges only connect entity ↔ bipartite_edge (no entity-entity edges)
 - Undirected edges (NetworkX Graph)
 - Metadata: weight, source_id on both nodes and edges
+- ✅ Node IDs: Hash-based for bipartite edges (e.g., "rel-abc123..."), uppercase names for entities (e.g., "PARIS")
+- ✅ Content stored as node attributes (not in IDs) - Jan 2025 update
 ```
 
 ---

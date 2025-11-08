@@ -543,3 +543,119 @@ def safe_unicode_decode(content):
     )
 
     return decoded_content
+
+
+# ========================
+# Retry Mechanism (B3)
+# ========================
+
+async def safe_operation_with_retry(
+    operation,
+    operation_name: str,
+    context: str = "",
+    max_retries: int = 3,
+    retry_delay: float = 0.2,
+):
+    """
+    Execute async operation with retry on transient failures.
+
+    Uses exponential backoff for retries to handle transient failures
+    in VDB operations, storage operations, and LLM API calls.
+
+    Args:
+        operation: Async callable to execute
+        operation_name: Name of operation for logging
+        context: Additional context for error messages
+        max_retries: Maximum number of retry attempts
+        retry_delay: Initial delay between retries (seconds)
+
+    Returns:
+        Result of the operation
+
+    Raises:
+        Exception: If operation fails after all retries
+
+    Example:
+        await safe_operation_with_retry(
+            lambda: vdb_entities.upsert(data),
+            "VDB upsert entities",
+            context=f"{len(data)} entities",
+            max_retries=3,
+        )
+    """
+    for attempt in range(max_retries):
+        try:
+            return await operation()
+        except Exception as e:
+            if attempt >= max_retries - 1:
+                error_msg = f"{operation_name} failed for {context} after {max_retries} attempts: {e}"
+                logger.error(error_msg)
+                raise Exception(error_msg) from e
+            else:
+                wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+                logger.warning(
+                    f"{operation_name} attempt {attempt + 1} failed for {context}: {e}. "
+                    f"Retrying in {wait_time:.1f}s..."
+                )
+                await asyncio.sleep(wait_time)
+
+
+# ========================
+# Logging Setup (B4)
+# ========================
+
+def setup_bigrag_logger(
+    logger_name: str = "bigrag",
+    level: str = "INFO",
+    log_dir: Optional[str] = None,
+):
+    """
+    Setup BiG-RAG logger with console and optional rotating file handlers.
+
+    This provides production-ready logging with:
+    - Console handler (simple format for terminal output)
+    - Rotating file handler (detailed format, 10MB max, 5 backups)
+
+    Args:
+        logger_name: Name of the logger (default: "bigrag")
+        level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_dir: Directory for log files (None = console only)
+
+    Returns:
+        Configured logger instance
+
+    Example:
+        from bigrag.config import config
+        logger = setup_bigrag_logger(
+            level=config.log_level,
+            log_dir=config.log_dir
+        )
+    """
+    import logging.handlers
+    from pathlib import Path
+    from .constants import DEFAULT_LOG_MAX_BYTES, DEFAULT_LOG_BACKUP_COUNT
+
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(level)
+    logger.handlers = []  # Clear existing handlers
+    logger.propagate = False  # Don't propagate to root logger
+
+    # Console handler (simple format)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logger.addHandler(console_handler)
+
+    # Rotating file handler (detailed format)
+    if log_dir:
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+        file_handler = logging.handlers.RotatingFileHandler(
+            filename=f"{log_dir}/bigrag.log",
+            maxBytes=DEFAULT_LOG_MAX_BYTES,  # 10MB
+            backupCount=DEFAULT_LOG_BACKUP_COUNT,  # 5 backups
+        )
+        file_handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+        logger.addHandler(file_handler)
+
+    return logger

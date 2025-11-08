@@ -1,47 +1,63 @@
-GRAPH_FIELD_SEP = "<SEP>"
+from .constants import (
+    GRAPH_FIELD_SEP,
+    DEFAULT_ENTITY_TYPES,
+    DEFAULT_LANGUAGE,
+    DEFAULT_TUPLE_DELIMITER,
+    DEFAULT_RECORD_DELIMITER,
+    DEFAULT_COMPLETION_DELIMITER,
+)
 
 PROMPTS = {}
 
-PROMPTS["DEFAULT_LANGUAGE"] = "English"
-PROMPTS["DEFAULT_TUPLE_DELIMITER"] = "<|>"
-PROMPTS["DEFAULT_RECORD_DELIMITER"] = "##"
-PROMPTS["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
+PROMPTS["DEFAULT_LANGUAGE"] = DEFAULT_LANGUAGE
+PROMPTS["DEFAULT_TUPLE_DELIMITER"] = DEFAULT_TUPLE_DELIMITER
+PROMPTS["DEFAULT_RECORD_DELIMITER"] = DEFAULT_RECORD_DELIMITER
+PROMPTS["DEFAULT_COMPLETION_DELIMITER"] = DEFAULT_COMPLETION_DELIMITER
 PROMPTS["process_tickers"] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
-PROMPTS["DEFAULT_ENTITY_TYPES"] = ["organization", "person", "geo", "event", "category"]
+PROMPTS["DEFAULT_ENTITY_TYPES"] = DEFAULT_ENTITY_TYPES
 
-PROMPTS["entity_extraction"] = """-Goal-
-Given a text document that is potentially relevant to this activity and a list of entity types, identify all entities of those types from the text and all relationships among the identified entities.
+PROMPTS["entity_extraction"] = """---Role---
+You are a Knowledge Graph Specialist responsible for extracting entities and knowledge segments from text documents.
+
+---Goal---
+Given a text document, identify all entities and knowledge segments, ensuring proper formatting and type validation.
 Use {language} as output language.
 
--Steps-
-1. Divide the text into several complete knowledge segments.  For each knowledge segment, extract the following information:
--- knowledge_segment: A sentence that describes the context of the knowledge segment.
--- completeness_score: A score from 0 to 10 indicating the completeness of the knowledge segment.
-Format each knowledge segment as ("bipartite_edge"{tuple_delimiter}<knowledge_segment>{tuple_delimiter}<completeness_score>)
+---Instructions---
+1. **Knowledge Segment Extraction:**
+   * Divide the text into complete, self-contained knowledge segments
+   * Each segment should capture a coherent piece of information
+   * Assign a completeness score (0-10) based on how complete the information is
+   * Format: ("bipartite_edge"{tuple_delimiter}<knowledge_segment>{tuple_delimiter}<completeness_score>)
 
-2. Identify all entities in each knowledge segment. For each identified entity, extract the following information:
-- entity_name: Name of the entity, use same language as input text. If English, capitalized the name.
-- entity_type: Type of the entity.
-- entity_description: Comprehensive description of the entity's attributes and activities.
-- key_score: A score from 0 to 100 indicating the importance of the entity in the text.
-Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>{tuple_delimiter}<key_score>)
+2. **Entity Extraction:**
+   * For each knowledge segment, identify all relevant entities
+   * **IMPORTANT - Entity Type Validation:**
+     - Entity types MUST be one of: {entity_types}
+     - If an entity doesn't fit any type, classify it as the closest match or "category"
+     - Use lowercase for entity types (e.g., "person", not "PERSON")
+   * Entity name: Use same language as input. If English, capitalize the name.
+   * Entity description: Comprehensive description of attributes and activities
+   * Key score (0-100): Importance of the entity in the text
+   * Format: ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>{tuple_delimiter}<key_score>)
 
-3. Return output in {language} as a single list of all the entities and relationships identified in steps 1 and 2. Use **{record_delimiter}** as the list delimiter.
+3. **Formatting Rules:**
+   * Use **{record_delimiter}** as the delimiter between records
+   * Ensure each record ends with ){record_delimiter}
+   * Do NOT add extra delimiters or newlines between records
+   * Output all records in a single continuous list
 
-4. When finished, output {completion_delimiter}
+4. **Completion:**
+   * When finished, output {completion_delimiter}
 
-######################
--Examples-
-######################
+---Examples---
 {examples}
 
-#############################
--Real Data-
-######################
+---Real Data---
 Text: {input_text}
-######################
-Output:
+
+---Output---
 """
 
 PROMPTS["entity_extraction_examples"] = [

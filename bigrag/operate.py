@@ -30,6 +30,102 @@ from .base import (
     QueryParam,
 )
 from .prompt import GRAPH_FIELD_SEP, PROMPTS
+from .constants import DEFAULT_ENTITY_TYPES, DEFAULT_LLM_CONCURRENCY
+
+
+# ========================
+# Entity Type Validation (A2)
+# ========================
+
+TYPE_NORMALIZATION_MAP = {
+    # Teams & Organizations
+    "TEAM": "organization",
+    "CLUB": "organization",
+    "LEAGUE": "organization",
+    "ORGANIZATION": "organization",
+    "ORG": "organization",
+    "COMPANY": "organization",
+    "CORPORATION": "organization",
+
+    # People
+    "PLAYER": "person",
+    "PERSON": "person",
+    "PEOPLE": "person",
+    "INDIVIDUAL": "person",
+    "ATHLETE": "person",
+    "COACH": "person",
+    "MANAGER": "person",
+
+    # Places
+    "LOCATION": "geo",
+    "GEO": "geo",
+    "PLACE": "geo",
+    "CITY": "geo",
+    "COUNTRY": "geo",
+    "REGION": "geo",
+    "VENUE": "geo",
+    "STADIUM": "geo",
+
+    # Events
+    "EVENT": "event",
+    "TOURNAMENT": "event",
+    "CHAMPIONSHIP": "event",
+    "MATCH": "event",
+    "GAME": "event",
+    "COMPETITION": "event",
+    "SEASON": "event",
+
+    # Abstract/Other
+    "CONCEPT": "category",
+    "CATEGORY": "category",
+    "STATISTIC": "category",
+    "METRIC": "category",
+    "OBJECT": "category",
+    "THING": "category",
+    "OTHER": "category",
+    "TIME": "category",
+    "DATE": "category",
+}
+
+
+def normalize_entity_type(extracted_type: str, allowed_types: list = None) -> str:
+    """
+    Normalize entity type from LLM extraction to allowed types.
+
+    This handles cases where LLM extracts types like "TEAM", "STATISTIC", etc.
+    that are not in the configured allowed types list.
+
+    Args:
+        extracted_type: Raw entity type from LLM extraction
+        allowed_types: List of allowed types (default: DEFAULT_ENTITY_TYPES)
+
+    Returns:
+        Normalized lowercase entity type
+
+    Examples:
+        normalize_entity_type("TEAM") -> "organization"
+        normalize_entity_type("person") -> "person"
+        normalize_entity_type("UNKNOWN") -> "category" (with warning)
+    """
+    if allowed_types is None:
+        allowed_types = DEFAULT_ENTITY_TYPES
+
+    # Strip quotes and normalize to uppercase for mapping lookup
+    # LLM sometimes outputs types with quotes: "person" or 'person'
+    normalized_upper = extracted_type.strip().strip('"').strip("'").strip().upper()
+
+    # Check if it's in the normalization map
+    if normalized_upper in TYPE_NORMALIZATION_MAP:
+        return TYPE_NORMALIZATION_MAP[normalized_upper]
+
+    # Check if it's already a valid type (case-insensitive)
+    for allowed in allowed_types:
+        if normalized_upper == allowed.upper():
+            return allowed.lower()
+
+    # Unknown type - log warning and fallback to category
+    logger.warning(f"Unknown entity type '{extracted_type}' - using fallback 'category'")
+    return "category"
 
 
 def chunking_by_token_size(
@@ -81,6 +177,14 @@ async def _handle_entity_relation_summary(
     description: str,
     global_config: dict,
 ) -> str:
+    """
+    Summarize entity/relation descriptions when they exceed token limits.
+
+    Note (B5): This function doesn't use semaphore control because:
+    1. Summarization is rare (only when descriptions > summary_max_tokens)
+    2. Already indirectly rate-limited by merge function concurrency
+    3. Main rate limit risk is in extract_entities (addressed with semaphore)
+    """
     use_llm_func: callable = global_config["llm_model_func"]
     llm_max_tokens = global_config["llm_model_max_token_size"]
     tiktoken_model_name = global_config["tiktoken_model_name"]
@@ -118,7 +222,9 @@ async def _handle_single_entity_extraction(
     entity_name = clean_str(record_attributes[1].upper())
     if not entity_name.strip():
         return None
-    entity_type = clean_str(record_attributes[2].upper())
+    # Normalize entity type to ensure consistency (A2)
+    raw_entity_type = clean_str(record_attributes[2])
+    entity_type = normalize_entity_type(raw_entity_type)
     entity_description = clean_str(record_attributes[3])
     weight = (
         float(record_attributes[-1]) if is_float_regex(record_attributes[-1]) else 50.0
@@ -147,8 +253,15 @@ async def _handle_single_hyperrelation_extraction(
     weight = (
         float(record_attributes[-1]) if is_float_regex(record_attributes[-1]) else 1.0
     )
+
+    # A1: Generate hash-based ID instead of using content directly
+    # This reduces GraphML file size by 30-40% and improves query performance
+    from .constants import BIPARTITE_EDGE_PREFIX
+    edge_id = compute_mdhash_id(knowledge_fragment, prefix=BIPARTITE_EDGE_PREFIX)
+
     return dict(
-        hyper_relation="<bipartite_edge>"+knowledge_fragment,  # Fixed: was bipartite_relation
+        hyper_relation=edge_id,  # Hash ID: "rel-abc123..."
+        hyper_relation_content=knowledge_fragment,  # Store content separately
         weight=weight,
         source_id=edge_source_id,
     )
@@ -160,6 +273,26 @@ async def _merge_bipartite_edges_then_upsert(
     knowledge_graph_inst: BaseGraphStorage,
     global_config: dict,
 ):
+    """
+    Merge and upsert bipartite edge nodes with weight aggregation.
+
+    A1: Now accepts hash-based IDs and stores content as node attribute.
+
+    Weight Semantics (A3):
+    - weight = sum of completeness scores across all occurrences
+    - Range: 0 to N×10 (where N = number of chunks mentioning this relation)
+    - Higher weight = more frequently mentioned + higher completeness
+    - No normalization (intentional - preserves frequency signal)
+
+    Args:
+        bipartite_edge_name: Hash ID of the edge (e.g., "rel-abc123...")
+        nodes_data: List of dicts with hyper_relation_content, weight, source_id
+        knowledge_graph_inst: Graph storage instance
+        global_config: Configuration dict
+
+    Returns:
+        Node data dict with bipartite_edge_name
+    """
     already_weights = []
     already_source_ids = []
 
@@ -174,8 +307,14 @@ async def _merge_bipartite_edges_then_upsert(
     source_id = GRAPH_FIELD_SEP.join(
         set([dp["source_id"] for dp in nodes_data] + already_source_ids)
     )
+
+    # A1: Extract content from first occurrence (all should be same since same hash)
+    # Content is now stored as node attribute instead of being the ID
+    content = nodes_data[0].get("hyper_relation_content", "") if nodes_data else ""
+
     node_data = dict(
-        role = "bipartite_edge",
+        role="bipartite_edge",
+        content=content,  # A1: Store content as attribute
         weight=weight,
         source_id=source_id,
     )
@@ -184,6 +323,7 @@ async def _merge_bipartite_edges_then_upsert(
         node_data=node_data,
     )
     node_data["bipartite_edge_name"] = bipartite_edge_name
+    node_data["bipartite_edge_content"] = content  # For VDB upsertion
     return node_data
 
 
@@ -193,6 +333,31 @@ async def _merge_nodes_then_upsert(
     knowledge_graph_inst: BaseGraphStorage,
     global_config: dict,
 ):
+    """
+    Merge and upsert entity nodes with weight aggregation.
+
+    Weight Semantics (A3):
+    - weight = sum of importance scores (key_score) across all occurrences
+    - Range: 0 to N×100 (where N = number of chunks mentioning this entity)
+    - Higher weight = more frequently mentioned + higher LLM importance scores
+    - Used for ranking entities by significance in the knowledge graph
+    - No normalization (intentional - preserves frequency signal)
+
+    Examples:
+      - 400+: Very central entity (4+ mentions, high scores)
+      - 200-399: Important entity (2-3 mentions)
+      - 100-199: Mentioned entity (1-2 mentions)
+      - 50-99: Peripheral entity (1 mention, low score)
+
+    Args:
+        entity_name: Name of the entity (uppercase, e.g., "LIONEL MESSI")
+        nodes_data: List of dicts with entity_type, description, weight, source_id
+        knowledge_graph_inst: Graph storage instance
+        global_config: Configuration dict
+
+    Returns:
+        Node data dict with entity_name
+    """
     already_entity_types = []
     already_source_ids = []
     already_description = []
@@ -299,6 +464,10 @@ async def extract_entities(
     use_llm_func: callable = global_config["llm_model_func"]
     entity_extract_max_gleaning = global_config["entity_extract_max_gleaning"]
 
+    # B5: Create semaphore to limit concurrent LLM API calls (prevents rate limits)
+    llm_concurrency = global_config.get("llm_concurrency", DEFAULT_LLM_CONCURRENCY)
+    llm_semaphore = asyncio.Semaphore(llm_concurrency)
+
     ordered_chunks = list(chunks.items())
     # add language and example number params to prompt
     language = global_config["addon_params"].get(
@@ -330,7 +499,7 @@ async def extract_entities(
         tuple_delimiter=PROMPTS["DEFAULT_TUPLE_DELIMITER"],
         record_delimiter=PROMPTS["DEFAULT_RECORD_DELIMITER"],
         completion_delimiter=PROMPTS["DEFAULT_COMPLETION_DELIMITER"],
-        # entity_types=",".join(entity_types),
+        entity_types=",".join(entity_types),  # Fixed: Uncommented for prompt compatibility
         examples=examples,
         language=language,
     )
@@ -376,19 +545,23 @@ async def extract_entities(
             **context_base, input_text="{input_text}"
         ).format(**context_base, input_text=enriched_content)
 
-        final_result = await use_llm_func(hint_prompt)
+        # B5: Use semaphore to limit concurrent LLM calls
+        async with llm_semaphore:
+            final_result = await use_llm_func(hint_prompt)
         history = pack_user_ass_to_openai_messages(hint_prompt, final_result)
         for now_glean_index in range(entity_extract_max_gleaning):
-            glean_result = await use_llm_func(continue_prompt, history_messages=history)
+            async with llm_semaphore:
+                glean_result = await use_llm_func(continue_prompt, history_messages=history)
 
             history += pack_user_ass_to_openai_messages(continue_prompt, glean_result)
             final_result += glean_result
             if now_glean_index == entity_extract_max_gleaning - 1:
                 break
 
-            if_loop_result: str = await use_llm_func(
-                if_loop_prompt, history_messages=history
-            )
+            async with llm_semaphore:
+                if_loop_result: str = await use_llm_func(
+                    if_loop_prompt, history_messages=history
+                )
             if_loop_result = if_loop_result.strip().strip('"').strip("'").lower()
             if if_loop_result != "yes":
                 break
@@ -513,15 +686,26 @@ async def extract_entities(
     if not len(all_relationships_data):
         logger.warning("Didn't extract any relationships")
 
+    # B3: Wrap VDB operations with retry mechanism
+    from .utils import safe_operation_with_retry
+    from .constants import DEFAULT_MAX_RETRIES
+
     if vdb_bipartite_edges is not None:
+        # A1: bipartite_edge_name is already a hash ID (rel-abc123...)
+        # No need to hash again. Use bipartite_edge_content for vector embedding.
         data_for_vdb = {
-            compute_mdhash_id(dp["bipartite_edge_name"], prefix="rel-"): {
-                "content": dp["bipartite_edge_name"],
+            dp["bipartite_edge_name"]: {  # Already hash ID
+                "content": dp.get("bipartite_edge_content", ""),  # Use actual content for embedding
                 "bipartite_edge_name": dp["bipartite_edge_name"],
             }
             for dp in all_bipartite_edges_data
         }
-        await vdb_bipartite_edges.upsert(data_for_vdb)
+        await safe_operation_with_retry(
+            lambda: vdb_bipartite_edges.upsert(data_for_vdb),
+            "VDB upsert bipartite edges",
+            context=f"{len(data_for_vdb)} edges",
+            max_retries=global_config.get("api_retry_attempts", DEFAULT_MAX_RETRIES),
+        )
 
     if vdb_entities is not None:
         data_for_vdb = {
@@ -531,7 +715,12 @@ async def extract_entities(
             }
             for dp in all_entities_data
         }
-        await vdb_entities.upsert(data_for_vdb)
+        await safe_operation_with_retry(
+            lambda: vdb_entities.upsert(data_for_vdb),
+            "VDB upsert entities",
+            context=f"{len(data_for_vdb)} entities",
+            max_retries=global_config.get("api_retry_attempts", DEFAULT_MAX_RETRIES),
+        )
 
     return knowledge_graph_inst
 

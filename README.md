@@ -329,6 +329,30 @@ The following components will be released when fully ready:
 
 ---
 
+## FAQ
+
+### Understanding Weight Values
+
+BiG-RAG assigns weight values to entities and relations in the knowledge graph:
+
+**Entity Weights:**
+- Calculation: Sum of importance scores (0-100) across all occurrences
+- Interpretation:
+  - 400+: Very central entity (mentioned 4+ times with high scores)
+  - 200-399: Important entity (2-3 mentions)
+  - 100-199: Mentioned entity (1-2 mentions)
+  - <100: Peripheral entity
+
+**Relation Weights:**
+- Calculation: Sum of completeness scores (0-10) across all occurrences
+- Higher weight = more frequently mentioned + more complete information
+
+**Why not normalized?** Un-normalized weights preserve frequency information, which is valuable for ranking and understanding graph centrality.
+
+For detailed weight semantics and usage examples, see [CLAUDE.md - Weight Semantics](CLAUDE.md#weight-semantics).
+
+---
+
 ## 📚 Documentation
 
 - **[CLAUDE.md](CLAUDE.md)** - AI assistant guidance and comprehensive system reference

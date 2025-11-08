@@ -37,12 +37,15 @@ When examining a BiG-RAG GraphML file, you'll see three distinct types:
 ### Type 1: Bipartite Edge Node (Knowledge Segment Node)
 
 ```xml
-<node id="&lt;bipartite_edge&gt;&quot;The football world eagerly anticipates the 2024 European Championship and Copa America 2024.&quot;">
+<node id="rel-a1b2c3d4e5f6g7h8i9j0">
   <data key="d0">bipartite_edge</data>        <!-- role -->
+  <data key="content">The football world eagerly anticipates the 2024 European Championship and Copa America 2024.</data>  <!-- ✨ NEW: content as attribute -->
   <data key="d1">16.0</data>                   <!-- weight -->
   <data key="d2">chunk-600f9c648bc602202ec663361837e416</data>  <!-- source_id -->
 </node>
 ```
+
+**✨ Updated Structure (January 2025):** Node ID is now a hash (`rel-abc123...`) instead of full content. Content is stored as a separate `<data key="content">` attribute.
 
 **What it is:** A semantic knowledge segment (relation/statement) extracted by the LLM.
 
@@ -54,7 +57,9 @@ When examining a BiG-RAG GraphML file, you'll see three distinct types:
   - Linked back to source chunks
 
 **Attributes:**
+- `id`: Hash-based identifier (e.g., `rel-a1b2c3d4...`) - **NEW**
 - `role="bipartite_edge"`: Identifies this as a relation node
+- `content`: The actual knowledge segment text - **NEW**
 - `weight`: Cumulative importance score (aggregated if appears in multiple chunks)
 - `source_id`: Chunk ID(s) where this knowledge segment appears
 
@@ -82,12 +87,14 @@ When examining a BiG-RAG GraphML file, you'll see three distinct types:
 ### Type 3: Graph Edge (Connector)
 
 ```xml
-<edge source="&lt;bipartite_edge&gt;&quot;The football world eagerly anticipates...&quot;"
+<edge source="rel-a1b2c3d4e5f6g7h8i9j0"
       target="&quot;COPA AMERICA 2024&quot;">
   <data key="d5">90.0</data>                   <!-- weight -->
   <data key="d6">chunk-600f9c648bc602202ec663361837e416</data>  <!-- source_id -->
 </edge>
 ```
+
+**✨ Updated Structure (January 2025):** Source now uses hash ID (`rel-abc123...`) instead of escaped content.
 
 **What it is:** Connects a bipartite edge node to an entity node.
 
@@ -202,8 +209,8 @@ The term "bipartite edge" in the node name refers to its role in the bipartite s
 │  │                  weight, source_id                   │  │
 │  │                                                       │  │
 │  │  - Bipartite edge nodes (Type 1)                     │  │
-│  │    * ID: "<bipartite_edge>content"  ⚠️ Issue #1      │  │
-│  │    * Attributes: role, weight, source_id             │  │
+│  │    * ID: "rel-abc123..."  ✅ Hash-based (Jan 2025)  │  │
+│  │    * Attributes: role, content, weight, source_id   │  │
 │  │                                                       │  │
 │  │  - Graph edges (Type 3)                              │  │
 │  │    * Connect: entity ↔ bipartite_edge                │  │

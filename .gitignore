@@ -274,3 +274,6 @@ backend/.env.local
 backend/__pycache__/
 
 CHANGELOG.md
+
+# Backend logs
+backend/logs/

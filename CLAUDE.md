@@ -320,6 +320,107 @@ Unlike traditional hypergraphs, BiG-RAG uses a **true bipartite graph**:
 - **No direct edges**: Documents don't connect to documents; entities don't connect to entities
 - **Queries**: Traverse from query → entities → relations → documents
 
+### Weight Semantics
+
+BiG-RAG uses **weight values** to rank the importance of entities and relations in the knowledge graph. Understanding these semantics is crucial for interpreting query results and debugging.
+
+#### Entity Weights
+
+**Calculation:**
+```
+weight = Σ(importance_score) for all occurrences
+```
+
+**Interpretation:**
+- **Range**: 0 to N×100 (where N = number of chunks mentioning the entity)
+- **Components**: Sum of LLM-assigned importance scores (key_score: 0-100) across all chunks
+- **Higher weight** = more frequently mentioned + higher LLM importance ratings
+
+**Examples:**
+| Weight Range | Interpretation | Typical Example |
+|--------------|----------------|-----------------|
+| 400+ | Very central entity | "LIONEL MESSI" mentioned in 4+ chunks with high scores |
+| 200-399 | Important entity | "BARCELONA" mentioned in 2-3 chunks |
+| 100-199 | Mentioned entity | "LA LIGA" mentioned in 1-2 chunks |
+| 50-99 | Peripheral entity | "COPA DEL REY" mentioned once with low score |
+
+**Why no normalization?**
+- Preserves **frequency signal**: Higher weight = more occurrences
+- Enables **importance ranking**: Sort by weight to find central entities
+- Reflects **graph centrality**: Entities with high weights are hubs
+
+#### Relation Weights
+
+**Calculation:**
+```
+weight = Σ(completeness_score) for all occurrences
+```
+
+**Interpretation:**
+- **Range**: 0 to N×10 (where N = number of chunks mentioning the relation)
+- **Components**: Sum of completeness scores (0-10) from LLM extraction
+- **Higher weight** = more complete and frequently mentioned knowledge
+
+**Examples:**
+| Weight Range | Interpretation | Typical Example |
+|--------------|----------------|-----------------|
+| 20+ | Very important relation | Core fact mentioned in 2+ chunks |
+| 10-19 | Important relation | Mentioned in 1-2 chunks with high completeness |
+| 5-9 | Single mention | Mentioned once |
+| <5 | Incomplete relation | Partial information extracted |
+
+**Completeness Score Criteria:**
+- **9-10**: Complete, well-formed knowledge segment with full context
+- **7-8**: Mostly complete, minor context missing
+- **5-6**: Partial information, some ambiguity
+- **<5**: Incomplete or fragmented knowledge
+
+#### Using Weights in Practice
+
+**1. Entity Ranking**
+```python
+# Get top entities by weight
+top_entities = sorted(entities, key=lambda e: e['weight'], reverse=True)[:10]
+```
+
+**2. Filtering by Importance**
+```python
+# Only keep entities with weight > 100 (mentioned at least once with decent score)
+important_entities = [e for e in entities if e['weight'] > 100]
+```
+
+**3. Debug Low Weights**
+```python
+# Check if entity has low weight because:
+# - Few occurrences (check source_id count)
+# - Low LLM importance scores (check extraction quality)
+```
+
+**4. Weight Distribution Analysis**
+```python
+# Create histogram to understand weight distribution
+import numpy as np
+weights = [e['weight'] for e in entities]
+print(f"Mean: {np.mean(weights):.1f}, Median: {np.median(weights):.1f}")
+print(f"Min: {min(weights):.1f}, Max: {max(weights):.1f}")
+```
+
+#### Common Questions
+
+**Q: Why is entity X weight 360.0?**
+A: Entity X appears in multiple chunks (360/90 ≈ 4 mentions with avg score ~90).
+
+**Q: Should I normalize weights?**
+A: No. Un-normalized weights preserve frequency information which is valuable for ranking.
+
+**Q: Can weights be negative?**
+A: No. Weights are always non-negative (sum of positive scores).
+
+**Q: Do weights affect retrieval?**
+A: Yes. During graph traversal, higher-weight nodes/edges are prioritized in ranking.
+
+---
+
 ### Training Pipeline Data Flow
 
 ```

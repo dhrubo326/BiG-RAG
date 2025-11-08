@@ -302,7 +302,7 @@ class DocumentDetailResponse(BaseModel):
     status: DocumentStatus = Field(..., description="Document status")
     dataset: str = Field(..., description="Dataset name")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Document metadata")
-    job_id: str = Field(..., description="Associated job ID")
+    job_id: Optional[str] = Field(None, description="Associated job ID (if uploaded via API)")
     stats: Optional[KGStatistics] = Field(None, description="Knowledge graph statistics")
     top_entities: Optional[List[EntityInfo]] = Field(None, description="Top entities extracted")
     related_documents: Optional[List[RelatedDocument]] = Field(None, description="Related documents")

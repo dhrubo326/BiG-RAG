@@ -396,10 +396,10 @@ async def get_document_details(
         # Get related documents if requested
         related_docs = []
         if include_related:
-            related_docs = await find_related_documents(document_id, working_dir, limit=5)
+            related_docs = await find_related_documents(current_data_source, document_id, top_k=5)
 
         # Get content preview
-        content_preview = await get_document_content_from_corpus(document_id, current_data_source)
+        content_preview = await get_document_content_from_corpus(current_data_source, document_id)
 
         return DocumentDetailResponse(
             document_id=document_id,
@@ -411,10 +411,10 @@ async def get_document_details(
             content_length=doc.get("content_length", 0),
             content_preview=content_preview[:500] if content_preview else "",
             status=doc.get("status", "active"),
-            category=doc.get("metadata", {}).get("category"),
-            tags=doc.get("metadata", {}).get("tags", []),
-            kg_stats=kg_stats,
-            entities=entities_list,
+            metadata=doc.get("metadata"),
+            job_id=doc.get("job_id"),
+            stats=kg_stats,
+            top_entities=entities_list,
             related_documents=related_docs
         )
 

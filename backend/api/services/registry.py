@@ -12,8 +12,8 @@ from datetime import datetime
 from pathlib import Path
 import logging
 
-# Get project root directory (2 levels up from api/)
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+# Get project root directory (3 levels up from api/services/)
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 # Load environment variables from root .env file
 from dotenv import load_dotenv

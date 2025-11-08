@@ -16,12 +16,12 @@ from typing import List, Dict, Optional, Any
 import time
 import logging
 
-from api.answer_generation import (
+from .answer_generation import (
     batch_generate_answers,
     is_no_answer_response
 )
-from api.metrics import exact_match, token_f1
-from api.export import export_all_formats
+from .metrics import exact_match, token_f1
+from .export import export_all_formats
 
 logger = logging.getLogger(__name__)
 

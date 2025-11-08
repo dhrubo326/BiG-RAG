@@ -185,7 +185,7 @@ async def process_document_background(
 
         # Get stats from KG (import here to avoid circular dependency)
         try:
-            from api.kg_utils import get_document_stats_from_kg
+            from .kg_utils import get_document_stats_from_kg
             stats = await get_document_stats_from_kg(dataset, job.document_id)
         except Exception as e:
             logger.warning(f"Could not get document stats: {e}")

@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
 
-# Get project root directory (2 levels up from api/)
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+# Get project root directory (3 levels up from api/services/)
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 # Load environment variables from root .env file
 from dotenv import load_dotenv
@@ -339,7 +339,7 @@ async def get_document_title(data_source: str, document_id: str) -> str:
     """
     # Try registry first
     try:
-        from api.registry import registry
+        from .registry import registry
         doc = await registry.get_document(document_id, dataset=data_source)
 
         if doc:
@@ -414,7 +414,7 @@ async def rebuild_entire_graph(dataset: str, job_id: str, rag_instance, processi
         rag_instance: BiGRAG instance
         processing_jobs_dict: Reference to processing_jobs dict
     """
-    from api.jobs import ProcessingJob, JobStatus
+    from .jobs import ProcessingJob, JobStatus
     from datetime import datetime
 
     job = ProcessingJob(

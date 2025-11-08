@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from bigrag import BiGRAG, QueryParam
 
-from api.metrics import (
+from .metrics import (
     calculate_retrieval_metrics,
     calculate_answer_metrics,
     aggregate_metrics

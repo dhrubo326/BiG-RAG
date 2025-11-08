@@ -276,74 +276,76 @@ async def list_documents(
     status: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20
+    limit: int = 50,
+    offset: int = 0
 ):
     """
     List all documents with optional filtering and pagination.
 
     **Filters:**
-    - search: Search in title/filename
-    - category: Filter by document category
-    - tags: Comma-separated tags (OR logic)
-    - status: active/deleted
-    - date_from/date_to: Date range (ISO format)
+    - `dataset`: Filter by dataset name
+    - `search`: Search in title or filename
+    - `category`: Filter by category
+    - `tags`: Comma-separated tags (e.g., "RAG,NLP")
+    - `status`: Filter by status (pending, processing, indexed, failed, deleted)
+    - `date_from`, `date_to`: Date range filter (ISO format)
+    - `limit`: Results per page (1-500, default 50)
+    - `offset`: Pagination offset (default 0)
 
     **Example usage:**
     ```bash
-    # List all documents
+    # Get all documents
     curl "http://localhost:8001/documents"
 
     # Search with filters
-    curl "http://localhost:8001/documents?search=AI&category=research&page=1&page_size=10"
+    curl "http://localhost:8001/documents?search=research&category=science&limit=20"
+
+    # Get documents by status
+    curl "http://localhost:8001/documents?status=indexed"
     ```
     """
     try:
-        current_data_source = get_data_source()
-        target_dataset = dataset or current_data_source
+        # Parse tags
+        tags_list = tags.split(',') if tags else None
 
-        # Build filter
-        doc_filter = DocumentFilter(
-            dataset=target_dataset,
+        # Get documents from registry
+        docs = await registry.list_documents(
+            dataset=dataset,
             search=search,
             category=category,
-            tags=tags.split(',') if tags else None,
+            tags=tags_list,
             status=status,
             date_from=date_from,
             date_to=date_to
         )
 
-        # Query registry
-        all_docs, pagination = await registry.list_documents(
-            filters=doc_filter,
-            page=page,
-            page_size=page_size
-        )
+        # Apply pagination
+        total = len(docs)
+        paginated = docs[offset:offset+limit]
 
-        # Convert to response models
-        doc_summaries = [
+        # Convert to DocumentSummary models
+        summaries = [
             DocumentSummary(
-                document_id=doc["id"],
-                title=doc["title"],
+                document_id=doc["document_id"],
                 filename=doc["filename"],
-                dataset=doc.get("dataset", target_dataset),
-                upload_date=doc.get("created_at", ""),
-                last_modified=doc.get("updated_at", ""),
-                content_length=doc.get("content_length", 0),
-                status=doc.get("status", "active"),
-                category=doc.get("metadata", {}).get("category"),
-                tags=doc.get("metadata", {}).get("tags", [])
+                title=doc["title"],
+                content_length=doc["content_length"],
+                upload_date=doc["upload_date"],
+                indexed_date=doc.get("indexed_date"),
+                last_modified=doc["last_modified"],
+                status=doc["status"],
+                dataset=doc["dataset"],
+                metadata=doc.get("metadata"),
+                job_id=doc["job_id"]
             )
-            for doc in all_docs
+            for doc in paginated
         ]
 
         return DocumentListResponse(
-            documents=doc_summaries,
-            total_count=pagination["total"],
-            page=page,
-            page_size=page_size,
-            total_pages=pagination["total_pages"],
-            filters_applied=doc_filter
+            total=total,
+            limit=limit,
+            offset=offset,
+            documents=summaries
         )
 
     except Exception as e:

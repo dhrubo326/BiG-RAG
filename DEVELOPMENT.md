@@ -147,13 +147,30 @@ curl "http://localhost:8001/graph/export?data_source=SingleTopic&limit=1000&offs
 - **cola**: Constraint-based, avoids overlaps
 
 **For Large Graphs:**
-- **grid**: Fastest, simple grid arrangement
-- **circle**: Fast, nodes in circle
-- **concentric**: Grouped by importance
+- **grid**: ✅ **FIXED** - Organized table-like structure, sorted by type and weight
+- **circle**: ✅ **IMPROVED** - Grouped by type in circular sections (blue→red→green→purple)
+- **concentric**: ✅ **IMPROVED** - Target pattern with type-based rings (entities outer, relations middle, chunks inner)
 
 **For Small Graphs (<500 nodes):**
 - **cose-bilkent**: Best visual quality
 - **fcose**: Good balance of speed and quality
+
+### Recent Layout Improvements (Nov 6, 2025)
+
+#### Grid Layout (Fixed)
+- **Issue:** Not displaying nodes
+- **Fix:** Added proper sort function, auto-calculate dimensions, increased spacing (1.8x), 30px padding
+- **Result:** Clean organized grid with type grouping
+
+#### Circle Layout (Improved)
+- **Issue:** Poor visual organization
+- **Fix:** Sort by type first (entity→relation→chunk→document), then by weight
+- **Result:** Color-grouped sections in circular arrangement
+
+#### Concentric Layout (Improved)
+- **Issue:** Confusing hierarchy
+- **Fix:** Type-based ring levels (entities=300, relations=200, chunks=100), 80px spacing, 2.0x ring separation
+- **Result:** Clear bullseye pattern with visual type hierarchy
 
 ---
 

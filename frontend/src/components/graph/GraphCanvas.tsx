@@ -333,25 +333,57 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         convergenceThreshold: 0.01,
         flow: { axis: 'y', minSeparation: 60 },
       }),
-      // ✅ PHASE 3: Concentric radial layout (by weight)
+      // ✅ IMPROVED: Concentric radial layout (by type and weight)
       ...(layoutName === 'concentric' && {
         concentric: (node: any) => {
+          // Group by type first, then by weight
+          const type = node.data('type');
           const weight = node.data('weight') || 0.5;
-          return weight * 100; // Scale weight for better distribution
+
+          // Assign level based on type (entities outer, relations middle, chunks inner)
+          const typeLevel = type === 'entity' ? 300 :
+                           type === 'relation' ? 200 : 100;
+
+          // Add weight within type level
+          return typeLevel + (weight * 50);
         },
-        levelWidth: () => 3,         // Increased from 2
-        minNodeSpacing: 60,          // Increased from 40
-        spacingFactor: 1.5,
-        equidistant: false,
-        startAngle: 0,
-        sweep: undefined,
+        levelWidth: () => 2,              // Nodes per level
+        minNodeSpacing: 80,               // More spacing between nodes
+        spacingFactor: 2.0,               // More space between levels
+        equidistant: false,               // Allow variable spacing
+        startAngle: 0,                    // Start at top
+        sweep: 2 * Math.PI,               // Full circle
+        clockwise: true,
+        avoidOverlap: true,
       }),
-      // ✅ PHASE 3: Circle layout
+      // ✅ IMPROVED: Circle layout (grouped by type)
       ...(layoutName === 'circle' && {
-        radius: undefined,
-        spacingFactor: 2.0,          // Increased from 1.5
-        startAngle: Math.PI / 4,     // Start at 45 degrees
-        sweep: undefined,
+        radius: undefined,                // Auto-calculate radius
+        spacingFactor: 2.5,               // More spacing
+        startAngle: 0,                    // Start at top (12 o'clock)
+        sweep: 2 * Math.PI,               // Full circle
+        clockwise: true,
+        // Sort nodes by type for better grouping
+        sort: (a: any, b: any) => {
+          const typeOrder: Record<string, number> = {
+            entity: 0,
+            relation: 1,
+            chunk: 2,
+            document: 3
+          };
+          const aType = a.data('type');
+          const bType = b.data('type');
+
+          // First sort by type
+          const typeDiff = (typeOrder[aType] || 999) - (typeOrder[bType] || 999);
+          if (typeDiff !== 0) return typeDiff;
+
+          // Then by weight (descending)
+          const aWeight = a.data('weight') || 0;
+          const bWeight = b.data('weight') || 0;
+          return bWeight - aWeight;
+        },
+        avoidOverlap: true,
       }),
       // ✅ PHASE 3: Breadthfirst tree layout
       ...(layoutName === 'breadthfirst' && {
@@ -362,15 +394,38 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         avoidOverlap: true,
         nodeDimensionsIncludeLabels: true,
       }),
-      // ✅ PHASE 3: Grid layout
+      // ✅ FIXED: Grid layout with proper settings
       ...(layoutName === 'grid' && {
-        rows: undefined,
-        cols: undefined,
-        position: undefined,
+        rows: undefined,                    // Auto-calculate rows
+        cols: undefined,                    // Auto-calculate cols
+        position: (node: any) => undefined, // Auto-position
+        // Sort nodes by type and weight for organized grid
+        sort: (a: any, b: any) => {
+          const typeOrder: Record<string, number> = {
+            entity: 0,
+            relation: 1,
+            chunk: 2,
+            document: 3
+          };
+          const aType = a.data('type');
+          const bType = b.data('type');
+
+          // First sort by type
+          const typeDiff = (typeOrder[aType] || 999) - (typeOrder[bType] || 999);
+          if (typeDiff !== 0) return typeDiff;
+
+          // Then by weight (descending) for visual hierarchy
+          const aWeight = a.data('weight') || 0;
+          const bWeight = b.data('weight') || 0;
+          return bWeight - aWeight;
+        },
         avoidOverlap: true,
-        avoidOverlapPadding: 20,
+        avoidOverlapPadding: 30,           // More padding between nodes
         nodeDimensionsIncludeLabels: true,
-        spacingFactor: 1.5,
+        spacingFactor: 1.8,                // Better spacing
+        condense: false,                    // Don't compress the grid
+        // Force a square-ish grid for better appearance
+        boundingBox: undefined,
       }),
     };
 

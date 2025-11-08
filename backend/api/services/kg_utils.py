@@ -7,7 +7,7 @@ Helper functions for querying and manipulating the knowledge graph
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import logging
 
 # Get project root directory (2 levels up from api/)
@@ -501,3 +501,62 @@ async def rebuild_entire_graph(dataset: str, job_id: str, rag_instance, processi
             completed_at=datetime.now()
         )
         raise
+
+
+# ==============================================================================
+# Document Management Helper Functions
+# ==============================================================================
+
+def compute_doc_id(content: str, prefix: str = "doc") -> str:
+    """
+    Generate unique ID from content hash
+
+    Uses BiGRAG's compute_mdhash_id to ensure document IDs match
+    between upload system and knowledge graph.
+    """
+    from bigrag.utils import compute_mdhash_id
+    return compute_mdhash_id(content.strip(), prefix=f"{prefix}-")
+
+
+async def add_document_to_corpus(
+    data_source: str,
+    doc_id: str,
+    content: str,
+    title: str,
+    metadata: Optional[Dict[str, Any]] = None
+):
+    """Add a document to the corpus.jsonl file"""
+    from pathlib import Path
+    import os
+    import json
+    from datetime import datetime
+    from bigrag.utils import logger
+    
+    PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+    
+    # Use configurable input directory from environment
+    input_dir_base = os.getenv('INPUT_DIR', './datasets').lstrip('./')
+    corpus_file = PROJECT_ROOT / input_dir_base / data_source / "raw" / "corpus.jsonl"
+
+    # Create directory if doesn't exist
+    corpus_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Prepare document
+    doc = {
+        "id": doc_id,
+        "contents": content,
+        "title": title,
+        "upload_date": datetime.now().isoformat(),
+        "source": "upload"
+    }
+
+    # Add metadata if provided
+    if metadata:
+        doc["metadata"] = metadata
+
+    # Append to corpus
+    with open(corpus_file, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(doc, ensure_ascii=False) + '\n')
+
+    logger.info(f"Added document {doc_id} to corpus")
+    return doc

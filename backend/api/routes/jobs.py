@@ -8,7 +8,7 @@ from ..models.models import JobStatusResponse, JobStatistics
 from ..services.jobs import processing_jobs
 
 
-router = APIRouter(prefix="/status", tags=["Job Management"])
+router = APIRouter(prefix="/jobs", tags=["Job Management"])
 
 
 @router.get("/{job_id}", response_model=JobStatusResponse)
@@ -18,7 +18,7 @@ async def get_job_status(job_id: str):
 
     **Example usage:**
     ```bash
-    curl "http://localhost:8001/status/job-abc123"
+    curl "http://localhost:8001/jobs/job-abc123"
     ```
 
     **Returns:** Job status with progress (0.0 to 1.0) and current stage

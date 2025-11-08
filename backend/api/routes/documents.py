@@ -36,7 +36,7 @@ from ..services.kg_utils import (
 )
 
 
-router = APIRouter(tags=["Document Management"])
+router = APIRouter(prefix="/documents", tags=["Document Management"])
 
 
 @router.post("/upload", response_model=EnhancedUploadResponse)
@@ -267,7 +267,7 @@ async def rebuild_graph(
         raise HTTPException(status_code=500, detail=f"Rebuild failed: {str(e)}")
 
 
-@router.get("/documents", response_model=DocumentListResponse)
+@router.get("", response_model=DocumentListResponse)
 async def list_documents(
     dataset: Optional[str] = None,
     search: Optional[str] = None,
@@ -355,7 +355,7 @@ async def list_documents(
         raise HTTPException(status_code=500, detail=f"Failed to list documents: {str(e)}")
 
 
-@router.get("/documents/{document_id}", response_model=DocumentDetailResponse)
+@router.get("/{document_id}", response_model=DocumentDetailResponse)
 async def get_document_details(
     document_id: str,
     include_entities: bool = True,
@@ -427,7 +427,7 @@ async def get_document_details(
         raise HTTPException(status_code=500, detail=f"Failed to get document details: {str(e)}")
 
 
-@router.delete("/documents/{document_id}", response_model=DeleteResponse)
+@router.delete("/{document_id}", response_model=DeleteResponse)
 async def delete_document(
     document_id: str,
     rag: RAGDep,

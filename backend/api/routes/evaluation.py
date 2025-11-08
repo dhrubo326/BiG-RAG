@@ -19,8 +19,7 @@ from ..services.evaluation import (
     evaluate_retrieval, evaluate_single_answer,
     compare_configurations, batch_evaluate
 )
-# CSV evaluation temporarily disabled
-# from ..services.csv_evaluation import batch_generate_answers, evaluate_csv_results
+from ..services.csv_evaluation import batch_generate_endpoint, evaluate_results_endpoint
 from ..services.metrics import aggregate_metrics
 
 
@@ -332,5 +331,100 @@ async def batch_evaluate_endpoint(
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Batch evaluation failed: {str(e)}")
+
+
+@router.post("/batch_generate", response_model=BatchGenerateResponse)
+async def batch_generate_from_csv(
+    request: BatchGenerateRequest,
+    rag: RAGDep,
+    llm_manager: LLMDep,
+    embedding_manager: EmbeddingDep
+):
+    """
+    Batch process questions from CSV and generate answers.
+
+    **Use Case:** Systematic evaluation on standard datasets.
+    Separates generation from evaluation to avoid redundant processing.
+
+    **Workflow:**
+    1. Load questions from CSV
+    2. For each question: retrieve context + generate answer
+    3. Save results to CSV for later evaluation
+
+    **Example usage:**
+    ```bash
+    curl -X POST "http://localhost:8001/eval/batch_generate" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "questions_csv_path": "datasets/test_questions.csv",
+        "output_csv_path": "results/answers.csv",
+        "llm_provider": "openai",
+        "model": "gpt-4o-mini"
+      }'
+    ```
+    """
+    try:
+        results = await batch_generate_endpoint(
+            questions_csv_path=request.questions_csv_path,
+            output_csv_path=request.output_csv_path,
+            rag_instance=rag,
+            llm_manager=llm_manager,
+            embedding_manager=embedding_manager,
+            llm_provider=request.llm_provider,
+            model=request.model,
+            temperature=request.temperature,
+            max_tokens=request.max_tokens,
+            top_k=request.top_k,
+            enable_reranking=request.enable_reranking
+        )
+
+        return BatchGenerateResponse(**results)
+
+    except Exception as e:
+        logger.error(f"Batch generation failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Batch generation failed: {str(e)}")
+
+
+@router.post("/evaluate_results", response_model=EvaluateResultsResponse)
+async def evaluate_csv_results(request: EvaluateResultsRequest):
+    """
+    Evaluate saved results CSV for accuracy.
+
+    **Use Case:** Calculate metrics on previously generated answers.
+
+    **Metrics:**
+    - EM (Exact Match)
+    - F1 (Token F1)
+    - ROUGE-L (optional)
+    - Answer Rate (for no-answer questions)
+
+    **Example usage:**
+    ```bash
+    curl -X POST "http://localhost:8001/eval/evaluate_results" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "results_csv_path": "results/answers.csv",
+        "metrics": ["em", "f1", "rouge_l"],
+        "export_formats": ["json", "csv", "markdown"]
+      }'
+    ```
+    """
+    try:
+        results = await evaluate_results_endpoint(
+            results_csv_path=request.results_csv_path,
+            metrics=request.metrics,
+            export_formats=request.export_formats,
+            output_dir=request.output_dir
+        )
+
+        return EvaluateResultsResponse(**results)
+
+    except Exception as e:
+        logger.error(f"Results evaluation failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Results evaluation failed: {str(e)}")
 
 

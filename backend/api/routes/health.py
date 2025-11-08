@@ -45,7 +45,7 @@ async def root():
                 "rebuild": "POST /documents/rebuild - Rebuild knowledge graph"
             },
             "job_management": {
-                "status": "GET /jobs/status/{job_id} - Get processing job status"
+                "status": "GET /jobs/{job_id} - Get processing job status"
             },
             "graph_management": {
                 "stats": "GET /graph/stats - Get knowledge graph statistics",

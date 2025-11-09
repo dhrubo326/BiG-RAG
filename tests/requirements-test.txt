@@ -1,4 +1,9 @@
 # BiG-RAG Test Dependencies
+#
+# NOTE: This file is now OPTIONAL. The recommended way to install test dependencies is:
+#   pip install -e ".[test]"
+#
+# This file is kept for backward compatibility and manual installations.
 # Install with: pip install -r requirements-test.txt
 
 # Core testing framework

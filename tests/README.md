@@ -8,11 +8,45 @@ Comprehensive testing framework for BiG-RAG to ensure production-ready quality.
 
 ### 1. Install Test Dependencies
 
+**OPTION A: Use Existing Dev Environment (RECOMMENDED)**
+
+If you already have a development venv with dependencies installed:
+
 ```cmd
-cd tests
-pip install -r requirements-test.txt
-pip install -e ..
+# Activate your existing dev venv
+# venv\Scripts\activate  (or whatever your venv is named)
+
+# Install BiGRAG with test dependencies
+pip install -e ".[test]"
+
+# Download NLP models (if not already done)
+python -m spacy download en_core_web_sm
+python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 ```
+
+**OPTION B: Create Dedicated Test Environment (CLEAN ISOLATION)**
+
+For a clean test environment separate from development:
+
+```cmd
+# Create test virtual environment
+cd tests
+python -m venv test_venv
+test_venv\Scripts\activate
+
+# Install BiGRAG with test dependencies
+cd ..
+pip install -e ".[test]"
+
+# Download NLP models
+python -m spacy download en_core_web_sm
+python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+
+# Return to tests directory
+cd tests
+```
+
+**Note:** Both options install the same dependencies. Option A is simpler if you're actively developing BiGRAG.
 
 ### 2. Set Environment Variables (Optional)
 
@@ -65,12 +99,23 @@ pytest tests/performance/ tests/edge_cases/ -v
 **Before declaring BiGRAG production-ready, complete ALL steps:**
 
 #### Step 1: Clean Environment Setup
+
+**OPTION A (Development Venv):**
 ```cmd
+# Use your existing dev venv
+venv\Scripts\activate
+pip install -e ".[test]"
+```
+
+**OPTION B (Dedicated Test Venv):**
+```cmd
+# Create fresh test environment
 cd tests
 python -m venv test_venv
 test_venv\Scripts\activate
-pip install -r requirements-test.txt
-pip install -e ..
+cd ..
+pip install -e ".[test]"
+cd tests
 ```
 
 #### Step 2: Critical Path Validation (ZERO TOLERANCE)

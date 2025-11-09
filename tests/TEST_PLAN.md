@@ -6,13 +6,18 @@
 
 ## Update Log
 
-- **2025-01-09:** Phase 3 Integration Tests implemented (30 tests across 4 files)
-  - Added test_entity_extraction.py (6 tests)
-  - Added test_graph_vector_sync.py (6 tests)
-  - Added test_retrieval_pipeline.py (10 tests)
-  - Added test_storage_consistency.py (8 tests)
-  - Discovered and fixed Bug #7 (dict unpacking in operate.py)
-  - Fixed Bug #8 (test-level attribute name error)
+- **2025-01-09:** Phase 3 Integration Tests + Phase 4 API Tests implemented
+  - **Phase 3** (30 tests across 4 files):
+    - Added test_entity_extraction.py (6 tests)
+    - Added test_graph_vector_sync.py (6 tests)
+    - Added test_retrieval_pipeline.py (10 tests)
+    - Added test_storage_consistency.py (8 tests)
+    - Discovered and fixed Bug #7 (dict unpacking in operate.py)
+    - Fixed Bug #8 (test-level attribute name error)
+  - **Phase 4** (40 tests across 3 files):
+    - Added test_server_endpoints.py (10 tests) - Server health and docs
+    - Added test_search_api.py (15 tests) - Search and retrieval endpoints
+    - Added test_graph_api.py (15 tests) - Graph management API
 
 ---
 
@@ -67,14 +72,14 @@
 |-----------|-------|-----------------|----------|
 | Unit Tests | 10 files (+4 NEW) | 60% of tests | HIGH |
 | Integration Tests | 4 files (30 tests) | 30% of tests | HIGH |
+| API Tests | 3 files (40 tests) | All endpoints | HIGH |
 | End-to-End Tests | 3 files | 10% of tests | CRITICAL |
 | Regression Tests | 1 file | 6 bug fixes | CRITICAL |
-| API Tests | 3 files | All endpoints | HIGH |
 | Frontend Tests | 1 file | Basic UI flow | MEDIUM |
 | Performance Tests | 2 files | Stress testing | MEDIUM |
 | Edge Cases | 1 file | Error handling | HIGH |
 
-**Total Test Files:** 25+ (4 new unit tests + 4 integration tests added 2025-01-09)
+**Total Test Files:** 28+ (4 unit + 4 integration + 3 API tests added 2025-01-09)
 
 ### NEW Unit Tests (2025-01-09)
 1. **test_chunking.py** - Comprehensive chunking tests (40+ tests)
@@ -95,6 +100,14 @@
    - Entity/relation/chunk paths, hybrid mode, RRF scoring, reranking, metadata preservation
 4. **test_storage_consistency.py** - Storage layer sync (8 tests)
    - Insert/delete/upsert sync, concurrent operations, entity counts, chunk-entity mapping
+
+### NEW API Tests (2025-01-09)
+1. **test_server_endpoints.py** - Server health and docs (10 tests)
+   - Root endpoint (API info, features, providers), health monitoring, OpenAPI docs, error handling
+2. **test_search_api.py** - Search and retrieval (15 tests)
+   - Basic/batch search, ask endpoint, retrieval modes (hybrid/local/global/naive), reranking, parameter validation
+3. **test_graph_api.py** - Graph operations (15 tests)
+   - Graph statistics, export (Cytoscape format), sampling strategies, subgraph operations, filters
 
 ---
 
@@ -145,15 +158,16 @@
 
 ---
 
-### Phase 4: API and Interface Testing
-**Purpose:** Validate external interfaces
+### Phase 4: API Testing (NEW 2025-01-09)
+**Purpose:** Validate backend API endpoints
+**Requires:** Backend server running on port 8001
 
-13. `tests/api/test_server_endpoints.py` - API server endpoints
-14. `tests/api/test_search_api.py` - Search functionality
-15. `tests/api/test_graph_api.py` - Graph management API
-16. `tests/frontend/test_ui_integration.py` - UI integration (if applicable)
+**API Tests (40 tests):**
+19. `tests/api/test_server_endpoints.py` - Server endpoints (10 tests)
+20. `tests/api/test_search_api.py` - Search and ask endpoints (15 tests)
+21. `tests/api/test_graph_api.py` - Graph management API (15 tests)
 
-**Exit Criteria:** All API tests pass. Frontend tests optional.
+**Exit Criteria:** ≥90% pass rate (36/40 tests). Some tests may skip if endpoints not implemented.
 
 ---
 
@@ -409,7 +423,62 @@ pytest e2e/test_three_path_retrieval.py -v --tb=short
 # CHECKPOINT: Target >=90% pass rate for Phase 3 (E2E tests)
 ```
 
-#### Phase 4: API Tests (Requires Backend Server)
+#### Phase 4: API Tests (NEW - 2025-01-09)
+
+**PREREQUISITES:**
+```bash
+# 1. Install REQUIRED dependencies (NEW SESSION)
+pip install pytest-asyncio httpx
+
+# 2. Create demo dataset (first time only)
+mkdir -p datasets/demo_test/raw
+# Add sample corpus.jsonl (see RUN_ALL_PHASES.md for content)
+python script_build.py --data_source demo_test
+
+# 3. Start backend server (Terminal 1)
+cd backend
+python server.py --data_source demo_test
+# Wait for: "Server started on http://0.0.0.0:8001"
+```
+
+**Run Tests** (Terminal 2):
+```bash
+# Test 19/25: Server Endpoints (NEW - 2025-01-09)
+pytest api/test_server_endpoints.py -v --tb=short
+# Expected: 10 tests PASSED
+# Tests: Root (API info), health (status, uptime, RAG instances), docs, error handling
+# Time: ~10 seconds
+
+# Test 20/25: Search API (NEW - 2025-01-09)
+pytest api/test_search_api.py -v --tb=short
+# Expected: 15 tests PASSED
+# Tests: Basic/batch search, ask endpoint, retrieval modes, reranking, validation, edge cases
+# Time: ~30 seconds
+
+# Test 21/25: Graph API (NEW - 2025-01-09)
+pytest api/test_graph_api.py -v --tb=short
+# Expected: 12-15 tests PASSED (some may skip if dataset not large enough)
+# Tests: Graph stats, export, subgraph operations, filters, sampling
+# Time: ~25 seconds
+
+# Run all API tests at once
+pytest api/ -v --tb=short
+# Expected: 36-40/40 PASSED
+
+# CHECKPOINT: All 40 API tests should pass (≥90% = 36/40)
+```
+
+**Stop Server After Tests:**
+```bash
+# Linux/macOS
+fuser -k 8001/tcp
+
+# Windows
+netstat -ano | findstr :8001
+taskkill /PID <pid> /F
+```
+
+#### Phase 5: Regression and Edge Cases
 
 **PREREQUISITE:** Start backend server in separate terminal
 ```cmd

@@ -278,3 +278,9 @@ CHANGELOG.md
 
 # Backend logs
 backend/logs/
+
+###############################################################################
+# Claude Code Settings (Contains API keys - Never commit!)
+###############################################################################
+.claude/
+.claude/settings.local.json

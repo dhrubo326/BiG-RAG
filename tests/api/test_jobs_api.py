@@ -7,6 +7,7 @@ Tests async job tracking and status monitoring.
 import pytest
 import os
 import asyncio
+import io
 
 
 @pytest.mark.api
@@ -17,69 +18,72 @@ import asyncio
 class TestJobsAPI:
     """Test /jobs endpoints"""
 
+    @pytest.fixture
+    async def test_job_id(self, api_client):
+        """Create a test job by uploading a document"""
+        # Upload a small test document to create a job
+        file_content = b"Test document for job testing. Lionel Messi is a football player."
+        files = {"file": ("test_job_doc.txt", io.BytesIO(file_content), "text/plain")}
+        data = {"metadata": '{"title": "Test Job Document"}'}
+
+        response = await api_client.post("/documents/upload", files=files, data=data)
+
+        if response.status_code == 200:
+            response_data = response.json()
+            job_id = response_data.get("job_id")
+            if job_id:
+                # Wait a moment for job to start processing
+                await asyncio.sleep(1)
+                return job_id
+
+        # If upload failed, skip jobs tests
+        pytest.skip(f"Could not create test job (upload returned {response.status_code})")
+
+    @pytest.mark.asyncio
+    async def test_get_job_status_existing(self, api_client, test_job_id):
+        """Test getting status of an existing job"""
+        response = await api_client.get(f"/jobs/{test_job_id}")
+
+        # Should return job status (200)
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        assert "job_id" in data
+        assert data["job_id"] == test_job_id
+        assert "status" in data
+        assert "progress" in data
+        assert data["status"] in ["pending", "processing", "completed", "failed"]
+
     @pytest.mark.asyncio
     async def test_get_job_status_nonexistent(self, api_client):
         """Test getting status of non-existent job"""
-        try:
-            response = await api_client.get("/jobs/nonexistent_job_id")
+        response = await api_client.get("/jobs/nonexistent_job_id_12345")
 
-            if response.status_code == 404:
-                # Job not found - expected
-                data = response.json()
-                assert isinstance(data, dict)
-            elif response.status_code == 200:
-                # Job endpoint exists but job not found (might return empty status)
-                data = response.json()
-                assert isinstance(data, dict)
-            else:
-                pytest.skip(f"Jobs endpoint returned {response.status_code}")
-
-        except Exception as e:
-            pytest.skip(f"API server not running: {e}")
+        # Should return 404 (job not found)
+        assert response.status_code == 404, f"Expected 404, got {response.status_code}"
+        data = response.json()
+        assert "detail" in data
+        assert "not found" in data["detail"].lower()
 
     @pytest.mark.asyncio
-    async def test_get_job_status_format(self, api_client):
+    async def test_job_status_format(self, api_client, test_job_id):
         """Test job status response format"""
-        try:
-            # Try to get a job status (may not exist)
-            response = await api_client.get("/jobs/test_job_123")
+        response = await api_client.get(f"/jobs/{test_job_id}")
 
-            if response.status_code in [200, 404]:
-                data = response.json()
-                assert isinstance(data, dict)
-                # If job exists, should have status fields
-                if response.status_code == 200:
-                    # Common job status fields
-                    expected_fields = ["job_id", "status", "progress", "created_at"]
-                    # At least one of these should be present
-                    has_job_fields = any(field in data for field in expected_fields)
-                    if has_job_fields:
-                        assert True
-            else:
-                pytest.skip(f"Jobs endpoint returned {response.status_code}")
+        assert response.status_code == 200
+        data = response.json()
 
-        except Exception as e:
-            pytest.skip(f"API server not running: {e}")
+        # Check required fields
+        assert "job_id" in data
+        assert "status" in data
+        assert "progress" in data
 
-    @pytest.mark.asyncio
-    async def test_job_status_values(self, api_client):
-        """Test that job status contains valid state values"""
-        try:
-            response = await api_client.get("/jobs/test_job")
+        # Check progress is a number between 0 and 1
+        assert isinstance(data["progress"], (int, float))
+        assert 0 <= data["progress"] <= 1
 
-            if response.status_code == 200:
-                data = response.json()
-                if "status" in data:
-                    # Status should be one of: pending, processing, completed, failed
-                    valid_statuses = ["pending", "processing", "completed", "failed", "queued"]
-                    assert data["status"] in valid_statuses or isinstance(data["status"], str)
-            elif response.status_code == 404:
-                pytest.skip("Job not found (expected for test job)")
-            else:
-                pytest.skip(f"Jobs endpoint returned {response.status_code}")
-
-        except Exception as e:
-            pytest.skip(f"API server not running: {e}")
+        # Check status is valid
+        valid_statuses = ["pending", "processing", "completed", "failed"]
+        assert data["status"] in valid_statuses
 
 
 if __name__ == "__main__":

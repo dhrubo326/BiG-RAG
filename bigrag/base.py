@@ -43,6 +43,22 @@ class QueryParam:
     # Improves precision at cost of ~50-100ms latency
     enable_reranking: bool = True
 
+    def __post_init__(self):
+        """Validate QueryParam parameters at runtime"""
+        valid_modes = ["local", "global", "hybrid", "naive"]
+        if self.mode not in valid_modes:
+            raise ValueError(
+                f"Invalid mode '{self.mode}'. Must be one of: {valid_modes}"
+            )
+        if self.top_k < 1:
+            raise ValueError(f"top_k must be >= 1, got {self.top_k}")
+        if self.max_token_for_text_unit < 1:
+            raise ValueError(f"max_token_for_text_unit must be >= 1, got {self.max_token_for_text_unit}")
+        if self.max_token_for_global_context < 1:
+            raise ValueError(f"max_token_for_global_context must be >= 1, got {self.max_token_for_global_context}")
+        if self.max_token_for_local_context < 1:
+            raise ValueError(f"max_token_for_local_context must be >= 1, got {self.max_token_for_local_context}")
+
 
 @dataclass
 class StorageNameSpace:

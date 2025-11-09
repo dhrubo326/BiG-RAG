@@ -583,12 +583,15 @@ async def safe_operation_with_retry(
             max_retries=3,
         )
     """
-    for attempt in range(max_retries):
+    # Total attempts = 1 initial + max_retries
+    for attempt in range(max_retries + 1):
         try:
             return await operation()
         except Exception as e:
-            if attempt >= max_retries - 1:
-                error_msg = f"{operation_name} failed for {context} after {max_retries} attempts: {e}"
+            if attempt >= max_retries:
+                # Failed after all retries
+                total_attempts = max_retries + 1
+                error_msg = f"{operation_name} failed for {context} after {total_attempts} attempts: {e}"
                 logger.error(error_msg)
                 raise Exception(error_msg) from e
             else:
@@ -659,3 +662,81 @@ def setup_bigrag_logger(
         logger.addHandler(file_handler)
 
     return logger
+
+
+def normalize_text(text: str) -> str:
+    """
+    Normalize text for matching by removing extra whitespace, lowercasing, and removing punctuation.
+
+    Args:
+        text: Input text to normalize
+
+    Returns:
+        Normalized text string
+
+    Examples:
+        >>> normalize_text("  Hello,  World!  ")
+        'hello world'
+        >>> normalize_text("The Quick Brown Fox.")
+        'the quick brown fox'
+    """
+    if not text:
+        return ""
+
+    # Lowercase
+    text = text.lower()
+
+    # Remove punctuation (keep alphanumeric and spaces)
+    text = re.sub(r'[^\w\s]', ' ', text)
+
+    # Remove extra whitespace
+    text = ' '.join(text.split())
+
+    return text
+
+
+def remove_stopwords(text: str, stopwords: Optional[List[str]] = None) -> str:
+    """
+    Remove common stopwords from text.
+
+    Args:
+        text: Input text
+        stopwords: Optional list of stopwords to remove (default: common English stopwords)
+
+    Returns:
+        Text with stopwords removed
+
+    Examples:
+        >>> remove_stopwords("the quick brown fox")
+        'quick brown fox'
+        >>> remove_stopwords("this is a test")
+        'test'
+    """
+    # Default English stopwords (comprehensive list)
+    if stopwords is None:
+        stopwords = [
+            'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an',
+            'and', 'any', 'are', 'as', 'at', 'be', 'because', 'been', 'before',
+            'being', 'below', 'between', 'both', 'but', 'by', 'can', 'cannot',
+            'could', 'did', 'do', 'does', 'doing', 'down', 'during', 'each',
+            'few', 'for', 'from', 'further', 'had', 'has', 'have', 'having',
+            'he', 'her', 'here', 'hers', 'herself', 'him', 'himself', 'his',
+            'how', 'i', 'if', 'in', 'into', 'is', 'it', 'its', 'itself', 'just',
+            'me', 'might', 'more', 'most', 'must', 'my', 'myself', 'no', 'nor',
+            'not', 'now', 'of', 'off', 'on', 'once', 'only', 'or', 'other',
+            'our', 'ours', 'ourselves', 'out', 'over', 'own', 'same', 'she',
+            'should', 'so', 'some', 'such', 'than', 'that', 'the', 'their',
+            'theirs', 'them', 'themselves', 'then', 'there', 'these', 'they',
+            'this', 'those', 'through', 'to', 'too', 'under', 'until', 'up',
+            'very', 'was', 'we', 'were', 'what', 'when', 'where', 'which',
+            'while', 'who', 'whom', 'why', 'will', 'with', 'would', 'you',
+            'your', 'yours', 'yourself', 'yourselves'
+        ]
+
+    # Split text into words
+    words = text.lower().split()
+
+    # Remove stopwords
+    filtered_words = [word for word in words if word not in stopwords]
+
+    return ' '.join(filtered_words)

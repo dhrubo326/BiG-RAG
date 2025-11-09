@@ -34,6 +34,46 @@ from .constants import DEFAULT_ENTITY_TYPES, DEFAULT_LLM_CONCURRENCY
 
 
 # ========================
+# RRF (Reciprocal Rank Fusion) Scoring
+# ========================
+
+def rrf_score_fusion(rankings: list[list], k: int = 1) -> dict:
+    """
+    Reciprocal Rank Fusion (RRF) scoring for merging multiple ranked lists.
+
+    Combines rankings by assigning scores based on reciprocal rank position.
+    Items appearing in multiple lists accumulate higher scores.
+
+    Args:
+        rankings: List of ranking lists (each inner list is ordered by relevance)
+                 Example: [["A", "B"], ["B", "C"]]
+        k: Constant for RRF formula (default=1, matches current inline implementation)
+
+    Returns:
+        Dict mapping items to RRF scores (higher score = more relevant)
+
+    Formula: score(item) = Σ 1/(rank + k) across all rankings where item appears
+
+    Examples:
+        >>> rrf_score_fusion([["A", "B"], ["B", "C"]])
+        {"A": 1.0, "B": 1.5, "C": 0.5}  # B appears in both lists
+
+        >>> rrf_score_fusion([])
+        {}  # Empty input returns empty dict
+    """
+    scores = {}
+
+    for ranking in rankings:
+        for i, item in enumerate(ranking):
+            if item not in scores:
+                scores[item] = 0.0
+            # RRF formula: 1/(rank + k) where rank is 0-indexed position
+            scores[item] += 1.0 / (i + k)
+
+    return scores
+
+
+# ========================
 # Entity Type Validation (A2)
 # ========================
 

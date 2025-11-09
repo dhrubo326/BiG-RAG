@@ -68,7 +68,7 @@ class SemanticReranker:
         query: str,
         candidates: List[Tuple[str, List[str]]],  # List of (content, [source_ids])
         top_k: int = 5,
-    ) -> List[Tuple[str, List[str], float]]:
+    ) -> List[dict]:
         """
         Rerank candidate chunks by semantic relevance to query.
 
@@ -78,13 +78,17 @@ class SemanticReranker:
             top_k: Number of top results to return
 
         Returns:
-            List of (chunk_content, source_ids, score) tuples, sorted by relevance
+            List of dicts with keys: content (str), sources (list), score (float)
+            Sorted by relevance (highest score first)
             Returns original candidates (unranked) if model unavailable
         """
         if not self.is_available():
             logger.warning("[Reranker] Model not available, returning candidates unranked")
             # Return original candidates with default scores
-            return [(content, sources, 0.5) for content, sources in candidates[:top_k]]
+            return [
+                {"content": content, "sources": sources, "score": 0.5}
+                for content, sources in candidates[:top_k]
+            ]
 
         if not candidates:
             return []
@@ -99,7 +103,7 @@ class SemanticReranker:
         query: str,
         candidates: List[Tuple[str, List[str]]],
         top_k: int,
-    ) -> List[Tuple[str, List[str], float]]:
+    ) -> List[dict]:
         """Synchronous reranking (called in thread pool)"""
         # Extract just the content for scoring
         contents = [content for content, _ in candidates]
@@ -113,20 +117,23 @@ class SemanticReranker:
         except Exception as e:
             logger.error(f"[Reranker] Prediction failed: {e}")
             # Fallback: return unranked with default scores
-            return [(content, sources, 0.5) for content, sources in candidates[:top_k]]
+            return [
+                {"content": content, "sources": sources, "score": 0.5}
+                for content, sources in candidates[:top_k]
+            ]
 
         # Combine candidates with scores
         scored_candidates = [
-            (content, sources, float(score))
+            {"content": content, "sources": sources, "score": float(score)}
             for (content, sources), score in zip(candidates, scores)
         ]
 
         # Sort by score (descending) and take top-k
-        ranked = sorted(scored_candidates, key=lambda x: x[2], reverse=True)[:top_k]
+        ranked = sorted(scored_candidates, key=lambda x: x["score"], reverse=True)[:top_k]
 
         logger.info(
             f"[Reranker] Reranked {len(candidates)} candidates → top-{top_k} "
-            f"(scores: {ranked[0][2]:.3f} to {ranked[-1][2]:.3f})"
+            f"(scores: {ranked[0]['score']:.3f} to {ranked[-1]['score']:.3f})"
         )
 
         return ranked
@@ -136,7 +143,7 @@ class SemanticReranker:
         query: str,
         candidates: List[Tuple[str, List[str]]],
         top_k: int = 5,
-    ) -> List[Tuple[str, List[str], float]]:
+    ) -> List[dict]:
         """
         Synchronous reranking (for non-async contexts).
 
@@ -162,7 +169,7 @@ async def rerank_chunks(
     chunks: List[Tuple[str, List[str]]],
     top_k: int = 5,
     use_reranking: bool = True,
-) -> List[Tuple[str, List[str], float]]:
+) -> List[dict]:
     """
     Convenience function for reranking chunks.
 
@@ -173,11 +180,14 @@ async def rerank_chunks(
         use_reranking: Whether to use reranking (if False, returns original order)
 
     Returns:
-        List of (content, source_ids, score) tuples
+        List of dicts with keys: content (str), sources (list), score (float)
     """
     if not use_reranking:
         # Return original chunks with default scores
-        return [(content, sources, 0.5) for content, sources in chunks[:top_k]]
+        return [
+            {"content": content, "sources": sources, "score": 0.5}
+            for content, sources in chunks[:top_k]
+        ]
 
     reranker = get_reranker()
     return await reranker.rerank(query, chunks, top_k=top_k)

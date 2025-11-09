@@ -144,7 +144,7 @@ class TestTokenEncoding:
         ]
 
         # Truncate to small token limit
-        truncated = truncate_list_by_token_size(items, max_token_size=20)
+        truncated = truncate_list_by_token_size(items, key=lambda x: x, max_token_size=20)
 
         # Should have fewer items
         assert len(truncated) <= len(items)
@@ -161,7 +161,7 @@ class TestTokenEncoding:
             "This is a very long item that exceeds the token limit by itself"
         ]
 
-        truncated = truncate_list_by_token_size(items, max_token_size=5)
+        truncated = truncate_list_by_token_size(items, key=lambda x: x, max_token_size=5)
 
         # Should return empty or partial
         assert len(truncated) <= len(items)

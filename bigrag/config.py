@@ -155,6 +155,7 @@ class BiGRAGConfig:
     embedding_model: str = field(default_factory=lambda: os.getenv('EMBEDDING_MODEL', 'text-embedding-3-large'))
     embedding_dim: int = field(default_factory=lambda: int(os.getenv('EMBEDDING_DIM', '3072')))
     embedding_batch_size: int = field(default_factory=lambda: int(os.getenv('EMBEDDING_BATCH_SIZE', '10')))
+    embedding_batch_num: int = field(default_factory=lambda: int(os.getenv('EMBEDDING_BATCH_NUM', '32')))  # Alias for backward compatibility with BiGRAG class
     embedding_max_async: int = field(default_factory=lambda: int(os.getenv('EMBEDDING_MAX_ASYNC', '8')))
     embedding_device: str = field(default_factory=lambda: os.getenv('EMBEDDING_DEVICE', 'cpu'))
 

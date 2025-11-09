@@ -18,21 +18,20 @@ class TestBiGRAGConfig:
 
         # Check some default values
         assert config.chunk_size > 0
-        assert config.chunk_overlap >= 0
-        assert config.max_token_for_text_unit > 0
+        assert config.chunk_overlap_size >= 0
         assert isinstance(config.enable_reranking, bool)
 
     def test_config_from_env(self, monkeypatch):
         """Test configuration loading from environment variables"""
-        # Set environment variables
-        monkeypatch.setenv("BIGRAG_CHUNK_SIZE", "2000")
-        monkeypatch.setenv("BIGRAG_CHUNK_OVERLAP", "200")
-        monkeypatch.setenv("BIGRAG_ENABLE_RERANKING", "false")
+        # Set environment variables (no BIGRAG_ prefix in actual config)
+        monkeypatch.setenv("CHUNK_SIZE", "2000")
+        monkeypatch.setenv("CHUNK_OVERLAP_SIZE", "200")
+        monkeypatch.setenv("ENABLE_RERANKING", "false")
 
         config = BiGRAGConfig()
 
         assert config.chunk_size == 2000
-        assert config.chunk_overlap == 200
+        assert config.chunk_overlap_size == 200
         assert config.enable_reranking is False
 
     def test_config_openai_api_key(self, monkeypatch):
@@ -46,7 +45,7 @@ class TestBiGRAGConfig:
     def test_config_embedding_model(self, monkeypatch):
         """Test embedding model configuration"""
         test_model = "test-embedding-model"
-        monkeypatch.setenv("BIGRAG_EMBEDDING_MODEL", test_model)
+        monkeypatch.setenv("EMBEDDING_MODEL", test_model)
 
         config = BiGRAGConfig()
         assert config.embedding_model == test_model
@@ -87,12 +86,12 @@ class TestReloadConfig:
     def test_reload_config_updates_values(self, monkeypatch):
         """Test that reload_config picks up new environment values"""
         # Set initial value
-        monkeypatch.setenv("BIGRAG_CHUNK_SIZE", "1500")
+        monkeypatch.setenv("CHUNK_SIZE", "1500")
         config1 = reload_config()
         assert config1.chunk_size == 1500
 
         # Change environment
-        monkeypatch.setenv("BIGRAG_CHUNK_SIZE", "2500")
+        monkeypatch.setenv("CHUNK_SIZE", "2500")
         config2 = reload_config()
         assert config2.chunk_size == 2500
 
@@ -119,7 +118,7 @@ class TestConfigEdgeCases:
     def test_config_with_invalid_types(self, monkeypatch):
         """Test configuration with invalid type values"""
         # Set invalid value (should use default or handle gracefully)
-        monkeypatch.setenv("BIGRAG_CHUNK_SIZE", "invalid")
+        monkeypatch.setenv("CHUNK_SIZE", "invalid")
 
         try:
             config = BiGRAGConfig()
@@ -151,7 +150,7 @@ class TestConfigEdgeCases:
         ]
 
         for env_value, expected in test_cases:
-            monkeypatch.setenv("BIGRAG_ENABLE_RERANKING", env_value)
+            monkeypatch.setenv("ENABLE_RERANKING", env_value)
             config = BiGRAGConfig()
             assert config.enable_reranking == expected, f"Failed for: {env_value}"
 

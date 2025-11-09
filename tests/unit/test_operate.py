@@ -83,7 +83,7 @@ class TestChunking:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -99,7 +99,7 @@ class TestChunking:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=1000,
+            max_token_size=1000,
             overlap_token_size=10,
         )
 
@@ -113,7 +113,7 @@ class TestChunking:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=20,
         )
 
@@ -136,7 +136,7 @@ class TestChunking:
         """Test chunking empty text"""
         chunks = chunking_by_token_size(
             "",
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -150,7 +150,7 @@ class TestChunking:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 

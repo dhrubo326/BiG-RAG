@@ -17,7 +17,7 @@ class TestChunkingBasics:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -34,7 +34,7 @@ class TestChunkingBasics:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=1000,
+            max_token_size=1000,
             overlap_token_size=10,
         )
 
@@ -48,13 +48,13 @@ class TestChunkingBasics:
 
         chunks_no_overlap = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=0,
         )
 
         chunks_with_overlap = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=20,
         )
 
@@ -76,7 +76,7 @@ class TestChunkingMetadataPreservation:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
             doc_metadata=doc_metadata,
         )
@@ -95,7 +95,7 @@ class TestChunkingMetadataPreservation:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -112,7 +112,7 @@ class TestChunkingEdgeCases:
         """Test chunking empty text"""
         chunks = chunking_by_token_size(
             "",
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -124,7 +124,7 @@ class TestChunkingEdgeCases:
         """Test chunking single word"""
         chunks = chunking_by_token_size(
             "word",
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -135,7 +135,7 @@ class TestChunkingEdgeCases:
         """Test chunking whitespace-only text"""
         chunks = chunking_by_token_size(
             "     \n\n   \t  ",
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -148,7 +148,7 @@ class TestChunkingEdgeCases:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -165,7 +165,7 @@ class TestChunkingEdgeCases:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -181,7 +181,7 @@ class TestChunkingEdgeCases:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -198,7 +198,7 @@ class TestChunkingTokenSizeAccuracy:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=max_tokens,
+            max_token_size=max_tokens,
             overlap_token_size=10,
         )
 
@@ -217,7 +217,7 @@ class TestChunkingTokenSizeAccuracy:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=chunk_size,
+            max_token_size=chunk_size,
             overlap_token_size=overlap,
         )
 
@@ -241,7 +241,7 @@ class TestChunkingIndexing:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 
@@ -255,7 +255,7 @@ class TestChunkingIndexing:
 
         chunks = chunking_by_token_size(
             text,
-            chunk_token_size=100,
+            max_token_size=100,
             overlap_token_size=10,
         )
 

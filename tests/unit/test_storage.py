@@ -29,7 +29,7 @@ class TestJsonKVStorage:
         """Create fresh KV storage instance"""
         storage = JsonKVStorage(
             namespace="test",
-            global_config={"working_dir": str(temp_dir)},
+            global_config={"working_dir": str(temp_dir), "embedding_batch_num": 32},
             embedding_func=None,
         )
         return storage
@@ -215,7 +215,7 @@ class TestNanoVectorDBStorage:
         """Create fresh vector storage instance"""
         storage = NanoVectorDBStorage(
             namespace="test",
-            global_config={"working_dir": str(temp_dir)},
+            global_config={"working_dir": str(temp_dir), "embedding_batch_num": 32},
             embedding_func=mock_embedding_func,
             meta_fields=["entity_name"],
         )
@@ -288,7 +288,7 @@ class TestNetworkXStorage:
         """Create fresh graph storage instance"""
         storage = NetworkXStorage(
             namespace="test",
-            global_config={"working_dir": str(temp_dir)},
+            global_config={"working_dir": str(temp_dir), "embedding_batch_num": 32},
             embedding_func=None,
         )
         return storage

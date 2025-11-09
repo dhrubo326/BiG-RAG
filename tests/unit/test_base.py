@@ -47,48 +47,62 @@ class TestQueryParam:
 
 
 class TestTextChunkSchema:
-    """Test TextChunkSchema data class"""
+    """Test TextChunkSchema TypedDict"""
 
     def test_text_chunk_schema_creation(self):
-        """Test creating TextChunkSchema instance"""
-        chunk = TextChunkSchema(
-            chunk_id="chunk-123",
-            content="Test chunk content",
-            full_doc_id="doc-456",
-            title="Test Document",
-        )
+        """Test creating TextChunkSchema instance (dict)"""
+        # TextChunkSchema is a TypedDict, so it's created as a dict
+        chunk: TextChunkSchema = {
+            "tokens": 10,
+            "content": "Test chunk content",
+            "full_doc_id": "doc-456",
+            "chunk_order_index": 0,
+            "doc_title": "Test Document",
+            "doc_metadata": {},
+        }
 
-        assert chunk.chunk_id == "chunk-123"
-        assert chunk.content == "Test chunk content"
-        assert chunk.full_doc_id == "doc-456"
-        assert chunk.title == "Test Document"
+        # Access using dictionary keys
+        assert chunk["tokens"] == 10
+        assert chunk["content"] == "Test chunk content"
+        assert chunk["full_doc_id"] == "doc-456"
+        assert chunk["doc_title"] == "Test Document"
 
     def test_text_chunk_schema_with_metadata(self):
         """Test TextChunkSchema with metadata fields"""
-        chunk = TextChunkSchema(
-            chunk_id="chunk-123",
-            content="Test content",
-            full_doc_id="doc-456",
-            title="Test Doc",
-            category="test_category",
-            tags=["tag1", "tag2"],
-        )
+        # Create with metadata
+        chunk: TextChunkSchema = {
+            "tokens": 10,
+            "content": "Test content",
+            "full_doc_id": "doc-456",
+            "chunk_order_index": 0,
+            "doc_title": "Test Doc",
+            "doc_metadata": {
+                "category": "test_category",
+                "tags": ["tag1", "tag2"],
+            },
+        }
 
-        assert chunk.category == "test_category"
-        assert chunk.tags == ["tag1", "tag2"]
+        assert chunk["doc_metadata"]["category"] == "test_category"
+        assert chunk["doc_metadata"]["tags"] == ["tag1", "tag2"]
 
     def test_text_chunk_schema_optional_fields(self):
-        """Test TextChunkSchema with optional fields as None"""
-        chunk = TextChunkSchema(
-            chunk_id="chunk-123",
-            content="Test content",
-            full_doc_id="doc-456",
-        )
+        """Test TextChunkSchema with optional fields omitted"""
+        # Create minimal chunk (doc_title and doc_metadata are optional with total=False)
+        chunk: TextChunkSchema = {
+            "tokens": 10,
+            "content": "Test content",
+            "full_doc_id": "doc-456",
+            "chunk_order_index": 0,
+        }
 
-        # Optional fields should be None or have defaults
-        assert chunk.title is None or isinstance(chunk.title, str)
-        assert chunk.category is None or isinstance(chunk.category, str)
-        assert chunk.tags is None or isinstance(chunk.tags, list)
+        # Required fields should be present
+        assert "content" in chunk
+        assert "full_doc_id" in chunk
+        assert "tokens" in chunk
+
+        # Optional fields may be omitted
+        assert "doc_title" not in chunk or isinstance(chunk.get("doc_title"), str)
+        assert "doc_metadata" not in chunk or isinstance(chunk.get("doc_metadata"), dict)
 
 
 if __name__ == "__main__":

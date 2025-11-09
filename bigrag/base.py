@@ -89,7 +89,8 @@ class BaseKVStorage(Generic[T], StorageNameSpace):
 
     async def get_by_ids(
         self, ids: list[str], fields: Union[set[str], None] = None
-    ) -> list[Union[T, None]]:
+    ) -> dict[str, T]:
+        """Get multiple items by IDs. Returns dict mapping ID -> item. Missing IDs are not included."""
         raise NotImplementedError
 
     async def filter_keys(self, data: list[str]) -> set[str]:

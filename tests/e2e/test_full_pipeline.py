@@ -224,10 +224,10 @@ class TestMetadataPreservation:
 
         for chunk_data in all_chunks.values():
             # Verify metadata fields exist
-            assert "title" in chunk_data or chunk_data.get("title") is not None
+            assert "doc_title" in chunk_data or chunk_data.get("doc_title") is not None
             # Metadata should be preserved
-            if chunk_data.get("title"):
-                assert chunk_data["title"] == "AI Research Paper"
+            if chunk_data.get("doc_title"):
+                assert chunk_data["doc_title"] == "AI Research Paper"
 
 
 if __name__ == "__main__":

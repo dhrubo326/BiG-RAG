@@ -1,1 +1,347 @@
-/usr/bin/bash: line 1: pytest: command not found
+[1m============================= test session starts =============================[0m
+platform win32 -- Python 3.13.5, pytest-8.4.2, pluggy-1.6.0 -- D:\BiG-RAG\venv\Scripts\python.exe
+cachedir: .pytest_cache
+benchmark: 5.2.2 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+metadata: {'Python': '3.13.5', 'Platform': 'Windows-11-10.0.26100-SP0', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.11.0', 'Faker': '37.12.0', 'asyncio': '1.2.0', 'benchmark': '5.2.2', 'cov': '7.0.0', 'html': '4.1.1', 'metadata': '3.1.1', 'mock': '3.15.1', 'timeout': '2.4.0', 'xdist': '3.8.0'}}
+rootdir: D:\BiG-RAG\tests
+configfile: pytest.ini
+plugins: anyio-4.11.0, Faker-37.12.0, asyncio-1.2.0, benchmark-5.2.2, cov-7.0.0, html-4.1.1, metadata-3.1.1, mock-3.15.1, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+[1mcollecting ... [0mcollected 19 items
+
+e2e/test_full_pipeline.py::TestCompleteWorkflow::test_complete_pipeline [31mFAILED[0m[31m [  5%][0m
+e2e/test_full_pipeline.py::TestWithDemoTestDataset::test_query_demo_test_dataset [32mPASSED[0m[31m [ 10%][0m
+e2e/test_full_pipeline.py::TestWithDemoTestDataset::test_complex_multi_hop_query_demo_test [32mPASSED[0m[31m [ 15%][0m
+e2e/test_full_pipeline.py::TestMultipleInsertionsAndQueries::test_incremental_insertions [32mPASSED[0m[31m [ 21%][0m
+e2e/test_full_pipeline.py::TestMultipleInsertionsAndQueries::test_varied_queries [32mPASSED[0m[31m [ 26%][0m
+e2e/test_full_pipeline.py::TestMetadataPreservation::test_metadata_flows_through_pipeline [31mFAILED[0m[31m [ 31%][0m
+regression/test_bug_fixes.py::TestBug1EdgeDeletionPrefix::test_edge_deletion_uses_correct_id [31mFAILED[0m[31m [ 36%][0m
+regression/test_bug_fixes.py::TestBug1EdgeDeletionPrefix::test_edge_id_format_consistency [32mPASSED[0m[31m [ 42%][0m
+regression/test_bug_fixes.py::TestBug2DropDeletesAll::test_single_document_deletion_not_all [31mFAILED[0m[31m [ 47%][0m
+regression/test_bug_fixes.py::TestBug2DropDeletesAll::test_deletion_with_no_chunks [31mFAILED[0m[31m [ 52%][0m
+regression/test_bug_fixes.py::TestBug3ReloadConfigUndefined::test_reload_config_no_error [32mPASSED[0m[31m [ 57%][0m
+regression/test_bug_fixes.py::TestBug3ReloadConfigUndefined::test_reload_config_works_with_dotenv [32mPASSED[0m[31m [ 63%][0m
+regression/test_bug_fixes.py::TestBug3ReloadConfigUndefined::test_reload_config_works_without_dotenv [32mPASSED[0m[31m [ 68%][0m
+regression/test_bug_fixes.py::TestBug4DefensiveDictAccess::test_defensive_entity_name_access [32mPASSED[0m[31m [ 73%][0m
+regression/test_bug_fixes.py::TestBug4DefensiveDictAccess::test_defensive_edge_name_access [32mPASSED[0m[31m [ 78%][0m
+regression/test_bug_fixes.py::TestBug5UpsertActuallyUpdates::test_upsert_updates_existing_keys [32mPASSED[0m[31m [ 84%][0m
+regression/test_bug_fixes.py::TestBug5UpsertActuallyUpdates::test_upsert_mixed_insert_and_update [32mPASSED[0m[31m [ 89%][0m
+regression/test_bug_fixes.py::TestBug6TypeAnnotations::test_kg_query_type_annotations [32mPASSED[0m[31m [ 94%][0m
+regression/test_bug_fixes.py::TestAllBugsIntegration::test_complete_workflow_with_all_fixes [31mFAILED[0m[31m [100%][0m
+
+================================== FAILURES ===================================
+[31m[1m_________________ TestCompleteWorkflow.test_complete_pipeline _________________[0m
+[1m[31me2e\test_full_pipeline.py[0m:74: in test_complete_pipeline
+    [0mdoc_id = [96mlist[39;49;00m(all_docs.keys())[[94m0[39;49;00m][90m[39;49;00m
+                  ^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE   AttributeError: 'list' object has no attribute 'keys'[0m
+---------------------------- Captured stderr setup ----------------------------
+INFO:bigrag:Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+INFO:bigrag:Load KV full_docs with 0 data
+INFO:bigrag:Load KV text_chunks with 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+----------------------------- Captured log setup ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:181 Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+[32mINFO    [0m bigrag:storage.py:31 Load KV full_docs with 0 data
+[32mINFO    [0m bigrag:storage.py:31 Load KV text_chunks with 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+---------------------------- Captured stdout call -----------------------------
+\u2819 Processed 1 chunks, 5 entities(duplicated), 5 relations(duplicated)\r\u2839 Processed 2 chunks, 15 entities(duplicated), 15 relations(duplicated)\r\u2838 Processed 3 chunks, 30 entities(duplicated), 31 relations(duplicated)\r
+---------------------------- Captured stderr call -----------------------------
+INFO:bigrag:[New Docs] inserting 3 docs\n\rChunking documents:   0%|          | 0/3 [00:00<?, ?doc/s]\rChunking documents:  33%|\u2588\u2588\u2588\u258e      | 1/3 [00:00<00:00,  5.34doc/s]\rChunking documents: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:00<00:00, 15.99doc/s]\nINFO:bigrag:[New Chunks] inserting 3 chunks\nINFO:bigrag:[Entity Extraction]...\n\rExtracting entities from chunks:   0%|          | 0/3 [00:00<?, ?chunk/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  33%|\u2588\u2588\u2588\u258e      | 1/3 [00:10<00:20, 10.22s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  67%|\u2588\u2588\u2588\u2588\u2588\u2588\u258b   | 2/3 [00:20<00:09,  9.97s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:26<00:00,  8.57s/chunk]\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:26<00:00,  8.97s/chunk]\nINFO:bigrag:Inserting bipartite edges into storage...\n\rInserting bipartite edges:   0%|          | 0/30 [00:00<?, ?entity/s]\rInserting bipartite edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 30/30 [00:00<00:00, 32380.11entity/s]\nINFO:bigrag:Inserting entities into storage...\n\rInserting entities:   0%|          | 0/27 [00:00<?, ?entity/s]\rInserting entities: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 27/27 [00:00<00:00, 29896.04entity/s]\nINFO:bigrag:Inserting relationships into storage...\n\rInserting relationships:   0%|          | 0/27 [00:00<?, ?relationship/s]\rInserting relationships: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 27/27 [00:00<00:00, 33987.46relationship/s]\nINFO:bigrag:Inserting 30 vectors to bipartite_edges\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:03<00:00,  3.51s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:03<00:00,  3.51s/batch]\nINFO:bigrag:Inserting 27 vectors to entities\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:02<00:00,  2.55s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:02<00:00,  2.55s/batch]\nINFO:bigrag:Inserting 3 vectors to chunks\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.25s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.25s/batch]\nINFO:bigrag:[Chunks VDB] Indexed 3 chunks for vector search (Path C)\nINFO:bigrag:Writing graph with 57 nodes, 38 edges\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\nINFO:bigrag:[Path C] Found 3 chunks via direct vector search\nINFO:bigrag:[Path C] Added 0 indirect chunks from graph traversal\nINFO:bigrag:[Path C] Total: 3 chunk candidates\nWARNING:bigrag:[Reranker] sentence-transformers not installed. Reranking will be disabled. Install with: pip install sentence-transformers\nWARNING:bigrag:[Reranker] Model not available, returning candidates unranked\nINFO:bigrag:[Reranking] Applied cross-encoder reranking to chunks\nINFO:bigrag:[Three-Path Retrieval] Returning 8 items: 5 structured + 3 chunks
+------------------------------ Captured log call ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:341 [New Docs] inserting 3 docs
+[32mINFO    [0m bigrag:bigrag.py:371 [New Chunks] inserting 3 chunks
+[32mINFO    [0m bigrag:bigrag.py:373 [Entity Extraction]...
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:operate.py:631 Inserting bipartite edges into storage...
+[32mINFO    [0m bigrag:operate.py:646 Inserting entities into storage...
+[32mINFO    [0m bigrag:operate.py:661 Inserting relationships into storage...
+[32mINFO    [0m bigrag:storage.py:107 Inserting 30 vectors to bipartite_edges
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 27 vectors to entities
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 3 vectors to chunks
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:bigrag.py:400 [Chunks VDB] Indexed 3 chunks for vector search (Path C)
+[32mINFO    [0m bigrag:storage.py:235 Writing graph with 57 nodes, 38 edges
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:operate.py:1250 [Path C] Found 3 chunks via direct vector search
+[32mINFO    [0m bigrag:operate.py:1272 [Path C] Added 0 indirect chunks from graph traversal
+[32mINFO    [0m bigrag:operate.py:1276 [Path C] Total: 3 chunk candidates
+[33mWARNING [0m bigrag:reranker.py:53 [Reranker] sentence-transformers not installed. Reranking will be disabled. Install with: pip install sentence-transformers
+[33mWARNING [0m bigrag:reranker.py:85 [Reranker] Model not available, returning candidates unranked
+[32mINFO    [0m bigrag:operate.py:933 [Reranking] Applied cross-encoder reranking to chunks
+[32mINFO    [0m bigrag:operate.py:963 [Three-Path Retrieval] Returning 8 items: 5 structured + 3 chunks
+[31m[1m________ TestMetadataPreservation.test_metadata_flows_through_pipeline ________[0m
+[1m[31me2e\test_full_pipeline.py[0m:225: in test_metadata_flows_through_pipeline
+    [0m[94mfor[39;49;00m chunk_data [95min[39;49;00m all_chunks.values():[90m[39;49;00m
+                      ^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE   AttributeError: 'list' object has no attribute 'values'[0m
+---------------------------- Captured stderr setup ----------------------------
+INFO:bigrag:Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+INFO:bigrag:Load KV full_docs with 0 data
+INFO:bigrag:Load KV text_chunks with 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+----------------------------- Captured log setup ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:181 Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+[32mINFO    [0m bigrag:storage.py:31 Load KV full_docs with 0 data
+[32mINFO    [0m bigrag:storage.py:31 Load KV text_chunks with 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+---------------------------- Captured stdout call -----------------------------
+\u2819 Processed 1 chunks, 16 entities(duplicated), 8 relations(duplicated)\r
+---------------------------- Captured stderr call -----------------------------
+INFO:bigrag:[New Docs] inserting 1 docs\n\rChunking documents:   0%|          | 0/1 [00:00<?, ?doc/s]\rChunking documents: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00, 14513.16doc/s]\nINFO:bigrag:[New Chunks] inserting 1 chunks\nINFO:bigrag:[Entity Extraction]...\n\rExtracting entities from chunks:   0%|          | 0/1 [00:00<?, ?chunk/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:19<00:00, 19.29s/chunk]\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:19<00:00, 19.29s/chunk]\nINFO:bigrag:Inserting bipartite edges into storage...\n\rInserting bipartite edges:   0%|          | 0/8 [00:00<?, ?entity/s]\rInserting bipartite edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 8/8 [00:00<00:00, 38612.70entity/s]\nINFO:bigrag:Inserting entities into storage...\n\rInserting entities:   0%|          | 0/16 [00:00<?, ?entity/s]\rInserting entities: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 16/16 [00:00<00:00, 21641.04entity/s]\nINFO:bigrag:Inserting relationships into storage...\n\rInserting relationships:   0%|          | 0/16 [00:00<?, ?relationship/s]\rInserting relationships: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 16/16 [00:00<00:00, 105849.94relationship/s]\nINFO:bigrag:Inserting 8 vectors to bipartite_edges\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:03<00:00,  3.37s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:03<00:00,  3.37s/batch]\nINFO:bigrag:Inserting 16 vectors to entities\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.87s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.87s/batch]\nINFO:bigrag:Inserting 1 vectors to chunks\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00,  1.89batch/s]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00,  1.88batch/s]\nINFO:bigrag:[Chunks VDB] Indexed 1 chunks for vector search (Path C)\nINFO:bigrag:Writing graph with 24 nodes, 19 edges
+------------------------------ Captured log call ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:341 [New Docs] inserting 1 docs
+[32mINFO    [0m bigrag:bigrag.py:371 [New Chunks] inserting 1 chunks
+[32mINFO    [0m bigrag:bigrag.py:373 [Entity Extraction]...
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:operate.py:631 Inserting bipartite edges into storage...
+[32mINFO    [0m bigrag:operate.py:646 Inserting entities into storage...
+[32mINFO    [0m bigrag:operate.py:661 Inserting relationships into storage...
+[32mINFO    [0m bigrag:storage.py:107 Inserting 8 vectors to bipartite_edges
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 16 vectors to entities
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 1 vectors to chunks
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:bigrag.py:400 [Chunks VDB] Indexed 1 chunks for vector search (Path C)
+[32mINFO    [0m bigrag:storage.py:235 Writing graph with 24 nodes, 19 edges
+[31m[1m________ TestBug1EdgeDeletionPrefix.test_edge_deletion_uses_correct_id ________[0m
+[1m[31mregression\test_bug_fixes.py[0m:51: in test_edge_deletion_uses_correct_id
+    [0mdocs_to_delete = [96mlist[39;49;00m(all_docs_before.values())[90m[39;49;00m
+                          ^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE   AttributeError: 'list' object has no attribute 'values'[0m
+---------------------------- Captured stdout setup ----------------------------
+\u2819 Processed 1 chunks, 8 entities(duplicated), 3 relations(duplicated)\r\u2839 Processed 2 chunks, 20 entities(duplicated), 13 relations(duplicated)\r\u2838 Processed 3 chunks, 32 entities(duplicated), 26 relations(duplicated)\r\u283c Processed 4 chunks, 54 entities(duplicated), 42 relations(duplicated)\r\u2834 Processed 5 chunks, 79 entities(duplicated), 64 relations(duplicated)\r
+---------------------------- Captured stderr setup ----------------------------
+INFO:bigrag:Logger initialized for working directory: D:\\BiG-RAG\\tests\\test_output\nINFO:bigrag:Load KV full_docs with 0 data\nINFO:bigrag:Load KV text_chunks with 0 data\nINFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\\\BiG-RAG\\\\tests\\\\test_output\\\\vdb_entities.json'} 0 data\nINFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\\\BiG-RAG\\\\tests\\\\test_output\\\\vdb_bipartite_edges.json'} 0 data\nINFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\\\BiG-RAG\\\\tests\\\\test_output\\\\vdb_chunks.json'} 0 data\nINFO:bigrag:[New Docs] inserting 5 docs\n\rChunking documents:   0%|          | 0/5 [00:00<?, ?doc/s]\rChunking documents: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 5/5 [00:00<00:00, 36157.79doc/s]\nINFO:bigrag:[New Chunks] inserting 5 chunks\nINFO:bigrag:[Entity Extraction]...\n\rExtracting entities from chunks:   0%|          | 0/5 [00:00<?, ?chunk/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  20%|\u2588\u2588        | 1/5 [00:11<00:44, 11.04s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  40%|\u2588\u2588\u2588\u2588      | 2/5 [00:18<00:26,  8.83s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  60%|\u2588\u2588\u2588\u2588\u2588\u2588    | 3/5 [00:25<00:16,  8.11s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  80%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588  | 4/5 [00:29<00:06,  6.51s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nWARNING:bigrag:Unknown entity type '"role"' - using fallback 'category'\n\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 5/5 [00:34<00:00,  5.89s/chunk]\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 5/5 [00:34<00:00,  6.88s/chunk]\nINFO:bigrag:Inserting bipartite edges into storage...\n\rInserting bipartite edges:   0%|          | 0/64 [00:00<?, ?entity/s]\rInserting bipartite edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 64/64 [00:00<00:00, 101526.27entity/s]\nINFO:bigrag:Inserting entities into storage...\n\rInserting entities:   0%|          | 0/69 [00:00<?, ?entity/s]\rInserting entities: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 69/69 [00:00<00:00, 32408.40entity/s]\nINFO:bigrag:Inserting relationships into storage...\n\rInserting relationships:   0%|          | 0/69 [00:00<?, ?relationship/s]\rInserting relationships: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 69/69 [00:00<00:00, 202241.07relationship/s]\nINFO:bigrag:Inserting 64 vectors to bipartite_edges\n\rGenerating embeddings:   0%|          | 0/2 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings:  50%|\u2588\u2588\u2588\u2588\u2588     | 1/2 [00:02<00:02,  2.10s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 2/2 [00:02<00:00,  1.06s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 2/2 [00:02<00:00,  1.21s/batch]\nINFO:bigrag:Inserting 69 vectors to entities\n\rGenerating embeddings:   0%|          | 0/3 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings:  33%|\u2588\u2588\u2588\u258e      | 1/3 [00:00<00:01,  1.38batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings:  67%|\u2588\u2588\u2588\u2588\u2588\u2588\u258b   | 2/3 [00:01<00:00,  1.08batch/s]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:02<00:00,  1.09batch/s]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:02<00:00,  1.11batch/s]\nINFO:bigrag:Inserting 5 vectors to chunks\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:02<00:00,  2.27s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:02<00:00,  2.27s/batch]\nINFO:bigrag:[Chunks VDB] Indexed 5 chunks for vector search (Path C)\nINFO:bigrag:Writing graph with 133 nodes, 93 edges
+----------------------------- Captured log setup ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:181 Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+[32mINFO    [0m bigrag:storage.py:31 Load KV full_docs with 0 data
+[32mINFO    [0m bigrag:storage.py:31 Load KV text_chunks with 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+[32mINFO    [0m bigrag:bigrag.py:341 [New Docs] inserting 5 docs
+[32mINFO    [0m bigrag:bigrag.py:371 [New Chunks] inserting 5 chunks
+[32mINFO    [0m bigrag:bigrag.py:373 [Entity Extraction]...
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[33mWARNING [0m bigrag:operate.py:127 Unknown entity type '"role"' - using fallback 'category'
+[32mINFO    [0m bigrag:operate.py:631 Inserting bipartite edges into storage...
+[32mINFO    [0m bigrag:operate.py:646 Inserting entities into storage...
+[32mINFO    [0m bigrag:operate.py:661 Inserting relationships into storage...
+[32mINFO    [0m bigrag:storage.py:107 Inserting 64 vectors to bipartite_edges
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 69 vectors to entities
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 5 vectors to chunks
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:bigrag.py:400 [Chunks VDB] Indexed 5 chunks for vector search (Path C)
+[32mINFO    [0m bigrag:storage.py:235 Writing graph with 133 nodes, 93 edges
+[31m[1m________ TestBug2DropDeletesAll.test_single_document_deletion_not_all _________[0m
+[1m[31mregression\test_bug_fixes.py[0m:107: in test_single_document_deletion_not_all
+    [0mfirst_doc_id = [96mlist[39;49;00m(all_docs_before.keys())[[94m0[39;49;00m][90m[39;49;00m
+                        ^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE   AttributeError: 'list' object has no attribute 'keys'[0m
+---------------------------- Captured stderr setup ----------------------------
+INFO:bigrag:Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+INFO:bigrag:Load KV full_docs with 0 data
+INFO:bigrag:Load KV text_chunks with 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+----------------------------- Captured log setup ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:181 Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+[32mINFO    [0m bigrag:storage.py:31 Load KV full_docs with 0 data
+[32mINFO    [0m bigrag:storage.py:31 Load KV text_chunks with 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+---------------------------- Captured stdout call -----------------------------
+\u2819 Processed 1 chunks, 4 entities(duplicated), 4 relations(duplicated)\r\u2839 Processed 2 chunks, 9 entities(duplicated), 10 relations(duplicated)\r\u2838 Processed 3 chunks, 24 entities(duplicated), 18 relations(duplicated)\r
+---------------------------- Captured stderr call -----------------------------
+INFO:bigrag:[New Docs] inserting 3 docs\n\rChunking documents:   0%|          | 0/3 [00:00<?, ?doc/s]\rChunking documents: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:00<00:00, 25115.59doc/s]\nINFO:bigrag:[New Chunks] inserting 3 chunks\nINFO:bigrag:[Entity Extraction]...\n\rExtracting entities from chunks:   0%|          | 0/3 [00:00<?, ?chunk/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  33%|\u2588\u2588\u2588\u258e      | 1/3 [00:08<00:16,  8.36s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  67%|\u2588\u2588\u2588\u2588\u2588\u2588\u258b   | 2/3 [00:12<00:05,  5.74s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nWARNING:bigrag:Unknown entity type '"measurement"' - using fallback 'category'\nWARNING:bigrag:Unknown entity type '"quantity"' - using fallback 'category'\nWARNING:bigrag:Unknown entity type '"timeframe"' - using fallback 'category'\n\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:17<00:00,  5.47s/chunk]\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:17<00:00,  5.80s/chunk]\nINFO:bigrag:Inserting bipartite edges into storage...\n\rInserting bipartite edges:   0%|          | 0/18 [00:00<?, ?entity/s]\rInserting bipartite edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 18/18 [00:00<00:00, 2053.40entity/s]\nINFO:bigrag:Inserting entities into storage...\n\rInserting entities:   0%|          | 0/24 [00:00<?, ?entity/s]\rInserting entities: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 24/24 [00:00<00:00, 22846.87entity/s]\nINFO:bigrag:Inserting relationships into storage...\n\rInserting relationships:   0%|          | 0/24 [00:00<?, ?relationship/s]\rInserting relationships: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 24/24 [00:00<00:00, 139422.85relationship/s]\nINFO:bigrag:Inserting 18 vectors to bipartite_edges\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.71s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.71s/batch]\nINFO:bigrag:Inserting 24 vectors to entities\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.93s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.93s/batch]\nINFO:bigrag:Inserting 3 vectors to chunks\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00,  1.08batch/s]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00,  1.08batch/s]\nINFO:bigrag:[Chunks VDB] Indexed 3 chunks for vector search (Path C)\nINFO:bigrag:Writing graph with 42 nodes, 29 edges
+------------------------------ Captured log call ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:341 [New Docs] inserting 3 docs
+[32mINFO    [0m bigrag:bigrag.py:371 [New Chunks] inserting 3 chunks
+[32mINFO    [0m bigrag:bigrag.py:373 [Entity Extraction]...
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[33mWARNING [0m bigrag:operate.py:127 Unknown entity type '"measurement"' - using fallback 'category'
+[33mWARNING [0m bigrag:operate.py:127 Unknown entity type '"quantity"' - using fallback 'category'
+[33mWARNING [0m bigrag:operate.py:127 Unknown entity type '"timeframe"' - using fallback 'category'
+[32mINFO    [0m bigrag:operate.py:631 Inserting bipartite edges into storage...
+[32mINFO    [0m bigrag:operate.py:646 Inserting entities into storage...
+[32mINFO    [0m bigrag:operate.py:661 Inserting relationships into storage...
+[32mINFO    [0m bigrag:storage.py:107 Inserting 18 vectors to bipartite_edges
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 24 vectors to entities
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 3 vectors to chunks
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:bigrag.py:400 [Chunks VDB] Indexed 3 chunks for vector search (Path C)
+[32mINFO    [0m bigrag:storage.py:235 Writing graph with 42 nodes, 29 edges
+[31m[1m_____________ TestBug2DropDeletesAll.test_deletion_with_no_chunks _____________[0m
+[1m[31mregression\test_bug_fixes.py[0m:128: in test_deletion_with_no_chunks
+    [0mdoc_id_to_delete = [96mlist[39;49;00m(all_docs.keys())[[94m0[39;49;00m][90m[39;49;00m
+                            ^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE   AttributeError: 'list' object has no attribute 'keys'[0m
+---------------------------- Captured stderr setup ----------------------------
+INFO:bigrag:Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+INFO:bigrag:Load KV full_docs with 0 data
+INFO:bigrag:Load KV text_chunks with 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+----------------------------- Captured log setup ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:181 Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+[32mINFO    [0m bigrag:storage.py:31 Load KV full_docs with 0 data
+[32mINFO    [0m bigrag:storage.py:31 Load KV text_chunks with 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+---------------------------- Captured stdout call -----------------------------
+\u2819 Processed 1 chunks, 5 entities(duplicated), 3 relations(duplicated)\r\u2839 Processed 2 chunks, 9 entities(duplicated), 7 relations(duplicated)\r\u2838 Processed 3 chunks, 16 entities(duplicated), 14 relations(duplicated)\r
+---------------------------- Captured stderr call -----------------------------
+INFO:bigrag:[New Docs] inserting 3 docs\n\rChunking documents:   0%|          | 0/3 [00:00<?, ?doc/s]\rChunking documents: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:00<00:00, 40721.40doc/s]\nINFO:bigrag:[New Chunks] inserting 3 chunks\nINFO:bigrag:[Entity Extraction]...\n\rExtracting entities from chunks:   0%|          | 0/3 [00:00<?, ?chunk/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  33%|\u2588\u2588\u2588\u258e      | 1/3 [00:08<00:17,  8.93s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  67%|\u2588\u2588\u2588\u2588\u2588\u2588\u258b   | 2/3 [00:10<00:04,  4.88s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nWARNING:bigrag:Unknown entity type '"process"' - using fallback 'category'\n\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:12<00:00,  3.45s/chunk]\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 3/3 [00:12<00:00,  4.24s/chunk]\nINFO:bigrag:Inserting bipartite edges into storage...\n\rInserting bipartite edges:   0%|          | 0/12 [00:00<?, ?entity/s]\rInserting bipartite edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 12/12 [00:00<00:00, 39444.87entity/s]\nINFO:bigrag:Inserting entities into storage...\n\rInserting entities:   0%|          | 0/13 [00:00<?, ?entity/s]\rInserting entities: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 13/13 [00:00<00:00, 4184.33entity/s]\nINFO:bigrag:Inserting relationships into storage...\n\rInserting relationships:   0%|          | 0/13 [00:00<?, ?relationship/s]\rInserting relationships: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 13/13 [00:00<00:00, 2270.31relationship/s]\nINFO:bigrag:Inserting 12 vectors to bipartite_edges\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.57s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.57s/batch]\nINFO:bigrag:Inserting 13 vectors to entities\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.53s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.53s/batch]\nINFO:bigrag:Inserting 3 vectors to chunks\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00,  1.03batch/s]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00,  1.03batch/s]\nINFO:bigrag:[Chunks VDB] Indexed 3 chunks for vector search (Path C)\nINFO:bigrag:Writing graph with 25 nodes, 15 edges
+------------------------------ Captured log call ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:341 [New Docs] inserting 3 docs
+[32mINFO    [0m bigrag:bigrag.py:371 [New Chunks] inserting 3 chunks
+[32mINFO    [0m bigrag:bigrag.py:373 [Entity Extraction]...
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[33mWARNING [0m bigrag:operate.py:127 Unknown entity type '"process"' - using fallback 'category'
+[32mINFO    [0m bigrag:operate.py:631 Inserting bipartite edges into storage...
+[32mINFO    [0m bigrag:operate.py:646 Inserting entities into storage...
+[32mINFO    [0m bigrag:operate.py:661 Inserting relationships into storage...
+[32mINFO    [0m bigrag:storage.py:107 Inserting 12 vectors to bipartite_edges
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 13 vectors to entities
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 3 vectors to chunks
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:bigrag.py:400 [Chunks VDB] Indexed 3 chunks for vector search (Path C)
+[32mINFO    [0m bigrag:storage.py:235 Writing graph with 25 nodes, 15 edges
+[31m[1m________ TestAllBugsIntegration.test_complete_workflow_with_all_fixes _________[0m
+[1m[31mregression\test_bug_fixes.py[0m:353: in test_complete_workflow_with_all_fixes
+    [0mdoc_id = [96mlist[39;49;00m(all_docs.keys())[[94m0[39;49;00m][90m[39;49;00m
+                  ^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE   AttributeError: 'list' object has no attribute 'keys'[0m
+---------------------------- Captured stderr setup ----------------------------
+INFO:bigrag:Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+INFO:bigrag:Load KV full_docs with 0 data
+INFO:bigrag:Load KV text_chunks with 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+INFO:nano-vectordb:Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+----------------------------- Captured log setup ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:181 Logger initialized for working directory: D:\BiG-RAG\tests\test_output
+[32mINFO    [0m bigrag:storage.py:31 Load KV full_docs with 0 data
+[32mINFO    [0m bigrag:storage.py:31 Load KV text_chunks with 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_entities.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_bipartite_edges.json'} 0 data
+[32mINFO    [0m nano-vectordb:dbs.py:81 Init {'embedding_dim': 1536, 'metric': 'cosine', 'storage_file': 'D:\\BiG-RAG\\tests\\test_output\\vdb_chunks.json'} 0 data
+---------------------------- Captured stdout call -----------------------------
+\u2819 Processed 1 chunks, 15 entities(duplicated), 5 relations(duplicated)\r\u2839 Processed 2 chunks, 36 entities(duplicated), 14 relations(duplicated)\r
+---------------------------- Captured stderr call -----------------------------
+INFO:bigrag:[New Docs] inserting 2 docs\n\rChunking documents:   0%|          | 0/2 [00:00<?, ?doc/s]\rChunking documents: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 2/2 [00:00<00:00, 17549.39doc/s]\nINFO:bigrag:[New Chunks] inserting 2 chunks\nINFO:bigrag:[Entity Extraction]...\n\rExtracting entities from chunks:   0%|          | 0/2 [00:00<?, ?chunk/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks:  50%|\u2588\u2588\u2588\u2588\u2588     | 1/2 [00:18<00:18, 18.17s/chunk]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"\n\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 2/2 [00:28<00:00, 13.27s/chunk]\rExtracting entities from chunks: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 2/2 [00:28<00:00, 14.00s/chunk]\nINFO:bigrag:Inserting bipartite edges into storage...\n\rInserting bipartite edges:   0%|          | 0/14 [00:00<?, ?entity/s]\rInserting bipartite edges: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 14/14 [00:00<00:00, 2935.87entity/s]\nINFO:bigrag:Inserting entities into storage...\n\rInserting entities:   0%|          | 0/34 [00:00<?, ?entity/s]\rInserting entities: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 34/34 [00:00<00:00, 42530.97entity/s]\nINFO:bigrag:Inserting relationships into storage...\n\rInserting relationships:   0%|          | 0/34 [00:00<?, ?relationship/s]\rInserting relationships: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 34/34 [00:00<00:00, 200289.80relationship/s]\nINFO:bigrag:Inserting 14 vectors to bipartite_edges\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.81s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.81s/batch]\nINFO:bigrag:Inserting 34 vectors to entities\n\rGenerating embeddings:   0%|          | 0/2 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings:  50%|\u2588\u2588\u2588\u2588\u2588     | 1/2 [00:01<00:01,  1.04s/batch]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 2/2 [00:02<00:00,  1.16s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 2/2 [00:02<00:00,  1.14s/batch]\nINFO:bigrag:Inserting 2 vectors to chunks\n\rGenerating embeddings:   0%|          | 0/1 [00:00<?, ?batch/s]INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\n\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.09s/batch]\rGenerating embeddings: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:01<00:00,  1.09s/batch]\nINFO:bigrag:[Chunks VDB] Indexed 2 chunks for vector search (Path C)\nINFO:bigrag:Writing graph with 48 nodes, 36 edges\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\nINFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"\nINFO:bigrag:[Path C] Added 1 indirect chunks from graph traversal\nINFO:bigrag:[Path C] Total: 1 chunk candidates\nWARNING:bigrag:[Reranker] Model not available, returning candidates unranked\nINFO:bigrag:[Reranking] Applied cross-encoder reranking to chunks\nINFO:bigrag:[Three-Path Retrieval] Returning 2 items: 1 structured + 1 chunks
+------------------------------ Captured log call ------------------------------
+[32mINFO    [0m bigrag:bigrag.py:341 [New Docs] inserting 2 docs
+[32mINFO    [0m bigrag:bigrag.py:371 [New Chunks] inserting 2 chunks
+[32mINFO    [0m bigrag:bigrag.py:373 [Entity Extraction]...
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:operate.py:631 Inserting bipartite edges into storage...
+[32mINFO    [0m bigrag:operate.py:646 Inserting entities into storage...
+[32mINFO    [0m bigrag:operate.py:661 Inserting relationships into storage...
+[32mINFO    [0m bigrag:storage.py:107 Inserting 14 vectors to bipartite_edges
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 34 vectors to entities
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:storage.py:107 Inserting 2 vectors to chunks
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:bigrag.py:400 [Chunks VDB] Indexed 2 chunks for vector search (Path C)
+[32mINFO    [0m bigrag:storage.py:235 Writing graph with 48 nodes, 36 edges
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+[32mINFO    [0m bigrag:operate.py:1272 [Path C] Added 1 indirect chunks from graph traversal
+[32mINFO    [0m bigrag:operate.py:1276 [Path C] Total: 1 chunk candidates
+[33mWARNING [0m bigrag:reranker.py:85 [Reranker] Model not available, returning candidates unranked
+[32mINFO    [0m bigrag:operate.py:933 [Reranking] Applied cross-encoder reranking to chunks
+[32mINFO    [0m bigrag:operate.py:963 [Three-Path Retrieval] Returning 2 items: 1 structured + 1 chunks
+[36m[1m=========================== short test summary info ===========================[0m
+[31mFAILED[0m e2e/test_full_pipeline.py::[1mTestCompleteWorkflow::test_complete_pipeline[0m - AttributeError: 'list' object has no attribute 'keys'
+[31mFAILED[0m e2e/test_full_pipeline.py::[1mTestMetadataPreservation::test_metadata_flows_through_pipeline[0m - AttributeError: 'list' object has no attribute 'values'
+[31mFAILED[0m regression/test_bug_fixes.py::[1mTestBug1EdgeDeletionPrefix::test_edge_deletion_uses_correct_id[0m - AttributeError: 'list' object has no attribute 'values'
+[31mFAILED[0m regression/test_bug_fixes.py::[1mTestBug2DropDeletesAll::test_single_document_deletion_not_all[0m - AttributeError: 'list' object has no attribute 'keys'
+[31mFAILED[0m regression/test_bug_fixes.py::[1mTestBug2DropDeletesAll::test_deletion_with_no_chunks[0m - AttributeError: 'list' object has no attribute 'keys'
+[31mFAILED[0m regression/test_bug_fixes.py::[1mTestAllBugsIntegration::test_complete_workflow_with_all_fixes[0m - AttributeError: 'list' object has no attribute 'keys'
+[31m============= [31m[1m6 failed[0m, [32m13 passed[0m, [33m1 warning[0m[31m in 259.14s (0:04:19)[0m[31m =============[0m

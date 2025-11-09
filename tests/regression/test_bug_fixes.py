@@ -48,9 +48,9 @@ class TestBug1EdgeDeletionPrefix:
         assert initial_count > 0, "No documents in test data"
 
         # Delete a document (triggers edge deletion)
-        docs_to_delete = list(all_docs_before.values())
-        if docs_to_delete:
-            doc_id = docs_to_delete[0]["__id__"]
+        if all_docs_before:
+            # Get first document ID from the dict keys
+            doc_id = list(all_docs_before.keys())[0]
             stats = await rag.adelete_document(doc_id)
 
             # Verify deletion stats

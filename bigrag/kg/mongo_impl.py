@@ -25,14 +25,15 @@ class MongoKVStorage(BaseKVStorage):
         return self._data.find_one({"_id": id})
 
     async def get_by_ids(self, ids, fields=None):
+        """Get multiple items by IDs. Returns dict mapping ID -> item."""
         if fields is None:
-            return list(self._data.find({"_id": {"$in": ids}}))
-        return list(
-            self._data.find(
-                {"_id": {"$in": ids}},
-                {field: 1 for field in fields},
-            )
+            results = self._data.find({"_id": {"$in": ids}})
+            return {str(doc["_id"]): doc for doc in results}
+        results = self._data.find(
+            {"_id": {"$in": ids}},
+            {field: 1 for field in fields},
         )
+        return {str(doc["_id"]): doc for doc in results}
 
     async def filter_keys(self, data: list[str]) -> set[str]:
         existing_ids = [

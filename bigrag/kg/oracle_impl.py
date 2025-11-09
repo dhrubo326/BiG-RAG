@@ -174,7 +174,7 @@ class OracleKVStorage(BaseKVStorage):
     ################ QUERY METHODS ################
 
     async def get_by_id(self, id: str) -> Union[dict, None]:
-        """根据 id 获取 doc_full 数据."""
+        """Get doc_full data by id."""
         SQL = SQL_TEMPLATES["get_by_id_" + self.namespace]
         params = {"workspace": self.db.workspace, "id": id}
         # print("get_by_id:"+SQL)
@@ -186,9 +186,9 @@ class OracleKVStorage(BaseKVStorage):
         else:
             return None
 
-    # Query by id
-    async def get_by_ids(self, ids: list[str], fields=None) -> Union[list[dict], None]:
-        """根据 id 获取 doc_chunks 数据"""
+    # Query by ids
+    async def get_by_ids(self, ids: list[str], fields=None) -> dict[str, dict]:
+        """Get multiple items by IDs. Returns dict mapping ID -> item."""
         SQL = SQL_TEMPLATES["get_by_ids_" + self.namespace].format(
             ids=",".join([f"'{id}'" for id in ids])
         )
@@ -197,14 +197,13 @@ class OracleKVStorage(BaseKVStorage):
         # print(params)
         res = await self.db.query(SQL, params, multirows=True)
         if res:
-            data = res  # [{"data":i} for i in res]
-            # print(data)
-            return data
+            # Convert list to dict using ID as key
+            return {str(row["ID"]): row for row in res}
         else:
-            return None
+            return {}
 
     async def filter_keys(self, keys: list[str]) -> set[str]:
-        """过滤掉重复内容"""
+        """Filter out existing keys and return non-existent ones."""
         SQL = SQL_TEMPLATES["filter_keys"].format(
             table_name=N_T[self.namespace], ids=",".join([f"'{id}'" for id in keys])
         )
@@ -293,7 +292,7 @@ class OracleVectorDBStorage(BaseVectorStorage):
         pass
 
     async def upsert(self, data: dict[str, dict]):
-        """向向量数据库中插入数据"""
+        """Insert data into vector database."""
         pass
 
     async def index_done_callback(self):
@@ -301,10 +300,10 @@ class OracleVectorDBStorage(BaseVectorStorage):
 
     #################### query method ###############
     async def query(self, query: str, top_k=5) -> Union[dict, list[dict]]:
-        """从向量数据库中查询数据"""
+        """Query data from vector database."""
         embeddings = await self.embedding_func([query])
         embedding = embeddings[0]
-        # 转换精度
+        # Convert precision
         dtype = str(embedding.dtype).upper()
         dimension = embedding.shape[0]
         embedding_string = "[" + ", ".join(map(str, embedding.tolist())) + "]"
@@ -324,16 +323,16 @@ class OracleVectorDBStorage(BaseVectorStorage):
 
 @dataclass
 class OracleGraphStorage(BaseGraphStorage):
-    """基于Oracle的图存储模块"""
+    """Oracle-based graph storage module."""
 
     def __post_init__(self):
-        """从graphml文件加载图"""
+        """Load graph from graphml file."""
         self._max_batch_size = self.global_config["embedding_batch_num"]
 
     #################### insert method ################
 
     async def upsert_node(self, node_id: str, node_data: dict[str, str]):
-        """插入或更新节点"""
+        """Insert or update node."""
         # print("go into upsert node method")
         entity_name = node_id
         entity_type = node_data["entity_type"]
@@ -369,7 +368,7 @@ class OracleGraphStorage(BaseGraphStorage):
     async def upsert_edge(
         self, source_node_id: str, target_node_id: str, edge_data: dict[str, str]
     ):
-        """插入或更新边"""
+        """Insert or update edge."""
         # print("go into upsert edge method")
         source_name = source_node_id
         target_name = target_node_id
@@ -409,13 +408,13 @@ class OracleGraphStorage(BaseGraphStorage):
         # self._graph.add_edge(source_node_id, target_node_id, **edge_data)
 
     async def embed_nodes(self, algorithm: str) -> tuple[np.ndarray, list[str]]:
-        """为节点生成向量"""
+        """Generate vectors for nodes."""
         if algorithm not in self._node_embed_algorithms:
             raise ValueError(f"Node embedding algorithm {algorithm} not supported")
         return await self._node_embed_algorithms[algorithm]()
 
     async def _node2vec_embed(self):
-        """为节点生成向量"""
+        """Generate vectors for nodes."""
         from graspologic import embed
 
         embeddings, nodes = embed.node2vec_embed(
@@ -427,14 +426,14 @@ class OracleGraphStorage(BaseGraphStorage):
         return embeddings, nodes_ids
 
     async def index_done_callback(self):
-        """写入graphhml图文件"""
+        """Write graphml file."""
         logger.info(
             "Node and edge data had been saved into oracle db already, so nothing to do here!"
         )
 
     #################### query method #################
     async def has_node(self, node_id: str) -> bool:
-        """根据节点id检查节点是否存在"""
+        """Check if node exists by node id."""
         SQL = SQL_TEMPLATES["has_node"]
         params = {"workspace": self.db.workspace, "node_id": node_id}
         # print(SQL)
@@ -448,7 +447,7 @@ class OracleGraphStorage(BaseGraphStorage):
             return False
 
     async def has_edge(self, source_node_id: str, target_node_id: str) -> bool:
-        """根据源和目标节点id检查边是否存在"""
+        """Check if edge exists by source and target node ids."""
         SQL = SQL_TEMPLATES["has_edge"]
         params = {
             "workspace": self.db.workspace,
@@ -465,7 +464,7 @@ class OracleGraphStorage(BaseGraphStorage):
             return False
 
     async def node_degree(self, node_id: str) -> int:
-        """根据节点id获取节点的度"""
+        """Get node degree by node id."""
         SQL = SQL_TEMPLATES["node_degree"]
         params = {"workspace": self.db.workspace, "node_id": node_id}
         # print(SQL)
@@ -478,13 +477,13 @@ class OracleGraphStorage(BaseGraphStorage):
             return 0
 
     async def edge_degree(self, src_id: str, tgt_id: str) -> int:
-        """根据源和目标节点id获取边的度"""
+        """Get edge degree by source and target node ids."""
         degree = await self.node_degree(src_id) + await self.node_degree(tgt_id)
         # print("Edge degree",degree)
         return degree
 
     async def get_node(self, node_id: str) -> Union[dict, None]:
-        """根据节点id获取节点数据"""
+        """Get node data by node id."""
         SQL = SQL_TEMPLATES["get_node"]
         params = {"workspace": self.db.workspace, "node_id": node_id}
         # print(self.db.workspace, node_id)
@@ -500,7 +499,7 @@ class OracleGraphStorage(BaseGraphStorage):
     async def get_edge(
         self, source_node_id: str, target_node_id: str
     ) -> Union[dict, None]:
-        """根据源和目标节点id获取边"""
+        """Get edge by source and target node ids."""
         SQL = SQL_TEMPLATES["get_edge"]
         params = {
             "workspace": self.db.workspace,
@@ -516,7 +515,7 @@ class OracleGraphStorage(BaseGraphStorage):
             return None
 
     async def get_node_edges(self, source_node_id: str):
-        """根据节点id获取节点的所有边"""
+        """Get all edges of a node by node id."""
         if await self.has_node(source_node_id):
             SQL = SQL_TEMPLATES["get_node_edges"]
             params = {"workspace": self.db.workspace, "source_node_id": source_node_id}
@@ -530,7 +529,7 @@ class OracleGraphStorage(BaseGraphStorage):
                 return []
 
     async def get_all_nodes(self, limit: int):
-        """查询所有节点"""
+        """Query all nodes."""
         SQL = SQL_TEMPLATES["get_all_nodes"]
         params = {"workspace": self.db.workspace, "limit": str(limit)}
         res = await self.db.query(sql=SQL, params=params, multirows=True)
@@ -538,7 +537,7 @@ class OracleGraphStorage(BaseGraphStorage):
             return res
 
     async def get_all_edges(self, limit: int):
-        """查询所有边"""
+        """Query all edges."""
         SQL = SQL_TEMPLATES["get_all_edges"]
         params = {"workspace": self.db.workspace, "limit": str(limit)}
         res = await self.db.query(sql=SQL, params=params, multirows=True)

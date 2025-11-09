@@ -101,7 +101,7 @@ class TiDBKVStorage(BaseKVStorage):
     ################ QUERY METHODS ################
 
     async def get_by_id(self, id: str) -> Union[dict, None]:
-        """根据 id 获取 doc_full 数据."""
+        """Get doc_full data by id."""
         SQL = SQL_TEMPLATES["get_by_id_" + self.namespace]
         params = {"id": id}
         # print("get_by_id:"+SQL)
@@ -113,23 +113,22 @@ class TiDBKVStorage(BaseKVStorage):
         else:
             return None
 
-    # Query by id
-    async def get_by_ids(self, ids: list[str], fields=None) -> Union[list[dict], None]:
-        """根据 id 获取 doc_chunks 数据"""
+    # Query by ids
+    async def get_by_ids(self, ids: list[str], fields=None) -> dict[str, dict]:
+        """Get multiple items by IDs. Returns dict mapping ID -> item."""
         SQL = SQL_TEMPLATES["get_by_ids_" + self.namespace].format(
             ids=",".join([f"'{id}'" for id in ids])
         )
         # print("get_by_ids:"+SQL)
         res = await self.db.query(SQL, multirows=True)
         if res:
-            data = res  # [{"data":i} for i in res]
-            # print(data)
-            return data
+            # Convert list to dict using id as key
+            return {str(row["id"]): row for row in res}
         else:
-            return None
+            return {}
 
     async def filter_keys(self, keys: list[str]) -> set[str]:
-        """过滤掉重复内容"""
+        """Filter out existing keys and return non-existent ones."""
         SQL = SQL_TEMPLATES["filter_keys"].format(
             table_name=N_T[self.namespace],
             id_field=N_ID[self.namespace],

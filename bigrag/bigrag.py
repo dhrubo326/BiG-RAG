@@ -662,7 +662,13 @@ class BiGRAG:
             doc_data = await self.full_docs.get_by_id(doc_id)
             if doc_data is None:
                 logger.warning(f"Document '{doc_id}' not found in storage")
-                return
+                return {
+                    "chunks_deleted": 0,
+                    "entities_deleted": 0,
+                    "edges_deleted": 0,
+                    "document_id": doc_id,
+                    "status": "not_found"
+                }
 
             logger.info(f"[Document Deletion] Starting deletion for document: {doc_id}")
 
@@ -680,7 +686,13 @@ class BiGRAG:
                 # Bug #2 Fix: Use delete() to remove only this document, not drop() which deletes ALL
                 await self.full_docs.delete(doc_id)
                 logger.info(f"[Document Deletion] Deleted document {doc_id} from full_docs")
-                return
+                return {
+                    "chunks_deleted": 0,
+                    "entities_deleted": 0,
+                    "edges_deleted": 0,
+                    "document_id": doc_id,
+                    "status": "no_chunks_found"
+                }
 
             logger.info(f"[Document Deletion] Found {len(doc_chunk_ids)} chunks to process")
 
@@ -777,6 +789,14 @@ class BiGRAG:
             logger.info(f"[Document Deletion] Completed deletion for document: {doc_id}")
 
             await self._delete_document_done()
+
+            return {
+                "chunks_deleted": deleted_chunks,
+                "entities_deleted": len(entities_to_delete),
+                "edges_deleted": len(edges_to_delete),
+                "document_id": doc_id,
+                "status": "success"
+            }
 
         except Exception as e:
             logger.error(f"Error while deleting document '{doc_id_or_content}': {e}")

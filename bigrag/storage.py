@@ -40,16 +40,13 @@ class JsonKVStorage(BaseKVStorage):
         return self._data.get(id, None)
 
     async def get_by_ids(self, ids, fields=None):
+        """Get multiple items by IDs. Returns dict mapping ID -> item."""
         if fields is None:
-            return [self._data.get(id, None) for id in ids]
-        return [
-            (
-                {k: v for k, v in self._data[id].items() if k in fields}
-                if self._data.get(id, None)
-                else None
-            )
-            for id in ids
-        ]
+            return {id: self._data[id] for id in ids if id in self._data}
+        return {
+            id: {k: v for k, v in self._data[id].items() if k in fields}
+            for id in ids if id in self._data
+        }
 
     async def filter_keys(self, data: list[str]) -> set[str]:
         return set([s for s in data if s not in self._data])

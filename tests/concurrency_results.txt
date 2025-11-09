@@ -1,0 +1,22 @@
+[1m============================= test session starts =============================[0m
+platform win32 -- Python 3.13.5, pytest-8.4.2, pluggy-1.6.0 -- D:\BiG-RAG\venv\Scripts\python.exe
+cachedir: .pytest_cache
+benchmark: 5.2.2 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+metadata: {'Python': '3.13.5', 'Platform': 'Windows-11-10.0.26100-SP0', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.11.0', 'Faker': '37.12.0', 'asyncio': '1.2.0', 'benchmark': '5.2.2', 'cov': '7.0.0', 'html': '4.1.1', 'metadata': '3.1.1', 'mock': '3.15.1', 'timeout': '2.4.0', 'xdist': '3.8.0'}}
+rootdir: D:\BiG-RAG\tests
+configfile: pytest.ini
+plugins: anyio-4.11.0, Faker-37.12.0, asyncio-1.2.0, benchmark-5.2.2, cov-7.0.0, html-4.1.1, metadata-3.1.1, mock-3.15.1, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+[1mcollecting ... [0mcollected 8 items
+
+performance/test_concurrency.py::TestConcurrency::test_concurrent_queries [32mPASSED[0m[33m [ 12%][0m
+performance/test_concurrency.py::TestConcurrency::test_concurrent_inserts [32mPASSED[0m[33m [ 25%][0m
+performance/test_concurrency.py::TestConcurrency::test_concurrent_deletes [31mFAILED[0m[31m [ 37%][0m
+performance/test_concurrency.py::TestConcurrency::test_mixed_concurrent_operations [32mPASSED[0m[31m [ 50%][0m
+performance/test_concurrency.py::TestConcurrency::test_high_concurrency_stress [32mPASSED[0m[31m [ 62%][0m
+performance/test_concurrency.py::TestConcurrency::test_concurrent_query_different_modes [32mPASSED[0m[31m [ 75%][0m
+performance/test_concurrency.py::TestConcurrency::test_concurrent_batch_operations [32mPASSED[0m[31m [ 87%][0m
+performance/test_concurrency.py::TestConcurrency::test_sustained_concurrent_load 

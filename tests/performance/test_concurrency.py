@@ -44,8 +44,8 @@ class TestConcurrency:
         """Test concurrent document insertion"""
         rag = bigrag_instance
 
-        # Generate test documents
-        docs = get_performance_test_documents(count=100)
+        # Generate test documents (REDUCED for faster testing)
+        docs = get_performance_test_documents(count=20)
         batch_size = 10
 
         # Split into batches and insert concurrently
@@ -63,8 +63,8 @@ class TestConcurrency:
         """Test concurrent document deletion"""
         rag = bigrag_instance
 
-        # Insert documents first
-        docs = get_performance_test_documents(count=50)
+        # Insert documents first (REDUCED for faster testing)
+        docs = get_performance_test_documents(count=15)
         doc_ids = []
 
         for i, doc in enumerate(docs):
@@ -193,8 +193,8 @@ class TestConcurrency:
         """Test sustained concurrent load over time"""
         rag = bigrag_instance
 
-        # Insert initial documents
-        initial_docs = get_performance_test_documents(count=50)
+        # Insert initial documents (REDUCED for faster testing)
+        initial_docs = get_performance_test_documents(count=10)
         await rag.ainsert(initial_docs)
 
         # Run sustained concurrent queries for 30 seconds

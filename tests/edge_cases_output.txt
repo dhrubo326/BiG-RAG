@@ -1,0 +1,126 @@
+[1m============================= test session starts =============================[0m
+platform win32 -- Python 3.13.5, pytest-8.4.2, pluggy-1.6.0 -- D:\BiG-RAG\venv\Scripts\python.exe
+cachedir: .pytest_cache
+benchmark: 5.2.2 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+metadata: {'Python': '3.13.5', 'Platform': 'Windows-11-10.0.26100-SP0', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.11.0', 'Faker': '37.12.0', 'asyncio': '1.2.0', 'benchmark': '5.2.2', 'cov': '7.0.0', 'html': '4.1.1', 'metadata': '3.1.1', 'mock': '3.15.1', 'timeout': '2.4.0', 'xdist': '3.8.0'}}
+rootdir: D:\BiG-RAG\tests
+configfile: pytest.ini
+plugins: anyio-4.11.0, Faker-37.12.0, asyncio-1.2.0, benchmark-5.2.2, cov-7.0.0, html-4.1.1, metadata-3.1.1, mock-3.15.1, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+[1mcollecting ... [0mcollected 21 items
+
+edge_cases/test_edge_cases.py::TestEdgeCases::test_empty_document [32mPASSED[0m[33m [  4%][0m
+edge_cases/test_edge_cases.py::TestEdgeCases::test_very_long_document +++++++++++++++++++++++++++++++++++ Timeout +++++++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Captured stderr ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+INFO:bigrag:[New Docs] inserting 1 docs\n\rChunking documents:   0%|          | 0/1 [00:00<?, ?doc/s]\rChunking documents: 100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00, 497.78doc/s]\nINFO:bigrag:[New Chunks] inserting 2 chunks\nINFO:bigrag:[Entity Extraction]...\n\rExtracting entities from chunks:   0%|          | 0/2 [00:00<?, ?chunk/s]~~~~~~~~~~~~~~~~~~~~~~~~~~ Stack of asyncio_1 (636) ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 1014, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 1043, in _bootstrap_inner
+    self.run()
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 994, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\TC Server PC\miniconda3\Lib\concurrent\futures\thread.py", line 90, in _worker
+    work_item = work_queue.get(block=True)
+~~~~~~~~~~~~~~~~~~~~~~~~~ Stack of asyncio_0 (28640) ~~~~~~~~~~~~~~~~~~~~~~~~~~
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 1014, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 1043, in _bootstrap_inner
+    self.run()
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 994, in run
+    self._target(*self._args, **self._kwargs)
+  File "C:\Users\TC Server PC\miniconda3\Lib\concurrent\futures\thread.py", line 90, in _worker
+    work_item = work_queue.get(block=True)
+~~~~~~~~~~~~~~~~~~~~~~~~~~ Stack of Thread-2 (32668) ~~~~~~~~~~~~~~~~~~~~~~~~~~
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 1014, in _bootstrap
+    self._bootstrap_inner()
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 1043, in _bootstrap_inner
+    self.run()
+  File "D:\BiG-RAG\venv\Lib\site-packages\tqdm\_monitor.py", line 60, in run
+    self.was_killed.wait(self.sleep_interval)
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 659, in wait
+    signaled = self._cond.wait(timeout)
+  File "C:\Users\TC Server PC\miniconda3\Lib\threading.py", line 363, in wait
+    gotit = waiter.acquire(True, timeout)
+~~~~~~~~~~~~~~~~~~~~~~~~~ Stack of MainThread (25984) ~~~~~~~~~~~~~~~~~~~~~~~~~
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\BiG-RAG\venv\Lib\site-packages\pytest\__main__.py", line 9, in <module>
+    raise SystemExit(pytest.console_main())
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\config\__init__.py", line 201, in console_main
+    code = main()
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\config\__init__.py", line 175, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\main.py", line 336, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\main.py", line 289, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\main.py", line 343, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\main.py", line 367, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\runner.py", line 117, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\runner.py", line 136, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\runner.py", line 245, in call_and_report
+    call = CallInfo.from_call(
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\runner.py", line 344, in from_call
+    result: TResult | None = func()
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\runner.py", line 246, in <lambda>
+    lambda: runtest_hook(item=item, **kwds), when=when, reraise=reraise
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\runner.py", line 178, in pytest_runtest_call
+    item.runtest()
+  File "D:\BiG-RAG\venv\Lib\site-packages\pytest_asyncio\plugin.py", line 474, in runtest
+    super().runtest()
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\python.py", line 1671, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "D:\BiG-RAG\venv\Lib\site-packages\_pytest\python.py", line 157, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "D:\BiG-RAG\venv\Lib\site-packages\pytest_asyncio\plugin.py", line 721, in inner
+    runner.run(coro, context=context)
+  File "C:\Users\TC Server PC\miniconda3\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "C:\Users\TC Server PC\miniconda3\Lib\asyncio\base_events.py", line 712, in run_until_complete
+    self.run_forever()
+  File "C:\Users\TC Server PC\miniconda3\Lib\asyncio\base_events.py", line 683, in run_forever
+    self._run_once()
+  File "C:\Users\TC Server PC\miniconda3\Lib\asyncio\base_events.py", line 2004, in _run_once
+    event_list = self._selector.select(timeout)
+  File "C:\Users\TC Server PC\miniconda3\Lib\asyncio\windows_events.py", line 446, in select
+    self._poll(timeout)
+  File "C:\Users\TC Server PC\miniconda3\Lib\asyncio\windows_events.py", line 775, in _poll
+    status = _overlapped.GetQueuedCompletionStatus(self._iocp, ms)
++++++++++++++++++++++++++++++++++++ Timeout +++++++++++++++++++++++++++++++++++

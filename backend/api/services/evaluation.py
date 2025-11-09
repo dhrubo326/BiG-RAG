@@ -389,6 +389,7 @@ async def compare_configurations(
     Returns:
         Dict with comparison results and ranking
     """
+    start_time = time.time()  # Track comparison time
     comparison_results = {}
 
     for config in configurations:
@@ -433,10 +434,13 @@ async def compare_configurations(
         best_configuration = None
         ranking = []
 
+    comparison_time = time.time() - start_time
+
     return {
-        "comparison_results": comparison_results,
+        "results": comparison_results,  # Changed from "comparison_results"
         "best_configuration": best_configuration,
-        "ranking": ranking
+        "ranking": ranking,
+        "comparison_time": comparison_time  # Added timing metadata
     }
 
 

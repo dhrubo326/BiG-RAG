@@ -146,6 +146,8 @@ Please provide a comprehensive answer based on the above context."""
 
         return JSONResponse(content=response)
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"LLM error: {e}")
         import traceback

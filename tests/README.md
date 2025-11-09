@@ -84,7 +84,8 @@ REM Status: COMPLETE - 30/30 integration tests passed
 REM PHASE 4: API Tests (Requires Backend Running)
 REM Terminal 1: cd backend && python server.py --data_source demo_test
 REM Terminal 2: pytest tests/api/ -v
-REM Status: COMPLETE - 58/69 tests passed (84% pass rate, 11 skipped)
+REM Status: COMPLETE - 60/69 tests passed (87% pass rate, 3 failed, 6 skipped)
+REM Note: 3 failures are backend bugs (see TEST_PLAN.md for details)
 
 REM PHASE 5: Performance & Edge Cases (Robustness)
 pytest tests/performance/ tests/edge_cases/ -v

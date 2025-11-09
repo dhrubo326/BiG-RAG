@@ -32,7 +32,7 @@ class TestStorageConsistency:
 
         # 3. Graph storage (should have nodes - chunks, entities, relations)
         # Get all graph nodes
-        assert rag.knowledge_graph_inst is not None, "Graph storage should exist"
+        assert rag.chunk_entity_relation_graph is not None, "Graph storage should exist"
 
         # 4. Vector DBs (entities and chunks should have entries)
         assert rag.vdb_entities is not None, "Entity vector DB should exist"
@@ -133,7 +133,7 @@ class TestStorageConsistency:
         # Counts should match (or be close, accounting for duplicates)
 
         # Basic check: both layers should have data
-        assert rag.knowledge_graph_inst is not None, "Graph should exist"
+        assert rag.chunk_entity_relation_graph is not None, "Graph should exist"
         assert rag.vdb_entities is not None, "Entity vector DB should exist"
 
     @pytest.mark.asyncio
@@ -151,7 +151,7 @@ class TestStorageConsistency:
 
         # Verify graph has edges connecting chunks to entities
         # (This validates the bipartite graph structure)
-        assert rag.knowledge_graph_inst is not None, "Graph should exist with edges"
+        assert rag.chunk_entity_relation_graph is not None, "Graph should exist with edges"
 
     @pytest.mark.asyncio
     async def test_metadata_sync_across_storage(self, bigrag_instance):

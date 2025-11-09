@@ -21,7 +21,7 @@ class TestGraphVectorSync:
         await rag.ainsert([doc])
 
         # Entity should be in graph
-        assert rag.knowledge_graph_inst is not None, "Graph storage should exist"
+        assert rag.chunk_entity_relation_graph is not None, "Graph storage should exist"
 
         # Entity should be in vector DB for retrieval
         assert rag.vdb_entities is not None, "Entity vector DB should exist"

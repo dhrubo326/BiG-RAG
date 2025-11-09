@@ -1,8 +1,18 @@
 # BiG-RAG Test Plan
 
-**Version:** 1.0
+**Version:** 1.1
 **Last Updated:** 2025-01-09
 **Status:** Active
+
+## Update Log
+
+- **2025-01-09:** Phase 3 Integration Tests implemented (30 tests across 4 files)
+  - Added test_entity_extraction.py (6 tests)
+  - Added test_graph_vector_sync.py (6 tests)
+  - Added test_retrieval_pipeline.py (10 tests)
+  - Added test_storage_consistency.py (8 tests)
+  - Discovered and fixed Bug #7 (dict unpacking in operate.py)
+  - Fixed Bug #8 (test-level attribute name error)
 
 ---
 
@@ -56,7 +66,7 @@
 | Test Type | Files | Coverage Target | Priority |
 |-----------|-------|-----------------|----------|
 | Unit Tests | 10 files (+4 NEW) | 60% of tests | HIGH |
-| Integration Tests | 4 files | 30% of tests | HIGH |
+| Integration Tests | 4 files (30 tests) | 30% of tests | HIGH |
 | End-to-End Tests | 3 files | 10% of tests | CRITICAL |
 | Regression Tests | 1 file | 6 bug fixes | CRITICAL |
 | API Tests | 3 files | All endpoints | HIGH |
@@ -64,7 +74,7 @@
 | Performance Tests | 2 files | Stress testing | MEDIUM |
 | Edge Cases | 1 file | Error handling | HIGH |
 
-**Total Test Files:** 25+ (4 new unit tests added 2025-01-09)
+**Total Test Files:** 25+ (4 new unit tests + 4 integration tests added 2025-01-09)
 
 ### NEW Unit Tests (2025-01-09)
 1. **test_chunking.py** - Comprehensive chunking tests (40+ tests)
@@ -75,6 +85,16 @@
    - Function wrapping, batch processing, dimensions
 4. **test_retrieval.py** - Retrieval logic tests (40+ tests)
    - RRF scoring, paths A/B/C, weighted retrieval
+
+### NEW Integration Tests (2025-01-09)
+1. **test_entity_extraction.py** - LLM entity extraction (6 tests)
+   - Entity normalization, type mapping, relation quality, caching, metadata context, multi-entity handling
+2. **test_graph_vector_sync.py** - Graph-vector synchronization (6 tests)
+   - Entity/relation roundtrip, edge deletion, embedding consistency, vector search integration
+3. **test_retrieval_pipeline.py** - Complete retrieval pipeline (10 tests)
+   - Entity/relation/chunk paths, hybrid mode, RRF scoring, reranking, metadata preservation
+4. **test_storage_consistency.py** - Storage layer sync (8 tests)
+   - Insert/delete/upsert sync, concurrent operations, entity counts, chunk-entity mapping
 
 ---
 
@@ -93,24 +113,33 @@
 ### Phase 2: Core Functionality Testing
 **Purpose:** Validate all major components work correctly
 
+**Unit Tests:**
 3. `tests/unit/test_utils.py` - Utility functions
 4. `tests/unit/test_storage.py` - Storage layer
 5. `tests/unit/test_operate.py` - Graph operations
 6. `tests/unit/test_config.py` - Configuration management
-7. `tests/integration/test_storage_consistency.py` - Storage sync
-8. `tests/integration/test_retrieval_pipeline.py` - Three-path retrieval
+7. `tests/unit/test_base.py` - Base classes and schemas
+8. `tests/unit/test_reranker.py` - Semantic reranking
+9. `tests/unit/test_chunking.py` - Text chunking (NEW 2025-01-09)
+10. `tests/unit/test_graph_building.py` - Graph construction (NEW 2025-01-09)
+11. `tests/unit/test_embedding.py` - Embedding preparation (NEW 2025-01-09)
+12. `tests/unit/test_retrieval.py` - Retrieval logic (NEW 2025-01-09)
+
+**Integration Tests (NEW 2025-01-09):**
+13. `tests/integration/test_storage_consistency.py` - Storage sync (8 tests)
+14. `tests/integration/test_retrieval_pipeline.py` - Three-path retrieval (10 tests)
+15. `tests/integration/test_entity_extraction.py` - LLM extraction (6 tests)
+16. `tests/integration/test_graph_vector_sync.py` - Graph-vector consistency (6 tests)
 
 **Exit Criteria:** >=95% pass rate. Document failures for investigation.
 
 ---
 
-### Phase 3: Advanced Features Testing
-**Purpose:** Validate advanced features and integrations
+### Phase 3: End-to-End Workflows
+**Purpose:** Validate complete user workflows
 
-9. `tests/e2e/test_three_path_retrieval.py` - Path A, B, C validation
-10. `tests/e2e/test_document_lifecycle.py` - Complete document lifecycle
-11. `tests/integration/test_entity_extraction.py` - LLM extraction
-12. `tests/integration/test_graph_vector_sync.py` - Graph-vector consistency
+17. `tests/e2e/test_three_path_retrieval.py` - Path A, B, C validation
+18. `tests/e2e/test_document_lifecycle.py` - Complete document lifecycle
 
 **Exit Criteria:** >=90% pass rate.
 
@@ -334,30 +363,32 @@ pytest unit/test_retrieval.py -v --tb=short
 #### Phase 2: Core Functionality - Integration Tests
 
 ```cmd
-# Test 13/25: Storage Consistency
+# Test 13/25: Storage Consistency (NEW - 2025-01-09)
 pytest integration/test_storage_consistency.py -v --tb=short
-# Expected: 8-12 tests PASSED
-# Tests: Graph-KV-Vector DB synchronization
-# Time: ~25 seconds
-
-# Test 14/25: Retrieval Pipeline
-pytest integration/test_retrieval_pipeline.py -v --tb=short
-# Expected: 12-15 tests PASSED
-# Tests: Three-path retrieval (Entity + Relation + Chunk)
+# Expected: 8 tests PASSED
+# Tests: Insert/delete/upsert sync, concurrent operations, entity counts, chunk-entity mapping
 # Time: ~30 seconds
 
-# Test 15/25: Entity Extraction
-pytest integration/test_entity_extraction.py -v --tb=short
-# Expected: 10-12 tests PASSED (may skip if no OPENAI_API_KEY)
-# Tests: LLM entity extraction, normalization, caching
-# Time: ~60 seconds (with API calls)
-# Note: Skipped tests are OK if API key not set
+# Test 14/25: Retrieval Pipeline (NEW - 2025-01-09)
+pytest integration/test_retrieval_pipeline.py -v --tb=short
+# Expected: 10 tests PASSED
+# Tests: Entity/relation/chunk paths, hybrid mode, RRF, reranking, metadata preservation
+# Time: ~40 seconds
 
-# Test 16/25: Graph-Vector Sync
+# Test 15/25: Entity Extraction (NEW - 2025-01-09)
+pytest integration/test_entity_extraction.py -v --tb=short
+# Expected: 6 tests PASSED (requires OPENAI_API_KEY)
+# Tests: LLM extraction, entity normalization, type mapping, relation quality, caching
+# Time: ~60-90 seconds (with API calls)
+# Note: Tests will FAIL if API key not set (not skipped)
+
+# Test 16/25: Graph-Vector Sync (NEW - 2025-01-09)
 pytest integration/test_graph_vector_sync.py -v --tb=short
-# Expected: 8-10 tests PASSED
-# Tests: Graph and vector DB consistency checks
-# Time: ~20 seconds
+# Expected: 6 tests PASSED
+# Tests: Entity/relation roundtrip, edge deletion, embedding consistency, vector search
+# Time: ~25 seconds
+
+# CHECKPOINT: All 30 integration tests should pass (100%)
 ```
 
 #### Phase 3: End-to-End Workflows
@@ -375,7 +406,7 @@ pytest e2e/test_three_path_retrieval.py -v --tb=short
 # Tests: Path A (entity), Path B (relation), Path C (chunk) validation
 # Time: ~35 seconds
 
-# CHECKPOINT: Target >=90% pass rate for Phase 3
+# CHECKPOINT: Target >=90% pass rate for Phase 3 (E2E tests)
 ```
 
 #### Phase 4: API Tests (Requires Backend Server)
@@ -791,14 +822,28 @@ Track these metrics during testing:
 
 Tests for previously fixed bugs:
 
-| Bug ID | Description | Test Function | File |
-|--------|-------------|---------------|------|
-| Bug #1 | Wrong hash prefix (edge deletion) | `test_bug1_edge_deletion_prefix` | `test_bug_fixes.py` |
-| Bug #2 | drop() deletes all documents | `test_bug2_single_document_deletion` | `test_bug_fixes.py` |
-| Bug #3 | Undefined load_env_file() | `test_bug3_reload_config` | `test_bug_fixes.py` |
-| Bug #4 | KeyError on missing dict keys | `test_bug4_defensive_dict_access` | `test_bug_fixes.py` |
-| Bug #5 | upsert() doesn't update | `test_bug5_upsert_updates` | `test_bug_fixes.py` |
-| Bug #6 | Wrong type annotations | `test_bug6_type_annotations` | `test_bug_fixes.py` |
+| Bug ID | Description | Test Function | File | Date Fixed |
+|--------|-------------|---------------|------|------------|
+| Bug #1 | Wrong hash prefix (edge deletion) | `test_bug1_edge_deletion_prefix` | `test_bug_fixes.py` | Pre-2025 |
+| Bug #2 | drop() deletes all documents | `test_bug2_single_document_deletion` | `test_bug_fixes.py` | Pre-2025 |
+| Bug #3 | Undefined load_env_file() | `test_bug3_reload_config` | `test_bug_fixes.py` | Pre-2025 |
+| Bug #4 | KeyError on missing dict keys | `test_bug4_defensive_dict_access` | `test_bug_fixes.py` | Pre-2025 |
+| Bug #5 | upsert() doesn't update | `test_bug5_upsert_updates` | `test_bug_fixes.py` | Pre-2025 |
+| Bug #6 | Wrong type annotations | `test_bug6_type_annotations` | `test_bug_fixes.py` | Pre-2025 |
+| Bug #7 | Dict unpacking in reranker | Covered by all integration tests | `operate.py:971-979` | 2025-01-09 |
+| Bug #8 | Test used wrong attribute name | Test-level fix (not core bug) | 4 integration test files | 2025-01-09 |
+
+### Bug #7 Details (CRITICAL - Fixed 2025-01-09)
+**Location:** [bigrag/operate.py:971-979](bigrag/operate.py#L971-L979)
+**Impact:** 24/30 integration tests failing
+**Root Cause:** Reranker returns list of dicts, but code unpacked as tuple
+**Fix:** Changed from `for content, sources, score in reranked` to `for item in reranked` with dict access
+
+### Bug #8 Details (Test-Level - Fixed 2025-01-09)
+**Location:** 4 integration test files
+**Impact:** 4/30 integration tests failing after Bug #7 fix
+**Root Cause:** Tests referenced non-existent `rag.knowledge_graph_inst` attribute
+**Fix:** Updated to use correct attribute `rag.chunk_entity_relation_graph`
 
 ---
 
@@ -882,6 +927,56 @@ pytest --durations=10
 
 **Issue:** Windows encoding errors
 **Solution:** Set `PYTHONIOENCODING=utf-8` before running tests
+
+### 15.3 Phase 3 Integration Test Implementation (2025-01-09)
+
+**Overview:** Expanded 7 skeleton integration tests to 30 comprehensive tests across 4 files.
+
+**Implementation Details:**
+
+1. **test_entity_extraction.py** (6 tests)
+   - `test_entity_normalization_after_extraction` - Validates TYPE_NORMALIZATION_MAP usage
+   - `test_entity_type_normalized_correctly` - Checks entity type consistency
+   - `test_relation_extraction_quality` - Validates relation completeness
+   - `test_llm_cache_reduces_api_calls` - Verifies LLM response caching
+   - `test_extraction_with_metadata_context` - Tests metadata-enhanced extraction
+   - `test_multiple_entities_in_single_doc` - Multi-entity handling
+
+2. **test_graph_vector_sync.py** (6 tests)
+   - `test_entity_in_both_graph_and_vector` - Entity exists in both storage layers
+   - `test_edge_deletion_removes_from_vector` - Cascade deletion validation
+   - `test_chunk_embedding_matches_content` - Embedding consistency check
+   - `test_entity_embedding_consistency` - Entity vector validation
+   - `test_relation_embedding_consistency` - Relation vector validation
+   - `test_vector_search_returns_graph_nodes` - Search integration test
+
+3. **test_retrieval_pipeline.py** (10 tests)
+   - `test_entity_extraction_to_retrieval` - Path A validation
+   - `test_relation_extraction_to_retrieval` - Path B validation
+   - `test_chunk_based_retrieval_path_c` - Path C validation
+   - `test_hybrid_mode_combines_all_paths` - Three-path combination
+   - `test_rrf_scoring_across_paths` - RRF algorithm validation
+   - `test_reranking_improves_results` - Semantic reranking test
+   - `test_metadata_preserved_in_results` - Metadata flow validation
+   - `test_query_with_no_results_graceful` - Edge case handling
+   - `test_multi_document_retrieval` - Multi-doc retrieval
+   - `test_weighted_retrieval_ranking` - Weight-based ranking
+
+4. **test_storage_consistency.py** (8 tests)
+   - `test_insert_syncs_all_layers` - Insert synchronization
+   - `test_delete_syncs_all_layers` - Delete synchronization
+   - `test_upsert_maintains_consistency` - Upsert validation
+   - `test_concurrent_operations_stay_synced` - Concurrency test
+   - `test_entity_count_matches_across_layers` - Count consistency
+   - `test_chunk_to_entity_mapping_consistency` - Mapping validation
+   - `test_metadata_sync_across_storage` - Metadata sync
+   - `test_vector_count_matches_graph_nodes` - Vector-graph alignment
+
+**Bugs Discovered:**
+- **Bug #7 (CRITICAL):** Dict unpacking error in operate.py:971-979 (affected 24/30 tests)
+- **Bug #8 (Test-Level):** Wrong attribute name in 4 test files (affected 4/30 tests)
+
+**Result:** After fixes, all 30 integration tests pass (100%)
 
 ---
 

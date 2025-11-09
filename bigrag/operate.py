@@ -968,14 +968,15 @@ async def _build_query_context(
                 use_reranking=True
             )
             # Update chunk_knowledge with reranked results and scores
+            # reranked is a list of dicts: [{"content": str, "sources": list, "score": float}, ...]
             chunk_knowledge = [
                 {
-                    "content": content,
-                    "score": score,
-                    "sources": sources,
+                    "content": item["content"],
+                    "score": item["score"],
+                    "sources": item["sources"],
                     "type": "chunk_reranked"
                 }
-                for content, sources, score in reranked
+                for item in reranked
             ]
             logger.info("[Reranking] Applied cross-encoder reranking to chunks")
         except Exception as e:

@@ -21,20 +21,20 @@ class TestDocumentLifecycle:
         doc_content = "Albert Einstein developed the theory of relativity in 1905."
         metadata = {"title": "Einstein", "category": "science"}
 
-        await rag.insert([doc_content], metadata=[metadata])
+        await rag.ainsert([doc_content], metadata=[metadata])
 
         # Verify insertion
         all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
         assert len(all_docs) >= 1
 
         # PHASE 2: QUERY
-        results = await rag.query("Who developed relativity?", QueryParam(mode="hybrid"))
+        results = await rag.aquery("Who developed relativity?", QueryParam(mode="hybrid"))
         assert results is not None
         assert "einstein" in results.lower()
 
         # PHASE 3: DELETE
         doc_id = list(all_docs.keys())[0]
-        stats = await rag.delete_document(doc_id)
+        stats = await rag.adelete_document(doc_id)
         assert stats["chunks_deleted"] >= 0
 
         # PHASE 4: VERIFY DELETION
@@ -47,7 +47,7 @@ class TestDocumentLifecycle:
         rag = bigrag_instance
 
         # Insert document
-        await rag.insert(["Test document with entity TestEntity and relation TestRelation"])
+        await rag.ainsert(["Test document with entity TestEntity and relation TestRelation"])
 
         # Get counts before deletion
         docs_before = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
@@ -55,7 +55,7 @@ class TestDocumentLifecycle:
 
         # Delete
         doc_id = list(docs_before.keys())[0]
-        await rag.delete_document(doc_id)
+        await rag.adelete_document(doc_id)
 
         # Verify cascade
         docs_after = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())

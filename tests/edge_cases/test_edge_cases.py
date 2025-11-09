@@ -23,7 +23,7 @@ class TestEdgeCases:
         rag = bigrag_instance
 
         # Should handle gracefully
-        await rag.insert([""])
+        await rag.ainsert([""])
 
     @pytest.mark.asyncio
     async def test_very_long_document(self, bigrag_instance):
@@ -31,7 +31,7 @@ class TestEdgeCases:
         rag = bigrag_instance
 
         long_doc = " ".join(["word"] * 5000)
-        await rag.insert([long_doc])
+        await rag.ainsert([long_doc])
 
     @pytest.mark.asyncio
     async def test_special_characters(self, bigrag_instance):
@@ -43,7 +43,7 @@ class TestEdgeCases:
             "Unicode: 你好世界 مرحبا",
         ]
 
-        await rag.insert(special_docs)
+        await rag.ainsert(special_docs)
 
     @pytest.mark.asyncio
     async def test_query_with_no_results(self, bigrag_with_data):
@@ -51,7 +51,7 @@ class TestEdgeCases:
         rag = bigrag_with_data
 
         from bigrag.base import QueryParam
-        results = await rag.query(
+        results = await rag.aquery(
             "NONEXISTENT_QUERY_12345_RANDOM",
             QueryParam(mode="hybrid"),
         )
@@ -66,7 +66,7 @@ class TestEdgeCases:
 
         # Should handle gracefully
         try:
-            await rag.delete_document("nonexistent-doc-id")
+            await rag.adelete_document("nonexistent-doc-id")
         except Exception:
             # May raise exception or return gracefully
             pass
@@ -81,7 +81,7 @@ class TestEdgeCases:
         # Should handle all without crashing
         for doc in edge_docs:
             try:
-                await rag.insert([doc])
+                await rag.ainsert([doc])
             except Exception as e:
                 # Document what fails
                 pytest.fail(f"Failed to insert edge case document: {doc[:50]}... Error: {e}")

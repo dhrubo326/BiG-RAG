@@ -17,7 +17,7 @@ class TestStorageConsistency:
         rag = bigrag_instance
 
         # Insert document
-        await rag.insert(["Test document for consistency check"])
+        await rag.ainsert(["Test document for consistency check"])
 
         # Verify all layers have data
         # 1. Full docs
@@ -39,12 +39,12 @@ class TestStorageConsistency:
         rag = bigrag_instance
 
         # Insert then delete
-        await rag.insert(["Document to delete"])
+        await rag.ainsert(["Document to delete"])
 
         docs_before = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
         doc_id = list(docs_before.keys())[0]
 
-        await rag.delete_document(doc_id)
+        await rag.adelete_document(doc_id)
 
         # Verify removal
         docs_after = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())

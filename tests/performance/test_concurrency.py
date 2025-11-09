@@ -28,7 +28,7 @@ class TestConcurrency:
         # Run queries concurrently
         from bigrag.base import QueryParam
         tasks = [
-            rag.query(q, QueryParam(mode="hybrid"))
+            rag.aquery(q, QueryParam(mode="hybrid"))
             for q in queries
         ]
 

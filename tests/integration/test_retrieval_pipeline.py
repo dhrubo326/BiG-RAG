@@ -18,10 +18,10 @@ class TestRetrievalPipeline:
         rag = bigrag_instance
 
         # Insert document with clear entities
-        await rag.insert(["Marie Curie won the Nobel Prize in Physics and Chemistry."])
+        await rag.ainsert(["Marie Curie won the Nobel Prize in Physics and Chemistry."])
 
         # Query for extracted entities
-        results = await rag.query("Nobel Prize winner", QueryParam(mode="local"))
+        results = await rag.aquery("Nobel Prize winner", QueryParam(mode="local"))
 
         assert results is not None
         # Should find Marie Curie
@@ -32,9 +32,9 @@ class TestRetrievalPipeline:
         """Test that extracted relations are retrievable"""
         rag = bigrag_instance
 
-        await rag.insert(["Amazon River flows through Brazil."])
+        await rag.ainsert(["Amazon River flows through Brazil."])
 
-        results = await rag.query("What flows through Brazil?", QueryParam(mode="global"))
+        results = await rag.aquery("What flows through Brazil?", QueryParam(mode="global"))
 
         assert results is not None
 

@@ -49,10 +49,10 @@ class TestCompleteWorkflow:
             {"title": "Inter Miami Info", "category": "sports"},
         ]
 
-        await rag.insert(docs, metadata=metadata)
+        await rag.ainsert(docs, metadata=metadata)
 
         # Step 2: QUERY the knowledge graph
-        results = await rag.query(
+        results = await rag.aquery(
             "Which team does Messi play for?",
             param=QueryParam(mode="hybrid", top_k=5),
         )
@@ -72,7 +72,7 @@ class TestCompleteWorkflow:
 
         # Step 4: DELETE a document
         doc_id = list(all_docs.keys())[0]
-        deletion_stats = await rag.delete_document(doc_id)
+        deletion_stats = await rag.adelete_document(doc_id)
 
         # Validate deletion
         assert deletion_stats is not None
@@ -86,7 +86,7 @@ class TestCompleteWorkflow:
         assert len(all_docs_after) == len(all_docs) - 1
 
         # Step 6: QUERY after deletion (should still work)
-        results_after = await rag.query(
+        results_after = await rag.aquery(
             "What is Inter Miami?",
             param=QueryParam(mode="hybrid"),
         )
@@ -113,7 +113,7 @@ class TestWithDemoTestDataset:
         rag = BiGRAG(working_dir=str(DEMO_TEST_EXPR))
 
         # Query complex multi-hop question
-        results = await rag.query(
+        results = await rag.aquery(
             "Who won the 2022 FIFA World Cup?",
             param=QueryParam(mode="hybrid", top_k=10),
         )
@@ -135,7 +135,7 @@ class TestWithDemoTestDataset:
         rag = BiGRAG(working_dir=str(DEMO_TEST_EXPR))
 
         # Multi-hop query requiring chaining facts
-        results = await rag.query(
+        results = await rag.aquery(
             "Which team does the 2022 World Cup winner captain play for?",
             param=QueryParam(mode="hybrid", top_k=10),
         )
@@ -157,17 +157,17 @@ class TestMultipleInsertionsAndQueries:
         rag = bigrag_instance
 
         # First batch
-        await rag.insert(["Document 1 about topic A"])
+        await rag.ainsert(["Document 1 about topic A"])
 
         # Query
-        results1 = await rag.query("topic A", QueryParam(mode="hybrid"))
+        results1 = await rag.aquery("topic A", QueryParam(mode="hybrid"))
         assert results1 is not None
 
         # Second batch
-        await rag.insert(["Document 2 about topic B", "Document 3 about topic C"])
+        await rag.ainsert(["Document 2 about topic B", "Document 3 about topic C"])
 
         # Query again
-        results2 = await rag.query("topic B", QueryParam(mode="hybrid"))
+        results2 = await rag.aquery("topic B", QueryParam(mode="hybrid"))
         assert results2 is not None
 
         # Verify all documents exist
@@ -187,7 +187,7 @@ class TestMultipleInsertionsAndQueries:
         ]
 
         for query in queries:
-            results = await rag.query(query, QueryParam(mode="hybrid"))
+            results = await rag.aquery(query, QueryParam(mode="hybrid"))
             # All queries should return something
             assert results is not None
             assert len(results) > 0
@@ -212,7 +212,7 @@ class TestMetadataPreservation:
             }
         ]
 
-        await rag.insert(docs, metadata=metadata)
+        await rag.ainsert(docs, metadata=metadata)
 
         # Retrieve chunks and verify metadata
         all_chunks = await rag.text_chunks.get_by_ids(

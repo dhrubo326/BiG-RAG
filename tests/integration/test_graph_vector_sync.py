@@ -16,7 +16,7 @@ class TestGraphVectorSync:
         """Test that entities appear in both graph and vector DB"""
         rag = bigrag_instance
 
-        await rag.insert(["Test entity TESTENTITY123 in document."])
+        await rag.ainsert(["Test entity TESTENTITY123 in document."])
 
         # Entity should be in graph (if extraction worked)
         # and in vector DB for retrieval
@@ -27,11 +27,11 @@ class TestGraphVectorSync:
         rag = bigrag_instance
 
         # Insert and delete
-        await rag.insert(["Document with edge"])
+        await rag.ainsert(["Document with edge"])
         docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
 
         if docs:
-            await rag.delete_document(list(docs.keys())[0])
+            await rag.adelete_document(list(docs.keys())[0])
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ class TestEntityExtraction:
         rag = bigrag_instance
 
         # Insert document (triggers LLM extraction)
-        await rag.insert(["Barack Obama was the 44th President of the United States."])
+        await rag.ainsert(["Barack Obama was the 44th President of the United States."])
 
         # Verify entities exist and are normalized
         # (This requires checking graph storage for normalized types)

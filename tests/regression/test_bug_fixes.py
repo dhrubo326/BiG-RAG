@@ -51,7 +51,7 @@ class TestBug1EdgeDeletionPrefix:
         docs_to_delete = list(all_docs_before.values())
         if docs_to_delete:
             doc_id = docs_to_delete[0]["__id__"]
-            stats = await rag.delete_document(doc_id)
+            stats = await rag.adelete_document(doc_id)
 
             # Verify deletion stats
             assert stats is not None
@@ -95,7 +95,7 @@ class TestBug2DropDeletesAll:
         rag = bigrag_instance
 
         # Insert multiple documents
-        await rag.insert(sample_documents[:3])
+        await rag.ainsert(sample_documents[:3])
 
         # Count documents before deletion
         all_docs_before = await rag.full_docs.get_by_ids(
@@ -105,7 +105,7 @@ class TestBug2DropDeletesAll:
 
         # Delete only first document
         first_doc_id = list(all_docs_before.keys())[0]
-        await rag.delete_document(first_doc_id)
+        await rag.adelete_document(first_doc_id)
 
         # Verify only 1 deleted, not all 3
         all_docs_after = await rag.full_docs.get_by_ids(
@@ -119,7 +119,7 @@ class TestBug2DropDeletesAll:
         rag = bigrag_instance
 
         # Insert documents
-        await rag.insert(["Doc 1", "Doc 2", "Doc 3"])
+        await rag.ainsert(["Doc 1", "Doc 2", "Doc 3"])
 
         # Get a document ID
         all_docs = await rag.full_docs.get_by_ids(
@@ -128,7 +128,7 @@ class TestBug2DropDeletesAll:
         doc_id_to_delete = list(all_docs.keys())[0]
 
         # Delete
-        await rag.delete_document(doc_id_to_delete)
+        await rag.adelete_document(doc_id_to_delete)
 
         # Verify others still exist
         remaining_docs = await rag.full_docs.get_by_ids(
@@ -338,10 +338,10 @@ class TestAllBugsIntegration:
         rag = bigrag_instance
 
         # Insert documents (exercises Bug #5 - upsert)
-        await rag.insert(sample_documents[:2])
+        await rag.ainsert(sample_documents[:2])
 
         # Query (exercises Bug #4 - defensive dict access, Bug #6 - type annotations)
-        results = await rag.query(
+        results = await rag.aquery(
             "test query",
             param=QueryParam(mode="hybrid"),
         )
@@ -351,7 +351,7 @@ class TestAllBugsIntegration:
         all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
         if all_docs:
             doc_id = list(all_docs.keys())[0]
-            await rag.delete_document(doc_id)
+            await rag.adelete_document(doc_id)
 
         # Verify system still functional
         remaining_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())

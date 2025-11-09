@@ -30,7 +30,7 @@ class TestLargeScale:
         batch_size = 50
         for i in range(0, len(docs), batch_size):
             batch = docs[i:i+batch_size]
-            await rag.insert(batch)
+            await rag.ainsert(batch)
 
         # Verify insertion
         all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
@@ -43,11 +43,11 @@ class TestLargeScale:
 
         # Insert many documents
         docs = get_performance_test_documents(count=100)
-        await rag.insert(docs)
+        await rag.ainsert(docs)
 
         # Query
         from bigrag.base import QueryParam
-        results = await rag.query("test query", QueryParam(mode="hybrid", top_k=10))
+        results = await rag.aquery("test query", QueryParam(mode="hybrid", top_k=10))
 
         assert results is not None
 

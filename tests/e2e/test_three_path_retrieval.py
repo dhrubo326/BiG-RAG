@@ -22,7 +22,7 @@ class TestThreePathRetrieval:
         rag = bigrag_with_data
 
         # Query using entity-based retrieval only
-        results = await rag.query(
+        results = await rag.aquery(
             "Who is Lionel Messi?",
             param=QueryParam(mode="local", top_k=5),
         )
@@ -39,7 +39,7 @@ class TestThreePathRetrieval:
         rag = bigrag_with_data
 
         # Query using relation-based retrieval only
-        results = await rag.query(
+        results = await rag.aquery(
             "What is the relationship between Messi and Inter Miami?",
             param=QueryParam(mode="global", top_k=5),
         )
@@ -57,7 +57,7 @@ class TestThreePathRetrieval:
         rag = bigrag_with_data
 
         # Query using chunk-based retrieval only
-        results = await rag.query(
+        results = await rag.aquery(
             "Tell me about Miami",
             param=QueryParam(mode="naive", top_k=5),
         )
@@ -72,7 +72,7 @@ class TestThreePathRetrieval:
         rag = bigrag_with_data
 
         # Query using hybrid mode (all three paths)
-        results_hybrid = await rag.query(
+        results_hybrid = await rag.aquery(
             "Where does Messi play?",
             param=QueryParam(mode="hybrid", top_k=10),
         )
@@ -92,10 +92,10 @@ class TestThreePathRetrieval:
         query = "What team does Messi play for?"
 
         # Get results from each path
-        results_local = await rag.query(query, QueryParam(mode="local", top_k=5))
-        results_global = await rag.query(query, QueryParam(mode="global", top_k=5))
-        results_naive = await rag.query(query, QueryParam(mode="naive", top_k=5))
-        results_hybrid = await rag.query(query, QueryParam(mode="hybrid", top_k=10))
+        results_local = await rag.aquery(query, QueryParam(mode="local", top_k=5))
+        results_global = await rag.aquery(query, QueryParam(mode="global", top_k=5))
+        results_naive = await rag.aquery(query, QueryParam(mode="naive", top_k=5))
+        results_hybrid = await rag.aquery(query, QueryParam(mode="hybrid", top_k=10))
 
         # All paths should return results
         assert results_local is not None and len(results_local) > 0
@@ -116,7 +116,7 @@ class TestSemanticReranking:
         """Test retrieval with reranking enabled"""
         rag = bigrag_with_data
 
-        results = await rag.query(
+        results = await rag.aquery(
             "Football World Cup",
             param=QueryParam(mode="hybrid", enable_reranking=True, top_k=5),
         )
@@ -129,7 +129,7 @@ class TestSemanticReranking:
         """Test retrieval with reranking disabled (faster)"""
         rag = bigrag_with_data
 
-        results = await rag.query(
+        results = await rag.aquery(
             "Football World Cup",
             param=QueryParam(mode="hybrid", enable_reranking=False, top_k=5),
         )
@@ -145,13 +145,13 @@ class TestSemanticReranking:
         query = "Who won the World Cup?"
 
         # With reranking
-        results_with_rerank = await rag.query(
+        results_with_rerank = await rag.aquery(
             query,
             param=QueryParam(mode="hybrid", enable_reranking=True, top_k=5),
         )
 
         # Without reranking
-        results_without_rerank = await rag.query(
+        results_without_rerank = await rag.aquery(
             query,
             param=QueryParam(mode="hybrid", enable_reranking=False, top_k=5),
         )
@@ -177,7 +177,7 @@ class TestWeightedRRF:
         rag = bigrag_with_data
 
         # Query that should trigger both direct and indirect retrieval
-        results = await rag.query(
+        results = await rag.aquery(
             "Messi and Argentina",
             param=QueryParam(mode="hybrid", top_k=10),
         )

@@ -24,7 +24,7 @@ class TestDocumentLifecycle:
         await rag.ainsert([doc_content], metadata=[metadata])
 
         # Verify insertion
-        all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         assert len(all_docs) >= 1
 
         # PHASE 2: QUERY
@@ -38,7 +38,7 @@ class TestDocumentLifecycle:
         assert stats["chunks_deleted"] >= 0
 
         # PHASE 4: VERIFY DELETION
-        remaining_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        remaining_docs = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         assert len(remaining_docs) == len(all_docs) - 1
 
     @pytest.mark.asyncio
@@ -50,16 +50,16 @@ class TestDocumentLifecycle:
         await rag.ainsert(["Test document with entity TestEntity and relation TestRelation"])
 
         # Get counts before deletion
-        docs_before = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
-        chunks_before = await rag.text_chunks.get_by_ids(await rag.text_chunks.get_all_ids())
+        docs_before = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
+        chunks_before = await rag.text_chunks.get_by_ids(await rag.text_chunks.all_keys())
 
         # Delete
         doc_id = list(docs_before.keys())[0]
         await rag.adelete_document(doc_id)
 
         # Verify cascade
-        docs_after = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
-        chunks_after = await rag.text_chunks.get_by_ids(await rag.text_chunks.get_all_ids())
+        docs_after = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
+        chunks_after = await rag.text_chunks.get_by_ids(await rag.text_chunks.all_keys())
 
         assert len(docs_after) < len(docs_before)
         assert len(chunks_after) < len(chunks_before)

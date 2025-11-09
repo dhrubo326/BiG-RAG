@@ -725,6 +725,44 @@ async def extract_entities(
     return knowledge_graph_inst
 
 
+def _format_knowledge_as_string(knowledge_list: list[dict]) -> str:
+    """
+    Convert structured knowledge list to clean string for LLM context injection.
+
+    Args:
+        knowledge_list: List of dicts with structure:
+            {
+                "<knowledge>": "text content",
+                "<coherence>": 0.95,
+                "<source_ids>": ["id1", "id2"],
+                "<type>": "entity" | "relation" | "chunk"
+            }
+
+    Returns:
+        Clean, newline-separated knowledge text without metadata.
+        Already sorted by coherence (highest first) from _build_query_context.
+
+    Example:
+        Input: [
+            {"<knowledge>": "Messi plays for Inter Miami", "<coherence>": 0.95},
+            {"<knowledge>": "Messi won World Cup 2022", "<coherence>": 0.88}
+        ]
+        Output: "Messi plays for Inter Miami\n\nMessi won World Cup 2022"
+    """
+    if not knowledge_list:
+        return ""
+
+    # Extract knowledge text only (no metadata clutter for LLM)
+    knowledge_texts = [
+        item.get("<knowledge>", "").strip()
+        for item in knowledge_list
+        if item.get("<knowledge>")
+    ]
+
+    # Join with double newlines for readability
+    return "\n\n".join(knowledge_texts)
+
+
 async def kg_query(
     query,
     knowledge_graph_inst: BaseGraphStorage,
@@ -740,7 +778,7 @@ async def kg_query(
     hl_keywords = query
     ll_keywords = query
     keywords = [ll_keywords, hl_keywords]
-    context = await _build_query_context(
+    knowledge_list = await _build_query_context(
         keywords,
         knowledge_graph_inst,
         vdb_entities,
@@ -750,7 +788,8 @@ async def kg_query(
         query_param,
     )
 
-    return context
+    # Bug #1 Fix: Format structured knowledge as string for LLM context
+    return _format_knowledge_as_string(knowledge_list)
 
 
 

@@ -109,7 +109,7 @@ async def bigrag_with_data(bigrag_instance):
         {"title": "Qatar World Cup", "category": "sports", "tags": ["world cup", "qatar"]},
     ]
 
-    await bigrag_instance.insert(docs, metadata=metadata)
+    await bigrag_instance.ainsert(docs, metadata=metadata)
 
     yield bigrag_instance
 

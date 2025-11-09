@@ -66,7 +66,7 @@ class TestCompleteWorkflow:
 
         # Step 3: VERIFY data persistence
         all_docs = await rag.full_docs.get_by_ids(
-            await rag.full_docs.get_all_ids()
+            await rag.full_docs.all_keys()
         )
         assert len(all_docs) >= 3
 
@@ -81,7 +81,7 @@ class TestCompleteWorkflow:
 
         # Step 5: VERIFY deletion
         all_docs_after = await rag.full_docs.get_by_ids(
-            await rag.full_docs.get_all_ids()
+            await rag.full_docs.all_keys()
         )
         assert len(all_docs_after) == len(all_docs) - 1
 
@@ -171,7 +171,7 @@ class TestMultipleInsertionsAndQueries:
         assert results2 is not None
 
         # Verify all documents exist
-        all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         assert len(all_docs) >= 3
 
     @pytest.mark.asyncio
@@ -216,7 +216,7 @@ class TestMetadataPreservation:
 
         # Retrieve chunks and verify metadata
         all_chunks = await rag.text_chunks.get_by_ids(
-            await rag.text_chunks.get_all_ids()
+            await rag.text_chunks.all_keys()
         )
 
         # At least one chunk should have metadata

@@ -33,7 +33,7 @@ class TestLargeScale:
             await rag.ainsert(batch)
 
         # Verify insertion
-        all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         assert len(all_docs) >= 900  # Allow some tolerance
 
     @pytest.mark.asyncio

@@ -21,11 +21,11 @@ class TestStorageConsistency:
 
         # Verify all layers have data
         # 1. Full docs
-        docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        docs = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         assert len(docs) > 0
 
         # 2. Text chunks
-        chunks = await rag.text_chunks.get_by_ids(await rag.text_chunks.get_all_ids())
+        chunks = await rag.text_chunks.get_by_ids(await rag.text_chunks.all_keys())
         assert len(chunks) > 0
 
         # 3. Vector DBs (entities and chunks should have entries)
@@ -41,13 +41,13 @@ class TestStorageConsistency:
         # Insert then delete
         await rag.ainsert(["Document to delete"])
 
-        docs_before = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        docs_before = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         doc_id = list(docs_before.keys())[0]
 
         await rag.adelete_document(doc_id)
 
         # Verify removal
-        docs_after = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        docs_after = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         assert len(docs_after) < len(docs_before)
 
 

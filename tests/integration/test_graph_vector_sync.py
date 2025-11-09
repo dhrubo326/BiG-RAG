@@ -28,7 +28,7 @@ class TestGraphVectorSync:
 
         # Insert and delete
         await rag.ainsert(["Document with edge"])
-        docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        docs = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
 
         if docs:
             await rag.adelete_document(list(docs.keys())[0])

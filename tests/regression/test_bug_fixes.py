@@ -42,7 +42,7 @@ class TestBug1EdgeDeletionPrefix:
 
         # Get initial document count
         all_docs_before = await rag.full_docs.get_by_ids(
-            await rag.full_docs.get_all_ids()
+            await rag.full_docs.all_keys()
         )
         initial_count = len(all_docs_before)
         assert initial_count > 0, "No documents in test data"
@@ -60,7 +60,7 @@ class TestBug1EdgeDeletionPrefix:
 
             # Verify document actually deleted
             all_docs_after = await rag.full_docs.get_by_ids(
-                await rag.full_docs.get_all_ids()
+                await rag.full_docs.all_keys()
             )
             assert len(all_docs_after) == initial_count - 1
 
@@ -99,7 +99,7 @@ class TestBug2DropDeletesAll:
 
         # Count documents before deletion
         all_docs_before = await rag.full_docs.get_by_ids(
-            await rag.full_docs.get_all_ids()
+            await rag.full_docs.all_keys()
         )
         assert len(all_docs_before) == 3
 
@@ -109,7 +109,7 @@ class TestBug2DropDeletesAll:
 
         # Verify only 1 deleted, not all 3
         all_docs_after = await rag.full_docs.get_by_ids(
-            await rag.full_docs.get_all_ids()
+            await rag.full_docs.all_keys()
         )
         assert len(all_docs_after) == 2, "Bug #2: drop() deleted all documents!"
 
@@ -123,7 +123,7 @@ class TestBug2DropDeletesAll:
 
         # Get a document ID
         all_docs = await rag.full_docs.get_by_ids(
-            await rag.full_docs.get_all_ids()
+            await rag.full_docs.all_keys()
         )
         doc_id_to_delete = list(all_docs.keys())[0]
 
@@ -132,7 +132,7 @@ class TestBug2DropDeletesAll:
 
         # Verify others still exist
         remaining_docs = await rag.full_docs.get_by_ids(
-            await rag.full_docs.get_all_ids()
+            await rag.full_docs.all_keys()
         )
         assert len(remaining_docs) == 2
 
@@ -348,13 +348,13 @@ class TestAllBugsIntegration:
         assert results is not None
 
         # Delete one document (exercises Bug #1 - edge deletion, Bug #2 - single delete)
-        all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        all_docs = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         if all_docs:
             doc_id = list(all_docs.keys())[0]
             await rag.adelete_document(doc_id)
 
         # Verify system still functional
-        remaining_docs = await rag.full_docs.get_by_ids(await rag.full_docs.get_all_ids())
+        remaining_docs = await rag.full_docs.get_by_ids(await rag.full_docs.all_keys())
         assert len(remaining_docs) > 0
 
         # Test config reload (exercises Bug #3)

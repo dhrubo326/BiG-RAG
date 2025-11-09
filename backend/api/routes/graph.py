@@ -40,6 +40,8 @@ async def get_graph_stats(dataset: Optional[str] = None):
         stats = await get_graph_statistics(working_dir, dataset)
         return stats
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"Failed to get graph stats: {e}")
         import traceback
@@ -101,6 +103,8 @@ async def export_graph(
         )
         return graph_data
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"Failed to export graph: {e}")
         import traceback
@@ -139,6 +143,8 @@ async def get_neighbors(
         )
         return subgraph
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"Failed to get neighbors: {e}")
         import traceback
@@ -177,6 +183,8 @@ async def search_nodes(
         )
         return results
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"Failed to search nodes: {e}")
         import traceback

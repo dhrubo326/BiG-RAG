@@ -24,11 +24,15 @@ class TestGraphAPI:
 
             if response.status_code == 200:
                 stats = response.json()
-                # Should have stats fields
+                # Should have GraphStatsResponse structure
                 assert isinstance(stats, dict)
-                assert "dataset" in stats
-                assert "entities" in stats or "total_entities" in stats
-                assert "relations" in stats or "total_relations" in stats or "edges" in stats
+                assert "success" in stats
+                assert "total_datasets" in stats
+                assert "global_stats" in stats
+                assert "datasets" in stats
+                # Check global_stats has expected fields
+                assert isinstance(stats["global_stats"], dict)
+                assert "total_entities" in stats["global_stats"] or "total_edges" in stats["global_stats"]
             else:
                 pytest.skip("Graph stats endpoint not available")
 
@@ -43,14 +47,16 @@ class TestGraphAPI:
 
             if response.status_code == 200:
                 stats = response.json()
-                # Check for numeric fields
-                numeric_fields = ["entities", "relations", "edges", "chunks", "total_entities", "total_relations"]
+                # Check for numeric fields in global_stats
+                assert "global_stats" in stats
+                global_stats = stats["global_stats"]
+                numeric_fields = ["total_entities", "total_edges", "total_chunks", "total_documents"]
                 found_numeric = False
                 for field in numeric_fields:
-                    if field in stats and isinstance(stats[field], (int, float)):
+                    if field in global_stats and isinstance(global_stats[field], (int, float)):
                         found_numeric = True
                         break
-                assert found_numeric, "No numeric count fields found in stats"
+                assert found_numeric, "No numeric count fields found in global_stats"
             else:
                 pytest.skip("Graph stats endpoint not available")
 

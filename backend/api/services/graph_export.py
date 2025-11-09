@@ -374,6 +374,16 @@ async def search_graph_nodes(query: str, limit: int = 20, working_dir: str = Non
     - nodes: List of matching nodes
     """
     try:
+        # Handle empty query gracefully
+        if not query or not query.strip():
+            return {
+                "success": True,
+                "query": query,
+                "results_count": 0,
+                "nodes": [],
+                "message": "Empty query provided"
+            }
+
         if not data_source:
             raise HTTPException(status_code=400, detail="data_source parameter is required")
 
@@ -388,7 +398,7 @@ async def search_graph_nodes(query: str, limit: int = 20, working_dir: str = Non
         G = nx.read_graphml(graph_file)
 
         # Search nodes (simple substring match)
-        query_lower = query.lower()
+        query_lower = query.strip().lower()
         matching_nodes = []
 
         for node, attrs in G.nodes(data=True):

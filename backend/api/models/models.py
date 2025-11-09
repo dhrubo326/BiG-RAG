@@ -5,7 +5,7 @@ Defines all request and response models for the BiG-RAG API endpoints
 """
 
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from datetime import datetime
 from enum import Enum
 
@@ -526,9 +526,9 @@ class ErrorResponse(BaseModel):
 
 class AskRequest(BaseModel):
     """Request model for /ask endpoint"""
-    question: str
+    question: str = Field(..., min_length=1, description="Question text (required, non-empty)")
     top_k: Optional[int] = 5
-    mode: Optional[str] = "hybrid"
+    mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
     llm_provider: Optional[str] = None
     enable_reranking: Optional[bool] = False
 

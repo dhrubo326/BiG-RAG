@@ -260,6 +260,8 @@ async def rebuild_graph(
             rebuild_type="full" if force_full_rebuild else "incremental"
         )
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"Rebuild failed: {e}")
         import traceback
@@ -348,6 +350,8 @@ async def list_documents(
             documents=summaries
         )
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"Failed to list documents: {e}")
         import traceback

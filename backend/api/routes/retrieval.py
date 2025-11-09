@@ -80,6 +80,8 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
             message="Successfully retrieved relevant context"
         )
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"Query error: {e}")
         import traceback
@@ -120,6 +122,8 @@ async def search(request: SearchRequest, rag: RAGDep, embedding_manager: Embeddi
 
         return results
 
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions (400, 404, etc.) as-is
     except Exception as e:
         logger.error(f"Retrieval error: {e}")
         raise HTTPException(status_code=500, detail=f"Retrieval error: {str(e)}")

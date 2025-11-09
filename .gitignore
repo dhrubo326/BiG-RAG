@@ -204,6 +204,7 @@ evaluation_results/
 
 # Old/legacy files
 graphrag/
+light-rag/
 
 ###############################################################################
 # Temporarily Excluded (Not Ready for Public Release Yet)

@@ -136,7 +136,6 @@ The term "bipartite edge" in the node name refers to its role in the bipartite s
 | `<edge>` (graph) | `connector` | Graph edge connecting layers |
 
 **Why we keep "bipartite_edge":**
-- Historical naming from original GraphR1 framework
 - Emphasizes the bipartite structure
 - Distinguishes from traditional KG "relations" (which are just edge labels)
 

@@ -49,7 +49,7 @@ python -m spacy download en_core_web_sm
 python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 ```
 
-> **Note:** For detailed setup instructions, see [docs/technical/SETUP_VENV.md](docs/technical/SETUP_VENV.md)
+> **Note:** For detailed setup and development guides, see [DEVELOPMENT.md](DEVELOPMENT.md) and [CLAUDE.md](CLAUDE.md)
 
 ---
 
@@ -131,8 +131,8 @@ BiG-RAG has been reorganized for better clarity and scalability:
 BiG-RAG/
 ├── README.md                    # This file
 ├── CLAUDE.md                    # Claude Code assistant instructions
+├── DEVELOPMENT.md               # Development status and technical guides
 ├── BIGRAG_UI_PLAN.md           # UI implementation plan
-├── IMPLEMENTATION_STATUS.md     # Current development status
 │
 ├── backend/                     # FastAPI server (NEW)
 │   ├── api/                    # API modules
@@ -150,16 +150,15 @@ BiG-RAG/
 │   ├── reranker.py             # Semantic reranking
 │   └── ...                     # Other modules
 │
-├── docs/                        # Documentation (NEW)
-│   ├── README.md               # Documentation index
-│   ├── technical/              # Design specs, setup guides
-│   ├── reports/                # Test & evaluation reports
-│   └── updates/                # Change logs
+├── docs/                        # Documentation (work in progress, not yet public)
 │
-├── test_scripts/                # Test & validation scripts (NEW)
-│   ├── README.md               # Test documentation
-│   ├── test_*.py               # Various test scripts
-│   └── validate_*.py           # Validation scripts
+├── tests/                       # Comprehensive test suite
+│   ├── README.md               # Test documentation and guides
+│   ├── api/                    # API endpoint tests
+│   ├── integration/            # Integration tests
+│   ├── unit/                   # Unit tests
+│   ├── e2e/                    # End-to-end tests
+│   └── ...                     # Other test categories
 │
 ├── datasets/                    # QA datasets and corpora
 ├── expr/                        # Built knowledge graphs
@@ -172,35 +171,32 @@ BiG-RAG/
 - ✅ `api/` → `backend/api/` for clear separation
 - ✅ `script_api.py` → `backend/server.py` with path fixes
 - ✅ `frontend/` added with React 19 + TypeScript + Tailwind CSS v4
-- ✅ `docs/` organized into technical/, reports/, updates/
-- ✅ `test_scripts/` consolidates all test files
-- ✅ Root directory clean with only 4 markdown files
+- ✅ `tests/` organized into api/, integration/, unit/, e2e/ categories
+- ✅ Clean root directory structure with core markdown documentation
 
-See [`docs/README.md`](docs/README.md) for complete documentation index.
+See [CLAUDE.md](CLAUDE.md) for comprehensive system reference and [DEVELOPMENT.md](DEVELOPMENT.md) for development guides.
 
 ---
 
 ## Testing BiG-RAG
 
-We provide a complete test suite in [`test_scripts/`](test_scripts/):
+We provide a comprehensive test suite organized by category:
 
 ```bash
-cd test_scripts
+# Run all tests
+pytest tests/
 
-# Test all retrieval modes
-python test_all_retrieval_modes.py
+# Run specific test categories
+pytest tests/api/              # API endpoint tests
+pytest tests/integration/      # Integration tests
+pytest tests/unit/             # Unit tests
+pytest tests/e2e/              # End-to-end tests
 
-# Test Phase 2-4 improvements
-python test_improvements.py
-
-# Validate SingleTopic dataset
-python validate_singletopic_dataset.py
-
-# Run complete evaluation
-python run_singletopic_evaluation.py
+# Run with coverage
+pytest tests/ --cov=bigrag --cov-report=html
 ```
 
-See [`test_scripts/README.md`](test_scripts/README.md) for all available tests.
+See [`tests/README.md`](tests/README.md) for detailed test documentation and guides.
 
 ---
 
@@ -297,7 +293,7 @@ Fixed 5 critical bugs:
 
 **All bugs are now fixed. System is production-ready.**
 
-For complete details, see [docs/updates/IMPLEMENTATION_SUMMARY.md](docs/updates/IMPLEMENTATION_SUMMARY.md)
+For complete technical details and development guides, see [CLAUDE.md](CLAUDE.md) and [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ---
 
@@ -358,9 +354,9 @@ For detailed weight semantics and usage examples, see [CLAUDE.md - Weight Semant
 - **[CLAUDE.md](CLAUDE.md)** - AI assistant guidance and comprehensive system reference
 - **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development status, implementation notes, and technical guides
 - **[BIGRAG_UI_PLAN.md](BIGRAG_UI_PLAN.md)** - Frontend UI implementation plan
-- **[docs/](docs/)** - Detailed technical documentation, guides, and reports
-- **[frontend/README.md](frontend/README.md)** - Frontend setup and development
 - **[backend/README.md](backend/README.md)** - Backend API documentation
+- **[frontend/README.md](frontend/README.md)** - Frontend setup and development
+- **[tests/README.md](tests/README.md)** - Testing documentation and guides
 
 ---
 

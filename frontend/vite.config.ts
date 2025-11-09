@@ -15,7 +15,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    host: 'localhost', // Force IPv4 resolution on Windows (prevents IPv6 ::1 binding error)
+    port: 3000, // Changed port to avoid conflicts
+    strictPort: false, // Allow auto port increment if 3000 is busy
     proxy: {
       '/api': {
         target: 'http://localhost:8001',

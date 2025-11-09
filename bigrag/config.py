@@ -77,6 +77,33 @@ except ImportError:
     load_env_file()
 
 
+def parse_bool(value: str) -> bool:
+    """
+    Parse boolean from string (handles true/false and 1/0).
+
+    Supports multiple formats:
+    - "true", "TRUE", "True" → True
+    - "false", "FALSE", "False" → False
+    - "1", "yes", "on" → True
+    - "0", "no", "off" → False
+
+    Args:
+        value: String value to parse
+
+    Returns:
+        Boolean value
+
+    Raises:
+        ValueError: If value cannot be parsed as boolean
+    """
+    value_lower = value.lower().strip()
+    if value_lower in ('true', '1', 'yes', 'on'):
+        return True
+    if value_lower in ('false', '0', 'no', 'off'):
+        return False
+    raise ValueError(f"Cannot parse '{value}' as boolean")
+
+
 @dataclass
 class BiGRAGConfig:
     """BiG-RAG Configuration with Environment Variable Support"""
@@ -104,7 +131,7 @@ class BiGRAGConfig:
     # ========================
     top_k: int = field(default_factory=lambda: int(os.getenv('TOP_K', '5')))
     retrieval_mode: str = field(default_factory=lambda: os.getenv('RETRIEVAL_MODE', 'hybrid'))
-    enable_reranking: bool = field(default_factory=lambda: os.getenv('ENABLE_RERANKING', 'false').lower() == 'true')
+    enable_reranking: bool = field(default_factory=lambda: parse_bool(os.getenv('ENABLE_RERANKING', 'false')))
 
     # Reranking Configuration
     rerank_provider: str = field(default_factory=lambda: os.getenv('RERANK_PROVIDER', 'local'))
@@ -131,7 +158,7 @@ class BiGRAGConfig:
     custom_rerank_api_key: str = field(default_factory=lambda: os.getenv('CUSTOM_RERANK_API_KEY', ''))
 
     max_context_items: int = field(default_factory=lambda: int(os.getenv('MAX_CONTEXT_ITEMS', '10')))
-    enable_llm_cache: bool = field(default_factory=lambda: os.getenv('ENABLE_LLM_CACHE', 'true').lower() == 'true')
+    enable_llm_cache: bool = field(default_factory=lambda: parse_bool(os.getenv('ENABLE_LLM_CACHE', 'true')))
 
     # ========================
     # Document Processing
@@ -143,10 +170,10 @@ class BiGRAGConfig:
         os.getenv('ENTITY_TYPES', '["organization", "person", "geo", "time"]')
     ))
     max_async: int = field(default_factory=lambda: int(os.getenv('MAX_ASYNC', '4')))
-    enable_llm_cache_for_extract: bool = field(default_factory=lambda: os.getenv(
+    enable_llm_cache_for_extract: bool = field(default_factory=lambda: parse_bool(os.getenv(
         'ENABLE_LLM_CACHE_FOR_EXTRACT',
         'true'
-    ).lower() == 'true')
+    )))
 
     # ========================
     # Embedding Configuration
@@ -234,7 +261,7 @@ class BiGRAGConfig:
     # ========================
     # RL Training (Optional)
     # ========================
-    training_mode: bool = field(default_factory=lambda: os.getenv('TRAINING_MODE', 'false').lower() == 'true')
+    training_mode: bool = field(default_factory=lambda: parse_bool(os.getenv('TRAINING_MODE', 'false')))
     base_model: str = field(default_factory=lambda: os.getenv('BASE_MODEL', ''))
     rl_algorithm: str = field(default_factory=lambda: os.getenv('RL_ALGORITHM', 'grpo'))
     actor_lr: float = field(default_factory=lambda: float(os.getenv('ACTOR_LR', '5e-7')))
@@ -247,14 +274,14 @@ class BiGRAGConfig:
     # ========================
     eval_metrics: List[str] = field(default_factory=lambda: os.getenv('EVAL_METRICS', 'em,f1,rouge_l').split(','))
     eval_batch_size: int = field(default_factory=lambda: int(os.getenv('EVAL_BATCH_SIZE', '32')))
-    save_eval_results: bool = field(default_factory=lambda: os.getenv('SAVE_EVAL_RESULTS', 'true').lower() == 'true')
+    save_eval_results: bool = field(default_factory=lambda: parse_bool(os.getenv('SAVE_EVAL_RESULTS', 'true')))
     eval_results_dir: str = field(default_factory=lambda: os.getenv('EVAL_RESULTS_DIR', './evaluation_results'))
 
     # ========================
     # Advanced Settings
     # ========================
-    debug: bool = field(default_factory=lambda: os.getenv('DEBUG', 'false').lower() == 'true')
-    enable_profiling: bool = field(default_factory=lambda: os.getenv('ENABLE_PROFILING', 'false').lower() == 'true')
+    debug: bool = field(default_factory=lambda: parse_bool(os.getenv('DEBUG', 'false')))
+    enable_profiling: bool = field(default_factory=lambda: parse_bool(os.getenv('ENABLE_PROFILING', 'false')))
     cache_dir: str = field(default_factory=lambda: os.getenv('CACHE_DIR', './cache'))
     tiktoken_cache_dir: str = field(default_factory=lambda: os.getenv('TIKTOKEN_CACHE_DIR', './cache/tiktoken'))
     hf_home: str = field(default_factory=lambda: os.getenv('HF_HOME', './cache/huggingface'))

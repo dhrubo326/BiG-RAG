@@ -81,6 +81,7 @@ TYPE_NORMALIZATION_MAP = {
     # Teams & Organizations
     "TEAM": "organization",
     "CLUB": "organization",
+    "GROUP": "organization",
     "LEAGUE": "organization",
     "ORGANIZATION": "organization",
     "ORG": "organization",
@@ -192,16 +193,21 @@ def chunking_by_token_size(
     """
     tokens = encode_string_by_tiktoken(content, model_name=tiktoken_model)
     results = []
-    for index, start in enumerate(
-        range(0, len(tokens), max_token_size - overlap_token_size)
-    ):
+    chunk_index = 0
+    for start in range(0, len(tokens), max_token_size - overlap_token_size):
         chunk_content = decode_tokens_by_tiktoken(
             tokens[start : start + max_token_size], model_name=tiktoken_model
         )
+        chunk_content_stripped = chunk_content.strip()
+
+        # Skip empty chunks (can happen with trailing whitespace tokens)
+        if not chunk_content_stripped:
+            continue
+
         chunk = {
             "tokens": min(max_token_size, len(tokens) - start),
-            "content": chunk_content.strip(),
-            "chunk_order_index": index,
+            "content": chunk_content_stripped,
+            "chunk_order_index": chunk_index,
         }
         # Preserve metadata if provided
         if doc_title:
@@ -209,6 +215,7 @@ def chunking_by_token_size(
         if doc_metadata:
             chunk["doc_metadata"] = doc_metadata
         results.append(chunk)
+        chunk_index += 1
     return results
 
 

@@ -1,0 +1,173 @@
+[1m============================= test session starts =============================[0m
+platform win32 -- Python 3.13.5, pytest-8.4.2, pluggy-1.6.0 -- D:\BiG-RAG\venv\Scripts\python.exe
+cachedir: .pytest_cache
+benchmark: 5.2.2 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+metadata: {'Python': '3.13.5', 'Platform': 'Windows-11-10.0.26100-SP0', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.11.0', 'Faker': '37.12.0', 'asyncio': '1.2.0', 'benchmark': '5.2.2', 'cov': '7.0.0', 'html': '4.1.1', 'metadata': '3.1.1', 'mock': '3.15.1', 'timeout': '2.4.0', 'xdist': '3.8.0'}}
+rootdir: D:\BiG-RAG\tests
+configfile: pytest.ini
+plugins: anyio-4.11.0, Faker-37.12.0, asyncio-1.2.0, benchmark-5.2.2, cov-7.0.0, html-4.1.1, metadata-3.1.1, mock-3.15.1, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+[1mcollecting ... [0mcollected 157 items
+
+tests\unit\test_base.py::TestQueryParam::test_query_param_defaults [32mPASSED[0m[33m [  0%][0m
+tests\unit\test_base.py::TestQueryParam::test_query_param_custom_values [32mPASSED[0m[33m [  1%][0m
+tests\unit\test_base.py::TestQueryParam::test_query_param_valid_modes [32mPASSED[0m[33m [  1%][0m
+tests\unit\test_base.py::TestQueryParam::test_query_param_invalid_mode [32mPASSED[0m[33m [  2%][0m
+tests\unit\test_base.py::TestTextChunkSchema::test_text_chunk_schema_creation [32mPASSED[0m[33m [  3%][0m
+tests\unit\test_base.py::TestTextChunkSchema::test_text_chunk_schema_with_metadata [32mPASSED[0m[33m [  3%][0m
+tests\unit\test_base.py::TestTextChunkSchema::test_text_chunk_schema_optional_fields [32mPASSED[0m[33m [  4%][0m
+tests\unit\test_chunking.py::TestChunkingBasics::test_chunking_creates_chunks [32mPASSED[0m[33m [  5%][0m
+tests\unit\test_chunking.py::TestChunkingBasics::test_chunking_short_text [32mPASSED[0m[33m [  5%][0m
+tests\unit\test_chunking.py::TestChunkingBasics::test_chunking_with_overlap [32mPASSED[0m[33m [  6%][0m
+tests\unit\test_chunking.py::TestChunkingMetadataPreservation::test_metadata_preserved_in_chunks [32mPASSED[0m[33m [  7%][0m
+tests\unit\test_chunking.py::TestChunkingMetadataPreservation::test_chunks_without_metadata [32mPASSED[0m[33m [  7%][0m
+tests\unit\test_chunking.py::TestChunkingEdgeCases::test_empty_text [32mPASSED[0m[33m [  8%][0m
+tests\unit\test_chunking.py::TestChunkingEdgeCases::test_single_word [32mPASSED[0m[33m [  8%][0m
+tests\unit\test_chunking.py::TestChunkingEdgeCases::test_whitespace_only [32mPASSED[0m[33m [  9%][0m
+tests\unit\test_chunking.py::TestChunkingEdgeCases::test_very_large_text [32mPASSED[0m[33m [ 10%][0m
+tests\unit\test_chunking.py::TestChunkingEdgeCases::test_unicode_text [32mPASSED[0m[33m [ 10%][0m
+tests\unit\test_chunking.py::TestChunkingEdgeCases::test_special_characters [32mPASSED[0m[33m [ 11%][0m
+tests\unit\test_chunking.py::TestChunkingTokenSizeAccuracy::test_chunks_respect_max_size [32mPASSED[0m[33m [ 12%][0m
+tests\unit\test_chunking.py::TestChunkingTokenSizeAccuracy::test_overlap_calculation [32mPASSED[0m[33m [ 12%][0m
+tests\unit\test_chunking.py::TestChunkingIndexing::test_chunks_have_sequential_index [32mPASSED[0m[33m [ 13%][0m
+tests\unit\test_chunking.py::TestChunkingIndexing::test_chunks_preserve_order [32mPASSED[0m[33m [ 14%][0m
+tests\unit\test_config.py::TestBiGRAGConfig::test_config_defaults [32mPASSED[0m[33m [ 14%][0m
+tests\unit\test_config.py::TestBiGRAGConfig::test_config_from_env [32mPASSED[0m[33m [ 15%][0m
+tests\unit\test_config.py::TestBiGRAGConfig::test_config_openai_api_key [32mPASSED[0m[33m [ 15%][0m
+tests\unit\test_config.py::TestBiGRAGConfig::test_config_embedding_model [32mPASSED[0m[33m [ 16%][0m
+tests\unit\test_config.py::TestGetConfig::test_get_config_singleton [32mPASSED[0m[33m [ 17%][0m
+tests\unit\test_config.py::TestGetConfig::test_get_config_returns_valid_config [32mPASSED[0m[33m [ 17%][0m
+tests\unit\test_config.py::TestReloadConfig::test_reload_config_basic [32mPASSED[0m[33m [ 18%][0m
+tests\unit\test_config.py::TestReloadConfig::test_reload_config_updates_values [32mPASSED[0m[33m [ 19%][0m
+tests\unit\test_config.py::TestReloadConfig::test_reload_config_with_dotenv_available [32mPASSED[0m[33m [ 19%][0m
+tests\unit\test_config.py::TestReloadConfig::test_reload_config_without_dotenv [32mPASSED[0m[33m [ 20%][0m
+tests\unit\test_config.py::TestConfigEdgeCases::test_config_with_invalid_types [32mPASSED[0m[33m [ 21%][0m
+tests\unit\test_config.py::TestConfigEdgeCases::test_config_with_missing_optional_values [32mPASSED[0m[33m [ 21%][0m
+tests\unit\test_config.py::TestConfigEdgeCases::test_config_boolean_parsing [32mPASSED[0m[33m [ 22%][0m
+tests\unit\test_embedding.py::TestEmbeddingFunctionWrapping::test_wrap_embedding_func_basic [32mPASSED[0m[33m [ 22%][0m
+tests\unit\test_embedding.py::TestEmbeddingFunctionWrapping::test_wrapped_function_callable [32mPASSED[0m[33m [ 23%][0m
+tests\unit\test_embedding.py::TestEmbeddingFunctionWrapping::test_wrap_with_custom_dimensions [32mPASSED[0m[33m [ 24%][0m
+tests\unit\test_embedding.py::TestEmbeddingOutputFormat::test_embedding_output_shape [32mPASSED[0m[33m [ 24%][0m
+tests\unit\test_embedding.py::TestEmbeddingOutputFormat::test_embedding_single_text [32mPASSED[0m[33m [ 25%][0m
+tests\unit\test_embedding.py::TestEmbeddingOutputFormat::test_embedding_empty_list [32mPASSED[0m[33m [ 26%][0m
+tests\unit\test_embedding.py::TestEmbeddingBatchProcessing::test_batch_embedding [32mPASSED[0m[33m [ 26%][0m
+tests\unit\test_embedding.py::TestEmbeddingBatchProcessing::test_large_batch_processing [32mPASSED[0m[33m [ 27%][0m
+tests\unit\test_embedding.py::TestEmbeddingDimensionValidation::test_dimension_mismatch_detection [32mPASSED[0m[33m [ 28%][0m
+tests\unit\test_embedding.py::TestEmbeddingDimensionValidation::test_common_embedding_dimensions [32mPASSED[0m[33m [ 28%][0m
+tests\unit\test_embedding.py::TestEmbeddingNormalization::test_normalized_embeddings [32mPASSED[0m[33m [ 29%][0m
+tests\unit\test_embedding.py::TestEmbeddingNormalization::test_unnormalized_embeddings [32mPASSED[0m[33m [ 29%][0m
+tests\unit\test_embedding.py::TestEmbeddingDataTypes::test_float32_embeddings [32mPASSED[0m[33m [ 30%][0m
+tests\unit\test_embedding.py::TestEmbeddingDataTypes::test_float64_embeddings [32mPASSED[0m[33m [ 31%][0m
+tests\unit\test_embedding.py::TestEmbeddingEdgeCases::test_very_long_text [32mPASSED[0m[33m [ 31%][0m
+tests\unit\test_embedding.py::TestEmbeddingEdgeCases::test_special_characters_in_text [32mPASSED[0m[33m [ 32%][0m
+tests\unit\test_embedding.py::TestEmbeddingEdgeCases::test_unicode_text_embedding [32mPASSED[0m[33m [ 33%][0m
+tests\unit\test_embedding.py::TestEmbeddingConsistency::test_consistent_embeddings [32mPASSED[0m[33m [ 33%][0m
+tests\unit\test_embedding.py::TestEmbeddingConsistency::test_different_texts_different_embeddings [32mPASSED[0m[33m [ 34%][0m
+tests\unit\test_graph_building.py::TestNodeIDGeneration::test_entity_id_format [32mPASSED[0m[33m [ 35%][0m
+tests\unit\test_graph_building.py::TestNodeIDGeneration::test_relation_id_format [32mPASSED[0m[33m [ 35%][0m
+tests\unit\test_graph_building.py::TestNodeIDGeneration::test_chunk_id_format [32mPASSED[0m[33m [ 36%][0m
+tests\unit\test_graph_building.py::TestNodeIDGeneration::test_deterministic_hashing [32mPASSED[0m[33m [ 36%][0m
+tests\unit\test_graph_building.py::TestNodeIDGeneration::test_different_content_different_ids [32mPASSED[0m[33m [ 37%][0m
+tests\unit\test_graph_building.py::TestGraphStructureBasics::test_create_empty_graph [32mPASSED[0m[33m [ 38%][0m
+tests\unit\test_graph_building.py::TestGraphStructureBasics::test_add_entity_node [32mPASSED[0m[33m [ 38%][0m
+tests\unit\test_graph_building.py::TestGraphStructureBasics::test_add_relation_node [32mPASSED[0m[33m [ 39%][0m
+tests\unit\test_graph_building.py::TestGraphStructureBasics::test_add_chunk_node [32mPASSED[0m[33m [ 40%][0m
+tests\unit\test_graph_building.py::TestGraphEdgeCreation::test_chunk_to_entity_edge [32mPASSED[0m[33m [ 40%][0m
+tests\unit\test_graph_building.py::TestGraphEdgeCreation::test_chunk_to_relation_edge [32mPASSED[0m[33m [ 41%][0m
+tests\unit\test_graph_building.py::TestGraphEdgeCreation::test_bipartite_graph_structure [32mPASSED[0m[33m [ 42%][0m
+tests\unit\test_graph_building.py::TestWeightAggregation::test_entity_weight_single_occurrence [32mPASSED[0m[33m [ 42%][0m
+tests\unit\test_graph_building.py::TestWeightAggregation::test_entity_weight_multiple_occurrences [32mPASSED[0m[33m [ 43%][0m
+tests\unit\test_graph_building.py::TestWeightAggregation::test_relation_weight_single_occurrence [32mPASSED[0m[33m [ 43%][0m
+tests\unit\test_graph_building.py::TestWeightAggregation::test_relation_weight_multiple_occurrences [32mPASSED[0m[33m [ 44%][0m
+tests\unit\test_graph_building.py::TestWeightAggregation::test_weight_update_on_merge [32mPASSED[0m[33m [ 45%][0m
+tests\unit\test_graph_building.py::TestGraphMetadata::test_entity_metadata [32mPASSED[0m[33m [ 45%][0m
+tests\unit\test_graph_building.py::TestGraphMetadata::test_relation_metadata [32mPASSED[0m[33m [ 46%][0m
+tests\unit\test_graph_building.py::TestGraphQueries::test_get_node_by_id [32mPASSED[0m[33m [ 47%][0m
+tests\unit\test_graph_building.py::TestGraphQueries::test_get_neighbors [32mPASSED[0m[33m [ 47%][0m
+tests\unit\test_graph_building.py::TestGraphQueries::test_filter_nodes_by_role [32mPASSED[0m[33m [ 48%][0m
+tests\unit\test_graph_building.py::TestGraphPersistence::test_graph_to_graphml [32mPASSED[0m[33m [ 49%][0m
+tests\unit\test_graph_building.py::TestGraphPersistence::test_graph_from_graphml [32mPASSED[0m[33m [ 49%][0m
+tests\unit\test_operate.py::TestEntityTypeNormalization::test_normalize_uppercase_to_lowercase [32mPASSED[0m[33m [ 50%][0m
+tests\unit\test_operate.py::TestEntityTypeNormalization::test_normalize_mixed_case [32mPASSED[0m[33m [ 50%][0m
+tests\unit\test_operate.py::TestEntityTypeNormalization::test_normalize_variants [32mPASSED[0m[33m [ 51%][0m
+tests\unit\test_operate.py::TestEntityTypeNormalization::test_normalize_unknown_type [32mPASSED[0m[33m [ 52%][0m
+tests\unit\test_operate.py::TestEntityTypeNormalization::test_normalize_already_normalized [32mPASSED[0m[33m [ 52%][0m
+tests\unit\test_operate.py::TestChunking::test_chunking_basic [32mPASSED[0m[33m     [ 53%][0m
+tests\unit\test_operate.py::TestChunking::test_chunking_short_text [32mPASSED[0m[33m [ 54%][0m
+tests\unit\test_operate.py::TestChunking::test_chunking_with_overlap [32mPASSED[0m[33m [ 54%][0m
+tests\unit\test_operate.py::TestChunking::test_chunking_empty_text [32mPASSED[0m[33m [ 55%][0m
+tests\unit\test_operate.py::TestChunking::test_chunking_preserves_metadata [32mPASSED[0m[33m [ 56%][0m
+tests\unit\test_operate.py::TestHashIDGeneration::test_hash_id_format [32mPASSED[0m[33m [ 56%][0m
+tests\unit\test_operate.py::TestHashIDGeneration::test_hash_id_not_double_hashed [32mPASSED[0m[33m [ 57%][0m
+tests\unit\test_operate.py::TestDefensiveDictAccess::test_safe_dict_access_with_missing_keys [32mPASSED[0m[33m [ 57%][0m
+tests\unit\test_operate.py::TestDefensiveDictAccess::test_safe_dict_access_empty_results [32mPASSED[0m[33m [ 58%][0m
+tests\unit\test_reranker.py::TestSemanticReranker::test_reranker_import [32mPASSED[0m[33m [ 59%][0m
+tests\unit\test_reranker.py::TestSemanticReranker::test_rerank_chunks_basic [32mPASSED[0m[33m [ 59%][0m
+tests\unit\test_reranker.py::TestSemanticReranker::test_rerank_empty_chunks [32mPASSED[0m[33m [ 60%][0m
+tests\unit\test_reranker.py::TestSemanticReranker::test_rerank_preserves_sources [32mPASSED[0m[33m [ 61%][0m
+tests\unit\test_retrieval.py::TestRRFScoring::test_rrf_single_list [32mPASSED[0m[33m [ 61%][0m
+tests\unit\test_retrieval.py::TestRRFScoring::test_rrf_multiple_lists [32mPASSED[0m[33m [ 62%][0m
+tests\unit\test_retrieval.py::TestRRFScoring::test_rrf_empty_lists [32mPASSED[0m[33m [ 63%][0m
+tests\unit\test_retrieval.py::TestRRFScoring::test_rrf_single_item_lists [32mPASSED[0m[33m [ 63%][0m
+tests\unit\test_retrieval.py::TestRRFScoring::test_rrf_no_overlap [32mPASSED[0m[33m [ 64%][0m
+tests\unit\test_retrieval.py::TestWeightedRetrieval::test_weight_based_sorting [32mPASSED[0m[33m [ 64%][0m
+tests\unit\test_retrieval.py::TestWeightedRetrieval::test_weight_filtering [32mPASSED[0m[33m [ 65%][0m
+tests\unit\test_retrieval.py::TestWeightedRetrieval::test_normalized_weights [32mPASSED[0m[33m [ 66%][0m
+tests\unit\test_retrieval.py::TestDefensiveDictAccess::test_safe_key_access_with_get [32mPASSED[0m[33m [ 66%][0m
+tests\unit\test_retrieval.py::TestDefensiveDictAccess::test_safe_list_comprehension [32mPASSED[0m[33m [ 67%][0m
+tests\unit\test_retrieval.py::TestDefensiveDictAccess::test_defensive_access_with_validation [32mPASSED[0m[33m [ 68%][0m
+tests\unit\test_retrieval.py::TestPathAEntityRetrieval::test_entity_vector_search_format [32mPASSED[0m[33m [ 68%][0m
+tests\unit\test_retrieval.py::TestPathAEntityRetrieval::test_entity_graph_lookup [32mPASSED[0m[33m [ 69%][0m
+tests\unit\test_retrieval.py::TestPathBRelationRetrieval::test_relation_vector_search_format [32mPASSED[0m[33m [ 70%][0m
+tests\unit\test_retrieval.py::TestPathBRelationRetrieval::test_relation_graph_lookup [32mPASSED[0m[33m [ 70%][0m
+tests\unit\test_retrieval.py::TestPathCChunkRetrieval::test_chunk_vector_search_format [32mPASSED[0m[33m [ 71%][0m
+tests\unit\test_retrieval.py::TestPathCChunkRetrieval::test_chunk_reranking_preparation [32mPASSED[0m[33m [ 71%][0m
+tests\unit\test_retrieval.py::TestHybridModeRetrieval::test_hybrid_result_merging [32mPASSED[0m[33m [ 72%][0m
+tests\unit\test_retrieval.py::TestHybridModeRetrieval::test_hybrid_deduplication [32mPASSED[0m[33m [ 73%][0m
+tests\unit\test_retrieval.py::TestRetrievalErrorHandling::test_empty_query_results [32mPASSED[0m[33m [ 73%][0m
+tests\unit\test_retrieval.py::TestRetrievalErrorHandling::test_none_query_results [32mPASSED[0m[33m [ 74%][0m
+tests\unit\test_retrieval.py::TestRetrievalErrorHandling::test_malformed_results [32mPASSED[0m[33m [ 75%][0m
+tests\unit\test_retrieval.py::TestTopKFiltering::test_top_k_selection [32mPASSED[0m[33m [ 75%][0m
+tests\unit\test_retrieval.py::TestTopKFiltering::test_top_k_less_than_available [32mPASSED[0m[33m [ 76%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_upsert_insert_new_keys [32mPASSED[0m[33m [ 77%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_upsert_update_existing_keys [32mPASSED[0m[33m [ 77%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_upsert_mixed_new_and_existing [32mPASSED[0m[33m [ 78%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_delete_single_item [32mPASSED[0m[33m [ 78%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_delete_nonexistent_item [32mPASSED[0m[33m [ 79%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_delete_many [32mPASSED[0m[33m   [ 80%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_drop_deletes_all [32mPASSED[0m[33m [ 80%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_get_by_ids [32mPASSED[0m[33m    [ 81%][0m
+tests\unit\test_storage.py::TestJsonKVStorage::test_filter_keys [32mPASSED[0m[33m   [ 82%][0m
+tests\unit\test_storage.py::TestNanoVectorDBStorage::test_upsert_vectors [32mPASSED[0m[33m [ 82%][0m
+tests\unit\test_storage.py::TestNanoVectorDBStorage::test_query_vectors [32mPASSED[0m[33m [ 83%][0m
+tests\unit\test_storage.py::TestNanoVectorDBStorage::test_delete_vectors [32mPASSED[0m[33m [ 84%][0m
+tests\unit\test_storage.py::TestNetworkXStorage::test_upsert_node [32mPASSED[0m[33m [ 84%][0m
+tests\unit\test_storage.py::TestNetworkXStorage::test_upsert_edge [32mPASSED[0m[33m [ 85%][0m
+tests\unit\test_storage.py::TestNetworkXStorage::test_delete_node [32mPASSED[0m[33m [ 85%][0m
+tests\unit\test_storage.py::TestNetworkXStorage::test_get_node_edges [32mPASSED[0m[33m [ 86%][0m
+tests\unit\test_storage.py::TestNetworkXStorage::test_has_node [32mPASSED[0m[33m    [ 87%][0m
+tests\unit\test_utils.py::TestHashFunctions::test_compute_mdhash_id_basic [32mPASSED[0m[33m [ 87%][0m
+tests\unit\test_utils.py::TestHashFunctions::test_compute_mdhash_id_different_content [32mPASSED[0m[33m [ 88%][0m
+tests\unit\test_utils.py::TestHashFunctions::test_compute_mdhash_id_different_prefixes [32mPASSED[0m[33m [ 89%][0m
+tests\unit\test_utils.py::TestHashFunctions::test_compute_mdhash_id_empty_content [32mPASSED[0m[33m [ 89%][0m
+tests\unit\test_utils.py::TestHashFunctions::test_compute_mdhash_id_unicode [32mPASSED[0m[33m [ 90%][0m
+tests\unit\test_utils.py::TestHashFunctions::test_compute_mdhash_id_collision_resistance [32mPASSED[0m[33m [ 91%][0m
+tests\unit\test_utils.py::TestTokenEncoding::test_encode_string_basic [32mPASSED[0m[33m [ 91%][0m
+tests\unit\test_utils.py::TestTokenEncoding::test_decode_tokens_basic [32mPASSED[0m[33m [ 92%][0m
+tests\unit\test_utils.py::TestTokenEncoding::test_encode_decode_roundtrip [32mPASSED[0m[33m [ 92%][0m
+tests\unit\test_utils.py::TestTokenEncoding::test_encode_empty_string [32mPASSED[0m[33m [ 93%][0m
+tests\unit\test_utils.py::TestTokenEncoding::test_truncate_list_by_token_size [32mPASSED[0m[33m [ 94%][0m
+tests\unit\test_utils.py::TestTokenEncoding::test_truncate_single_item_exceeds_limit [32mPASSED[0m[33m [ 94%][0m
+tests\unit\test_utils.py::TestRetryMechanism::test_safe_operation_success [32mPASSED[0m[33m [ 95%][0m
+tests\unit\test_utils.py::TestRetryMechanism::test_safe_operation_retry_then_success [32mPASSED[0m[33m [ 96%][0m
+tests\unit\test_utils.py::TestRetryMechanism::test_safe_operation_max_retries_exceeded [32mPASSED[0m[33m [ 96%][0m
+tests\unit\test_utils.py::TestTextProcessing::test_text_normalization [32mPASSED[0m[33m [ 97%][0m
+tests\unit\test_utils.py::TestTextProcessing::test_remove_stopwords [32mPASSED[0m[33m [ 98%][0m
+tests\unit\test_utils.py::TestHashEdgeCases::test_hash_very_long_content [32mPASSED[0m[33m [ 98%][0m
+tests\unit\test_utils.py::TestHashEdgeCases::test_hash_special_characters [32mPASSED[0m[33m [ 99%][0m
+tests\unit\test_utils.py::TestHashEdgeCases::test_hash_binary_data [32mPASSED[0m[33m [100%][0m
+
+[33m======================= [32m157 passed[0m, [33m[1m1 warning[0m[33m in 2.63s[0m[33m ========================[0m

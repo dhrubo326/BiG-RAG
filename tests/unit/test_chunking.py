@@ -68,17 +68,14 @@ class TestChunkingMetadataPreservation:
     def test_metadata_preserved_in_chunks(self):
         """Test that metadata is preserved in chunk dicts"""
         text = " ".join(["word"] * 500)
-        doc_metadata = {
-            "title": "Test Document",
-            "category": "test",
-            "tags": ["test1", "test2"],
-        }
 
+        # doc_title and doc_metadata are separate parameters (flat schema design)
         chunks = chunking_by_token_size(
             text,
             max_token_size=100,
             overlap_token_size=10,
-            doc_metadata=doc_metadata,
+            doc_title="Test Document",
+            doc_metadata={"category": "test", "tags": ["test1", "test2"]},
         )
 
         # All chunks should have metadata

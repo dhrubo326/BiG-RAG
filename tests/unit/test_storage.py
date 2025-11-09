@@ -12,6 +12,7 @@ from pathlib import Path
 
 from bigrag.storage import JsonKVStorage, NanoVectorDBStorage, NetworkXStorage
 from bigrag.base import TextChunkSchema
+from bigrag.utils import EmbeddingFunc
 
 
 class TestJsonKVStorage:
@@ -203,12 +204,19 @@ class TestNanoVectorDBStorage:
     @pytest.fixture
     async def mock_embedding_func(self):
         """Mock embedding function for testing"""
+        import numpy as np
+
         async def embed(texts):
             # Return simple embeddings (just for testing)
-            import numpy as np
             return [np.random.rand(128).tolist() for _ in texts]
 
-        return embed
+        # Wrap in EmbeddingFunc dataclass (required by NanoVectorDBStorage)
+        return EmbeddingFunc(
+            embedding_dim=128,
+            max_token_size=8192,
+            func=embed,
+            concurrent_limit=16
+        )
 
     @pytest.fixture
     async def vector_storage(self, temp_dir, mock_embedding_func):

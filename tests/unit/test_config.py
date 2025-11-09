@@ -133,7 +133,8 @@ class TestConfigEdgeCases:
         config = BiGRAGConfig()
 
         # Should have sensible defaults for optional values
-        assert config.llm_model is not None
+        # Config has openai_model, anthropic_model, etc. (not unified llm_model)
+        assert config.openai_model is not None
         assert config.embedding_model is not None
 
     def test_config_boolean_parsing(self, monkeypatch):

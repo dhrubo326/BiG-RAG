@@ -236,27 +236,531 @@ pytest --cov=bigrag --cov-report=html
 pytest -n auto
 ```
 
+### 7.6 Manual One-by-One Testing Guide
+
+**Purpose:** Execute each test file individually to isolate failures and understand component behavior.
+
+**Prerequisites:**
+```cmd
+cd tests
+..\venv\Scripts\activate  # Use your venv path
+```
+
+#### Phase 1: Critical Path (MUST PASS - Stop if ANY fail)
+
+```cmd
+# Test 1/25: Full Pipeline E2E
+pytest e2e/test_full_pipeline.py -v --tb=short
+# Expected: 5-7 tests PASSED
+# Tests: Complete insert -> query -> delete workflow
+# Time: ~30 seconds
+
+# Test 2/25: Regression Tests (6 Bug Fixes)
+pytest regression/test_bug_fixes.py -v --tb=short
+# Expected: 6 tests PASSED
+# Tests: Bug #1-6 validation (edge deletion, document deletion, etc.)
+# Time: ~20 seconds
+
+# CHECKPOINT: If ANY test fails, STOP and fix before proceeding
+```
+
+#### Phase 2: Core Functionality - Unit Tests
+
+```cmd
+# Test 3/25: Base Classes and Schemas
+pytest unit/test_base.py -v --tb=short
+# Expected: 10-15 tests PASSED
+# Tests: BaseGraphStorage, BaseVectorStorage, BaseKVStorage, TextChunkSchema
+# Time: ~10 seconds
+
+# Test 4/25: Utility Functions
+pytest unit/test_utils.py -v --tb=short
+# Expected: 15-20 tests PASSED
+# Tests: compute_mdhash_id, normalize_entity_type, string utilities
+# Time: ~15 seconds
+
+# Test 5/25: Storage Layer
+pytest unit/test_storage.py -v --tb=short
+# Expected: 20-25 tests PASSED
+# Tests: JsonKVStorage, NanoVectorDBStorage, NetworkXStorage CRUD operations
+# Time: ~20 seconds
+
+# Test 6/25: Configuration Management
+pytest unit/test_config.py -v --tb=short
+# Expected: 8-12 tests PASSED
+# Tests: Config loading, validation, default values
+# Time: ~10 seconds
+
+# Test 7/25: Graph Operations
+pytest unit/test_operate.py -v --tb=short
+# Expected: 25-30 tests PASSED
+# Tests: Entity extraction, chunking, graph building, normalization
+# Time: ~30 seconds
+
+# Test 8/25: Semantic Reranking
+pytest unit/test_reranker.py -v --tb=short
+# Expected: 10-15 tests PASSED
+# Tests: Cross-encoder reranking, score computation
+# Time: ~15 seconds
+# Note: May download cross-encoder model on first run (~330MB)
+
+# Test 9/25: Document Chunking (NEW)
+pytest unit/test_chunking.py -v --tb=short
+# Expected: 40+ tests PASSED
+# Tests: Text chunking, metadata preservation, edge cases
+# Time: ~40 seconds
+
+# Test 10/25: Graph Building Logic (NEW)
+pytest unit/test_graph_building.py -v --tb=short
+# Expected: 30+ tests PASSED
+# Tests: Node creation, weight aggregation, graph structure validation
+# Time: ~30 seconds
+
+# Test 11/25: Embedding Preparation (NEW)
+pytest unit/test_embedding.py -v --tb=short
+# Expected: 35+ tests PASSED
+# Tests: Embedding function wrapping, batch processing, dimensions
+# Time: ~35 seconds
+
+# Test 12/25: Retrieval Logic (NEW)
+pytest unit/test_retrieval.py -v --tb=short
+# Expected: 40+ tests PASSED
+# Tests: RRF scoring, Path A/B/C retrieval, weighted ranking
+# Time: ~40 seconds
+
+# CHECKPOINT: Target >=95% pass rate for Phase 2
+```
+
+#### Phase 2: Core Functionality - Integration Tests
+
+```cmd
+# Test 13/25: Storage Consistency
+pytest integration/test_storage_consistency.py -v --tb=short
+# Expected: 8-12 tests PASSED
+# Tests: Graph-KV-Vector DB synchronization
+# Time: ~25 seconds
+
+# Test 14/25: Retrieval Pipeline
+pytest integration/test_retrieval_pipeline.py -v --tb=short
+# Expected: 12-15 tests PASSED
+# Tests: Three-path retrieval (Entity + Relation + Chunk)
+# Time: ~30 seconds
+
+# Test 15/25: Entity Extraction
+pytest integration/test_entity_extraction.py -v --tb=short
+# Expected: 10-12 tests PASSED (may skip if no OPENAI_API_KEY)
+# Tests: LLM entity extraction, normalization, caching
+# Time: ~60 seconds (with API calls)
+# Note: Skipped tests are OK if API key not set
+
+# Test 16/25: Graph-Vector Sync
+pytest integration/test_graph_vector_sync.py -v --tb=short
+# Expected: 8-10 tests PASSED
+# Tests: Graph and vector DB consistency checks
+# Time: ~20 seconds
+```
+
+#### Phase 3: End-to-End Workflows
+
+```cmd
+# Test 17/25: Document Lifecycle
+pytest e2e/test_document_lifecycle.py -v --tb=short
+# Expected: 8-10 tests PASSED
+# Tests: Complete document CRUD operations
+# Time: ~30 seconds
+
+# Test 18/25: Three-Path Retrieval Validation
+pytest e2e/test_three_path_retrieval.py -v --tb=short
+# Expected: 10-12 tests PASSED
+# Tests: Path A (entity), Path B (relation), Path C (chunk) validation
+# Time: ~35 seconds
+
+# CHECKPOINT: Target >=90% pass rate for Phase 3
+```
+
+#### Phase 4: API Tests (Requires Backend Server)
+
+**PREREQUISITE:** Start backend server in separate terminal
+```cmd
+# Terminal 1:
+cd backend
+python server.py --data_source demo_test
+
+# Wait for "Server started" message before running tests
+```
+
+```cmd
+# Terminal 2: Run API tests
+
+# Test 19/25: Server Endpoints
+pytest api/test_server_endpoints.py -v --tb=short
+# Expected: 8-10 tests PASSED
+# Tests: /health, /stats, /status endpoints
+# Time: ~15 seconds
+
+# Test 20/25: Search API
+pytest api/test_search_api.py -v --tb=short
+# Expected: 12-15 tests PASSED
+# Tests: /search endpoint, query modes, response format
+# Time: ~25 seconds
+
+# Test 21/25: Graph API
+pytest api/test_graph_api.py -v --tb=short
+# Expected: 10-12 tests PASSED
+# Tests: /documents, /entities, /rebuild endpoints
+# Time: ~20 seconds
+
+# CHECKPOINT: All API tests must pass (100%)
+```
+
+#### Phase 5: Performance and Edge Cases
+
+```cmd
+# Test 22/25: Large Scale Performance
+pytest performance/test_large_scale.py -v --tb=short
+# Expected: 5-8 tests PASSED
+# Tests: 1000+ document handling, memory usage, scalability
+# Time: ~5-10 MINUTES (slow)
+# Note: May take significant time and memory
+
+# Test 23/25: Concurrency
+pytest performance/test_concurrency.py -v --tb=short
+# Expected: 6-8 tests PASSED
+# Tests: Concurrent inserts, queries, deletes
+# Time: ~30 seconds
+
+# Test 24/25: Edge Cases
+pytest edge_cases/test_edge_cases.py -v --tb=short
+# Expected: 15-20 tests PASSED
+# Tests: Empty inputs, special characters, malformed data
+# Time: ~25 seconds
+
+# CHECKPOINT: No crashes, acceptable performance
+```
+
+#### Phase 6: Frontend (Optional - Skip if UI not ready)
+
+```cmd
+# Test 25/25: UI Integration
+pytest frontend/test_ui_integration.py -v --tb=short
+# Expected: 5-8 tests PASSED (or SKIPPED)
+# Tests: UI integration with backend
+# Time: ~20 seconds
+# Note: May be skipped if SKIP_FRONTEND=true
+```
+
+#### Summary Command (All Tests)
+
+```cmd
+# Run all 25+ test files (use after individual testing)
+pytest -v --tb=short
+```
+
 ---
 
-## 8. Defect Management
+## 8. Test Output Interpretation
 
-### 8.1 Severity Levels
-- **CRITICAL:** System crash, data loss, security breach
-- **HIGH:** Major feature broken, incorrect results
-- **MEDIUM:** Minor feature issue, performance degradation
-- **LOW:** Cosmetic issues, documentation errors
+### 8.1 Understanding Pytest Output
 
-### 8.2 Bug Reporting
-When a test fails:
-1. Note the test name and file
-2. Capture the assertion error message
-3. Check if issue is reproducible
-4. Classify severity
-5. Document in issue tracker (GitHub Issues)
+#### Success Example
+```
+tests/unit/test_utils.py::test_compute_mdhash_id PASSED                    [ 10%]
+tests/unit/test_utils.py::test_normalize_entity_type PASSED                [ 20%]
+tests/unit/test_utils.py::test_string_normalization PASSED                 [ 30%]
+
+======================== 10 passed in 2.35s ========================
+```
+
+**Indicators:**
+- ✅ All tests show `PASSED`
+- ✅ Final line shows `X passed in Y.Ys`
+- ✅ No `FAILED`, `ERROR`, or traceback messages
+
+**Action:** Continue to next test file.
 
 ---
 
-## 9. Test Metrics
+#### Failure Example
+```
+tests/unit/test_storage.py::test_upsert_updates FAILED                     [ 30%]
+_________________________ test_upsert_updates __________________________
+    def test_upsert_updates():
+        storage = JsonKVStorage()
+>       await storage.upsert("key1", {"value": "new"})
+E       AssertionError: Expected 'new' but got 'old'
+
+tests/unit/test_storage.py:45: AssertionError
+==================== 1 failed, 9 passed in 2.51s ====================
+```
+
+**Indicators:**
+- ❌ Test shows `FAILED` status
+- ❌ Traceback shows assertion error
+- ❌ Final line shows `X failed, Y passed`
+
+**Action:** Follow Bug Triage Workflow (Section 8.3 below).
+
+---
+
+#### Skipped Test Example
+```
+tests/integration/test_entity_extraction.py::test_llm_extraction SKIPPED   [ 40%]
+
+Reason: No OPENAI_API_KEY environment variable set
+==================== 8 passed, 2 skipped in 1.85s ====================
+```
+
+**Indicators:**
+- ⚠️ Test shows `SKIPPED` status
+- ℹ️ Reason provided (usually missing dependency)
+- ✅ Final line shows `X passed, Y skipped`
+
+**Action:** OK to skip if dependency is optional (e.g., OpenAI API key).
+
+---
+
+#### Error Example
+```
+tests/api/test_search_api.py::test_search_endpoint ERROR                   [ 50%]
+_________________________ test_search_endpoint _________________________
+E   requests.exceptions.ConnectionError: Connection refused (localhost:8001)
+
+tests/api/test_search_api.py:15: ConnectionError
+==================== 1 error in 0.35s ====================
+```
+
+**Indicators:**
+- ❌ Test shows `ERROR` status
+- ❌ Exception raised before test logic runs
+- ❌ Usually infrastructure issue (server not running)
+
+**Action:** Fix environment issue (e.g., start backend server).
+
+---
+
+### 8.2 Test Result Status Types
+
+| Status | Meaning | Severity | Action |
+|--------|---------|----------|--------|
+| **PASSED** | Test succeeded | ✅ None | Continue testing |
+| **FAILED** | Assertion failed | ❌ High | Investigate bug (see Section 8.3) |
+| **ERROR** | Exception raised | ❌ High | Fix environment or code error |
+| **SKIPPED** | Test skipped | ⚠️ Low | OK if dependency optional |
+| **XFAIL** | Expected to fail | ℹ️ None | Known issue, documented |
+| **XPASS** | Unexpectedly passed | ⚠️ Medium | Remove XFAIL marker |
+
+---
+
+### 8.3 Bug Triage Workflow
+
+When a test **FAILS** or has **ERROR**, follow this decision tree:
+
+```
+Test Failed/Error
+    │
+    ├─ Is it a Critical Path test (Phase 1)?
+    │   ├─ YES → STOP ALL TESTING
+    │   │         Document as CRITICAL bug
+    │   │         Fix immediately before proceeding
+    │   │
+    │   └─ NO → Continue to next step
+    │
+    ├─ Can you reproduce it?
+    │   ├─ Run test again: pytest <file>::<function> -v
+    │   ├─ YES → Real bug, proceed to classification
+    │   └─ NO → Flaky test, document and re-run
+    │
+    ├─ Is it an ERROR (exception) or FAILED (assertion)?
+    │   ├─ ERROR → Likely environment issue
+    │   │          Check: Server running? Dependencies installed?
+    │   │          Fix environment and re-run
+    │   │
+    │   └─ FAILED → Real bug in code, proceed to classification
+    │
+    ├─ Classify Severity:
+    │   ├─ CRITICAL: System crash, data loss, security issue
+    │   │   └─ Action: STOP testing, fix immediately
+    │   │
+    │   ├─ HIGH: Major feature broken, incorrect results
+    │   │   └─ Action: Document, fix before release
+    │   │
+    │   ├─ MEDIUM: Minor feature issue, performance degradation
+    │   │   └─ Action: Document, schedule fix
+    │   │
+    │   └─ LOW: Cosmetic issue, edge case
+    │       └─ Action: Document, optional fix
+    │
+    └─ Create Bug Report (see Section 8.4 below)
+```
+
+---
+
+### 8.4 Bug Reporting Template
+
+When a test fails, document it using this template:
+
+```markdown
+## Bug Report #<number>
+
+**Severity:** [CRITICAL / HIGH / MEDIUM / LOW]
+**Test File:** tests/<category>/<file>.py
+**Test Function:** test_<function_name>
+**Discovered By:** [Your name or "Automated Testing"]
+**Date:** YYYY-MM-DD
+
+### Description
+[Brief 1-2 sentence description of the bug]
+
+### Expected Behavior
+[What should happen]
+
+### Actual Behavior
+[What actually happens]
+
+### Error Message
+```
+[Paste exact error message and traceback]
+```
+
+### Steps to Reproduce
+1. Navigate to tests directory: `cd tests`
+2. Activate venv: `..\venv\Scripts\activate`
+3. Run test: `pytest <file>::<function> -v`
+4. Observe failure at line <number>
+
+### Environment
+- OS: Windows 10/11
+- Python Version: 3.11.x
+- BiGRAG Version: [commit hash or version]
+- Pytest Version: [from `pip show pytest`]
+
+### Root Cause Analysis
+[Your analysis of why this happens - fill after investigation]
+
+### Suggested Fix
+[Proposed solution - fill after analysis]
+
+### Related Files
+- Source file: bigrag/<module>.py:<line>
+- Test file: tests/<category>/<file>.py:<line>
+
+### Priority
+[URGENT / HIGH / NORMAL / LOW]
+
+### Assigned To
+[Team member name or "Unassigned"]
+```
+
+**Example:**
+
+```markdown
+## Bug Report #7
+
+**Severity:** HIGH
+**Test File:** tests/unit/test_storage.py
+**Test Function:** test_upsert_updates
+**Discovered By:** Manual Testing - Phase 2
+**Date:** 2025-01-09
+
+### Description
+JsonKVStorage.upsert() does not update existing keys.
+
+### Expected Behavior
+Calling `upsert("key1", {"value": "new"})` on existing key should update the value to "new".
+
+### Actual Behavior
+Value remains "old" after upsert() call.
+
+### Error Message
+```
+E       AssertionError: Expected 'new' but got 'old'
+tests/unit/test_storage.py:45: AssertionError
+```
+
+### Steps to Reproduce
+1. cd tests
+2. ..\venv\Scripts\activate
+3. pytest unit/test_storage.py::test_upsert_updates -v
+4. See assertion failure at line 45
+
+### Environment
+- OS: Windows 11
+- Python Version: 3.11.11
+- BiGRAG Version: commit cf777e9
+- Pytest Version: 8.3.4
+
+### Root Cause Analysis
+JsonKVStorage.upsert() always calls insert() instead of checking if key exists.
+
+### Suggested Fix
+Update bigrag/storage.py line 28-32:
+```python
+async def upsert(self, id, data):
+    if id in self._data:
+        self._data[id].update(data)  # Update existing
+    else:
+        self._data[id] = data  # Insert new
+```
+
+### Related Files
+- Source file: bigrag/storage.py:28
+- Test file: tests/unit/test_storage.py:45
+
+### Priority
+HIGH (affects data integrity)
+
+### Assigned To
+Unassigned
+```
+
+---
+
+## 9. Quick Reference Card
+
+### 9.1 Common Test Commands Cheat Sheet
+
+```cmd
+# Run single test file
+pytest tests/unit/test_utils.py -v --tb=short
+
+# Run specific test function
+pytest tests/unit/test_utils.py::test_compute_mdhash_id -v
+
+# Run all tests in a category
+pytest tests/unit/ -v
+pytest tests/integration/ -v
+pytest tests/e2e/ -v
+
+# Run with coverage
+pytest --cov=bigrag --cov-report=html
+
+# Stop on first failure
+pytest -x
+
+# Show print statements
+pytest -s
+
+# Run only failed tests from last run
+pytest --lf
+
+# Show 10 slowest tests
+pytest --durations=10
+```
+
+### 9.2 Troubleshooting Quick Guide
+
+| Problem | Solution |
+|---------|----------|
+| Import errors | `pip install -e ..` from tests directory |
+| API tests timeout | Start backend: `cd backend && python server.py` |
+| Out of memory | Run tests in smaller batches, disable `-n auto` |
+| Encoding errors (Windows) | Set `PYTHONIOENCODING=utf-8` |
+| Tests hang | Check for background processes, restart venv |
+| Slow tests | Use `pytest -m "not slow"` to skip performance tests |
+
+---
+
+## 10. Test Metrics
 
 Track these metrics during testing:
 
@@ -269,21 +773,21 @@ Track these metrics during testing:
 
 ---
 
-## 10. Known Limitations
+## 11. Known Limitations
 
-### 10.1 Test Limitations
+### 11.1 Test Limitations
 - LLM extraction tests require OpenAI API key (can be skipped)
 - Frontend tests require UI to be implemented
 - Performance tests may take 5-10 minutes
 - Some tests require internet connection (for embedding models)
 
-### 10.2 Platform Limitations
+### 11.2 Platform Limitations
 - Windows-only testing (Linux/Mac not validated in this plan)
 - Single-machine testing (no distributed/multi-node tests)
 
 ---
 
-## 11. Regression Test Coverage
+## 12. Regression Test Coverage
 
 Tests for previously fixed bugs:
 
@@ -298,15 +802,15 @@ Tests for previously fixed bugs:
 
 ---
 
-## 12. Continuous Testing
+## 13. Continuous Testing
 
-### 12.1 Pre-Commit Checklist
+### 13.1 Pre-Commit Checklist
 Before committing code:
 - [ ] Run critical tests: `pytest -m critical`
 - [ ] Run affected unit tests
 - [ ] Verify no new failures
 
-### 12.2 Pre-Release Checklist
+### 13.2 Pre-Release Checklist
 Before release:
 - [ ] Run full test suite: `pytest`
 - [ ] Verify coverage >= 80%
@@ -317,24 +821,24 @@ Before release:
 
 ---
 
-## 13. Test Maintenance
+## 14. Test Maintenance
 
-### 13.1 When to Update Tests
+### 14.1 When to Update Tests
 - After fixing a bug (add regression test)
 - After adding a feature (add corresponding tests)
 - When test becomes flaky (fix or remove)
 - When requirements change (update assertions)
 
-### 13.2 Test Review Schedule
+### 14.2 Test Review Schedule
 - **Weekly:** Review failed tests
 - **Monthly:** Review test coverage
 - **Quarterly:** Refactor outdated tests
 
 ---
 
-## 14. Appendix
+## 15. Appendix
 
-### 14.1 Useful Commands
+### 15.1 Useful Commands
 
 ```cmd
 REM Install test dependencies
@@ -365,7 +869,7 @@ REM Show slowest tests
 pytest --durations=10
 ```
 
-### 14.2 Troubleshooting
+### 15.2 Troubleshooting
 
 **Issue:** Tests fail with import errors
 **Solution:** Ensure bigrag is installed: `pip install -e ..`
@@ -381,7 +885,7 @@ pytest --durations=10
 
 ---
 
-## 15. Sign-Off
+## 16. Sign-Off
 
 Test plan approved by: _________________
 Date: _________________

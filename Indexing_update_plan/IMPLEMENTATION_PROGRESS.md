@@ -404,6 +404,62 @@ Mark all sections as COMPLETED with implementation notes
 
 **Status**: ✅ ALL CRITICAL FIXES AND QUALITY IMPROVEMENTS COMPLETED
 
-**Last Updated**: 2025-01-08 (Implementation session completed)
+**Last Updated**: 2025-11-10 (Post-implementation update)
 
 **Ready For**: Migration guide creation and comprehensive testing
+
+---
+
+## Post-Implementation Enhancements (November 2025)
+
+### Centralized Logging System (November 10, 2025) ✅
+
+**Supersedes**: B4 logging infrastructure (setup_bigrag_logger)
+
+**New Implementation**:
+The initial logging infrastructure (B4) was significantly enhanced with a comprehensive centralized logging system:
+
+**Files Created**:
+- `bigrag/logging_config.py` (216 lines) - Centralized logging configuration module
+
+**Files Modified**:
+- `bigrag/utils.py` - Updated set_logger() to use centralized module
+- `bigrag/bigrag.py` - Smart log directory detection (LOG_DIR → logs/bigrag-core/ → working_dir/logs/)
+- `backend/server.py` - Separate API logger with daily rotation
+- `frontend/src/utils/logger.ts` - Browser console logger
+- `.gitignore` - Enhanced log file exclusion patterns
+
+**Key Features**:
+- **Structured logging** with JSON format support
+- **Multiple handlers** (console, file, error-only)
+- **Log rotation** (size-based and time-based)
+- **Contextual logging** with metadata
+- **Component separation**: Core (logs/bigrag-core/), Backend (logs/backend/), Frontend (browser console)
+- **Backward compatible** with existing code
+
+**Directory Structure**:
+```
+logs/
+├── bigrag-core/     # Core engine logs (bigrag.log, error.log)
+├── backend/         # Backend API logs (api.log, error.log, access.log)
+├── jobs/            # Background job logs
+└── frontend/        # Frontend logs (if needed)
+```
+
+**Impact**:
+- Production-ready logging with centralized management
+- Better log organization by component
+- Improved debugging with structured logs
+- Automatic cleanup of orphaned log files
+
+**Documentation**: See [docs/technical/LOGGING_GUIDE.md](../docs/technical/LOGGING_GUIDE.md) for complete guide
+
+**Status**: ✅ COMPLETED - Supersedes initial B4 implementation
+
+---
+
+**Implementation Timeline**:
+- **2025-01-08**: Initial indexing improvements + basic logging (setup_bigrag_logger)
+- **2025-11-10**: Enhanced centralized logging system (logging_config.py)
+
+**Note**: Both logging systems coexist for backward compatibility, but new code should use the centralized logging_config module.

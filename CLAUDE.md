@@ -1137,6 +1137,81 @@ python -m verl.trainer.main_ppo \
   ... other args ...
 ```
 
+### Centralized Logging System (November 2025)
+
+BiG-RAG uses a comprehensive centralized logging infrastructure for production-ready log management.
+
+**Directory Structure**:
+```
+logs/
+├── bigrag-core/     # Core engine logs (bigrag.log, error.log)
+├── backend/         # Backend API logs (api.log, error.log, access.log)
+├── jobs/            # Background job logs
+└── frontend/        # Frontend logs (browser console)
+```
+
+**Key Features**:
+- **Log Rotation**: Size-based (10MB) and time-based (daily) rotation with configurable backup retention
+- **Multiple Handlers**: Console, file, and error-only log streams
+- **Structured Logging**: Optional JSON format for log aggregation tools
+- **Component Separation**: Logs organized by component (core, backend, frontend)
+- **Contextual Logging**: Add metadata to log entries for better debugging
+
+**Configuration** (`.env`):
+```bash
+# Log level
+LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# Log directory (optional, defaults to logs/bigrag-core/)
+LOG_DIR=./logs/bigrag-core
+
+# JSON format for structured logging
+LOG_JSON_FORMAT=false
+
+# Frontend log level
+VITE_LOG_LEVEL=INFO
+```
+
+**Usage in Python**:
+```python
+from bigrag.logging_config import setup_logger, add_context
+
+# Setup logger
+logger = setup_logger(
+    name="my_module",
+    log_dir="./logs/backend",
+    log_file="my_module.log",
+    level="INFO",
+    rotation="size",  # or "time"
+    max_bytes=10*1024*1024,
+    backup_count=5
+)
+
+# Basic logging
+logger.info("Processing started")
+logger.error("Failed to connect", error)
+
+# Contextual logging
+ctx_logger = add_context(logger, request_id="abc123", user_id="user456")
+ctx_logger.info("User action logged")
+```
+
+**Usage in Frontend (TypeScript)**:
+```typescript
+import { logger, apiLogger, graphLogger } from '@/utils/logger';
+
+logger.info('User logged in', { userId: '123' });
+graphLogger.debug('Rendering graph', { nodes: 100 });
+apiLogger.error('API call failed', error);
+```
+
+**Implementation Files**:
+- **[bigrag/logging_config.py](bigrag/logging_config.py)** - Centralized logging module
+- **[frontend/src/utils/logger.ts](frontend/src/utils/logger.ts)** - Frontend browser logger
+- **[docs/technical/LOGGING_GUIDE.md](docs/technical/LOGGING_GUIDE.md)** - Complete logging documentation
+
+For detailed configuration, best practices, and troubleshooting, see [docs/technical/LOGGING_GUIDE.md](docs/technical/LOGGING_GUIDE.md).
+
 ---
 
 ## Evaluation Metrics

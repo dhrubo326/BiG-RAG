@@ -389,21 +389,24 @@ async def get_document_details(
         if not doc:
             raise HTTPException(status_code=404, detail=f"Document not found: {document_id}")
 
+        # Get the document's dataset (may differ from current dataset)
+        doc_dataset = doc.get("dataset", current_data_source)
+
         # Get KG stats
-        kg_stats = await get_document_stats_from_kg(document_id, working_dir)
+        kg_stats = await get_document_stats_from_kg(doc_dataset, document_id)
 
         # Get entities if requested
         entities_list = []
         if include_entities:
-            entities_list = await get_document_entities(document_id, working_dir)
+            entities_list = await get_document_entities(doc_dataset, document_id)
 
         # Get related documents if requested
         related_docs = []
         if include_related:
-            related_docs = await find_related_documents(current_data_source, document_id, top_k=5)
+            related_docs = await find_related_documents(doc_dataset, document_id, top_k=5)
 
         # Get content preview
-        content_preview = await get_document_content_from_corpus(current_data_source, document_id)
+        content_preview = await get_document_content_from_corpus(doc_dataset, document_id)
 
         return DocumentDetailResponse(
             document_id=document_id,

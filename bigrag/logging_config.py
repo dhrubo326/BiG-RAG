@@ -15,7 +15,7 @@ import json
 import logging
 from pathlib import Path
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 
 
 class JSONFormatter(logging.Formatter):
@@ -47,7 +47,7 @@ def setup_logger(
     name: str,
     log_dir: str,
     log_file: str = "app.log",
-    level: str = "INFO",
+    level: Union[str, int] = "INFO",
     json_format: bool = False,
     rotation: str = "size",  # "size", "time", or "none"
     max_bytes: int = 10 * 1024 * 1024,  # 10 MB
@@ -62,7 +62,7 @@ def setup_logger(
         name: Logger name (e.g., "bigrag.api")
         log_dir: Directory for log files
         log_file: Log file name
-        level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        level: Log level (string like "INFO" or int like logging.INFO)
         json_format: Use JSON format (default: False)
         rotation: Rotation strategy ("size", "time", "none")
         max_bytes: Max file size for rotation (default: 10MB)
@@ -74,7 +74,14 @@ def setup_logger(
         Configured logger instance
     """
     logger = logging.getLogger(name)
-    logger.setLevel(getattr(logging, level.upper()))
+
+    # Handle both string and int log levels
+    if isinstance(level, str):
+        log_level = getattr(logging, level.upper())
+    else:
+        log_level = level
+
+    logger.setLevel(log_level)
 
     # Prevent duplicate handlers
     if logger.handlers:
@@ -113,7 +120,7 @@ def setup_logger(
         file_handler = logging.FileHandler(log_path, encoding='utf-8')
 
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(getattr(logging, level.upper()))
+    file_handler.setLevel(log_level)
     logger.addHandler(file_handler)
 
     # Separate error-only handler

@@ -293,6 +293,22 @@ Fixed 5 critical bugs:
 
 **All bugs are now fixed. System is production-ready.**
 
+### November 2025: Infrastructure Enhancements
+
+**Centralized Logging System** (November 10, 2025):
+- **Component-separated logs**: Core (logs/bigrag-core/), Backend (logs/backend/), Frontend (browser console)
+- **Log rotation**: Size-based (10MB) and time-based (daily) with automatic cleanup
+- **Structured logging**: Optional JSON format for log aggregation tools (ELK, Splunk)
+- **Multiple handlers**: Console, file, error-only streams
+- **Production-ready**: ~350 lines across 9 files for comprehensive log management
+
+**Frontend Logger** (TypeScript):
+- Browser console logger with module-specific loggers (apiLogger, graphLogger, chatLogger)
+- Environment-based log level configuration
+- Structured format with timestamps and context
+
+For detailed configuration and usage, see [docs/technical/LOGGING_GUIDE.md](docs/technical/LOGGING_GUIDE.md).
+
 For complete technical details and development guides, see [CLAUDE.md](CLAUDE.md) and [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ---

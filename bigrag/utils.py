@@ -33,7 +33,7 @@ ENCODER = None
 logger = logging.getLogger("bigrag")
 
 
-def set_logger(log_file: str, level: str = "INFO"):
+def set_logger(log_file: str, level: Union[str, int] = "INFO"):
     """
     Initialize logger with file handler (backward compatibility wrapper)
 
@@ -42,7 +42,7 @@ def set_logger(log_file: str, level: str = "INFO"):
 
     Args:
         log_file: Path to log file
-        level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        level: Log level (string like "INFO" or int like logging.INFO)
     """
     # Import here to avoid circular dependency
     from bigrag.logging_config import setup_logger

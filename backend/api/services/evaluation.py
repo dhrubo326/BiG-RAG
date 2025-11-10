@@ -33,7 +33,7 @@ async def evaluate_single_retrieval(
     top_k: int = 5,
     metrics: Optional[List[str]] = None,
     entity_match: Optional[Any] = None,
-    bipartite_edge_match: Optional[Any] = None
+    relation_match: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
     Evaluate retrieval for a single query
@@ -46,7 +46,7 @@ async def evaluate_single_retrieval(
         top_k: Number of documents to retrieve
         metrics: Metrics to calculate
         entity_match: Pre-computed entity matches (for FlagEmbedding mode)
-        bipartite_edge_match: Pre-computed edge matches (for FlagEmbedding mode)
+        relation_match: Pre-computed edge matches (for FlagEmbedding mode)
 
     Returns:
         Dict with retrieved docs and metrics
@@ -66,7 +66,7 @@ async def evaluate_single_retrieval(
             top_k=top_k
         ),
         entity_match=entity_match,
-        bipartite_edge_match=bipartite_edge_match
+        relation_match=relation_match
     )
 
     latency_ms = (time.time() - start_time) * 1000  # Convert to milliseconds
@@ -218,7 +218,7 @@ async def evaluate_retrieval(
             top_k=top_k,
             metrics=metrics,
             entity_match=entity_match,
-            bipartite_edge_match=edge_match
+            relation_match=edge_match
         )
 
         per_query_results.append({
@@ -295,7 +295,7 @@ async def evaluate_single_answer(
     top_k: int = 5,
     metrics: Optional[List[str]] = None,
     entity_match: Optional[Any] = None,
-    bipartite_edge_match: Optional[Any] = None
+    relation_match: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
     Evaluate answer generation for a single question
@@ -310,7 +310,7 @@ async def evaluate_single_answer(
         top_k: Number of contexts to retrieve
         metrics: Answer metrics to calculate
         entity_match: Pre-computed entity matches
-        bipartite_edge_match: Pre-computed edge matches
+        relation_match: Pre-computed edge matches
 
     Returns:
         Dict with generated answer and metrics
@@ -328,7 +328,7 @@ async def evaluate_single_answer(
                 top_k=top_k
             ),
             entity_match=entity_match,
-            bipartite_edge_match=bipartite_edge_match
+            relation_match=relation_match
         )
 
         # Extract answer
@@ -588,7 +588,7 @@ async def batch_evaluate(
                     top_k=top_k,
                     metrics=metrics,
                     entity_match=entity_match,
-                    bipartite_edge_match=edge_match
+                    relation_match=edge_match
                 )
                 retrieval_metrics_list.append(retrieval_result['metrics'])
             else:
@@ -606,7 +606,7 @@ async def batch_evaluate(
                     top_k=top_k,
                     metrics=metrics,
                     entity_match=entity_match if ground_truth_docs else None,
-                    bipartite_edge_match=edge_match if ground_truth_docs else None
+                    relation_match=edge_match if ground_truth_docs else None
                 )
                 answer_metrics_list.append(answer_result['metrics'])
             else:

@@ -26,7 +26,7 @@ Separation of concerns:
 #   - Purpose: Human-readable for debugging and interpretability
 #   - Storage: Graph nodes use name as ID, vector DB uses name as key
 #
-# RELATION NODES (Bipartite Edge Nodes):
+# RELATION NODES:
 #   - Format: Hash-based with prefix "rel-"
 #   - Hash: MD5 hash of relation content (32 hex characters)
 #   - Examples: "rel-8c80df8f1fc71f13c4ffbe19fa22bf8f"
@@ -95,8 +95,8 @@ DEFAULT_MAX_RELATION_TOKENS = 8000
 GRAPH_FIELD_SEP = "<SEP>"
 """Separator for multi-value fields in graph nodes"""
 
-BIPARTITE_EDGE_PREFIX = "rel-"
-"""Prefix for bipartite edge (relation) node IDs
+RELATION_PREFIX = "rel-"
+"""Prefix for relation node IDs
 Example: rel-8c80df8f1fc71f13c4ffbe19fa22bf8f"""
 
 ENTITY_PREFIX = "ent-"

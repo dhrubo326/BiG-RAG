@@ -333,13 +333,13 @@ class EmbeddingManager:
 
             # Load FAISS indices
             self.faiss_indices["entity"] = faiss.read_index(str(self.working_dir / "index_entity.bin"))
-            self.faiss_indices["edge"] = faiss.read_index(str(self.working_dir / "index_bipartite_edge.bin"))
+            self.faiss_indices["edge"] = faiss.read_index(str(self.working_dir / "index_relation.bin"))
             logger.info("FAISS indices loaded")
 
             # Load corpus mappings from GraphML (new architecture) or JSON (legacy)
             graph_file = self.working_dir / "graph_chunk_entity_relation.graphml"
             legacy_entities_file = self.working_dir / "kv_store_entities.json"
-            legacy_edges_file = self.working_dir / "kv_store_bipartite_edges.json"
+            legacy_edges_file = self.working_dir / "kv_store_relations.json"
 
             if graph_file.exists():
                 # New architecture: Read from GraphML
@@ -354,7 +354,7 @@ class EmbeddingManager:
                     role = attrs.get("role", "")
                     if role == "entity":
                         self.corpus_entity.append(attrs.get("name", node))
-                    elif role == "bipartite_edge":
+                    elif role == "relation":
                         self.corpus_edge.append(attrs.get("name", node))
 
             elif legacy_entities_file.exists() and legacy_edges_file.exists():

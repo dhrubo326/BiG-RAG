@@ -110,7 +110,7 @@ async def generate_answer_with_rag(
                 enable_reranking=enable_reranking
             ),
             entity_match=entity_match,
-            bipartite_edge_match=edge_match
+            relation_match=edge_match
         )
 
         # Step 2: Format retrieved context

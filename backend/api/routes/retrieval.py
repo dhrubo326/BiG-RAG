@@ -42,7 +42,7 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
                 enable_reranking=request.enable_reranking  # Phase 3.4: semantic reranking
             ),
             entity_match=entity_match,
-            bipartite_edge_match=edge_match
+            relation_match=edge_match
         )
 
         if not result:
@@ -116,7 +116,7 @@ async def search(request: SearchRequest, rag: RAGDep, embedding_manager: Embeddi
                     enable_reranking=False  # Phase 3.4: semantic reranking (default: False)
                 ),
                 entity_match=entity_match,
-                bipartite_edge_match=edge_match
+                relation_match=edge_match
             )
             results.append(json.dumps({"query": query_text, "results": result}))
 

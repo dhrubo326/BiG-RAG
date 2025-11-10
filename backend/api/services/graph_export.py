@@ -21,16 +21,16 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 def _extract_relation_text(node_id: str) -> str:
     """
-    Extract clean relation text from bipartite_edge node IDs.
+    Extract clean relation text from relation node IDs.
 
     Example:
-        Input: '<bipartite_edge>"Netflix is an American streaming service"'
+        Input: '<relation>"Netflix is an American streaming service"'
         Output: 'Netflix is an American streaming service'
     """
-    # Remove <bipartite_edge> prefix if present
+    # Remove <relation> prefix if present
     text = node_id
-    if text.startswith("<bipartite_edge>"):
-        text = text[len("<bipartite_edge>"):]
+    if text.startswith("<relation>"):
+        text = text[len("<relation>"):]
 
     # Decode HTML entities (e.g., &quot; -> ")
     text = html.unescape(text)
@@ -102,7 +102,7 @@ async def export_graph_for_cytoscape(
         if node_types:
             type_map = {
                 'entity': 'entity',
-                'relation': 'bipartite_edge',
+                'relation': 'relation',
                 'chunk': 'chunk'
             }
             allowed_types = [type_map.get(t, t) for t in node_types]
@@ -120,7 +120,7 @@ async def export_graph_for_cytoscape(
             if role == "entity":
                 node_type = "entity"
                 entity_count += 1
-            elif role == "bipartite_edge":
+            elif role == "relation":
                 node_type = "relation"
                 relation_count += 1
             elif role == "chunk" or node_id.startswith("chunk-"):
@@ -325,7 +325,7 @@ async def get_node_neighbors(node_id: str, depth: int = 1, working_dir: str = No
         nodes = []
         for node, attrs in H.nodes(data=True):
             role = attrs.get("role", "")
-            node_type = "entity" if role == "entity" else "relation" if role == "bipartite_edge" else "chunk"
+            node_type = "entity" if role == "entity" else "relation" if role == "relation" else "chunk"
 
             nodes.append({
                 "id": node,
@@ -407,7 +407,7 @@ async def search_graph_nodes(query: str, limit: int = 20, working_dir: str = Non
 
             if query_lower in name or query_lower in description:
                 role = attrs.get("role", "")
-                node_type = "entity" if role == "entity" else "relation" if role == "bipartite_edge" else "chunk"
+                node_type = "entity" if role == "entity" else "relation" if role == "relation" else "chunk"
 
                 matching_nodes.append({
                     "id": node,

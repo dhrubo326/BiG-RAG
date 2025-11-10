@@ -76,7 +76,7 @@ async def chat_completions(
                     enable_reranking=request.enable_reranking  # Phase 3.4: semantic reranking
                 ),
                 entity_match=entity_match,
-                bipartite_edge_match=edge_match
+                relation_match=edge_match
             )
 
             if context_results:

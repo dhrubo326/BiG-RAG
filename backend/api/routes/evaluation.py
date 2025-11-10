@@ -162,7 +162,7 @@ async def evaluate_answer_endpoint(
                 top_k=request.top_k,
                 metrics=request.metrics,
                 entity_match=entity_match,
-                bipartite_edge_match=edge_match
+                relation_match=edge_match
             )
 
             per_question_results.append(PerQuestionAnswerResult(

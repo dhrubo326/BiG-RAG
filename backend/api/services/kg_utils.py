@@ -126,7 +126,7 @@ async def get_document_stats_from_kg(
                 if any(sid in doc_chunk_ids for sid in source_ids):
                     if role == "entity":
                         doc_entities.append(node)
-                    elif role == "bipartite_edge":
+                    elif role == "relation":
                         doc_edges.append(node)
 
             stats["entities"] = len(doc_entities)
@@ -438,7 +438,7 @@ async def rebuild_entire_graph(dataset: str, job_id: str, rag_instance, processi
 
             # Vector DB files (embeddings for similarity search)
             "vdb_entities.json",
-            "vdb_bipartite_edges.json",
+            "vdb_relations.json",
             "vdb_chunks.json",
 
             # Graph structure file (NetworkX GraphML)
@@ -446,11 +446,11 @@ async def rebuild_entire_graph(dataset: str, job_id: str, rag_instance, processi
 
             # Legacy FAISS index files (kept for backward compatibility)
             "index_entity.bin",
-            "index_bipartite_edge.bin",
+            "index_relation.bin",
             "index.bin",
             "corpus.npy",
             "corpus_entity.npy",
-            "corpus_bipartite_edge.npy"
+            "corpus_relation.npy"
         ]:
             path = working_dir / file
             if path.exists():

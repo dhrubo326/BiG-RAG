@@ -130,11 +130,11 @@ try:
                 vdb_entities = json.load(f)
             stats["entities"] = len(vdb_entities.get('data', []))
 
-        edges_file = f"{working_dir}/vdb_bipartite_edges.json"
+        edges_file = f"{working_dir}/vdb_relations.json"
         if os.path.exists(edges_file):
             with open(edges_file, 'r', encoding='utf-8') as f:
-                vdb_bipartite_edges = json.load(f)
-            stats["edges"] = len(vdb_bipartite_edges.get('data', []))
+                vdb_relations = json.load(f)
+            stats["edges"] = len(vdb_relations.get('data', []))
 
     elif embedding_manager.mode == "flagembedding":
         stats["entities"] = len(embedding_manager.corpus_entity)

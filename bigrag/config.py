@@ -400,3 +400,215 @@ def reload_config() -> BiGRAGConfig:
         load_env_file()
     config = BiGRAGConfig()
     return config
+
+
+# ========================
+# Phase 2.3: Multi-Hop Query Configuration
+# ========================
+
+"""
+Dynamic configuration system for multi-hop graph traversal.
+
+Provides dataset-specific and domain-specific defaults for hop counts.
+Enables runtime registration of custom configurations without code changes.
+"""
+
+from .base import QueryParam as QueryParamBase
+
+# Dataset-specific hop configuration
+# Multi-hop datasets require 2-hop traversal, single-hop datasets use 1-hop
+DATASET_HOP_CONFIG: Dict[str, int] = {
+    # Multi-hop QA datasets (require 2-hop reasoning)
+    "2WikiMultiHopQA": 2,
+    "HotpotQA": 2,
+    "Musique": 2,
+
+    # Single-hop QA datasets
+    "NQ": 1,
+    "PopQA": 1,
+    "TriviaQA": 1,
+
+    # Demo/test datasets
+    "SingleTopic": 1,
+    "demo_test": 1,
+}
+
+# Domain-based hop configuration (fallback when dataset not in DATASET_HOP_CONFIG)
+DOMAIN_HOP_CONFIG: Dict[str, int] = {
+    "academic": 2,        # Academic papers often need multi-hop reasoning
+    "scientific": 2,      # Scientific documents often require multi-hop
+    "medical": 2,         # Medical knowledge requires multi-hop
+    "legal": 2,           # Legal documents often need multi-hop
+    "news": 1,            # News articles usually single-hop
+    "qa": 2,              # QA datasets usually multi-hop
+    "wiki": 2,            # Wikipedia often requires multi-hop
+    "general": 1,         # General-purpose default
+}
+
+
+def get_default_query_param(
+    dataset_name: Optional[str] = None,
+    domain: Optional[str] = None,
+    max_hops: Optional[int] = None,
+    **kwargs
+) -> QueryParamBase:
+    """
+    Get dataset-specific or domain-specific default query parameters.
+
+    Priority (highest to lowest):
+        1. Explicit max_hops parameter
+        2. Dataset-specific configuration (DATASET_HOP_CONFIG)
+        3. Domain-specific configuration (DOMAIN_HOP_CONFIG)
+        4. Global default (1-hop)
+
+    Args:
+        dataset_name: Specific dataset name (e.g., "2WikiMultiHopQA", "HotpotQA")
+        domain: Domain category (e.g., "academic", "scientific", "news")
+        max_hops: Explicit hop count override (1-3), takes precedence over all defaults
+        **kwargs: Additional QueryParam overrides (mode, top_k, enable_reranking, etc.)
+
+    Returns:
+        QueryParam with appropriate defaults based on dataset/domain
+
+    Examples:
+        # Explicit override (highest priority)
+        >>> param = get_default_query_param(max_hops=3)
+        >>> param.max_hops
+        3
+
+        # Dataset-specific default
+        >>> param = get_default_query_param(dataset_name="2WikiMultiHopQA")
+        >>> param.max_hops
+        2
+
+        # Domain-specific default
+        >>> param = get_default_query_param(domain="academic")
+        >>> param.max_hops
+        2
+
+        # Default (no matches)
+        >>> param = get_default_query_param()
+        >>> param.max_hops
+        1
+
+        # Override other parameters
+        >>> param = get_default_query_param(dataset_name="HotpotQA", top_k=100, enable_reranking=False)
+        >>> param.max_hops, param.top_k, param.enable_reranking
+        (2, 100, False)
+    """
+    # Determine hop count based on priority
+    if max_hops is not None:
+        # Explicit override takes precedence
+        hops = max_hops
+    elif dataset_name and dataset_name in DATASET_HOP_CONFIG:
+        # Dataset-specific configuration
+        hops = DATASET_HOP_CONFIG[dataset_name]
+    elif domain and domain in DOMAIN_HOP_CONFIG:
+        # Domain-specific configuration
+        hops = DOMAIN_HOP_CONFIG[domain]
+    else:
+        # Global default
+        hops = 1
+
+    # Create QueryParam with defaults
+    param_dict = {
+        "mode": "hybrid",
+        "top_k": 60,
+        "max_hops": hops,
+        "enable_reranking": True,
+    }
+
+    # Apply any additional overrides from kwargs
+    param_dict.update(kwargs)
+
+    return QueryParamBase(**param_dict)
+
+
+def register_dataset_hop_config(dataset_name: str, max_hops: int):
+    """
+    Register a custom dataset hop configuration at runtime.
+
+    Enables dynamic configuration without modifying code.
+    Useful for production systems with custom datasets.
+
+    Args:
+        dataset_name: Dataset identifier (case-sensitive)
+        max_hops: Number of hops (1-3)
+
+    Raises:
+        ValueError: If max_hops not in range [1, 3]
+
+    Examples:
+        >>> register_dataset_hop_config("CustomMedicalQA", 2)
+        >>> param = get_default_query_param("CustomMedicalQA")
+        >>> param.max_hops
+        2
+
+        >>> register_dataset_hop_config("CustomNewsQA", 1)
+        >>> param = get_default_query_param("CustomNewsQA")
+        >>> param.max_hops
+        1
+    """
+    if not 1 <= max_hops <= 3:
+        raise ValueError(f"max_hops must be between 1 and 3, got {max_hops}")
+    DATASET_HOP_CONFIG[dataset_name] = max_hops
+
+
+def register_domain_hop_config(domain: str, max_hops: int):
+    """
+    Register a custom domain hop configuration at runtime.
+
+    Enables dynamic configuration without modifying code.
+    Useful for production systems with custom domain categories.
+
+    Args:
+        domain: Domain category (case-sensitive)
+        max_hops: Number of hops (1-3)
+
+    Raises:
+        ValueError: If max_hops not in range [1, 3]
+
+    Examples:
+        >>> register_domain_hop_config("legal", 2)
+        >>> param = get_default_query_param(domain="legal")
+        >>> param.max_hops
+        2
+
+        >>> register_domain_hop_config("entertainment", 1)
+        >>> param = get_default_query_param(domain="entertainment")
+        >>> param.max_hops
+        1
+    """
+    if not 1 <= max_hops <= 3:
+        raise ValueError(f"max_hops must be between 1 and 3, got {max_hops}")
+    DOMAIN_HOP_CONFIG[domain] = max_hops
+
+
+def get_registered_datasets() -> Dict[str, int]:
+    """
+    Get all registered dataset configurations.
+
+    Returns:
+        Dictionary mapping dataset names to hop counts
+
+    Example:
+        >>> configs = get_registered_datasets()
+        >>> configs["2WikiMultiHopQA"]
+        2
+    """
+    return DATASET_HOP_CONFIG.copy()
+
+
+def get_registered_domains() -> Dict[str, int]:
+    """
+    Get all registered domain configurations.
+
+    Returns:
+        Dictionary mapping domain categories to hop counts
+
+    Example:
+        >>> configs = get_registered_domains()
+        >>> configs["academic"]
+        2
+    """
+    return DOMAIN_HOP_CONFIG.copy()

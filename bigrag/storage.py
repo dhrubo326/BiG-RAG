@@ -379,14 +379,14 @@ class NetworkXStorage(BaseGraphStorage):
             Dictionary with the following metrics:
             - total_nodes: Total number of nodes in the graph
             - entity_nodes: Number of entity nodes (role="entity")
-            - relation_nodes: Number of relation nodes (role="bipartite_edge")
+            - relation_nodes: Number of relation nodes (role="relation")
             - unknown_nodes: Number of nodes with missing or unknown role
             - total_edges: Total number of edges in the graph
             - bipartite_violations: Number of edges violating bipartite property
             - is_valid_bipartite: Boolean indicating if graph is a valid bipartite graph
             - entity_entity_edges: Number of entity-to-entity edges (invalid)
             - relation_relation_edges: Number of relation-to-relation edges (invalid)
-            - valid_bipartite_edges: Number of valid entity↔relation edges
+            - valid_relations: Number of valid entity↔relation edges
             - avg_entity_degree: Average degree of entity nodes
             - avg_relation_degree: Average degree of relation nodes
 
@@ -397,7 +397,7 @@ class NetworkXStorage(BaseGraphStorage):
             >>> print(f"Violations: {metrics['bipartite_violations']}")
         """
         # Count nodes by role
-        nodes_by_role = {"entity": 0, "bipartite_edge": 0, "unknown": 0}
+        nodes_by_role = {"entity": 0, "relation": 0, "unknown": 0}
         entity_degrees = []
         relation_degrees = []
 
@@ -406,8 +406,8 @@ class NetworkXStorage(BaseGraphStorage):
             if role == "entity":
                 nodes_by_role["entity"] += 1
                 entity_degrees.append(self._graph.degree(node))
-            elif role == "bipartite_edge":
-                nodes_by_role["bipartite_edge"] += 1
+            elif role == "relation":
+                nodes_by_role["relation"] += 1
                 relation_degrees.append(self._graph.degree(node))
             else:
                 nodes_by_role["unknown"] += 1
@@ -425,11 +425,11 @@ class NetworkXStorage(BaseGraphStorage):
             if source_role == "entity" and target_role == "entity":
                 entity_entity += 1
                 violations += 1
-            elif source_role == "bipartite_edge" and target_role == "bipartite_edge":
+            elif source_role == "relation" and target_role == "relation":
                 relation_relation += 1
                 violations += 1
-            elif (source_role in ["entity", "bipartite_edge"] and
-                  target_role in ["entity", "bipartite_edge"] and
+            elif (source_role in ["entity", "relation"] and
+                  target_role in ["entity", "relation"] and
                   source_role != target_role):
                 valid_edges += 1
             else:
@@ -443,14 +443,14 @@ class NetworkXStorage(BaseGraphStorage):
         return {
             "total_nodes": self._graph.number_of_nodes(),
             "entity_nodes": nodes_by_role["entity"],
-            "relation_nodes": nodes_by_role["bipartite_edge"],
+            "relation_nodes": nodes_by_role["relation"],
             "unknown_nodes": nodes_by_role["unknown"],
             "total_edges": self._graph.number_of_edges(),
             "bipartite_violations": violations,
             "is_valid_bipartite": violations == 0,
             "entity_entity_edges": entity_entity,
             "relation_relation_edges": relation_relation,
-            "valid_bipartite_edges": valid_edges,
+            "valid_relations": valid_edges,
             "avg_entity_degree": round(avg_entity_degree, 2),
             "avg_relation_degree": round(avg_relation_degree, 2)
         }

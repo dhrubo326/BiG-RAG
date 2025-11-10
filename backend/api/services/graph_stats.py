@@ -77,7 +77,7 @@ async def get_graph_statistics(working_dir: str, dataset: Optional[str] = None):
                         role = attrs.get("role", "")
                         if role == "entity":
                             entities_count += 1
-                        elif role == "bipartite_edge":
+                        elif role == "relation":
                             edges_count += 1
                 except Exception as e:
                     logger.warning(f"Failed to read GraphML for dataset {ds}: {e}")

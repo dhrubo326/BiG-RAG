@@ -127,10 +127,10 @@ async def health_check():
                 indices_loaded = (
                     # New architecture (NanoVectorDB)
                     (dataset_dir / "vdb_entities.json").exists() or
-                    (dataset_dir / "vdb_bipartite_edges.json").exists() or
+                    (dataset_dir / "vdb_relations.json").exists() or
                     # Legacy architecture (FAISS)
                     (dataset_dir / "index_entity.bin").exists() or
-                    (dataset_dir / "index_bipartite_edge.bin").exists()
+                    (dataset_dir / "index_relation.bin").exists()
                 )
 
                 # Count documents in registry

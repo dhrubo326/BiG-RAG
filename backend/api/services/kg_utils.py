@@ -130,9 +130,10 @@ async def get_document_stats_from_kg(
                         doc_edges.append(node)
 
             stats["entities"] = len(doc_entities)
-            stats["edges"] = len(doc_edges)
+            stats["relations"] = len(doc_edges)
+            stats["edges"] = len(doc_edges)  # Deprecated: alias for backward compatibility
 
-            logger.debug(f"Document {document_id}: Found {stats['entities']} entities and {stats['edges']} edges")
+            logger.debug(f"Document {document_id}: Found {stats['entities']} entities and {stats['relations']} relations")
 
         except Exception as e:
             logger.error(f"Error reading graph file: {e}")

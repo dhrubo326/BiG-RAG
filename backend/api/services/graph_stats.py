@@ -48,7 +48,8 @@ async def get_graph_statistics(working_dir: str, dataset: Optional[str] = None):
         global_totals = {
             "total_documents": 0,
             "total_entities": 0,
-            "total_edges": 0,
+            "total_relations": 0,
+            "total_edges": 0,  # Deprecated: alias for total_relations
             "total_chunks": 0
         }
 
@@ -110,7 +111,8 @@ async def get_graph_statistics(working_dir: str, dataset: Optional[str] = None):
                 failed_documents=reg_stats["failed"],
                 total_chunks=chunks_count,
                 total_entities=entities_count,
-                total_edges=edges_count,
+                total_relations=edges_count,  # Relation node count
+                total_edges=edges_count,  # Deprecated: alias for backward compatibility
                 total_tokens=tokens_count
             )
 
@@ -119,7 +121,8 @@ async def get_graph_statistics(working_dir: str, dataset: Optional[str] = None):
             # Add to global totals
             global_totals["total_documents"] += doc_count
             global_totals["total_entities"] += entities_count
-            global_totals["total_edges"] += edges_count
+            global_totals["total_relations"] += edges_count
+            global_totals["total_edges"] += edges_count  # Deprecated: alias
             global_totals["total_chunks"] += chunks_count
 
         return GraphStatsResponse(

@@ -12,8 +12,12 @@ export interface APIResponse<T = any> {
 export interface HealthResponse {
   status: string;
   message: string;
-  data_source: string;
+  dataset: string;  // Backend returns "dataset" not "data_source"
   api_version?: string;
+  version?: string;
+  embedding_mode?: string;
+  default_llm_provider?: string;
+  available_providers?: string[];
 }
 
 // Document types

@@ -144,12 +144,12 @@ async def evaluate_answer_endpoint(
         all_metrics = []
 
         for test_case in request.test_cases:
-            # Pre-compute entity/edge matches if FlagEmbedding
+            # Pre-compute entity/relation matches if FlagEmbedding
             entity_match = None
-            edge_match = None
+            relation_match = None
             if embedding_manager.mode == "flagembedding" and test_case.use_rag:
                 entity_match = await embedding_manager.search_entities(test_case.question, request.top_k)
-                edge_match = await embedding_manager.search_edges(test_case.question, request.top_k)
+                relation_match = await embedding_manager.search_relations(test_case.question, request.top_k)
 
             # Evaluate single answer
             result = await evaluate_single_answer(
@@ -162,7 +162,7 @@ async def evaluate_answer_endpoint(
                 top_k=request.top_k,
                 metrics=request.metrics,
                 entity_match=entity_match,
-                bipartite_edge_match=edge_match
+                relation_match=relation_match
             )
 
             per_question_results.append(PerQuestionAnswerResult(

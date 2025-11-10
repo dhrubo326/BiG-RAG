@@ -49,7 +49,7 @@ const useSettingsStore = create<SettingsState>()(
       (set, get) => ({
         // Initial state
         ...defaultSettings,
-        activeDataset: 'SingleTopic',
+        activeDataset: 'demo_test',  // Server default
         availableDatasets: [],
         isTestingConnection: false,
         connectionStatus: {},

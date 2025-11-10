@@ -30,6 +30,11 @@ class QueryParam:
     stream: bool = False
     # Number of top-k items to retrieve; corresponds to entities in "local" mode and relationships in "global" mode.
     top_k: int = 60
+    # Phase 2: Maximum number of hops for multi-hop graph traversal
+    # 1-hop: Entity → Relation (single-hop reasoning)
+    # 2-hop: Entity → Relation → Entity → Relation (multi-hop reasoning)
+    # Recommended: 1 for single-hop datasets (NQ, PopQA, TriviaQA), 2 for multi-hop datasets (2WikiMultiHopQA, HotpotQA, Musique)
+    max_hops: int = 1
     # Number of document chunks to retrieve.
     # top_n: int = 10
     # Number of tokens for the original chunks.
@@ -52,6 +57,8 @@ class QueryParam:
             )
         if self.top_k < 1:
             raise ValueError(f"top_k must be >= 1, got {self.top_k}")
+        if not 1 <= self.max_hops <= 3:
+            raise ValueError(f"max_hops must be between 1 and 3, got {self.max_hops}")
         if self.max_token_for_text_unit < 1:
             raise ValueError(f"max_token_for_text_unit must be >= 1, got {self.max_token_for_text_unit}")
         if self.max_token_for_global_context < 1:

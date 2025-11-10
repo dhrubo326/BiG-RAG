@@ -24,13 +24,13 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
     Supports multiple retrieval modes and LLM providers.
     """
     try:
-        # For FlagEmbedding mode, pre-compute entity/edge matches
+        # For FlagEmbedding mode, pre-compute entity/relation matches
         entity_match = None
-        edge_match = None
+        relation_match = None
 
         if embedding_manager.mode == "flagembedding":
             entity_match = await embedding_manager.search_entities(request.question, request.top_k)
-            edge_match = await embedding_manager.search_edges(request.question, request.top_k)
+            relation_match = await embedding_manager.search_relations(request.question, request.top_k)
 
         # Query BiGRAG (Phase 3: Three-Path Retrieval + Semantic Reranking)
         result = await rag.aquery(
@@ -42,7 +42,7 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
                 enable_reranking=request.enable_reranking  # Phase 3.4: semantic reranking
             ),
             entity_match=entity_match,
-            bipartite_edge_match=edge_match
+            relation_match=relation_match
         )
 
         if not result:
@@ -100,11 +100,11 @@ async def search(request: SearchRequest, rag: RAGDep, embedding_manager: Embeddi
         results = []
         for query_text in request.queries:
             entity_match = None
-            edge_match = None
+            relation_match = None
 
             if embedding_manager.mode == "flagembedding":
                 entity_match = await embedding_manager.search_entities(query_text, 5)
-                edge_match = await embedding_manager.search_edges(query_text, 5)
+                relation_match = await embedding_manager.search_relations(query_text, 5)
 
             # Phase 3: Three-Path Retrieval + Semantic Reranking
             result = await rag.aquery(
@@ -116,7 +116,7 @@ async def search(request: SearchRequest, rag: RAGDep, embedding_manager: Embeddi
                     enable_reranking=False  # Phase 3.4: semantic reranking (default: False)
                 ),
                 entity_match=entity_match,
-                bipartite_edge_match=edge_match
+                relation_match=relation_match
             )
             results.append(json.dumps({"query": query_text, "results": result}))
 

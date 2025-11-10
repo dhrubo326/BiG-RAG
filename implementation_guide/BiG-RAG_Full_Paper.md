@@ -150,12 +150,14 @@ Our work introduces an **agentic framework** combining graph-structured knowledg
 **Definition 1 (Bipartite Knowledge Graph).** A bipartite knowledge graph is a tuple $\mathcal{G}_B = (V_E, V_R, E_B, \phi, \psi)$ where:
 
 - $V_E = \{e_1, \ldots, e_{|E|}\}$ is the **entity node partition**
-- $V_R = \{r_1, \ldots, r_{|R|}\}$ is the **relation node partition**
-- $E_B \subseteq V_E \times V_R$ is the set of **bipartite edges**
+- $V_R = \{r_1, \ldots, r_{|R|}\}$ is the **relation node partition** (n-ary facts as first-class nodes)
+- $E_B \subseteq V_E \times V_R$ is the set of **graph edges** (connectors between layers)
 - $\phi: V_E \cup V_R \rightarrow \Sigma^*$ maps nodes to **natural language descriptions**
 - $\psi: V_E \cup V_R \rightarrow \mathbb{R}^d$ maps nodes to **dense vector embeddings**
 
-**Bipartite Structure Property:** All edges connect nodes from different partitions. Formally: $\forall (u,v) \in E_B: (u \in V_E \land v \in V_R) \lor (u \in V_R \land v \in V_E)$.
+**Terminology Note:** We use "relation nodes" (stored in $V_R$) to emphasize that n-ary facts are first-class graph nodes, not traditional edge attributes. The term "graph edges" ($E_B$) refers to the connectors between entity and relation nodes in the bipartite structure.
+
+**Bipartite Structure Property:** All graph edges connect nodes from different partitions. Formally: $\forall (u,v) \in E_B: (u \in V_E \land v \in V_R) \lor (u \in V_R \land v \in V_E)$.
 
 **Neighborhood Function:** For any node $v \in V_E \cup V_R$, define neighborhood:
 $$\mathcal{N}(v) = \{u \in V_E \cup V_R : (v,u) \in E_B \lor (u,v) \in E_B\}$$
@@ -176,6 +178,29 @@ where:
 - $\text{source}(r)$ identifies originating document chunk for provenance
 
 The bipartite edges encode participation: $\forall e \in \mathcal{E}_r: (e,r) \in E_B$.
+
+**Weight Aggregation Semantics:**
+
+BiG-RAG employs un-normalized weight aggregation to preserve frequency signals:
+
+**For Entity Nodes:**
+$$w(e) = \sum_{i=1}^{n} \text{importance}_i(e)$$
+
+where $\text{importance}_i(e) \in [0,100]$ is the LLM-assigned importance score for entity $e$ in chunk $i$.
+
+- **Range:** $0$ to $N \times 100$ (where $N$ = number of chunks mentioning $e$)
+- **Semantics:** Higher weight indicates both frequency and importance
+- **Examples:** $w \geq 400$ (very central), $200 \leq w < 400$ (important), $100 \leq w < 200$ (mentioned), $w < 100$ (peripheral)
+
+**For Relation Nodes:**
+$$w(r) = \sum_{j=1}^{m} \text{completeness}_j(r)$$
+
+where $\text{completeness}_j(r) \in [0,10]$ is the completeness score for relation $r$ in chunk $j$.
+
+- **Range:** $0$ to $M \times 10$ (where $M$ = number of chunks containing $r$)
+- **Semantics:** Higher weight indicates complete and frequently mentioned knowledge
+
+**Design Rationale:** Weights are intentionally un-normalized to preserve frequency information—an entity mentioned 4 times with score 90 each has weight 360, clearly distinguishing it from an entity mentioned once with score 90 (weight 90). This supports importance-based ranking during retrieval.
 
 **Design Rationale:** Storing natural language descriptions rather than structured predicates provides:
 
@@ -435,6 +460,18 @@ Output: Bipartite graph G_B = (V_E, V_R, E_B)
 22.
 23. Return G_B = (V_E, V_R, E_B)
 ```
+
+**Implementation Note (Node Identifiers):**
+
+Relation nodes use **hash-based identifiers** (e.g., `rel-8c80df8f1fc71f13c4ffbe19fa22bf8f`) generated from content via MD5 hashing, while entity nodes use **canonical names as IDs** (e.g., `"LIONEL MESSI"`). This design ensures:
+
+1. **Fast lookup:** $O(1)$ hash comparison vs $O(n)$ string comparison for relations
+2. **Consistency:** Hash IDs match vector database keys across storage layers
+3. **Compact storage:** GraphML files are ~30-40% smaller than using full content as IDs
+4. **Human readability:** Entity names remain interpretable for debugging
+5. **Collision resistance:** MD5 hashes virtually eliminate ID conflicts for distinct content
+
+The hash-based approach is critical for efficient retrieval in production systems with millions of relations.
 
 **Entity Resolution (line 10):** Implements:
 1. Canonical form normalization (lowercase, whitespace trimming)
@@ -1410,35 +1447,83 @@ Answer:
 
 ### B.2 Storage Schema
 
-**Entity Node Schema (JSON):**
-```json
-{
-  "id": "ent-a1b2c3d4",
-  "name": "Christopher Nolan",
-  "type": "Person",
-  "description": "British-American filmmaker",
-  "confidence": 0.95,
-  "source_chunks": ["chunk-001", "chunk-042"]
-}
-```
+BiG-RAG uses a three-layer storage architecture with the following schemas:
 
-**Relation Node Schema (JSON):**
-```json
-{
-  "id": "rel-x7y8z9w0",
-  "description": "Christopher Nolan directed Inception (2010), a science fiction thriller",
-  "type": "creative_work",
-  "confidence": 0.98,
-  "entities": ["ent-a1b2c3d4", "ent-e5f6g7h8"],
-  "source_chunk": "chunk-001"
-}
-```
+**GraphML Storage (graph_chunk_entity_relation.graphml):**
 
-**Bipartite Edge Schema (GraphML):**
+**Relation Node Attributes:**
 ```xml
-<edge source="ent-a1b2c3d4" target="rel-x7y8z9w0">
-  <data key="weight">1.0</data>
+<node id="rel-8c80df8f1fc71f13c4ffbe19fa22bf8f">
+  <data key="role">bipartite_edge</data>                    <!-- Node type (fixed) -->
+  <data key="content">Full natural language description</data> <!-- Complete semantic context -->
+  <data key="weight">12.0</data>                             <!-- Aggregated completeness score -->
+  <data key="source_id">chunk-600f9c...<SEP>chunk-abc...</data> <!-- Pipe-separated chunk IDs -->
+</node>
+```
+
+**Entity Node Attributes:**
+```xml
+<node id="&quot;LIONEL MESSI&quot;">
+  <data key="role">entity</data>                              <!-- Node type (fixed) -->
+  <data key="entity_type">person</data>                       <!-- Normalized type -->
+  <data key="description">Lionel Messi is...</data>           <!-- Aggregated descriptions -->
+  <data key="weight">275.0</data>                             <!-- Aggregated importance score -->
+  <data key="source_id">chunk-e49712ee...<SEP>chunk-600f...</data> <!-- Pipe-separated chunk IDs -->
+</node>
+```
+
+**Graph Edge Attributes:**
+```xml
+<edge source="rel-8c80df8f1fc71f13c4ffbe19fa22bf8f" target="&quot;LIONEL MESSI&quot;">
+  <data key="weight">180.0</data>                             <!-- Connection strength -->
+  <data key="source_id">chunk-600f9c648bc602202ec663...</data> <!-- Originating chunk ID -->
 </edge>
+```
+
+**Key Design Points:**
+- **Relation IDs:** Hash-based (e.g., `rel-8c80df8f...`) for fast lookup and collision resistance
+- **Entity IDs:** Canonical names (e.g., `"LIONEL MESSI"`) for human readability
+- **Weight Semantics:** Un-normalized sums preserving frequency signals
+- **Source Tracking:** Pipe-separated (`<SEP>`) chunk IDs for provenance
+- **Content Storage:** Full natural language descriptions stored as node attributes
+
+**Vector Database Schema (NanoVectorDB JSON):**
+
+```json
+{
+  "data": [
+    ["rel-8c80df8f1fc71f13c4ffbe19fa22bf8f", [0.123, -0.456, ...]], // 3072-dim vector
+    ["&quot;LIONEL MESSI&quot;", [0.789, 0.234, ...]],
+    ...
+  ],
+  "embedding_dim": 3072,
+  "metric": "cosine"
+}
+```
+
+**Key-Value Storage Schema (JSON):**
+
+```json
+// kv_store_text_chunks.json
+{
+  "chunk-600f9c648bc602202ec663361837e416": {
+    "content": "Full chunk text...",
+    "tokens": 1200,
+    "full_doc_id": "doc-ce2415fb73e5596b76d8f93f636c43a7",
+    "chunk_order_index": 0,
+    "doc_title": "Football and Footballer related news",
+    "doc_metadata": {"category": "sports", "tags": ["football", "soccer"]}
+  }
+}
+
+// kv_store_full_docs.json
+{
+  "doc-ce2415fb73e5596b76d8f93f636c43a7": {
+    "content": "Full document text...",
+    "title": "Football and Footballer related news",
+    "metadata": {"category": "sports", "source": "upload", "upload_date": "2025-11-10T10:14:31"}
+  }
+}
 ```
 
 ### B.3 Training Configuration

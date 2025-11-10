@@ -1,6 +1,6 @@
 # BiG-RAG Development Guide
 
-**Last Updated:** November 6, 2025
+**Last Updated:** November 10, 2025
 
 This document consolidates all development status, implementation notes, and technical guides for the BiG-RAG project.
 
@@ -171,6 +171,149 @@ curl "http://localhost:8001/graph/export?data_source=SingleTopic&limit=1000&offs
 - **Issue:** Confusing hierarchy
 - **Fix:** Type-based ring levels (entities=300, relations=200, chunks=100), 80px spacing, 2.0x ring separation
 - **Result:** Clear bullseye pattern with visual type hierarchy
+
+---
+
+## 🔍 Centralized Logging System (November 10, 2025)
+
+### Overview
+
+BiG-RAG implements a comprehensive centralized logging infrastructure for production-ready log management across all components.
+
+### Features Implemented
+
+✅ **Component-Separated Logs**:
+```
+logs/
+├── bigrag-core/     # Core engine (bigrag.log, error.log)
+├── backend/         # API server (api.log, error.log, access.log)
+├── jobs/            # Background jobs
+└── frontend/        # Browser console (via logger.ts)
+```
+
+✅ **Log Rotation**:
+- Size-based rotation (10MB max per file, 5 backups)
+- Time-based rotation (daily rotation, 7-day retention for API logs)
+- Automatic cleanup of old logs
+
+✅ **Multiple Log Handlers**:
+- Console output (simplified format for terminal)
+- File output (detailed format with timestamp, level, module, message)
+- Error-only output (separate error.log for critical issues)
+
+✅ **Structured Logging**:
+- Optional JSON format for log aggregation tools (ELK, Splunk)
+- Contextual logging with metadata support
+- Backward compatible with existing code
+
+✅ **Frontend Logger**:
+- Browser console logging with structured format
+- Module-specific loggers (apiLogger, graphLogger, chatLogger, documentLogger)
+- Environment-based log level configuration
+
+### Implementation Files
+
+**Backend (Python)**:
+- [bigrag/logging_config.py](bigrag/logging_config.py) - Centralized logging module (216 lines)
+- [bigrag/utils.py](bigrag/utils.py) - Enhanced set_logger() using logging_config
+- [bigrag/bigrag.py](bigrag/bigrag.py) - Smart log directory detection
+- [backend/server.py](backend/server.py) - API logger with daily rotation
+
+**Frontend (TypeScript)**:
+- [frontend/src/utils/logger.ts](frontend/src/utils/logger.ts) - Browser console logger (106 lines)
+- [frontend/src/app/App.tsx](frontend/src/app/App.tsx) - Using structured logger
+- [frontend/src/components/graph/GraphCanvas.tsx](frontend/src/components/graph/GraphCanvas.tsx) - Using graphLogger
+
+**Documentation**:
+- [docs/technical/LOGGING_GUIDE.md](docs/technical/LOGGING_GUIDE.md) - Complete logging guide
+- [Indexing_update_plan/IMPLEMENTATION_PROGRESS.md](Indexing_update_plan/IMPLEMENTATION_PROGRESS.md) - Implementation notes
+
+### Configuration
+
+Add to `.env`:
+```bash
+# Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOG_LEVEL=INFO
+
+# Log directory (optional, defaults to logs/bigrag-core/)
+LOG_DIR=./logs/bigrag-core
+
+# JSON format for structured logging
+LOG_JSON_FORMAT=false
+
+# Frontend log level
+VITE_LOG_LEVEL=INFO
+```
+
+### Usage Examples
+
+**Python (Backend)**:
+```python
+from bigrag.logging_config import setup_logger, add_context
+
+# Setup logger
+logger = setup_logger(
+    name="my_module",
+    log_dir="./logs/backend",
+    log_file="my_module.log",
+    level="INFO",
+    rotation="size",
+    max_bytes=10*1024*1024,
+    backup_count=5
+)
+
+# Basic logging
+logger.info("Operation completed successfully")
+logger.error("Failed to process request", exc_info=True)
+
+# Contextual logging
+ctx_logger = add_context(logger, request_id="req123", user="user456")
+ctx_logger.info("Processing user request")
+```
+
+**TypeScript (Frontend)**:
+```typescript
+import { logger, apiLogger, graphLogger } from '@/utils/logger';
+
+// General logging
+logger.info('Application initialized');
+
+// Module-specific logging
+apiLogger.error('API call failed', error);
+graphLogger.debug('Rendering 150 nodes');
+```
+
+### Benefits
+
+1. **Production-Ready**: Log rotation prevents disk space issues
+2. **Organized**: Logs separated by component for easy troubleshooting
+3. **Structured**: Optional JSON format for log aggregation tools
+4. **Debuggable**: Error-only logs highlight critical issues
+5. **Flexible**: Configurable via environment variables
+
+### Cleanup Performed
+
+**Orphaned Log Files Removed**:
+- `backend/backend.log` (19 bytes)
+- `backend/backend_fixed.log` (4.8 KB)
+- `backend/backend_new.log` (13 KB)
+- `backend/server.log` (19 bytes)
+- `backend/server_clean.log` (3.1 KB)
+- `backend/server_final.log` (4.3 KB)
+- `backend/server_nocache.log` (6.6 KB)
+- `frontend/frontend.log` (2.9 KB)
+
+**Total Cleanup**: 8 orphaned log files removed (~35 KB)
+
+### Impact
+
+- ✅ Better debugging with organized, structured logs
+- ✅ Automatic log management (rotation, cleanup)
+- ✅ Production-ready log infrastructure
+- ✅ Backward compatible with existing logging code
+- ✅ Comprehensive documentation for developers
+
+For complete details, see [docs/technical/LOGGING_GUIDE.md](docs/technical/LOGGING_GUIDE.md).
 
 ---
 
@@ -391,5 +534,9 @@ See [docs/technical/DEPLOYMENT.md](docs/technical/DEPLOYMENT.md) for Docker setu
 
 ---
 
-**Last Updated:** November 6, 2025
+**Last Updated:** November 10, 2025
 **Status:** Production Ready ✅
+
+**Recent Updates:**
+- November 10, 2025: Centralized logging system implementation
+- November 6, 2025: Graph visualization improvements (grid, circle, concentric layouts)

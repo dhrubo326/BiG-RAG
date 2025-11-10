@@ -9,7 +9,7 @@ import networkx as nx
 from bigrag.utils import compute_mdhash_id
 from bigrag.constants import (
     ENTITY_PREFIX,
-    BIPARTITE_EDGE_PREFIX,
+    RELATION_PREFIX,
     CHUNK_PREFIX,
 )
 
@@ -28,7 +28,7 @@ class TestNodeIDGeneration:
     def test_relation_id_format(self):
         """Test relation (bipartite edge) IDs use correct prefix"""
         relation_desc = "Test relation description"
-        relation_id = compute_mdhash_id(relation_desc, prefix=BIPARTITE_EDGE_PREFIX)
+        relation_id = compute_mdhash_id(relation_desc, prefix=RELATION_PREFIX)
 
         assert relation_id.startswith("rel-")
         assert len(relation_id) > 4

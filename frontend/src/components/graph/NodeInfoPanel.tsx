@@ -142,8 +142,8 @@ const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({
 
         {/* ✅ IMPROVED: Content with better spacing */}
         <div className="flex-1 px-6 py-6 space-y-6">
-          {/* ✅ IMPROVED: Node Type Badge with icon */}
-          <div className="flex items-center gap-2">
+          {/* ✅ IMPROVED: Node Type Badge with icon + Orphan Badge */}
+          <div className="flex items-center gap-2 flex-wrap">
             <span
               className={`
                 inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium
@@ -158,6 +158,13 @@ const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({
               {data.type === 'document' && '📋'}
               <span className="ml-1.5">{capitalize(data.type)}</span>
             </span>
+
+            {/* Orphan Node Badge */}
+            {data.connections === 0 && (
+              <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700">
+                ⚠️ Orphan Node
+              </span>
+            )}
           </div>
 
           {/* ✅ IMPROVED: Node Name with better typography */}
@@ -170,14 +177,55 @@ const NodeInfoPanel: React.FC<NodeInfoPanelProps> = ({
             </p>
           </div>
 
-          {/* Description */}
-          {data.description && (
-            <div className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-gray-900 rounded-xl p-4 border border-blue-100 dark:border-blue-900/30">
-              <label className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+          {/* Entity-specific fields */}
+          {data.type === 'entity' && (
+            <>
+              {/* Entity Type */}
+              {data.entityType && (
+                <div className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-gray-900 rounded-xl p-4 border border-blue-100 dark:border-blue-900/30">
+                  <label className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+                    Entity Type
+                  </label>
+                  <p className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {capitalize(data.entityType)}
+                  </p>
+                </div>
+              )}
+
+              {/* Entity Description (from d5) */}
+              {data.description && (
+                <div className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-gray-900 rounded-xl p-4 border border-blue-100 dark:border-blue-900/30">
+                  <label className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+                    Description
+                  </label>
+                  <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    {data.description}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Relation-specific fields */}
+          {data.type === 'relation' && (data.content || data.description) && (
+            <div className="bg-gradient-to-br from-red-50 to-white dark:from-red-900/10 dark:to-gray-900 rounded-xl p-4 border border-red-100 dark:border-red-900/30">
+              <label className="text-xs font-semibold text-red-700 dark:text-red-400 uppercase tracking-wide">
                 Description
               </label>
               <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {data.description}
+                {data.content || data.description}
+              </p>
+            </div>
+          )}
+
+          {/* Chunk-specific fields */}
+          {data.type === 'chunk' && (data.content || data.description) && (
+            <div className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-gray-900 rounded-xl p-4 border border-green-100 dark:border-green-900/30">
+              <label className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">
+                Content
+              </label>
+              <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {data.content || data.description}
               </p>
             </div>
           )}

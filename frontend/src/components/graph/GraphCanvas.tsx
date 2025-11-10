@@ -7,6 +7,7 @@ import fcose from 'cytoscape-fcose';
 import cola from 'cytoscape-cola';
 import { GRAPH_COLORS } from '../../utils/constants';
 import type { CytoscapeNode, CytoscapeEdge } from '../../types';
+import { graphLogger } from '@/utils/logger';
 
 // Register layout algorithms
 cytoscape.use(coseBilkent);
@@ -240,6 +241,16 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         opacity: 1,
       },
     },
+    // ✅ NEW: Orphan nodes (no connections) - dashed yellow border
+    {
+      selector: 'node[connections = 0]',
+      style: {
+        'border-width': 3,
+        'border-color': '#FBBF24',
+        'border-style': 'dashed',
+        'border-opacity': 0.9,
+      },
+    },
   ];
 
   // ✅ FIX: Prevent graph reset on node selection
@@ -445,7 +456,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
     // Skip if already initialized
     if (isInitialized.current) return;
 
-    console.log('[GraphCanvas] Initializing Cytoscape instance');
+    graphLogger.info('Initializing Cytoscape instance');
     cyRef.current = cy;
     isInitialized.current = true;
 
@@ -486,7 +497,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
     // Call parent's onReady
     onReady?.(cy);
 
-    console.log('[GraphCanvas] Initialization complete');
+    graphLogger.info('Initialization complete');
   }, [handleNodeTap, handleBackgroundTap, handleNodeMouseOver, handleNodeMouseOut, onReady]);
 
   // ✅ CRITICAL FIX: Run layout when elements are loaded OR layout changes

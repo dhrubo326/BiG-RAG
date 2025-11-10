@@ -170,15 +170,48 @@ class BiGRAG:
     convert_response_to_json_func: callable = convert_response_to_json
 
     def __post_init__(self):
-        # Ensure logs directory exists
-        logs_dir = os.path.join(os.getcwd(), "logs")
+        # Use centralized logging directory or fallback to working_dir/logs
+        from bigrag.config import config
+        from pathlib import Path
+
+        # Priority: LOG_DIR env var > centralized logs/bigrag-core > working_dir/logs
+        if config.log_dir:
+            logs_dir = config.log_dir
+        else:
+            # Try to find project root by looking for markers
+            # Start from current directory and go up
+            current = Path.cwd()
+            project_root = None
+
+            # Check current directory and up to 4 parent directories
+            for _ in range(5):
+                # Look for project root markers (not just logs/ directory)
+                # Project root should have: bigrag/ package AND logs/ directory
+                has_bigrag_package = (current / "bigrag").exists() and (current / "bigrag" / "__init__.py").exists()
+                has_logs_dir = (current / "logs").exists() and (current / "logs").is_dir()
+
+                if has_bigrag_package and has_logs_dir:
+                    project_root = current
+                    break
+
+                if current.parent == current:  # Reached filesystem root
+                    break
+                current = current.parent
+
+            if project_root:
+                # Found project root with both bigrag/ and logs/
+                logs_dir = str(project_root / "logs" / "bigrag-core")
+            else:
+                # Fallback to working_dir/logs for backward compatibility
+                logs_dir = os.path.join(self.working_dir, "logs")
+
         os.makedirs(logs_dir, exist_ok=True)
 
         log_file = os.path.join(logs_dir, "bigrag.log")
-        set_logger(log_file)
-        logger.setLevel(self.log_level)
+        set_logger(log_file, level=self.log_level)
 
         logger.info(f"Logger initialized for working directory: {self.working_dir}")
+        logger.debug(f"Logs directory: {logs_dir}")
 
         _print_config = ",\n  ".join([f"{k} = {v}" for k, v in asdict(self).items()])
         logger.debug(f"BiGRAG init with param:\n  {_print_config}\n")
@@ -233,11 +266,11 @@ class BiGRAG:
             meta_fields={"entity_name"},  # Bug #5 fix: Store entity_name for node lookup
             **self.vector_db_storage_cls_kwargs,
         )
-        self.vdb_bipartite_edges = self.vector_db_storage_cls(
-            namespace="bipartite_edges",
+        self.vdb_relations = self.vector_db_storage_cls(
+            namespace="relations",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
-            meta_fields={"bipartite_edge_name"},  # Bug #5 fix: Store edge name for node lookup
+            meta_fields={"relation_name"},  # Phase 3: Renamed from bipartite_edge_name for clarity
             **self.vector_db_storage_cls_kwargs,
         )
         self.vdb_chunks = self.vector_db_storage_cls(
@@ -375,11 +408,11 @@ class BiGRAG:
                 inserting_chunks,
                 knowledge_graph_inst=self.chunk_entity_relation_graph,
                 vdb_entities=self.vdb_entities,
-                vdb_bipartite_edges=self.vdb_bipartite_edges,
+                vdb_relations=self.vdb_relations,
                 global_config=asdict(self),
             )
             if maybe_new_kg is None:
-                logger.warning("No new bipartite edges and entities found")
+                logger.warning("No new relations and entities found")
                 return
             self.chunk_entity_relation_graph = maybe_new_kg
 
@@ -409,7 +442,7 @@ class BiGRAG:
             self.text_chunks,
             self.llm_response_cache,
             self.vdb_entities,
-            self.vdb_bipartite_edges,
+            self.vdb_relations,
             self.vdb_chunks,
             self.chunk_entity_relation_graph,
         ]:
@@ -540,7 +573,7 @@ class BiGRAG:
                 await self.vdb_entities.upsert(data_for_vdb)
 
             # Insert relationships into vector storage if needed
-            if self.vdb_bipartite_edges is not None:
+            if self.vdb_relations is not None:
                 data_for_vdb = {
                     compute_mdhash_id(dp["src_id"] + dp["tgt_id"], prefix="rel-"): {
                         "src_id": dp["src_id"],
@@ -552,16 +585,16 @@ class BiGRAG:
                     }
                     for dp in all_relationships_data
                 }
-                await self.vdb_bipartite_edges.upsert(data_for_vdb)
+                await self.vdb_relations.upsert(data_for_vdb)
         finally:
             if update_storage:
                 await self._insert_done()
 
-    def query(self, query: str, param: QueryParam = QueryParam(), entity_match=None, bipartite_edge_match=None):
+    def query(self, query: str, param: QueryParam = QueryParam(), entity_match=None, relation_match=None):
         loop = always_get_an_event_loop()
-        return loop.run_until_complete(self.aquery(query, param, entity_match, bipartite_edge_match))
+        return loop.run_until_complete(self.aquery(query, param, entity_match, relation_match))
 
-    async def aquery(self, query: str, param: QueryParam = QueryParam(), entity_match=None, bipartite_edge_match=None):
+    async def aquery(self, query: str, param: QueryParam = QueryParam(), entity_match=None, relation_match=None):
         # All query modes now pass VDB instances directly to kg_query
         # kg_query will handle querying based on param.mode
         # Phase 3.2: Now includes vdb_chunks for Three-Path Retrieval
@@ -569,7 +602,7 @@ class BiGRAG:
             query,
             self.chunk_entity_relation_graph,
             self.vdb_entities,  # Path A: Entity vector DB
-            self.vdb_bipartite_edges,  # Path B: Bipartite edge vector DB
+            self.vdb_relations,  # Path B: Relation vector DB
             self.text_chunks,
             self.vdb_chunks,  # Phase 3.2: Path C: Chunk vector DB
             param,
@@ -596,7 +629,7 @@ class BiGRAG:
 
         try:
             await self.vdb_entities.delete_entity(entity_name)
-            await self.vdb_bipartite_edges.delete_relation(entity_name)
+            await self.vdb_relations.delete_relation(entity_name)
             await self.chunk_entity_relation_graph.delete_node(entity_name)
 
             logger.info(
@@ -610,7 +643,7 @@ class BiGRAG:
         tasks = []
         for storage_inst in [
             self.vdb_entities,
-            self.vdb_bipartite_edges,
+            self.vdb_relations,
             self.chunk_entity_relation_graph,
         ]:
             if storage_inst is None:
@@ -741,7 +774,7 @@ class BiGRAG:
                             role = attrs.get("role", "")
                             if role == "entity":
                                 entities_to_delete.append(node)
-                            elif role == "bipartite_edge":
+                            elif role == "relation":
                                 edges_to_delete.append(node)
                         else:
                             # Update source_id to remove deleted chunks
@@ -770,10 +803,10 @@ class BiGRAG:
             for edge_name in edges_to_delete:
                 try:
                     await self.chunk_entity_relation_graph.delete_node(edge_name)
-                    if self.vdb_bipartite_edges is not None:
+                    if self.vdb_relations is not None:
                         # Bug #1 Fix: edge_name is already a hash ID (rel-abc123...)
                         # No need to compute hash again
-                        await self.vdb_bipartite_edges.delete([edge_name])
+                        await self.vdb_relations.delete([edge_name])
                 except Exception as e:
                     logger.warning(f"Failed to delete edge {edge_name}: {e}")
 
@@ -810,7 +843,7 @@ class BiGRAG:
             self.text_chunks,
             self.vdb_chunks,
             self.vdb_entities,
-            self.vdb_bipartite_edges,
+            self.vdb_relations,
             self.chunk_entity_relation_graph,
         ]:
             if storage_inst is None:

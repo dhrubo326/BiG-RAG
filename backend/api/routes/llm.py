@@ -60,11 +60,11 @@ async def chat_completions(
         # RAG: Retrieve context from knowledge graph
         if request.use_rag:
             entity_match = None
-            edge_match = None
+            relation_match = None
 
             if embedding_manager.mode == "flagembedding":
                 entity_match = await embedding_manager.search_entities(user_prompt, 5)
-                edge_match = await embedding_manager.search_edges(user_prompt, 5)
+                relation_match = await embedding_manager.search_relations(user_prompt, 5)
 
             # Phase 3: Three-Path Retrieval + Semantic Reranking
             context_results = await rag.aquery(
@@ -76,7 +76,7 @@ async def chat_completions(
                     enable_reranking=request.enable_reranking  # Phase 3.4: semantic reranking
                 ),
                 entity_match=entity_match,
-                bipartite_edge_match=edge_match
+                relation_match=relation_match
             )
 
             if context_results:

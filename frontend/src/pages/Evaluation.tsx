@@ -9,7 +9,7 @@
  * - Export evaluation reports
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Play, Download, RefreshCw, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -38,13 +38,28 @@ interface EvaluationResult {
 }
 
 export function Evaluation() {
-  const [dataset, setDataset] = useState('SingleTopic');
+  const [dataset, setDataset] = useState('demo_test');
   const [queryMode, setQueryMode] = useState('hybrid');
   const [topK, setTopK] = useState(5);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<EvaluationResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<EvaluationResult | null>(null);
+
+  // Fetch server's default dataset
+  useEffect(() => {
+    const fetchServerDataset = async () => {
+      try {
+        const response = await api.get<any>('/');
+        if (response.data.dataset) {
+          setDataset(response.data.dataset);
+        }
+      } catch (error) {
+        console.error('Failed to fetch server dataset:', error);
+      }
+    };
+    fetchServerDataset();
+  }, []);
 
   const handleRunEvaluation = async () => {
     setIsRunning(true);
@@ -141,6 +156,7 @@ export function Evaluation() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="demo_test">Demo Test (Default)</SelectItem>
                   <SelectItem value="SingleTopic">SingleTopic</SelectItem>
                   <SelectItem value="2WikiMultiHopQA">2WikiMultiHopQA</SelectItem>
                   <SelectItem value="HotpotQA">HotpotQA</SelectItem>

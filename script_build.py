@@ -166,7 +166,7 @@ def verify_output(working_dir: str):
     expected_files = [
         "kv_store_text_chunks.json",
         "vdb_entities.json",
-        "vdb_bipartite_edges.json",
+        "vdb_relations.json",
         "graph_chunk_entity_relation.graphml",
     ]
 
@@ -188,17 +188,17 @@ def verify_output(working_dir: str):
             chunks = json.load(f)
         with open(output_dir / "vdb_entities.json", 'r', encoding='utf-8') as f:
             vdb_entities = json.load(f)
-        with open(output_dir / "vdb_bipartite_edges.json", 'r', encoding='utf-8') as f:
-            vdb_bipartite_edges = json.load(f)
+        with open(output_dir / "vdb_relations.json", 'r', encoding='utf-8') as f:
+            vdb_relations = json.load(f)
 
         logger.info("="*80)
         logger.info("GRAPH STATISTICS")
         logger.info("="*80)
         logger.info(f"  Text Chunks: {len(chunks)}")
         entities_count = len(vdb_entities.get('data', []))
-        edges_count = len(vdb_bipartite_edges.get('data', []))
+        edges_count = len(vdb_relations.get('data', []))
         logger.info(f"  Entities: {entities_count}")
-        logger.info(f"  Relations (Bipartite Edges): {edges_count}")
+        logger.info(f"  Relations: {edges_count}")
         logger.info("="*80)
         logger.info("")
         return True

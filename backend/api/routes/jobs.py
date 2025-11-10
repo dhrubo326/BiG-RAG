@@ -31,10 +31,12 @@ async def get_job_status(job_id: str):
     # Convert stats to JobStatistics model if present
     job_stats = None
     if job.stats:
+        relations_count = job.stats.get("relations", job.stats.get("edges", 0))
         job_stats = JobStatistics(
             chunks_created=job.stats.get("chunks", 0),
             entities_extracted=job.stats.get("entities", 0),
-            edges_created=job.stats.get("edges", 0),
+            relations_created=relations_count,
+            edges_created=relations_count,  # Deprecated: alias for backward compatibility
             tokens_processed=job.stats.get("tokens", 0)
         )
 

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Router } from './Router'
 import { Toaster } from 'sonner'
+import { logger } from '@/utils/logger'
 
 /**
  * App Component
@@ -14,7 +15,7 @@ import { Toaster } from 'sonner'
 export function App() {
   useEffect(() => {
     // Log app initialization
-    console.log('[BiG-RAG] Application initialized')
+    logger.info('Application initialized')
 
     // Check API connectivity on startup
     checkAPIConnection()
@@ -24,12 +25,12 @@ export function App() {
     try {
       const response = await fetch('/api/health')
       if (response.ok) {
-        console.log('[BiG-RAG] Backend API connected')
+        logger.info('Backend API connected')
       } else {
-        console.warn('[BiG-RAG] Backend API returned non-OK status:', response.status)
+        logger.warn('Backend API returned non-OK status', { status: response.status })
       }
     } catch (error) {
-      console.warn('[BiG-RAG] Backend API not reachable:', error)
+      logger.warn('Backend API not reachable', error)
     }
   }
 

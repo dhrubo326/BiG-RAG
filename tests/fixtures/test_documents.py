@@ -352,7 +352,7 @@ def validate_demo_test_kg() -> bool:
     required_files = [
         "graph_chunk_entity_relation.graphml",
         "vdb_entities.json",
-        "vdb_bipartite_edges.json",
+        "vdb_relations.json",
         "vdb_chunks.json",
         "kv_store_full_docs.json",
         "kv_store_text_chunks.json",

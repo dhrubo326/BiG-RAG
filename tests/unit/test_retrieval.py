@@ -231,15 +231,15 @@ class TestPathBRelationRetrieval:
         """Test relation vector search result format"""
         # Simulate vector DB query results
         results = [
-            {"bipartite_edge_name": "Messi plays for Inter Miami", "score": 0.92},
-            {"bipartite_edge_name": "Inter Miami based in Florida", "score": 0.85},
+            {"relation_name": "Messi plays for Inter Miami", "score": 0.92},
+            {"relation_name": "Inter Miami based in Florida", "score": 0.85},
         ]
 
         # Extract relation names (Bug #4 fix: defensive access)
         relation_names = [
-            r.get("bipartite_edge_name")
+            r.get("relation_name")
             for r in results
-            if "bipartite_edge_name" in r
+            if "relation_name" in r
         ]
 
         assert len(relation_names) == 2

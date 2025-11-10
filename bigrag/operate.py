@@ -292,7 +292,7 @@ async def _handle_single_hyperrelation_extraction(
     record_attributes: list[str],
     chunk_key: str,
 ):
-    if len(record_attributes) < 3 or record_attributes[0] != '"bipartite_edge"':
+    if len(record_attributes) < 3 or record_attributes[0] != '"relation"':
         return None
     # add this record as edge
     knowledge_fragment = clean_str(record_attributes[1])
@@ -303,8 +303,8 @@ async def _handle_single_hyperrelation_extraction(
 
     # A1: Generate hash-based ID instead of using content directly
     # This reduces GraphML file size by 30-40% and improves query performance
-    from .constants import BIPARTITE_EDGE_PREFIX
-    edge_id = compute_mdhash_id(knowledge_fragment, prefix=BIPARTITE_EDGE_PREFIX)
+    from .constants import RELATION_PREFIX
+    edge_id = compute_mdhash_id(knowledge_fragment, prefix=RELATION_PREFIX)
 
     return dict(
         hyper_relation=edge_id,  # Hash ID: "rel-abc123..."
@@ -314,14 +314,14 @@ async def _handle_single_hyperrelation_extraction(
     )
     
 
-async def _merge_bipartite_edges_then_upsert(
-    bipartite_edge_name: str,
+async def _merge_relations_then_upsert(
+    relation_name: str,
     nodes_data: list[dict],
     knowledge_graph_inst: BaseGraphStorage,
     global_config: dict,
 ):
     """
-    Merge and upsert bipartite edge nodes with weight aggregation.
+    Merge and upsert relation nodes with weight aggregation.
 
     A1: Now accepts hash-based IDs and stores content as node attribute.
 
@@ -332,22 +332,22 @@ async def _merge_bipartite_edges_then_upsert(
     - No normalization (intentional - preserves frequency signal)
 
     Args:
-        bipartite_edge_name: Hash ID of the edge (e.g., "rel-abc123...")
+        relation_name: Hash ID of the edge (e.g., "rel-abc123...")
         nodes_data: List of dicts with hyper_relation_content, weight, source_id
         knowledge_graph_inst: Graph storage instance
         global_config: Configuration dict
 
     Returns:
-        Node data dict with bipartite_edge_name
+        Node data dict with relation_name
     """
     already_weights = []
     already_source_ids = []
 
-    already_bipartite_edge = await knowledge_graph_inst.get_node(bipartite_edge_name)
-    if already_bipartite_edge is not None:
-        already_weights.append(already_bipartite_edge["weight"])
+    already_relation = await knowledge_graph_inst.get_node(relation_name)
+    if already_relation is not None:
+        already_weights.append(already_relation["weight"])
         already_source_ids.extend(
-            split_string_by_multi_markers(already_bipartite_edge["source_id"], [GRAPH_FIELD_SEP])
+            split_string_by_multi_markers(already_relation["source_id"], [GRAPH_FIELD_SEP])
         )
 
     weight = sum([dp["weight"] for dp in nodes_data] + already_weights)
@@ -360,17 +360,17 @@ async def _merge_bipartite_edges_then_upsert(
     content = nodes_data[0].get("hyper_relation_content", "") if nodes_data else ""
 
     node_data = dict(
-        role="bipartite_edge",
+        role="relation",
         content=content,  # A1: Store content as attribute
         weight=weight,
         source_id=source_id,
     )
     await knowledge_graph_inst.upsert_node(
-        bipartite_edge_name,
+        relation_name,
         node_data=node_data,
     )
-    node_data["bipartite_edge_name"] = bipartite_edge_name
-    node_data["bipartite_edge_content"] = content  # For VDB upsertion
+    node_data["relation_name"] = relation_name
+    node_data["relation_content"] = content  # For VDB upsertion
     return node_data
 
 
@@ -434,7 +434,7 @@ async def _merge_nodes_then_upsert(
     source_id = GRAPH_FIELD_SEP.join(
         set([dp["source_id"] for dp in nodes_data] + already_source_ids)
     )
-    # Aggregate weights from all occurrences (same as bipartite edges)
+    # Aggregate weights from all occurrences (same as relations)
     weight = sum([dp.get("weight", 0) for dp in nodes_data] + already_weights)
 
     description = await _handle_entity_relation_summary(
@@ -505,7 +505,7 @@ async def extract_entities(
     chunks: dict[str, TextChunkSchema],
     knowledge_graph_inst: BaseGraphStorage,
     vdb_entities: BaseVectorStorage,
-    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_relations: BaseVectorStorage,
     global_config: dict,
 ) -> Union[BaseGraphStorage, None]:
     use_llm_func: callable = global_config["llm_model_func"]
@@ -675,20 +675,20 @@ async def extract_entities(
         for k, v in m_edges.items():
             maybe_edges[k].extend(v)
             
-    logger.info("Inserting bipartite edges into storage...")
-    all_bipartite_edges_data = []
+    logger.info("Inserting relations into storage...")
+    all_relations_data = []
     for result in tqdm_async(
         asyncio.as_completed(
             [
-                _merge_bipartite_edges_then_upsert(k, v, knowledge_graph_inst, global_config)
+                _merge_relations_then_upsert(k, v, knowledge_graph_inst, global_config)
                 for k, v in maybe_edges.items()
             ]
         ),
         total=len(maybe_edges),
-        desc="Inserting bipartite edges",
+        desc="Inserting relations",
         unit="entity",
     ):
-        all_bipartite_edges_data.append(await result)
+        all_relations_data.append(await result)
             
     logger.info("Inserting entities into storage...")
     all_entities_data = []
@@ -720,14 +720,14 @@ async def extract_entities(
     ):
         all_relationships_data.append(await result)
 
-    if not len(all_bipartite_edges_data) and not len(all_entities_data) and not len(all_relationships_data):
+    if not len(all_relations_data) and not len(all_entities_data) and not len(all_relationships_data):
         logger.warning(
-            "Didn't extract any bipartite edges and entities, maybe your LLM is not working"
+            "Didn't extract any relations and entities, maybe your LLM is not working"
         )
         return None
 
-    if not len(all_bipartite_edges_data):
-        logger.warning("Didn't extract any bipartite edges")
+    if not len(all_relations_data):
+        logger.warning("Didn't extract any relations")
     if not len(all_entities_data):
         logger.warning("Didn't extract any entities")
     if not len(all_relationships_data):
@@ -737,19 +737,19 @@ async def extract_entities(
     from .utils import safe_operation_with_retry
     from .constants import DEFAULT_MAX_RETRIES
 
-    if vdb_bipartite_edges is not None:
-        # A1: bipartite_edge_name is already a hash ID (rel-abc123...)
-        # No need to hash again. Use bipartite_edge_content for vector embedding.
+    if vdb_relations is not None:
+        # A1: relation_name is already a hash ID (rel-abc123...)
+        # No need to hash again. Use relation_content for vector embedding.
         data_for_vdb = {
-            dp["bipartite_edge_name"]: {  # Already hash ID
-                "content": dp.get("bipartite_edge_content", ""),  # Use actual content for embedding
-                "bipartite_edge_name": dp["bipartite_edge_name"],
+            dp["relation_name"]: {  # Already hash ID
+                "content": dp.get("relation_content", ""),  # Use actual content for embedding
+                "relation_name": dp["relation_name"],
             }
-            for dp in all_bipartite_edges_data
+            for dp in all_relations_data
         }
         await safe_operation_with_retry(
-            lambda: vdb_bipartite_edges.upsert(data_for_vdb),
-            "VDB upsert bipartite edges",
+            lambda: vdb_relations.upsert(data_for_vdb),
+            "VDB upsert relations",
             context=f"{len(data_for_vdb)} edges",
             max_retries=global_config.get("api_retry_attempts", DEFAULT_MAX_RETRIES),
         )
@@ -814,13 +814,13 @@ async def kg_query(
     query,
     knowledge_graph_inst: BaseGraphStorage,
     vdb_entities: BaseVectorStorage,  # Bug #6 Fix: Correct type annotation
-    vdb_bipartite_edges: BaseVectorStorage,  # Bug #6 Fix: Correct type annotation
+    vdb_relations: BaseVectorStorage,  # Bug #6 Fix: Correct type annotation
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     vdb_chunks: BaseVectorStorage,  # Phase 3.2: Added vdb_chunks parameter
     query_param: QueryParam,
     global_config: dict,
     hashing_kv: BaseKVStorage = None,
-) -> str:
+) -> Union[str, list]:
 
     hl_keywords = query
     ll_keywords = query
@@ -829,14 +829,17 @@ async def kg_query(
         keywords,
         knowledge_graph_inst,
         vdb_entities,
-        vdb_bipartite_edges,
+        vdb_relations,
         text_chunks_db,
         vdb_chunks,  # Phase 3.2: Pass vdb_chunks
         query_param,
     )
 
-    # Bug #1 Fix: Format structured knowledge as string for LLM context
-    return _format_knowledge_as_string(knowledge_list)
+    # Return structured list for API endpoints or formatted string for LLM context
+    if query_param.only_need_context:
+        return knowledge_list  # Return list of dicts for API endpoints
+    else:
+        return _format_knowledge_as_string(knowledge_list)  # Return formatted string for LLM
 
 
 
@@ -844,7 +847,7 @@ async def _build_query_context(
     query: list,
     knowledge_graph_inst: BaseGraphStorage,
     vdb_entities: BaseVectorStorage,
-    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_relations: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     vdb_chunks: BaseVectorStorage,  # Phase 3.2: Added vdb_chunks parameter
     query_param: QueryParam,
@@ -854,7 +857,7 @@ async def _build_query_context(
 
     Combines three retrieval paths:
     - Path A: Entity-based (structural, high-level)
-    - Path B: Bipartite edge-based (relational, knowledge fragments)
+    - Path B: Relation-based (relational, knowledge fragments)
     - Path C: Chunk-based (semantic, raw text)
 
     Returns 5 structured knowledge items + 5 chunk items = 10 total context items
@@ -871,11 +874,11 @@ async def _build_query_context(
         query_param,
     )
 
-    # Path B: Bipartite edge retrieval
+    # Path B: Relation retrieval
     knowledge_list_2 = await _get_edge_data(
         hl_keywrds,
         knowledge_graph_inst,
-        vdb_bipartite_edges,
+        vdb_relations,
         text_chunks_db,
         query_param,
     )
@@ -912,7 +915,11 @@ async def _build_query_context(
         if k not in know_score:
             know_score[k] = 0
             know_sources[k] = set()
-            know_type[k] = "entity"
+            # Phase 1 Fix: Distinguish entities from relations by prefix
+            if k.startswith("ENTITY:"):
+                know_type[k] = "entity"
+            else:
+                know_type[k] = "relation"  # Relations from entity traversal
         score = 1/(i+1)
         know_score[k] += score
         if source_ids:
@@ -923,7 +930,7 @@ async def _build_query_context(
         if k not in know_score:
             know_score[k] = 0
             know_sources[k] = set()
-            know_type[k] = "bipartite_edge"
+            know_type[k] = "relation"
         score = 1/(i+1)
         know_score[k] += score
         if source_ids:
@@ -989,7 +996,7 @@ async def _build_query_context(
     # Combine: 5 structured + 5 chunks = 10 total
     knowledge = []
 
-    # Add structured knowledge (entities + bipartite edges)
+    # Add structured knowledge (entities + relations)
     for k, score in structured_knowledge:
         sources = list(know_sources.get(k, []))
         knowledge.append({
@@ -1043,12 +1050,35 @@ async def _get_node_data(
         {**n, "entity_name": k, "rank": d}
         for k, n, d in zip(results, node_datas, node_degrees)
         if n is not None
-    ]  
+    ]
+
+    # Phase 1: Extract top-10 entity descriptions to preserve entity-level context
+    entity_knowledge_list = []
+    for i, entity in enumerate(node_datas[:10]):  # Top-10 most relevant entities
+        if entity and "description" in entity:
+            # Format: "ENTITY: {name} ({type}) - {description}"
+            entity_desc = (
+                f"ENTITY: {entity['entity_name']} "
+                f"({entity.get('entity_type', 'unknown')}) - "
+                f"{entity['description']}"
+            )
+            # Extract source_ids from entity (chunks where this entity appears)
+            source_ids = []
+            if "source_id" in entity and entity["source_id"]:
+                source_ids = (
+                    entity["source_id"].split(GRAPH_FIELD_SEP)
+                    if isinstance(entity["source_id"], str)
+                    else [entity["source_id"]]
+                )
+            entity_knowledge_list.append((entity_desc, source_ids))
+
+    # Get relations connected to all 60 entities (unchanged)
     use_relations = await _find_most_related_edges_from_entities(
         node_datas, query_param, knowledge_graph_inst
     )
-    # Extract knowledge and source IDs together for evaluation
-    knowledge_list = []
+
+    # Extract relation knowledge and source IDs
+    relation_knowledge_list = []
     for s in use_relations:
         # A1 Fix: Description now contains actual content from _find_most_related_edges_from_entities
         description = s["description"]
@@ -1057,7 +1087,13 @@ async def _get_node_data(
         if "source_id" in s and s["source_id"]:
             # source_id may contain multiple IDs separated by GRAPH_FIELD_SEP
             source_ids = s["source_id"].split(GRAPH_FIELD_SEP) if isinstance(s["source_id"], str) else [s["source_id"]]
-        knowledge_list.append((description, source_ids))
+        relation_knowledge_list.append((description, source_ids))
+
+    # Combine: 10 entity descriptions + all relation descriptions
+    # This provides balanced entity-level and relation-level context for RRF
+    knowledge_list = entity_knowledge_list + relation_knowledge_list
+
+    logger.info(f"[Path A] Returning {len(entity_knowledge_list)} entity descriptions + {len(relation_knowledge_list)} relations")
     return knowledge_list
 
 
@@ -1140,79 +1176,145 @@ async def _find_most_related_edges_from_entities(
     query_param: QueryParam,
     knowledge_graph_inst: BaseGraphStorage,
 ):
-    all_related_edges = await asyncio.gather(
-        *[knowledge_graph_inst.get_node_edges(dp["entity_name"]) for dp in node_datas]
-    )
-    all_edges = []
-    seen = set()
+    """
+    Find relations connected to entities via multi-hop graph traversal.
 
-    for this_edges in all_related_edges:
-        for e in this_edges:
-            sorted_edge = tuple(e)
-            if sorted_edge not in seen:
-                seen.add(sorted_edge)
-                all_edges.append(sorted_edge)
+    Phase 2: Implements static multi-hop reasoning (1-3 hops) based on query_param.max_hops.
+    Bipartite structure ensures alternating traversal: Entity → Relation → Entity → Relation
 
-    all_edges_pack = await asyncio.gather(
-        *[knowledge_graph_inst.get_edge(e[0], e[1]) for e in all_edges]
-    )
-    all_edges_degree = await asyncio.gather(
-        *[knowledge_graph_inst.edge_degree(e[0], e[1]) for e in all_edges]
-    )
+    Args:
+        node_datas: Initial entity nodes from vector search
+        query_param: Query parameters including max_hops
+        knowledge_graph_inst: Graph storage instance
 
-    # A1 Fix: Fetch node data for bipartite edge nodes to get content
-    # k[1] could be entity or bipartite edge node - need to check which
-    bipartite_edge_ids = [k[1] for k in all_edges if k[1].startswith("rel-")]
-    bipartite_node_data = {}
-    if bipartite_edge_ids:
-        nodes = await asyncio.gather(
-            *[knowledge_graph_inst.get_node(node_id) for node_id in bipartite_edge_ids]
+    Returns:
+        List of relation dictionaries sorted by (rank, weight), each containing:
+        - src_tgt: (source_id, target_id) tuple
+        - rank: Edge degree (how many times this edge appears)
+        - description: Relation content text
+        - source_id: Chunks where this relation appears
+        - weight: Aggregated importance score
+        - hop: Which hop this relation was discovered in (for debugging)
+    """
+    # Initialize traversal state
+    all_relations = []
+    current_entities = {dp["entity_name"]: dp for dp in node_datas}
+    visited_entities = set(current_entities.keys())
+
+    logger.info(f"[Multi-Hop] Starting traversal with {len(current_entities)} seed entities, max_hops={query_param.max_hops}")
+
+    # Multi-hop traversal loop
+    for hop in range(query_param.max_hops):
+        logger.info(f"[Multi-Hop] Hop {hop+1}/{query_param.max_hops}: Processing {len(current_entities)} entities")
+
+        # Get all edges from current hop entities
+        edges_batch = await asyncio.gather(
+            *[knowledge_graph_inst.get_node_edges(entity_name)
+              for entity_name in current_entities.keys()]
         )
-        bipartite_node_data = {
-            node_id: node for node_id, node in zip(bipartite_edge_ids, nodes)
-            if node is not None
-        }
 
-    all_edges_data = []
-    for k, v, d in zip(all_edges, all_edges_pack, all_edges_degree):
-        if v is None:
-            continue
-        # A1 Fix: If target is bipartite edge node, get content from node data
-        target_id = k[1]
-        if target_id.startswith("rel-") and target_id in bipartite_node_data:
-            description = bipartite_node_data[target_id].get("content", target_id)
-        else:
-            # Entity node or fallback - use node ID
-            description = target_id
+        # Collect unique edges
+        all_edges = []
+        seen_edges = set()
+        for edges in edges_batch:
+            for e in edges:
+                edge_tuple = tuple(e)
+                if edge_tuple not in seen_edges:
+                    seen_edges.add(edge_tuple)
+                    all_edges.append(edge_tuple)
 
-        all_edges_data.append({
-            "src_tgt": k,
-            "rank": d,
-            "description": description,
-            **v
-        })
+        if not all_edges:
+            logger.info(f"[Multi-Hop] No edges found at hop {hop+1}, stopping early")
+            break
 
-    all_edges_data = sorted(
-        all_edges_data, key=lambda x: (x["rank"], x["weight"]), reverse=True
-    )
-    return all_edges_data
+        # Fetch edge metadata and degrees in parallel
+        all_edges_pack = await asyncio.gather(
+            *[knowledge_graph_inst.get_edge(e[0], e[1]) for e in all_edges]
+        )
+        all_edges_degree = await asyncio.gather(
+            *[knowledge_graph_inst.edge_degree(e[0], e[1]) for e in all_edges]
+        )
+
+        # Fetch relation node data for content extraction
+        relation_ids = [e[1] for e in all_edges if e[1].startswith("rel-")]
+        relation_node_data = {}
+        if relation_ids:
+            nodes = await asyncio.gather(
+                *[knowledge_graph_inst.get_node(node_id) for node_id in relation_ids]
+            )
+            relation_node_data = {
+                node_id: node for node_id, node in zip(relation_ids, nodes)
+                if node is not None
+            }
+
+        # Process edges and prepare for next hop
+        hop_relations = []
+        next_entities = {}
+
+        for edge, edge_data, edge_degree in zip(all_edges, all_edges_pack, all_edges_degree):
+            if edge_data is None:
+                continue
+
+            src, tgt = edge
+
+            # Extract relation content
+            if tgt.startswith("rel-"):  # Target is a relation node
+                relation_node = relation_node_data.get(tgt)
+                if relation_node:
+                    hop_relations.append({
+                        "src_tgt": edge,
+                        "rank": edge_degree,
+                        "description": relation_node.get("content", tgt),
+                        "source_id": relation_node.get("source_id", ""),
+                        "weight": relation_node.get("weight", 0),
+                        "hop": hop + 1  # Track which hop discovered this relation
+                    })
+
+                    # If more hops needed, collect entities connected through this relation
+                    if hop < query_param.max_hops - 1:
+                        # Get entities connected to this relation node
+                        relation_edges = await knowledge_graph_inst.get_node_edges(tgt)
+                        for rel_edge in relation_edges:
+                            connected_entity = rel_edge[1]
+                            # Only traverse to unvisited entity nodes
+                            if not connected_entity.startswith("rel-") and connected_entity not in visited_entities:
+                                entity_data = await knowledge_graph_inst.get_node(connected_entity)
+                                if entity_data:
+                                    next_entities[connected_entity] = entity_data
+                                    visited_entities.add(connected_entity)
+
+        all_relations.extend(hop_relations)
+        logger.info(f"[Multi-Hop] Hop {hop+1} collected {len(hop_relations)} relations, discovered {len(next_entities)} new entities")
+
+        # Prepare for next hop
+        if hop < query_param.max_hops - 1:
+            current_entities = next_entities
+            if not current_entities:
+                logger.info(f"[Multi-Hop] Early stop at hop {hop+1}: No more entities to traverse")
+                break
+
+    # Sort all collected relations by (rank, weight) - higher is better
+    all_relations.sort(key=lambda x: (x["rank"], x["weight"]), reverse=True)
+    logger.info(f"[Multi-Hop] Total collected: {len(all_relations)} relations from {hop+1} hops")
+
+    return all_relations
 
 
 async def _get_edge_data(
     keywords,
     knowledge_graph_inst: BaseGraphStorage,
-    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_relations: BaseVectorStorage,
     text_chunks_db: BaseKVStorage[TextChunkSchema],
     query_param: QueryParam,
 ):
     # Fixed: Actually query the vector database instead of assigning the object
-    results = await vdb_bipartite_edges.query(keywords, top_k=query_param.top_k)
+    results = await vdb_relations.query(keywords, top_k=query_param.top_k)
 
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
     # Bug #4 Fix: Use defensive dict access to prevent KeyError
-    # Extract edge names from query results (Bug #5 fix: use bipartite_edge_name, not hash ID)
-    results = [r.get("bipartite_edge_name") for r in results if "bipartite_edge_name" in r]
+    # Extract edge names from query results (Bug #5 fix: use relation_name, not hash ID)
+    results = [r.get("relation_name") for r in results if "relation_name" in r]
 
     edge_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]
@@ -1221,10 +1323,10 @@ async def _get_edge_data(
     if not all([n is not None for n in edge_datas]):
         logger.warning("Some edges are missing, maybe the storage is damaged")
     # edge_degree = await asyncio.gather(
-    #     *[knowledge_graph_inst.node_degree(r["bipartite_edge_name"]) for r in results]
+    #     *[knowledge_graph_inst.node_degree(r["relation_name"]) for r in results]
     # )
     edge_datas = [
-        {"bipartite_edge": k, "rank": v["weight"], **v}
+        {"relation": k, "rank": v["weight"], **v}
         for k, v in zip(results, edge_datas)
         if v is not None
     ]
@@ -1236,13 +1338,13 @@ async def _get_edge_data(
     for s in edge_datas:
         # A1 Fix: Extract content from node (hash IDs store content in 'content' attribute)
         # Fallback to hash ID for backward compatibility (though content should always exist)
-        bipartite_edge_content = s.get("content", s["bipartite_edge"]).replace("<bipartite_edge>", "")
+        relation_content = s.get("content", s["relation"]).replace("<relation>", "")
         # Extract source_ids from the edge (chunks where this edge appears)
         source_ids = []
         if "source_id" in s and s["source_id"]:
             # source_id may contain multiple IDs separated by GRAPH_FIELD_SEP
             source_ids = s["source_id"].split(GRAPH_FIELD_SEP) if isinstance(s["source_id"], str) else [s["source_id"]]
-        knowledge_list.append((bipartite_edge_content, source_ids))
+        knowledge_list.append((relation_content, source_ids))
     return knowledge_list
 
 
@@ -1332,7 +1434,7 @@ async def _find_most_related_entities_from_relationships(
 ):
     
     node_datas = await asyncio.gather(
-        *[knowledge_graph_inst.get_node_edges(edge["bipartite_edge"]) for edge in edge_datas]
+        *[knowledge_graph_inst.get_node_edges(edge["relation"]) for edge in edge_datas]
     )
     
     entity_names = []

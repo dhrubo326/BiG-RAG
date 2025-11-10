@@ -166,11 +166,11 @@ class TestHashIDGeneration:
         """Test hash ID format for different prefixes"""
         from bigrag.operate import extract_entities
         from bigrag.utils import compute_mdhash_id
-        from bigrag.constants import BIPARTITE_EDGE_PREFIX
+        from bigrag.constants import RELATION_PREFIX
 
         # Test bipartite edge prefix
         content = "Test relation content"
-        edge_id = compute_mdhash_id(content, prefix=BIPARTITE_EDGE_PREFIX)
+        edge_id = compute_mdhash_id(content, prefix=RELATION_PREFIX)
 
         assert edge_id.startswith("rel-")
         assert len(edge_id) > 4

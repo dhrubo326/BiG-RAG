@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import type { Core } from 'cytoscape';
 import { useGraph } from '../hooks/useGraph';
 import GraphCanvas from '../components/graph/GraphCanvas';
@@ -52,11 +52,12 @@ export function GraphViz() {
   const [showHelp, setShowHelp] = useState(false);
 
   // Dataset selection state
-  const [selectedDataset, setSelectedDataset] = useState<string>('SingleTopic');
-  const [serverDataset, setServerDataset] = useState<string>('SingleTopic');
+  const [selectedDataset, setSelectedDataset] = useState<string>(''); // Empty until server responds
+  const [serverDataset, setServerDataset] = useState<string>('');
+  const [isLoadingDataset, setIsLoadingDataset] = useState(true);
   const [availableDatasets] = useState<string[]>([
+    'demo_test',      // Server default first
     'SingleTopic',
-    'demo_test',
     '2WikiMultiHopQA',
     'HotpotQA',
     'Musique',
@@ -64,6 +65,10 @@ export function GraphViz() {
     'PopQA',
     'TriviaQA'
   ]);
+
+  // Search state
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<CytoscapeNode[]>([]);
 
   // ✅ PHASE 4.2: Tooltip state
   const [hoveredNode, setHoveredNode] = useState<CytoscapeNode | null>(null);
@@ -73,24 +78,33 @@ export function GraphViz() {
   // Fetch server's default dataset from health check
   useEffect(() => {
     const fetchServerDataset = async () => {
+      setIsLoadingDataset(true);
       try {
         const response = await api.get<HealthResponse>('/');
-        if (response.data.data_source) {
-          setServerDataset(response.data.data_source);
-          setSelectedDataset(response.data.data_source); // Use server's dataset as default
+        if (response.data.dataset) {
+          setServerDataset(response.data.dataset);
+          setSelectedDataset(response.data.dataset); // Use server's dataset as default
+        } else {
+          // Fallback to first dataset if server doesn't return one
+          setSelectedDataset(availableDatasets[0]);
         }
       } catch (error) {
         console.error('Failed to fetch server dataset:', error);
-        // Keep default 'SingleTopic' if fetch fails
+        // Fallback to first dataset on error
+        setSelectedDataset(availableDatasets[0]);
+      } finally {
+        setIsLoadingDataset(false);
       }
     };
 
     fetchServerDataset();
-  }, []);
+  }, [availableDatasets]);
 
   // Load graph on mount with performance-optimized settings
   useEffect(() => {
-    // Load with sampling for large graphs (default: top 1000 nodes)
+    // Only load if dataset is set (wait for server fetch to complete)
+    if (!selectedDataset) return;
+
     const loadGraphData = async () => {
       try {
         await loadGraph(selectedDataset, {
@@ -227,30 +241,178 @@ export function GraphViz() {
     // For now, just a placeholder
   };
 
+  // Handle search with results dropdown
+  const handleSearchChange = (query: string) => {
+    setLocalSearchQuery(query);
+
+    // Search through nodes if query is at least 3 characters
+    if (query.length >= 3) {
+      const query_lower = query.toLowerCase();
+      const results = nodes.filter((node) => {
+        const label = (node.data.label || '').toLowerCase();
+        const description = (node.data.description || '').toLowerCase();
+        const content = (node.data.content || '').toLowerCase();
+        return label.includes(query_lower) || description.includes(query_lower) || content.includes(query_lower);
+      }).slice(0, 20); // Limit to 20 results
+
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+
+    // Also call the hook's search function for highlighting
+    searchNodes(query);
+  };
+
+  // Handle search result selection
+  const selectAndZoomToNode = (nodeId: string) => {
+    setSearchResults([]); // Close dropdown
+    setLocalSearchQuery(''); // Clear search
+
+    // Select the node
+    selectNode(nodes.find(n => n.data.id === nodeId) || null);
+
+    // Zoom to the node in Cytoscape
+    if (cyInstance) {
+      const node = cyInstance.$id(nodeId);
+      if (node.length > 0) {
+        cyInstance.animate({
+          center: { eles: node },
+          zoom: 2,
+        }, {
+          duration: 500,
+        });
+      }
+    }
+  };
+
   return (
     <GraphErrorBoundary onReset={handleErrorReset}>
       <div className="h-[calc(100vh-8rem)] flex flex-col relative">
-      {/* Dataset Selector */}
+      {/* Top Bar: Dataset + Search + Quick Stats */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Dataset:
-          </label>
-          <select
-            value={selectedDataset}
-            onChange={(e) => handleDatasetChange(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          >
-            {availableDatasets.map((dataset) => (
-              <option key={dataset} value={dataset}>
-                {dataset}
-                {dataset === serverDataset && ' (Server Default)'}
-              </option>
-            ))}
-          </select>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            Server using: <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{serverDataset}</span>
-          </span>
+        <div className="flex items-center gap-4">
+          {/* Dataset Selector */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+              Dataset:
+            </label>
+            <select
+              value={selectedDataset}
+              onChange={(e) => handleDatasetChange(e.target.value)}
+              disabled={isLoadingDataset}
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoadingDataset ? (
+                <option value="">Loading server default...</option>
+              ) : (
+                availableDatasets.map((dataset) => (
+                  <option key={dataset} value={dataset}>
+                    {dataset}
+                    {dataset === serverDataset && ' (Server Default)'}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
+          {/* Search Bar (Wide, prominent) */}
+          <div className="flex-1 max-w-2xl relative">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search entities, relations, or chunks (min 3 characters)..."
+                value={localSearchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full px-4 py-2 pl-10 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              />
+              {localSearchQuery && (
+                <button
+                  onClick={() => handleSearchChange('')}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Search Results Dropdown */}
+            {searchResults.length > 0 && (
+              <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl max-h-96 overflow-y-auto">
+                <div className="p-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                  Found {searchResults.length} results
+                </div>
+                {searchResults.map((result) => (
+                  <button
+                    key={result.data.id}
+                    onClick={() => selectAndZoomToNode(result.data.id)}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Node Type Indicator */}
+                      <div
+                        className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                          result.data.type === 'entity'
+                            ? 'bg-blue-500'
+                            : result.data.type === 'relation'
+                            ? 'bg-red-500'
+                            : 'bg-green-500'
+                        }`}
+                      >
+                        {result.data.type === 'entity'
+                          ? 'E'
+                          : result.data.type === 'relation'
+                          ? 'R'
+                          : 'C'}
+                      </div>
+
+                      {/* Node Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+                          {result.data.label}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                          {result.data.type === 'entity'
+                            ? `Type: ${result.data.entityType || 'unknown'} • Weight: ${result.data.weight}`
+                            : `Weight: ${result.data.weight} • ${result.data.connections || 0} connections`}
+                        </div>
+                        {result.data.connections === 0 && (
+                          <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded">
+                            Orphan Node
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quick Stats */}
+          {stats && (
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {stats.entities.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 transform rotate-45"></div>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {stats.relations.toLocaleString()}
+                </span>
+              </div>
+              {stats.orphanNodes !== undefined && stats.orphanNodes > 0 && (
+                <div className="text-xs text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                  {stats.orphanNodes} orphan
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -258,10 +420,8 @@ export function GraphViz() {
       <GraphToolbar
         layout={layout}
         filters={filters}
-        searchQuery={searchQuery}
         onLayoutChange={handleLayoutChange}
         onFiltersChange={updateFilters}
-        onSearchChange={searchNodes}
         onExport={handleExport}
         onFit={fitGraph}
         onZoomIn={handleZoomIn}

@@ -178,22 +178,28 @@ class BiGRAG:
         if config.log_dir:
             logs_dir = config.log_dir
         else:
-            # Try to find project root by looking for logs/ directory
+            # Try to find project root by looking for markers
             # Start from current directory and go up
             current = Path.cwd()
             project_root = None
 
-            # Check current directory and up to 3 parent directories
-            for _ in range(4):
-                if (current / "logs").exists() and (current / "logs").is_dir():
+            # Check current directory and up to 4 parent directories
+            for _ in range(5):
+                # Look for project root markers (not just logs/ directory)
+                # Project root should have: bigrag/ package AND logs/ directory
+                has_bigrag_package = (current / "bigrag").exists() and (current / "bigrag" / "__init__.py").exists()
+                has_logs_dir = (current / "logs").exists() and (current / "logs").is_dir()
+
+                if has_bigrag_package and has_logs_dir:
                     project_root = current
                     break
+
                 if current.parent == current:  # Reached filesystem root
                     break
                 current = current.parent
 
             if project_root:
-                # Found project root with logs/ directory
+                # Found project root with both bigrag/ and logs/
                 logs_dir = str(project_root / "logs" / "bigrag-core")
             else:
                 # Fallback to working_dir/logs for backward compatibility

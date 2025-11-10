@@ -94,11 +94,11 @@ async def generate_answer_with_rag(
     try:
         # Step 1: Retrieve context from knowledge graph
         entity_match = None
-        edge_match = None
+        relation_match = None
 
         if embedding_manager.mode == "flagembedding":
             entity_match = await embedding_manager.search_entities(question, top_k)
-            edge_match = await embedding_manager.search_edges(question, top_k)
+            relation_match = await embedding_manager.search_relations(question, top_k)
 
         # Three-Path Retrieval + Semantic Reranking
         context_results = await rag_instance.aquery(
@@ -110,7 +110,7 @@ async def generate_answer_with_rag(
                 enable_reranking=enable_reranking
             ),
             entity_match=entity_match,
-            relation_match=edge_match
+            relation_match=relation_match
         )
 
         # Step 2: Format retrieved context

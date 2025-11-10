@@ -138,7 +138,7 @@ try:
 
     elif embedding_manager.mode == "flagembedding":
         stats["entities"] = len(embedding_manager.corpus_entity)
-        stats["edges"] = len(embedding_manager.corpus_edge)
+        stats["edges"] = len(embedding_manager.corpus_relation)
 
     api_logger.info(f"Graph statistics:")
     api_logger.info(f"  - Entities: {stats['entities']}")

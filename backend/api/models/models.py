@@ -153,7 +153,7 @@ class JobStatistics(BaseModel):
     """Statistics from completed processing job"""
     chunks_created: int = Field(0, description="Number of text chunks created")
     entities_extracted: int = Field(0, description="Number of entities extracted")
-    edges_created: int = Field(0, description="Number of bipartite edges created")
+    edges_created: int = Field(0, description="Number of relations created")
     tokens_processed: int = Field(0, description="Total tokens processed")
 
 
@@ -271,7 +271,7 @@ class KGStatistics(BaseModel):
     """Knowledge graph statistics for document"""
     chunks: int = Field(0, description="Number of chunks")
     entities: int = Field(0, description="Number of entities")
-    edges: int = Field(0, description="Number of bipartite edges")
+    edges: int = Field(0, description="Number of relations")
     tokens: int = Field(0, description="Total tokens")
 
 
@@ -401,7 +401,7 @@ class DatasetStats(BaseModel):
     failed_documents: int = Field(..., description="Failed documents")
     total_chunks: int = Field(..., description="Total text chunks")
     total_entities: int = Field(..., description="Total entities")
-    total_edges: int = Field(..., description="Total bipartite edges")
+    total_edges: int = Field(..., description="Total relations")
     total_tokens: int = Field(..., description="Total tokens processed")
 
 

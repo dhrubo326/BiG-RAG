@@ -343,19 +343,19 @@ class EmbeddingManager:
 
             if graph_file.exists():
                 # New architecture: Read from GraphML
-                logger.info("Reading entity/edge names from GraphML file")
+                logger.info("Reading entity/relation names from GraphML file")
                 import networkx as nx
                 G = nx.read_graphml(graph_file)
 
                 self.corpus_entity = []
-                self.corpus_edge = []
+                self.corpus_relation = []
 
                 for node, attrs in G.nodes(data=True):
                     role = attrs.get("role", "")
                     if role == "entity":
                         self.corpus_entity.append(attrs.get("name", node))
                     elif role == "relation":
-                        self.corpus_edge.append(attrs.get("name", node))
+                        self.corpus_relation.append(attrs.get("name", node))
 
             elif legacy_entities_file.exists() and legacy_edges_file.exists():
                 # Legacy architecture: Read from JSON files
@@ -366,16 +366,16 @@ class EmbeddingManager:
 
                 with open(legacy_edges_file) as f:
                     edges = json.load(f)
-                    self.corpus_edge = [edges[item]['content'] for item in edges]
+                    self.corpus_relation = [edges[item]['content'] for item in edges]
             else:
                 raise FileNotFoundError(
-                    "No entity/edge metadata found! Expected either:\n"
+                    "No entity/relation metadata found! Expected either:\n"
                     f"  - {graph_file} (new architecture)\n"
                     f"  - {legacy_entities_file} + {legacy_edges_file} (legacy)\n"
                     "Please rebuild your graph with script_build.py"
                 )
 
-            logger.info(f"Loaded {len(self.corpus_entity)} entities, {len(self.corpus_edge)} edges")
+            logger.info(f"Loaded {len(self.corpus_entity)} entities, {len(self.corpus_relation)} relations")
 
         except ImportError as e:
             logger.error(f"FlagEmbedding dependencies not installed: {e}")
@@ -406,10 +406,10 @@ class EmbeddingManager:
             return [self.corpus_entity[i] for i in ids[0]]
         return None
 
-    async def search_edges(self, query: str, top_k: int = 5):
-        """Search for bipartite edges matching query"""
+    async def search_relations(self, query: str, top_k: int = 5):
+        """Search for relations matching query"""
         if self.mode == "flagembedding":
             embeddings = self.model.encode_queries([query])
-            _, ids = self.faiss_indices["edge"].search(embeddings, top_k)
-            return [self.corpus_edge[i] for i in ids[0]]
+            _, ids = self.faiss_indices["relation"].search(embeddings, top_k)
+            return [self.corpus_relation[i] for i in ids[0]]
         return None

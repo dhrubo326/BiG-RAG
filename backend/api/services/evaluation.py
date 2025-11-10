@@ -203,11 +203,11 @@ async def evaluate_retrieval(
 
         # For FlagEmbedding mode, pre-compute matches
         entity_match = None
-        edge_match = None
+        relation_match = None
         if embedding_manager and hasattr(embedding_manager, 'mode'):
             if embedding_manager.mode == "flagembedding":
                 entity_match = await embedding_manager.search_entities(question, top_k)
-                edge_match = await embedding_manager.search_edges(question, top_k)
+                relation_match = await embedding_manager.search_relations(question, top_k)
 
         # Evaluate single query
         result = await evaluate_single_retrieval(
@@ -218,7 +218,7 @@ async def evaluate_retrieval(
             top_k=top_k,
             metrics=metrics,
             entity_match=entity_match,
-            relation_match=edge_match
+            relation_match=relation_match
         )
 
         per_query_results.append({
@@ -574,11 +574,11 @@ async def batch_evaluate(
             # Evaluate retrieval if ground truth docs provided
             if ground_truth_docs:
                 entity_match = None
-                edge_match = None
+                relation_match = None
                 if embedding_manager and hasattr(embedding_manager, 'mode'):
                     if embedding_manager.mode == "flagembedding":
                         entity_match = await embedding_manager.search_entities(question, top_k)
-                        edge_match = await embedding_manager.search_edges(question, top_k)
+                        relation_match = await embedding_manager.search_relations(question, top_k)
 
                 retrieval_result = await evaluate_single_retrieval(
                     query=question,
@@ -588,7 +588,7 @@ async def batch_evaluate(
                     top_k=top_k,
                     metrics=metrics,
                     entity_match=entity_match,
-                    relation_match=edge_match
+                    relation_match=relation_match
                 )
                 retrieval_metrics_list.append(retrieval_result['metrics'])
             else:
@@ -606,7 +606,7 @@ async def batch_evaluate(
                     top_k=top_k,
                     metrics=metrics,
                     entity_match=entity_match if ground_truth_docs else None,
-                    relation_match=edge_match if ground_truth_docs else None
+                    relation_match=relation_match if ground_truth_docs else None
                 )
                 answer_metrics_list.append(answer_result['metrics'])
             else:

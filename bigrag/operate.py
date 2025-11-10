@@ -912,7 +912,11 @@ async def _build_query_context(
         if k not in know_score:
             know_score[k] = 0
             know_sources[k] = set()
-            know_type[k] = "entity"
+            # Phase 1 Fix: Distinguish entities from relations by prefix
+            if k.startswith("ENTITY:"):
+                know_type[k] = "entity"
+            else:
+                know_type[k] = "relation"  # Relations from entity traversal
         score = 1/(i+1)
         know_score[k] += score
         if source_ids:

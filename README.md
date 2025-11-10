@@ -1,6 +1,36 @@
 # BiG-RAG: Bipartite Graph Retrieval-Augmented Generation
 
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub Issues](https://img.shields.io/github/issues/dhrubo326/BiG-RAG)](https://github.com/dhrubo326/BiG-RAG/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/dhrubo326/BiG-RAG)](https://github.com/dhrubo326/BiG-RAG/stargazers)
+
 **BiG-RAG** is an advanced RAG framework that uses bipartite graph structures to enhance knowledge retrieval and reasoning capabilities for large language models.
+
+## 📑 Table of Contents
+
+- [What is BiG-RAG?](#what-is-bigrag)
+- [Quick Start](#quick-start)
+  - [Step 0: Clone the Repository](#step-0-clone-the-repository)
+  - [Step 1: Installation](#step-1-installation)
+  - [Step 2: Quick Test with Demo Dataset](#step-2-quick-test-with-demo-dataset)
+- [Building Your Own Knowledge Graph](#building-your-own-knowledge-graph)
+- [Using BiG-RAG in Your Code](#using-bigrag-in-your-code)
+- [Project Structure](#-project-structure)
+- [Testing BiG-RAG](#testing-bigrag)
+- [Retrieval Modes](#retrieval-modes)
+- [Storage Backends](#storage-backends)
+- [Recent Improvements](#-recent-improvements-january-2025)
+- [Advanced Features](#advanced-features)
+- [System Requirements](#system-requirements)
+- [Troubleshooting](#troubleshooting)
+- [FAQ](#faq)
+- [Documentation](#-documentation)
+- [Contributing](#contributing)
+- [Support & Community](#support--community)
+- [Acknowledgments](#acknowledgments)
+
+---
 
 ## What is BiG-RAG?
 
@@ -8,20 +38,30 @@ BiG-RAG constructs a **bipartite knowledge graph** using **n-ary relation extrac
 
 **Key Features:**
 - **Bipartite Graph Structure**: Documents ↔ Entities ↔ Relations for enhanced knowledge representation
-- **Three-Path Retrieval** ⭐ **NEW**: Entity-based (Path A) + Relation-based (Path B) + Chunk-based (Path C) for +15-25% recall improvement
-- **Semantic Reranking** ⭐ **NEW**: Cross-encoder reranking for +10-20% precision improvement
-- **Cascade Document Deletion** ⭐ **NEW**: Smart deletion with shared entity preservation (~1-2s, no rebuild needed)
-- **Metadata Preservation** ⭐ **NEW**: Document metadata flows through extraction for +2-3 F1 improvement
+- **Three-Path Retrieval** ⭐: Entity-based (Path A) + Relation-based (Path B) + Chunk-based (Path C) for +15-25% recall improvement
+- **Semantic Reranking** ⭐: Cross-encoder reranking for +10-20% precision improvement
+- **Cascade Document Deletion** ⭐: Smart deletion with shared entity preservation (~1-2s, no rebuild needed)
+- **Metadata Preservation** ⭐: Document metadata flows through extraction for +2-3 F1 improvement
+- **React Web UI**: Modern React 19 + TypeScript interface with graph visualization
 - **Multiple Storage Backends**: Support for Milvus, ChromaDB, Neo4J, MongoDB, Oracle, TiDB
 - **Flexible Retrieval Modes**: Hybrid, local (entity-based), global (relation-based), naive (text-only)
 - **OpenAI Integration**: Ready-to-use with GPT models for testing and development
+- **RL Training Framework**: GRPO, PPO, REINFORCE++ for training LLMs with graph-based retrieval
 - **Async-First Design**: Efficient concurrent processing for large-scale applications
 
 ---
 
 ## Quick Start
 
-### Installation
+### Step 0: Clone the Repository
+
+```bash
+# Clone from GitHub
+git clone https://github.com/dhrubo326/BiG-RAG.git
+cd BiG-RAG
+```
+
+### Step 1: Installation
 
 #### Using Python venv (Recommended)
 
@@ -38,8 +78,9 @@ venv\Scripts\activate
 # 3. Upgrade pip
 python -m pip install --upgrade pip
 
-# 4. Install PyTorch
+# 4. Install PyTorch (CPU version)
 pip install torch torchvision torchaudio
+# For GPU support, see: https://pytorch.org/get-started/locally/
 
 # 5. Install BiG-RAG dependencies
 pip install -r requirements.txt
@@ -49,13 +90,49 @@ python -m spacy download en_core_web_sm
 python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 ```
 
-> **Note:** For detailed setup and development guides, see [DEVELOPMENT.md](DEVELOPMENT.md) and [CLAUDE.md](CLAUDE.md)
+> **Note:** For advanced setup (RL training with GPUs), see [CLAUDE.md](CLAUDE.md) for conda environment setup.
+
+### Step 2: Quick Test with Demo Dataset
+
+BiG-RAG includes a pre-built demo dataset (`demo_test`) for immediate testing:
+
+```bash
+# Start the backend API server
+cd backend
+python server.py --data_source demo_test
+
+# The server will run on http://localhost:8001
+# Visit http://localhost:8001/docs to see the API documentation
+```
+
+**Test the API:**
+```bash
+# In another terminal, test retrieval
+curl -X POST http://localhost:8001/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Tell me about the demo dataset", "mode": "hybrid"}'
+```
+
+**Or use the Web UI:**
+```bash
+# Terminal 1: Backend (already running from above)
+cd backend && python server.py --data_source demo_test
+
+# Terminal 2: Frontend
+cd frontend
+npm install  # First time only
+npm run dev
+
+# Open http://localhost:5173 in your browser
+```
 
 ---
 
-## Basic Usage
+## Building Your Own Knowledge Graph
 
-### Step 1: Prepare Your Data
+After testing with the demo dataset, you can build a knowledge graph from your own documents:
+
+### Step 3: Prepare Your Data
 
 Create a corpus file (`corpus.jsonl`) with your documents:
 
@@ -66,7 +143,7 @@ Create a corpus file (`corpus.jsonl`) with your documents:
 
 Place it in: `datasets/your_dataset/raw/corpus.jsonl`
 
-### Step 2: Build Knowledge Graph
+### Step 4: Build Knowledge Graph
 
 Set your OpenAI API key:
 ```bash
@@ -79,37 +156,30 @@ python script_build.py --data_source your_dataset
 ```
 
 This will:
-- Extract entities and relations from your documents
+- Extract entities and relations from your documents using GPT-4o-mini
 - Create bipartite graph structure
-- Generate embeddings
+- Generate embeddings with FlagEmbedding
 - Save to `expr/your_dataset/`
 
-### Step 3: Start Retrieval Server
+**Time estimate:** 2-4 hours for ~10K documents (depends on corpus size and OpenAI API rate limits)
+
+### Step 5: Start Server with Your Dataset
 
 ```bash
-# NEW: Use backend/server.py
 cd backend
 python server.py --data_source your_dataset
 ```
 
-The API server runs on `http://localhost:8001`
+The API server runs on `http://localhost:8001/docs`
 
-**Or use the React UI (NEW):**
-```bash
-# Terminal 1: Start backend
-cd backend && python server.py --data_source your_dataset
+---
 
-# Terminal 2: Start frontend
-cd frontend && npm run dev
-```
-Then open `http://localhost:5173` in your browser
-
-### Step 4: Use BiG-RAG in Your Code
+## Using BiG-RAG in Your Code
 
 ```python
 from bigrag import BiGRAG, QueryParam
 
-# Initialize
+# Initialize with your dataset
 rag = BiGRAG(working_dir="expr/your_dataset")
 
 # Query the knowledge graph
@@ -125,54 +195,63 @@ print(result)
 
 ## 📁 Project Structure
 
-BiG-RAG has been reorganized for better clarity and scalability:
-
 ```
 BiG-RAG/
-├── README.md                    # This file
-├── CLAUDE.md                    # Claude Code assistant instructions
-├── DEVELOPMENT.md               # Development status and technical guides
-├── BIGRAG_UI_PLAN.md           # UI implementation plan
+├── README.md                    # This file - Getting started guide
+├── CLAUDE.md                    # Comprehensive system reference
+├── DEVELOPMENT.md               # Development status and guides
 │
-├── backend/                     # FastAPI server (NEW)
-│   ├── api/                    # API modules
-│   ├── server.py               # Main server (was script_api.py)
-│   └── README.md               # Backend documentation
+├── backend/                     # FastAPI REST API server
+│   ├── api/                    # API route modules
+│   ├── server.py               # Main server entry point
+│   └── README.md               # Backend API documentation
 │
-├── frontend/                    # React UI (NEW - Nov 2025)
+├── frontend/                    # React Web UI (Nov 2025)
 │   ├── src/                    # React 19 + TypeScript + Tailwind v4
-│   ├── package.json            # Latest dependencies
-│   └── README.md               # Frontend documentation
+│   └── README.md               # Frontend setup and development
 │
-├── bigrag/                      # Core Python library
+├── bigrag/                      # Core BiG-RAG Python library
 │   ├── bigrag.py               # Main BiGRAG class
-│   ├── operate.py              # Graph operations
+│   ├── operate.py              # Graph operations (build, query)
 │   ├── reranker.py             # Semantic reranking
-│   └── ...                     # Other modules
+│   ├── storage.py              # Default storage implementations
+│   └── kg/                     # Optional storage backends (Milvus, Neo4J, etc.)
 │
-├── docs/                        # Documentation (work in progress, not yet public)
+├── verl/                        # RL training framework (Volcano Engine RL)
+│   └── trainer/                # GRPO, PPO, REINFORCE++ implementations
+│
+├── agent/                       # Tool-based agent system
+│   ├── llm_agent/              # Tool generation manager
+│   └── tool/                   # Tool environment and implementations
+│
+├── evaluation/                  # Evaluation metrics and benchmarks
+│   └── README.md               # Evaluation guide
+│
+├── inference/                   # Model inference and deployment
+│   └── README.md               # Inference guide
 │
 ├── tests/                       # Comprehensive test suite
-│   ├── README.md               # Test documentation and guides
+│   ├── README.md               # Test documentation
 │   ├── api/                    # API endpoint tests
 │   ├── integration/            # Integration tests
-│   ├── unit/                   # Unit tests
-│   ├── e2e/                    # End-to-end tests
-│   └── ...                     # Other test categories
+│   ├── e2e/                    # End-to-end pipeline tests
+│   └── performance/            # Performance benchmarks
+│
+├── docs/                        # Technical documentation
+│   └── technical/              # Design specs, logging guides
 │
 ├── datasets/                    # QA datasets and corpora
+│   ├── demo_test/              # Pre-built demo dataset
+│   ├── SingleTopic/            # Sample dataset
+│   └── README.md               # Dataset format guide
+│
 ├── expr/                        # Built knowledge graphs
-├── script_build.py             # Build knowledge graph
-├── script_process.py           # Process datasets
-└── setup.py                    # Package setup
+│   └── [dataset_name]/         # Generated graph files per dataset
+│
+├── script_build.py             # Build knowledge graph from corpus
+├── script_process.py           # Process raw datasets to parquet
+└── setup.py                    # Python package setup
 ```
-
-**Key Changes:**
-- ✅ `api/` → `backend/api/` for clear separation
-- ✅ `script_api.py` → `backend/server.py` with path fixes
-- ✅ `frontend/` added with React 19 + TypeScript + Tailwind CSS v4
-- ✅ `tests/` organized into api/, integration/, unit/, e2e/ categories
-- ✅ Clean root directory structure with core markdown documentation
 
 See [CLAUDE.md](CLAUDE.md) for comprehensive system reference and [DEVELOPMENT.md](DEVELOPMENT.md) for development guides.
 
@@ -313,31 +392,112 @@ For complete technical details and development guides, see [CLAUDE.md](CLAUDE.md
 
 ---
 
-## Coming Soon
+## Advanced Features
 
-The following components will be released when fully ready:
+BiG-RAG includes advanced components for research and production use:
 
-- **RL Training Framework** - GRPO, PPO, REINFORCE++ implementations for training LLMs with graph-based retrieval
-- **Agent System** - Tool-based agent for iterative retrieval and reasoning
-- **Evaluation Module** - Metrics and benchmarking tools
-- **Inference Module** - Optimized deployment for production
-- **Complete Documentation** - In-depth technical guides and tutorials
-- **Architecture Diagrams** - Visual explanations of system design
+### RL Training Framework
+Train LLMs to actively query the knowledge graph during generation:
+- **GRPO** (Group Relative Policy Optimization) - Recommended for starting
+- **PPO** (Proximal Policy Optimization) - Standard RL algorithm
+- **REINFORCE++** - Variance-reduced policy gradients
+
+See [CLAUDE.md](CLAUDE.md) for RL training setup and configuration.
+
+### Tool-Based Agent System
+Agents that iteratively query the knowledge graph during reasoning:
+- Multi-turn retrieval loops
+- Tool call generation and execution
+- Answer synthesis with retrieved context
+
+### Evaluation & Benchmarks
+Comprehensive metrics for RAG systems:
+- Exact Match (EM)
+- Token-level F1 score
+- Semantic similarity (SimCSE)
+- Multi-hop QA benchmarks (2WikiMultiHopQA, HotpotQA, Musique)
+
+See [evaluation/README.md](evaluation/README.md) for details.
 
 ---
 
 ## System Requirements
 
+### For Knowledge Graph Building & Retrieval
+
 **Minimum:**
 - Python 3.11+
 - 4GB RAM
-- CPU (for small datasets)
+- CPU only (works for small datasets <1K documents)
+- 5GB free disk space
 
 **Recommended:**
 - Python 3.11+
 - 16GB+ RAM
-- GPU with 8GB+ VRAM (for large datasets)
+- GPU with 8GB+ VRAM (faster embedding generation)
 - SSD storage
+- OpenAI API key (for entity extraction)
+
+### For RL Training (Advanced)
+
+**Minimum:**
+- 4 x GPUs with 48GB VRAM each (for 3B parameter models)
+- 32GB+ system RAM
+- 100GB+ free disk space
+
+**Recommended:**
+- 8 x GPUs with 80GB VRAM each (for 7B+ parameter models)
+- 64GB+ system RAM
+- NVMe SSD storage
+- Multi-node cluster (for large-scale training)
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**1. ModuleNotFoundError: No module named 'bigrag'**
+```bash
+# Solution: Install in development mode
+pip install -e .
+```
+
+**2. Server fails to start: "Failed to load graph"**
+```bash
+# Solution: Check if knowledge graph files exist
+ls expr/demo_test/
+
+# If missing, rebuild the graph
+python script_build.py --data_source demo_test
+```
+
+**3. Frontend shows "Network Error"**
+```bash
+# Solution: Ensure backend is running
+curl http://localhost:8001/
+# Should return: {"message": "BiG-RAG Unified API Server..."}
+
+# If not running:
+cd backend && python server.py --data_source demo_test
+```
+
+**4. OpenAI API rate limit errors**
+```bash
+# Solution: Set your API key
+echo "sk-your-api-key-here" > openai_api_key.txt
+
+# Or use environment variable
+export OPENAI_API_KEY="sk-your-api-key-here"
+```
+
+**5. Out of memory during graph building**
+```bash
+# Solution: Process smaller batches
+# Edit script_build.py and reduce chunk_size or batch_size parameters
+```
+
+For more troubleshooting help, see [CLAUDE.md](CLAUDE.md) or open an issue on GitHub.
 
 ---
 
@@ -382,13 +542,63 @@ See [LICENSE](LICENSE) file for details.
 
 ---
 
-## Support
+## Contributing
 
-- **Issues**: https://github.com/dhrubo326/BiG-RAG/issues
-- **Discussions**: https://github.com/dhrubo326/BiG-RAG/discussions
+We welcome contributions! Here's how to get started:
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork**: `git clone https://github.com/your-username/BiG-RAG.git`
+3. **Create a branch**: `git checkout -b feature/your-feature-name`
+4. **Make your changes** and add tests
+5. **Run tests**: `pytest tests/`
+6. **Commit**: `git commit -m "Add your feature"`
+7. **Push**: `git push origin feature/your-feature-name`
+8. **Open a Pull Request** on GitHub
+
+### Development Setup
+
+```bash
+# Install development dependencies
+pip install -r requirements.txt
+pip install -e .
+
+# Run tests
+pytest tests/
+
+# Run tests with coverage
+pytest tests/ --cov=bigrag --cov-report=html
+```
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed development guides.
+
+---
+
+## Support & Community
+
+### Get Help
+
+- **Issues**: [Report bugs or request features](https://github.com/dhrubo326/BiG-RAG/issues)
+- **Discussions**: [Ask questions and share ideas](https://github.com/dhrubo326/BiG-RAG/discussions)
+- **Documentation**: [CLAUDE.md](CLAUDE.md) for comprehensive reference
+
+### Before Opening an Issue
+
+1. Check [existing issues](https://github.com/dhrubo326/BiG-RAG/issues) to avoid duplicates
+2. Review the [Troubleshooting](#troubleshooting) section
+3. Provide:
+   - Python version (`python --version`)
+   - OS and version
+   - Error messages or logs
+   - Steps to reproduce the issue
 
 ---
 
 ## Acknowledgments
 
-BiG-RAG builds upon research in graph-based RAG systems and reinforcement learning for LLMs. Thanks to the open-source community for foundational tools and frameworks.
+BiG-RAG builds upon excellent research and open-source projects:
+- **[Agent-R1](https://github.com/0russwest0/Agent-R1)**: Tool-augmented RL training
+- **[LightRAG](https://github.com/HKUDS/LightRAG)**: Lightweight graph RAG
+- **[HippoRAG2](https://github.com/OSU-NLP-Group/HippoRAG)**: Hippocampus-inspired RAG
+- **[VERL](https://github.com/volcengine/verl)**: Volcano Engine RL Framework (Bytedance)
+
+Thanks to the open-source community for foundational tools and frameworks!

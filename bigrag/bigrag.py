@@ -172,16 +172,32 @@ class BiGRAG:
     def __post_init__(self):
         # Use centralized logging directory or fallback to working_dir/logs
         from bigrag.config import config
+        from pathlib import Path
 
         # Priority: LOG_DIR env var > centralized logs/bigrag-core > working_dir/logs
         if config.log_dir:
             logs_dir = config.log_dir
-        elif os.path.exists(os.path.join(os.getcwd(), "logs")):
-            # If project root logs/ exists, use centralized location
-            logs_dir = os.path.join(os.getcwd(), "logs", "bigrag-core")
         else:
-            # Fallback to working_dir/logs for backward compatibility
-            logs_dir = os.path.join(self.working_dir, "logs")
+            # Try to find project root by looking for logs/ directory
+            # Start from current directory and go up
+            current = Path.cwd()
+            project_root = None
+
+            # Check current directory and up to 3 parent directories
+            for _ in range(4):
+                if (current / "logs").exists() and (current / "logs").is_dir():
+                    project_root = current
+                    break
+                if current.parent == current:  # Reached filesystem root
+                    break
+                current = current.parent
+
+            if project_root:
+                # Found project root with logs/ directory
+                logs_dir = str(project_root / "logs" / "bigrag-core")
+            else:
+                # Fallback to working_dir/logs for backward compatibility
+                logs_dir = os.path.join(self.working_dir, "logs")
 
         os.makedirs(logs_dir, exist_ok=True)
 

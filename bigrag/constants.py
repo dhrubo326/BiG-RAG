@@ -12,6 +12,63 @@ Separation of concerns:
 - config.py: Deployment settings (vary by environment, from .env)
 """
 
+# =============================================================================
+# Node ID Conventions
+# =============================================================================
+#
+# BiG-RAG uses distinct ID formats for different node types to optimize
+# performance and maintain consistency across storage layers (GraphML, Vector DB, KV Store).
+#
+# ENTITY NODES:
+#   - Format: Canonical entity name (uppercase)
+#   - Prefix: None (direct canonical name)
+#   - Examples: "LIONEL MESSI", "BARCELONA", "PYTHON"
+#   - Purpose: Human-readable for debugging and interpretability
+#   - Storage: Graph nodes use name as ID, vector DB uses name as key
+#
+# RELATION NODES (Bipartite Edge Nodes):
+#   - Format: Hash-based with prefix "rel-"
+#   - Hash: MD5 hash of relation content (32 hex characters)
+#   - Examples: "rel-8c80df8f1fc71f13c4ffbe19fa22bf8f"
+#   - Purpose: Collision-resistant, fast lookup, compact storage
+#   - Storage: Graph nodes, vector DB keys, source_id references
+#
+# CHUNK REFERENCES:
+#   - Format: Hash-based with prefix "chunk-"
+#   - Hash: MD5 hash of chunk content (32 hex characters)
+#   - Examples: "chunk-600f9c648bc602202ec663361837e416"
+#   - Purpose: Consistent ID across graph and vector databases
+#   - Storage: KV store keys, source_id fields, vector DB keys
+#
+# DOCUMENT IDs:
+#   - Format: Hash-based with prefix "doc-"
+#   - Hash: MD5 hash of document content (32 hex characters)
+#   - Examples: "doc-ce2415fb73e5596b76d8f93f636c43a7"
+#   - Purpose: Deduplication and consistent referencing
+#   - Storage: KV store keys, full_doc_id references
+#
+# BENEFITS OF THIS DESIGN:
+#   1. Fast Lookup: O(1) hash comparison vs O(n) string comparison for relations
+#   2. Consistency: Hash IDs match vector database keys across storage layers
+#   3. Compact Storage: GraphML files ~30-40% smaller than content-as-ID
+#   4. Human Readability: Entity names remain interpretable for debugging
+#   5. Collision Resistance: MD5 hashes virtually eliminate ID conflicts
+#   6. Content Stability: Content changes automatically generate new IDs
+#
+# IMPLEMENTATION NOTES:
+#   - Hash generation: Use bigrag.utils.compute_mdhash_id(content, prefix="rel-")
+#   - Entity normalization: Use uppercase() for canonical names
+#   - Case sensitivity: Entity IDs are case-insensitive (stored uppercase)
+#   - Hash IDs: Must remain lowercase to match vector DB keys
+#   - No uppercase transformation for hash-based IDs (breaks vector DB lookups)
+#
+# GRAPH STRUCTURE VALIDATION:
+#   - Use NetworkXStorage.get_bipartite_metrics() for quality checks
+#   - Validates bipartite property (no entity-entity or relation-relation edges)
+#   - Reports violations and node/edge counts by type
+#
+# =============================================================================
+
 # ========================
 # Extraction Settings
 # ========================
@@ -39,13 +96,24 @@ GRAPH_FIELD_SEP = "<SEP>"
 """Separator for multi-value fields in graph nodes"""
 
 BIPARTITE_EDGE_PREFIX = "rel-"
-"""Prefix for bipartite edge (relation) node IDs"""
+"""Prefix for bipartite edge (relation) node IDs
+Example: rel-8c80df8f1fc71f13c4ffbe19fa22bf8f"""
 
 ENTITY_PREFIX = "ent-"
-"""Prefix for entity node IDs in vector DB"""
+"""Prefix for entity node IDs in vector DB (legacy, not used for graph node IDs)
+Graph nodes use canonical names directly (e.g., "LIONEL MESSI")"""
 
 CHUNK_PREFIX = "chunk-"
-"""Prefix for text chunk IDs"""
+"""Prefix for text chunk IDs
+Example: chunk-600f9c648bc602202ec663361837e416"""
+
+DOCUMENT_PREFIX = "doc-"
+"""Prefix for document IDs
+Example: doc-ce2415fb73e5596b76d8f93f636c43a7"""
+
+# Hash length for MD5-based IDs (32 hex characters)
+HASH_ID_LENGTH = 32
+"""Length of MD5 hash component in node IDs (32 hex characters)"""
 
 # ========================
 # Retrieval Settings

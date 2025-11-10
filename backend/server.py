@@ -38,9 +38,9 @@ import uvicorn
 
 # Import BiG-RAG core
 from bigrag import BiGRAG
-from bigrag.utils import logger
 from bigrag.config import config
 from bigrag.llm import gpt_4o_mini_complete
+from bigrag.logging_config import setup_logger
 
 # Import core modules (managers and dependencies)
 from api.core.managers import LLMProviderManager, EmbeddingManager
@@ -66,12 +66,28 @@ parser.add_argument('--llm_provider', default=config.llm_provider,
                     help=f'Default LLM provider (default: {config.llm_provider})')
 args = parser.parse_args()
 
+# Setup API logger (separate from BiGRAG core logger)
+api_logger = setup_logger(
+    name="bigrag.api",
+    log_dir=str(PROJECT_ROOT / "logs" / "backend"),
+    log_file="api.log",
+    level=os.getenv('LOG_LEVEL', 'INFO'),
+    json_format=os.getenv('LOG_JSON_FORMAT', 'false').lower() == 'true',
+    rotation='time',  # Daily rotation
+    backup_count=7,
+    console_output=True,
+    error_separate=True
+)
+
 # Initialize managers
 working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
 working_dir = str(PROJECT_ROOT / working_dir_base / args.data_source)
 
-print(f"\n[INFO] Initializing BiG-RAG for dataset: {args.data_source}")
-print(f"[INFO] Working directory: {working_dir}\n")
+api_logger.info("="*60)
+api_logger.info(f"Initializing BiG-RAG API Server")
+api_logger.info(f"Dataset: {args.data_source}")
+api_logger.info(f"Working directory: {working_dir}")
+api_logger.info("="*60)
 
 embedding_manager = EmbeddingManager(working_dir)
 llm_manager = LLMProviderManager(default_provider=args.llm_provider)
@@ -93,10 +109,10 @@ dependencies.set_llm_manager(llm_manager)
 dependencies.set_embedding_manager(embedding_manager)
 dependencies.set_server_metadata(server_start_time, args.data_source, working_dir)
 
-print(f"[INFO] BiG-RAG initialized")
-print(f"[INFO] Embedding mode: {embedding_manager.mode}")
-print(f"[INFO] Available LLM providers: {', '.join(llm_manager.get_available_providers())}")
-print(f"[INFO] Default LLM provider: {args.llm_provider}\n")
+api_logger.info(f"BiG-RAG core initialized")
+api_logger.info(f"Embedding mode: {embedding_manager.mode}")
+api_logger.info(f"Available LLM providers: {', '.join(llm_manager.get_available_providers())}")
+api_logger.info(f"Default LLM provider: {args.llm_provider}")
 
 # Load statistics
 stats = {"entities": 0, "edges": 0, "chunks": 0}
@@ -124,13 +140,13 @@ try:
         stats["entities"] = len(embedding_manager.corpus_entity)
         stats["edges"] = len(embedding_manager.corpus_edge)
 
-    print(f"[INFO] Graph statistics:")
-    print(f"  - Entities: {stats['entities']}")
-    print(f"  - Relations: {stats['edges']}")
-    print(f"  - Text Chunks: {stats['chunks']}\n")
+    api_logger.info(f"Graph statistics:")
+    api_logger.info(f"  - Entities: {stats['entities']}")
+    api_logger.info(f"  - Relations: {stats['edges']}")
+    api_logger.info(f"  - Text Chunks: {stats['chunks']}")
 
 except Exception as e:
-    logger.warning(f"Could not load statistics: {e}")
+    api_logger.warning(f"Could not load statistics: {e}")
 
 
 # ============================================================================
@@ -187,15 +203,15 @@ app.include_router(llm.router)
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("=" * 60)
-    logger.info("BiG-RAG API Server started")
-    logger.info(f"Documentation: http://{args.host}:{args.port}/docs")
-    logger.info("=" * 60)
+    api_logger.info("=" * 60)
+    api_logger.info("BiG-RAG API Server started")
+    api_logger.info(f"Documentation: http://{args.host}:{args.port}/docs")
+    api_logger.info("=" * 60)
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("BiG-RAG API Server shutting down")
+    api_logger.info("BiG-RAG API Server shutting down")
 
 
 # ============================================================================

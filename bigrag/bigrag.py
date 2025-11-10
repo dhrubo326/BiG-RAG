@@ -170,15 +170,26 @@ class BiGRAG:
     convert_response_to_json_func: callable = convert_response_to_json
 
     def __post_init__(self):
-        # Ensure logs directory exists
-        logs_dir = os.path.join(os.getcwd(), "logs")
+        # Use centralized logging directory or fallback to working_dir/logs
+        from bigrag.config import config
+
+        # Priority: LOG_DIR env var > centralized logs/bigrag-core > working_dir/logs
+        if config.log_dir:
+            logs_dir = config.log_dir
+        elif os.path.exists(os.path.join(os.getcwd(), "logs")):
+            # If project root logs/ exists, use centralized location
+            logs_dir = os.path.join(os.getcwd(), "logs", "bigrag-core")
+        else:
+            # Fallback to working_dir/logs for backward compatibility
+            logs_dir = os.path.join(self.working_dir, "logs")
+
         os.makedirs(logs_dir, exist_ok=True)
 
         log_file = os.path.join(logs_dir, "bigrag.log")
-        set_logger(log_file)
-        logger.setLevel(self.log_level)
+        set_logger(log_file, level=self.log_level)
 
         logger.info(f"Logger initialized for working directory: {self.working_dir}")
+        logger.debug(f"Logs directory: {logs_dir}")
 
         _print_config = ",\n  ".join([f"{k} = {v}" for k, v in asdict(self).items()])
         logger.debug(f"BiGRAG init with param:\n  {_print_config}\n")

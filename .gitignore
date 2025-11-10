@@ -166,12 +166,23 @@ cython_debug/
 *.pem
 *.secret
 
-# Log files
+# Log files (centralized logging system)
 *.log
+*.log.*
 logs/
 build_graph.log
 test_*.log
 bigrag.log
+error.log
+api.log
+access.log
+
+# Keep log directory structure but not log files
+!logs/.gitkeep
+!logs/bigrag-core/.gitkeep
+!logs/backend/.gitkeep
+!logs/jobs/.gitkeep
+!logs/frontend/.gitkeep
 
 # Training outputs (RL - Not publishing yet)
 outputs/
@@ -276,7 +287,8 @@ backend/__pycache__/
 
 CHANGELOG.md
 
-# Backend logs
+# Backend orphaned logs (old log files to be cleaned up)
+backend/*.log
 backend/logs/
 
 ###############################################################################

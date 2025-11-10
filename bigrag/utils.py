@@ -33,19 +33,35 @@ ENCODER = None
 logger = logging.getLogger("bigrag")
 
 
-def set_logger(log_file: str):
-    logger.setLevel(logging.DEBUG)
+def set_logger(log_file: str, level: str = "INFO"):
+    """
+    Initialize logger with file handler (backward compatibility wrapper)
 
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG)
+    This function now uses the centralized logging_config module
+    for better log rotation and management.
 
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    Args:
+        log_file: Path to log file
+        level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    """
+    # Import here to avoid circular dependency
+    from bigrag.logging_config import setup_logger
+
+    log_dir = os.path.dirname(log_file)
+    log_filename = os.path.basename(log_file)
+
+    # Use new centralized logging system
+    setup_logger(
+        name="bigrag",
+        log_dir=log_dir if log_dir else ".",
+        log_file=log_filename,
+        level=level,
+        rotation="size",
+        max_bytes=10 * 1024 * 1024,  # 10 MB
+        backup_count=5,
+        console_output=False,  # Maintain old behavior (file-only)
+        error_separate=True
     )
-    file_handler.setFormatter(formatter)
-
-    if not logger.handlers:
-        logger.addHandler(file_handler)
 
 
 @dataclass

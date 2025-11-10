@@ -50,7 +50,7 @@ export const DEFAULT_CONFIG = {
   QUERY_MODE: 'hybrid' as const,
   ENABLE_RERANKING: true,
   GRAPH_LAYOUT: 'cose-bilkent' as const,
-  GRAPH_MIN_WEIGHT: 0.1,
+  GRAPH_MIN_WEIGHT: 0.0, // ✅ Changed from 0.1 to 0.0 to show ALL nodes including low-weight orphans
 } as const;
 
 // UI Constants

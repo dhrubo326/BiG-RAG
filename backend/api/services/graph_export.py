@@ -112,6 +112,7 @@ async def export_graph_for_cytoscape(
         entity_count = 0
         relation_count = 0
         chunk_count = 0
+        orphan_count = 0
 
         for node_id, attrs in G.nodes(data=True):
             role = attrs.get("role", "")
@@ -127,6 +128,11 @@ async def export_graph_for_cytoscape(
                 node_type = "chunk"
                 chunk_count += 1
 
+            # Calculate connections (degree) - CRITICAL for orphan detection
+            connections = G.degree(node_id)
+            if connections == 0:
+                orphan_count += 1
+
             # Apply filters
             if allowed_types and role not in allowed_types:
                 continue
@@ -135,32 +141,59 @@ async def export_graph_for_cytoscape(
             if weight < min_weight:
                 continue
 
-            # Extract label based on node type
+            # Extract label and content based on node type
             if node_type == "relation":
-                # For relation nodes, extract text from node_id
-                label = _extract_relation_text(node_id)
+                # For relation nodes: use d1 (content) field as main data
+                content = attrs.get("content", "")
+                if not content:
+                    # Fallback: extract from node_id (legacy support)
+                    content = _extract_relation_text(node_id)
+                # Create short label (first 50 chars)
+                label = content[:50] + "..." if len(content) > 50 else content
+            elif node_type == "entity":
+                # For entity nodes: use name, store description separately
+                label = attrs.get("name", node_id)
+                # Remove quotes if present
+                if label.startswith('"') and label.endswith('"'):
+                    label = label[1:-1]
             else:
-                # For entity/chunk nodes, use name attribute or node_id
+                # For chunk nodes
                 label = attrs.get("name", node_id)
 
-            # Lightweight node object (no descriptions yet)
+            # Lightweight node object (detailed fields loaded later for sampled nodes)
             node = {
                 "id": node_id,
                 "label": label,
                 "name": label,
                 "type": node_type,
                 "description": "",  # Load later for sampled nodes only
+                "content": "",      # Load later for relation nodes
                 "weight": weight,
-                "source_id": attrs.get("source_id", ""),
+                "connections": connections,  # NEW: degree count for orphan detection
+                "sourceId": attrs.get("source_id", ""),
                 "role": role,
                 "metadata": {
-                    "entity_type": attrs.get("entity_type", ""),
+                    "entityType": attrs.get("entity_type", ""),
                     "role": role,
                 }
             }
             all_nodes.append(node)
 
         logger.info(f"After filtering: {len(all_nodes)} nodes")
+
+        # ✅ NEW: Identify orphan nodes (important for debugging)
+        orphan_nodes = [n for n in all_nodes if n["connections"] == 0]
+        non_orphan_nodes = [n for n in all_nodes if n["connections"] > 0]
+
+        # Breakdown orphan nodes by type
+        orphan_entities = [n for n in orphan_nodes if n["type"] == "entity"]
+        orphan_relations = [n for n in orphan_nodes if n["type"] == "relation"]
+        orphan_chunks = [n for n in orphan_nodes if n["type"] == "chunk"]
+
+        logger.info(f"Found {len(orphan_nodes)} total orphan nodes:")
+        logger.info(f"  - {len(orphan_entities)} orphan entity nodes")
+        logger.info(f"  - {len(orphan_relations)} orphan relation nodes")
+        logger.info(f"  - {len(orphan_chunks)} orphan chunk nodes")
 
         # Apply sampling strategy
         sampled_nodes = all_nodes
@@ -170,33 +203,46 @@ async def export_graph_for_cytoscape(
             sampling_applied = True
             logger.info(f"Applying {sample_strategy} sampling to get {limit} nodes from {len(all_nodes)}")
 
+            # ✅ IMPORTANT: Always include ALL orphan nodes (up to 20% of limit)
+            # Orphan nodes are important for debugging graph construction issues
+            max_orphans_to_include = min(len(orphan_nodes), int(limit * 0.2))
+            included_orphans = orphan_nodes[:max_orphans_to_include]
+            remaining_limit = limit - len(included_orphans)
+
+            logger.info(f"Including {len(included_orphans)} orphan nodes + {remaining_limit} regular nodes")
+
             if sample_strategy == "top_weighted":
                 # Sort by weight descending, take top N
-                sampled_nodes = sorted(all_nodes, key=lambda x: x["weight"], reverse=True)[:limit]
+                sampled_regular = sorted(non_orphan_nodes, key=lambda x: x["weight"], reverse=True)[:remaining_limit]
+                sampled_nodes = included_orphans + sampled_regular
 
             elif sample_strategy == "random":
                 # Random sampling
-                sampled_nodes = random.sample(all_nodes, limit)
+                if remaining_limit < len(non_orphan_nodes):
+                    sampled_regular = random.sample(non_orphan_nodes, remaining_limit)
+                else:
+                    sampled_regular = non_orphan_nodes
+                sampled_nodes = included_orphans + sampled_regular
 
             elif sample_strategy == "diverse":
-                # Balanced sampling across node types
-                entities = [n for n in all_nodes if n["type"] == "entity"]
-                relations = [n for n in all_nodes if n["type"] == "relation"]
-                chunks = [n for n in all_nodes if n["type"] == "chunk"]
+                # Balanced sampling across node types (excluding already included orphans)
+                entities = [n for n in non_orphan_nodes if n["type"] == "entity"]
+                relations = [n for n in non_orphan_nodes if n["type"] == "relation"]
+                chunks = [n for n in non_orphan_nodes if n["type"] == "chunk"]
 
                 # Allocate proportionally
-                total = len(all_nodes)
-                entity_limit = int(limit * len(entities) / total) if total > 0 else 0
-                relation_limit = int(limit * len(relations) / total) if total > 0 else 0
-                chunk_limit = limit - entity_limit - relation_limit
+                total = len(non_orphan_nodes)
+                entity_limit = int(remaining_limit * len(entities) / total) if total > 0 else 0
+                relation_limit = int(remaining_limit * len(relations) / total) if total > 0 else 0
+                chunk_limit = remaining_limit - entity_limit - relation_limit
 
                 sampled_entities = sorted(entities, key=lambda x: x["weight"], reverse=True)[:entity_limit]
                 sampled_relations = sorted(relations, key=lambda x: x["weight"], reverse=True)[:relation_limit]
                 sampled_chunks = sorted(chunks, key=lambda x: x["weight"], reverse=True)[:chunk_limit]
 
-                sampled_nodes = sampled_entities + sampled_relations + sampled_chunks
+                sampled_nodes = included_orphans + sampled_entities + sampled_relations + sampled_chunks
 
-            logger.info(f"Sampled {len(sampled_nodes)} nodes")
+            logger.info(f"Sampled {len(sampled_nodes)} nodes (including {len(included_orphans)} orphans)")
 
         # Get node IDs for edge filtering
         sampled_node_ids = {node["id"] for node in sampled_nodes}
@@ -210,15 +256,31 @@ async def export_graph_for_cytoscape(
 
         # Load descriptions only for sampled nodes (performance optimization)
         for node in sampled_nodes:
-            if node["type"] == "chunk" and node["id"] in chunks_data:
-                node["description"] = chunks_data[node["id"]].get("content", "")[:500]
+            node_attrs = G.nodes[node["id"]]
+
+            if node["type"] == "entity":
+                # For entity nodes: use d5 (description) field
+                node["description"] = node_attrs.get("description", "")
+                node["entityType"] = node_attrs.get("entity_type", "unknown")
+
             elif node["type"] == "relation":
-                # For relation nodes, the label IS the description
-                node["description"] = node["label"]
-            else:
-                # Get from GraphML if not in chunks_data
-                node_attrs = G.nodes[node["id"]]
-                node["description"] = node_attrs.get("description", "")[:500]
+                # For relation nodes: use d1 (content) field as main data
+                content = node_attrs.get("content", "")
+                if not content:
+                    # Fallback: extract from node_id (legacy support)
+                    content = _extract_relation_text(node["id"])
+                node["content"] = content  # Full content
+                node["description"] = content[:200] + "..." if len(content) > 200 else content
+
+            elif node["type"] == "chunk":
+                # For chunk nodes: try KV store first, then GraphML
+                if node["id"] in chunks_data:
+                    node["description"] = chunks_data[node["id"]].get("content", "")[:500]
+                    node["content"] = chunks_data[node["id"]].get("content", "")
+                else:
+                    content = node_attrs.get("content", "")
+                    node["description"] = content[:500]
+                    node["content"] = content
 
         # Extract edges only between sampled nodes
         edges = []
@@ -242,6 +304,7 @@ async def export_graph_for_cytoscape(
             "relations": relation_count,
             "chunks": chunk_count,
             "documents": chunk_count,
+            "orphanNodes": orphan_count,  # NEW: nodes with no connections
         }
 
         # Sampling info
@@ -326,14 +389,46 @@ async def get_node_neighbors(node_id: str, depth: int = 1, working_dir: str = No
         for node, attrs in H.nodes(data=True):
             role = attrs.get("role", "")
             node_type = "entity" if role == "entity" else "relation" if role == "relation" else "chunk"
+            connections = G.degree(node)  # Use full graph for accurate degree count
 
-            nodes.append({
+            # Prepare node data based on type
+            node_data = {
                 "id": node,
-                "label": attrs.get("name", node),
                 "type": node_type,
-                "description": attrs.get("description", ""),
                 "weight": float(attrs.get("weight", 0.0)),
-            })
+                "connections": connections,
+            }
+
+            if node_type == "entity":
+                # Entity nodes: use d5 (description)
+                label = attrs.get("name", node)
+                if label.startswith('"') and label.endswith('"'):
+                    label = label[1:-1]
+                node_data.update({
+                    "label": label,
+                    "description": attrs.get("description", ""),
+                    "entityType": attrs.get("entity_type", "unknown"),
+                })
+            elif node_type == "relation":
+                # Relation nodes: use d1 (content)
+                content = attrs.get("content", "")
+                if not content:
+                    content = _extract_relation_text(node)
+                label = content[:50] + "..." if len(content) > 50 else content
+                node_data.update({
+                    "label": label,
+                    "content": content,
+                    "description": content[:200] + "..." if len(content) > 200 else content,
+                })
+            else:
+                # Chunk nodes
+                node_data.update({
+                    "label": attrs.get("name", node),
+                    "description": attrs.get("content", "")[:500],
+                    "content": attrs.get("content", ""),
+                })
+
+            nodes.append(node_data)
 
         edges = []
         for source, target, attrs in H.edges(data=True):
@@ -402,20 +497,64 @@ async def search_graph_nodes(query: str, limit: int = 20, working_dir: str = Non
         matching_nodes = []
 
         for node, attrs in G.nodes(data=True):
-            name = attrs.get("name", "").lower()
-            description = attrs.get("description", "").lower()
+            role = attrs.get("role", "")
+            node_type = "entity" if role == "entity" else "relation" if role == "relation" else "chunk"
+            connections = G.degree(node)
 
-            if query_lower in name or query_lower in description:
-                role = attrs.get("role", "")
-                node_type = "entity" if role == "entity" else "relation" if role == "relation" else "chunk"
+            # Search in appropriate fields based on node type
+            match = False
+            if node_type == "entity":
+                name = attrs.get("name", "").lower()
+                description = attrs.get("description", "").lower()
+                match = query_lower in name or query_lower in description
+            elif node_type == "relation":
+                # For relations: search in content (d1) field
+                content = attrs.get("content", "").lower()
+                if not content:
+                    content = _extract_relation_text(node).lower()
+                match = query_lower in content
+            else:
+                # For chunks
+                name = attrs.get("name", "").lower()
+                content = attrs.get("content", "").lower()
+                match = query_lower in name or query_lower in content
 
-                matching_nodes.append({
+            if match:
+                # Build node data based on type
+                node_data = {
                     "id": node,
-                    "label": attrs.get("name", node),
                     "type": node_type,
-                    "description": attrs.get("description", ""),
                     "weight": float(attrs.get("weight", 0.0)),
-                })
+                    "connections": connections,
+                }
+
+                if node_type == "entity":
+                    label = attrs.get("name", node)
+                    if label.startswith('"') and label.endswith('"'):
+                        label = label[1:-1]
+                    node_data.update({
+                        "label": label,
+                        "description": attrs.get("description", ""),
+                        "entityType": attrs.get("entity_type", "unknown"),
+                    })
+                elif node_type == "relation":
+                    content = attrs.get("content", "")
+                    if not content:
+                        content = _extract_relation_text(node)
+                    label = content[:50] + "..." if len(content) > 50 else content
+                    node_data.update({
+                        "label": label,
+                        "content": content,
+                        "description": content[:200] + "..." if len(content) > 200 else content,
+                    })
+                else:
+                    node_data.update({
+                        "label": attrs.get("name", node),
+                        "description": attrs.get("content", "")[:500],
+                        "content": attrs.get("content", ""),
+                    })
+
+                matching_nodes.append(node_data)
 
                 if len(matching_nodes) >= limit:
                     break

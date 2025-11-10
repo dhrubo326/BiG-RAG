@@ -5,8 +5,12 @@ export interface GraphNode {
   label: string;
   type: 'entity' | 'relation' | 'chunk' | 'document';
   description?: string;
+  content?: string;          // ✅ NEW: Relation content (d1 field)
+  entityType?: string;        // ✅ NEW: Entity type (person, organization, etc.)
   weight?: number;
+  connections?: number;       // ✅ NEW: Number of connections (for orphan detection)
   source_id?: string;
+  sourceId?: string;          // Alternative naming from backend
   metadata?: Record<string, any>;
 }
 
@@ -25,8 +29,12 @@ export interface CytoscapeNode {
     label: string;
     type: 'entity' | 'relation' | 'chunk' | 'document';
     description?: string;
+    content?: string;          // ✅ NEW: Relation content (d1 field)
+    entityType?: string;        // ✅ NEW: Entity type (person, organization, etc.)
     weight?: number;
+    connections?: number;       // ✅ NEW: Number of connections (for orphan detection)
     source_id?: string;
+    sourceId?: string;          // Alternative naming from backend
     metadata?: Record<string, any>;
   };
   position?: { x: number; y: number };
@@ -71,6 +79,7 @@ export interface GraphStats {
   relations: number;
   chunks: number;
   documents: number;
+  orphanNodes?: number;       // ✅ NEW: Nodes with no connections
 }
 
 export interface GraphExportOptions {

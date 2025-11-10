@@ -241,6 +241,16 @@ const GraphCanvas: React.FC<GraphCanvasProps> = memo(({
         opacity: 1,
       },
     },
+    // ✅ NEW: Orphan nodes (no connections) - dashed yellow border
+    {
+      selector: 'node[connections = 0]',
+      style: {
+        'border-width': 3,
+        'border-color': '#FBBF24',
+        'border-style': 'dashed',
+        'border-opacity': 0.9,
+      },
+    },
   ];
 
   // ✅ FIX: Prevent graph reset on node selection

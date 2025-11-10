@@ -68,11 +68,11 @@ class TestBug1EdgeDeletionPrefix:
     async def test_edge_id_format_consistency(self):
         """Verify edge IDs consistently use 'rel-' prefix"""
         from bigrag.utils import compute_mdhash_id
-        from bigrag.constants import BIPARTITE_EDGE_PREFIX
+        from bigrag.constants import RELATION_PREFIX
 
-        # Edge IDs should use BIPARTITE_EDGE_PREFIX
+        # Relation IDs should use RELATION_PREFIX
         content = "Test edge content"
-        edge_id = compute_mdhash_id(content, prefix=BIPARTITE_EDGE_PREFIX)
+        edge_id = compute_mdhash_id(content, prefix=RELATION_PREFIX)
 
         # Verify prefix
         assert edge_id.startswith("rel-"), f"Edge ID has wrong prefix: {edge_id}"
@@ -303,7 +303,7 @@ class TestBug6TypeAnnotations:
     """
     Regression test for Bug #6: Wrong type annotations
 
-    ISSUE: kg_query had vdb_entities and vdb_bipartite_edges typed as 'list'
+    ISSUE: kg_query had vdb_entities and vdb_relations typed as 'list'
     FIX: Changed to BaseVectorStorage
     """
 
@@ -316,10 +316,10 @@ class TestBug6TypeAnnotations:
         assert vdb_entities_annotation == BaseVectorStorage, \
             f"Bug #6 not fixed: vdb_entities is {vdb_entities_annotation}, expected BaseVectorStorage"
 
-        # Check vdb_bipartite_edges annotation
-        vdb_bipartite_edges_annotation = sig.parameters['vdb_bipartite_edges'].annotation
-        assert vdb_bipartite_edges_annotation == BaseVectorStorage, \
-            f"Bug #6 not fixed: vdb_bipartite_edges is {vdb_bipartite_edges_annotation}, expected BaseVectorStorage"
+        # Check vdb_relations annotation (renamed from vdb_bipartite_edges in Phase 3)
+        vdb_relations_annotation = sig.parameters['vdb_relations'].annotation
+        assert vdb_relations_annotation == BaseVectorStorage, \
+            f"Bug #6 not fixed: vdb_relations is {vdb_relations_annotation}, expected BaseVectorStorage"
 
 
 @pytest.mark.critical

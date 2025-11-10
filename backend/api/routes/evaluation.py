@@ -144,7 +144,7 @@ async def evaluate_answer_endpoint(
         all_metrics = []
 
         for test_case in request.test_cases:
-            # Pre-compute entity/edge matches if FlagEmbedding
+            # Pre-compute entity/relation matches if FlagEmbedding
             entity_match = None
             relation_match = None
             if embedding_manager.mode == "flagembedding" and test_case.use_rag:

@@ -333,7 +333,7 @@ class EmbeddingManager:
 
             # Load FAISS indices
             self.faiss_indices["entity"] = faiss.read_index(str(self.working_dir / "index_entity.bin"))
-            self.faiss_indices["edge"] = faiss.read_index(str(self.working_dir / "index_relation.bin"))
+            self.faiss_indices["relation"] = faiss.read_index(str(self.working_dir / "index_relation.bin"))
             logger.info("FAISS indices loaded")
 
             # Load corpus mappings from GraphML (new architecture) or JSON (legacy)

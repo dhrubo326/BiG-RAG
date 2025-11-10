@@ -198,7 +198,7 @@ def verify_output(working_dir: str):
         entities_count = len(vdb_entities.get('data', []))
         edges_count = len(vdb_relations.get('data', []))
         logger.info(f"  Entities: {entities_count}")
-        logger.info(f"  Relations (Bipartite Edges): {edges_count}")
+        logger.info(f"  Relations: {edges_count}")
         logger.info("="*80)
         logger.info("")
         return True

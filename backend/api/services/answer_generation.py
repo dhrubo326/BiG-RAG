@@ -55,7 +55,7 @@ async def generate_answer_with_rag(
         question: User's question
         rag_instance: BiGRAG instance for retrieval
         llm_manager: LLM manager for answer generation
-        embedding_manager: Embedding manager for entity/edge search
+        embedding_manager: Embedding manager for entity/relation search
         llm_provider: LLM provider (OpenAI, HuggingFace, etc.)
         model: Model name (e.g., "gpt-4o-mini")
         temperature: Sampling temperature (0.0 = deterministic, 1.0 = creative)

@@ -24,7 +24,7 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
     Supports multiple retrieval modes and LLM providers.
     """
     try:
-        # For FlagEmbedding mode, pre-compute entity/edge matches
+        # For FlagEmbedding mode, pre-compute entity/relation matches
         entity_match = None
         relation_match = None
 

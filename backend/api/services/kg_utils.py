@@ -97,7 +97,7 @@ async def get_document_stats_from_kg(
                 if c.get("full_doc_id") == document_id
             ]
 
-            # Store chunk IDs for entity/edge lookup
+            # Store chunk IDs for entity/relation lookup
             doc_chunk_ids = set(c_id for c_id, _ in doc_chunks)
 
             stats["chunks"] = len(doc_chunks)

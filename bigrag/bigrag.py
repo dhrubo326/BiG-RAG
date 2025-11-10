@@ -412,7 +412,7 @@ class BiGRAG:
                 global_config=asdict(self),
             )
             if maybe_new_kg is None:
-                logger.warning("No new bipartite edges and entities found")
+                logger.warning("No new relations and entities found")
                 return
             self.chunk_entity_relation_graph = maybe_new_kg
 
@@ -602,7 +602,7 @@ class BiGRAG:
             query,
             self.chunk_entity_relation_graph,
             self.vdb_entities,  # Path A: Entity vector DB
-            self.vdb_relations,  # Path B: Bipartite edge vector DB
+            self.vdb_relations,  # Path B: Relation vector DB
             self.text_chunks,
             self.vdb_chunks,  # Phase 3.2: Path C: Chunk vector DB
             param,

@@ -126,7 +126,7 @@ class TestGraphVectorSync:
         await rag.ainsert([doc])
 
         # Relation should be embedded in vector DB
-        assert rag.vdb_bipartite_edges is not None, "Relation vector DB should exist"
+        assert rag.vdb_relations is not None, "Relation vector DB should exist"
 
         # Test relation retrieval (Path B) works
         from bigrag.base import QueryParam

@@ -46,7 +46,7 @@ async def evaluate_single_retrieval(
         top_k: Number of documents to retrieve
         metrics: Metrics to calculate
         entity_match: Pre-computed entity matches (for FlagEmbedding mode)
-        relation_match: Pre-computed edge matches (for FlagEmbedding mode)
+        relation_match: Pre-computed relation matches (for FlagEmbedding mode)
 
     Returns:
         Dict with retrieved docs and metrics
@@ -310,7 +310,7 @@ async def evaluate_single_answer(
         top_k: Number of contexts to retrieve
         metrics: Answer metrics to calculate
         entity_match: Pre-computed entity matches
-        relation_match: Pre-computed edge matches
+        relation_match: Pre-computed relation matches
 
     Returns:
         Dict with generated answer and metrics

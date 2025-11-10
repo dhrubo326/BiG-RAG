@@ -321,7 +321,7 @@ async def _merge_relations_then_upsert(
     global_config: dict,
 ):
     """
-    Merge and upsert bipartite edge nodes with weight aggregation.
+    Merge and upsert relation nodes with weight aggregation.
 
     A1: Now accepts hash-based IDs and stores content as node attribute.
 
@@ -854,7 +854,7 @@ async def _build_query_context(
 
     Combines three retrieval paths:
     - Path A: Entity-based (structural, high-level)
-    - Path B: Bipartite edge-based (relational, knowledge fragments)
+    - Path B: Relation-based (relational, knowledge fragments)
     - Path C: Chunk-based (semantic, raw text)
 
     Returns 5 structured knowledge items + 5 chunk items = 10 total context items
@@ -871,7 +871,7 @@ async def _build_query_context(
         query_param,
     )
 
-    # Path B: Bipartite edge retrieval
+    # Path B: Relation retrieval
     knowledge_list_2 = await _get_edge_data(
         hl_keywrds,
         knowledge_graph_inst,

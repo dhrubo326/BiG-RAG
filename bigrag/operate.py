@@ -820,7 +820,7 @@ async def kg_query(
     query_param: QueryParam,
     global_config: dict,
     hashing_kv: BaseKVStorage = None,
-) -> str:
+) -> Union[str, list]:
 
     hl_keywords = query
     ll_keywords = query
@@ -835,8 +835,11 @@ async def kg_query(
         query_param,
     )
 
-    # Bug #1 Fix: Format structured knowledge as string for LLM context
-    return _format_knowledge_as_string(knowledge_list)
+    # Return structured list for API endpoints or formatted string for LLM context
+    if query_param.only_need_context:
+        return knowledge_list  # Return list of dicts for API endpoints
+    else:
+        return _format_knowledge_as_string(knowledge_list)  # Return formatted string for LLM
 
 
 

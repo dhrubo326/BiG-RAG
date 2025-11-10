@@ -52,11 +52,12 @@ export function GraphViz() {
   const [showHelp, setShowHelp] = useState(false);
 
   // Dataset selection state
-  const [selectedDataset, setSelectedDataset] = useState<string>('SingleTopic');
-  const [serverDataset, setServerDataset] = useState<string>('SingleTopic');
+  const [selectedDataset, setSelectedDataset] = useState<string>(''); // Empty until server responds
+  const [serverDataset, setServerDataset] = useState<string>('');
+  const [isLoadingDataset, setIsLoadingDataset] = useState(true);
   const [availableDatasets] = useState<string[]>([
+    'demo_test',      // Server default first
     'SingleTopic',
-    'demo_test',
     '2WikiMultiHopQA',
     'HotpotQA',
     'Musique',
@@ -77,24 +78,33 @@ export function GraphViz() {
   // Fetch server's default dataset from health check
   useEffect(() => {
     const fetchServerDataset = async () => {
+      setIsLoadingDataset(true);
       try {
         const response = await api.get<HealthResponse>('/');
-        if (response.data.data_source) {
-          setServerDataset(response.data.data_source);
-          setSelectedDataset(response.data.data_source); // Use server's dataset as default
+        if (response.data.dataset) {
+          setServerDataset(response.data.dataset);
+          setSelectedDataset(response.data.dataset); // Use server's dataset as default
+        } else {
+          // Fallback to first dataset if server doesn't return one
+          setSelectedDataset(availableDatasets[0]);
         }
       } catch (error) {
         console.error('Failed to fetch server dataset:', error);
-        // Keep default 'SingleTopic' if fetch fails
+        // Fallback to first dataset on error
+        setSelectedDataset(availableDatasets[0]);
+      } finally {
+        setIsLoadingDataset(false);
       }
     };
 
     fetchServerDataset();
-  }, []);
+  }, [availableDatasets]);
 
   // Load graph on mount with performance-optimized settings
   useEffect(() => {
-    // Load with sampling for large graphs (default: top 1000 nodes)
+    // Only load if dataset is set (wait for server fetch to complete)
+    if (!selectedDataset) return;
+
     const loadGraphData = async () => {
       try {
         await loadGraph(selectedDataset, {
@@ -290,14 +300,19 @@ export function GraphViz() {
             <select
               value={selectedDataset}
               onChange={(e) => handleDatasetChange(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              disabled={isLoadingDataset}
+              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {availableDatasets.map((dataset) => (
-                <option key={dataset} value={dataset}>
-                  {dataset}
-                  {dataset === serverDataset && ' (Server Default)'}
-                </option>
-              ))}
+              {isLoadingDataset ? (
+                <option value="">Loading server default...</option>
+              ) : (
+                availableDatasets.map((dataset) => (
+                  <option key={dataset} value={dataset}>
+                    {dataset}
+                    {dataset === serverDataset && ' (Server Default)'}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 

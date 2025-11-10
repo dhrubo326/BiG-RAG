@@ -179,8 +179,8 @@ export function Settings() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="demo_test">Demo Test (Default)</SelectItem>
                     <SelectItem value="SingleTopic">SingleTopic</SelectItem>
-                    <SelectItem value="demo_test">Demo Test</SelectItem>
                     <SelectItem value="2WikiMultiHopQA">2WikiMultiHopQA</SelectItem>
                     <SelectItem value="HotpotQA">HotpotQA</SelectItem>
                     <SelectItem value="Musique">Musique</SelectItem>

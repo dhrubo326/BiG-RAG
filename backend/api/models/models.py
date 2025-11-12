@@ -395,6 +395,21 @@ class BatchDeleteResponse(BaseModel):
 # Response Models - Graph Statistics
 # ==============================================================================
 
+class ConnectivityAnalysis(BaseModel):
+    """Graph connectivity analysis"""
+    total_nodes: int = Field(..., description="Total nodes (entities + relations + chunks)")
+    total_graph_edges: int = Field(..., description="Total edges connecting nodes")
+    orphan_entities: int = Field(..., description="Entity nodes with no connections")
+    orphan_relations: int = Field(..., description="Relation nodes with no connections")
+    single_connection_nodes: int = Field(..., description="Nodes with exactly 1 connection")
+    low_connection_nodes: int = Field(..., description="Nodes with 2-5 connections")
+    high_connection_nodes: int = Field(..., description="Nodes with more than 5 connections")
+    avg_degree: float = Field(..., description="Average node degree (connections per node)")
+    density: float = Field(..., description="Graph density (0-1, 1 = fully connected)")
+    largest_component_size: int = Field(..., description="Size of largest connected component")
+    num_components: int = Field(..., description="Number of disconnected components")
+
+
 class DatasetStats(BaseModel):
     """Statistics for a single dataset"""
     dataset: str = Field(..., description="Dataset name")
@@ -407,6 +422,7 @@ class DatasetStats(BaseModel):
     total_relations: int = Field(..., description="Total relation nodes")
     total_edges: int = Field(..., description="Total relations (deprecated: use 'total_relations' instead)")
     total_tokens: int = Field(..., description="Total tokens processed")
+    connectivity: Optional[ConnectivityAnalysis] = Field(None, description="Graph connectivity analysis")
 
 
 class GraphStatsResponse(BaseModel):

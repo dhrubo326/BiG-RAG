@@ -16,6 +16,22 @@ from ..models.models import AskRequest, AskResponse, SearchRequest
 router = APIRouter(tags=["Retrieval"])
 
 
+# Token counting utility
+def count_tokens(text: str, model: str = "gpt-4o-mini") -> int:
+    """Count tokens using tiktoken (OpenAI tokenizer)"""
+    try:
+        import tiktoken
+        try:
+            encoding = tiktoken.encoding_for_model(model)
+        except KeyError:
+            # Fallback to cl100k_base for unknown models
+            encoding = tiktoken.get_encoding("cl100k_base")
+        return len(encoding.encode(text))
+    except ImportError:
+        # Fallback: rough estimate (1 token ≈ 4 characters)
+        return len(text) // 4
+
+
 @router.post("/ask", response_model=AskResponse)
 async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: EmbeddingDep):
     """
@@ -52,24 +68,34 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
                 num_results=0,
                 mode=request.mode,
                 llm_provider_used=request.llm_provider or get_data_source(),
-                message="No relevant context found"
+                message="No relevant context found",
+                retrieval_tokens=0
             )
 
         # Format results
         contexts = []
+        all_context_text = []
         for i, item in enumerate(result, 1):
             if isinstance(item, dict):
+                context_text = item.get("<knowledge>", str(item))
                 contexts.append({
                     "rank": i,
-                    "context": item.get("<knowledge>", str(item)),
+                    "context": context_text,
                     "coherence_score": item.get("<coherence>", 0.0)
                 })
+                all_context_text.append(context_text)
             else:
+                context_text = str(item)
                 contexts.append({
                     "rank": i,
-                    "context": str(item),
+                    "context": context_text,
                     "coherence_score": 0.0
                 })
+                all_context_text.append(context_text)
+
+        # Calculate token count for retrieved context
+        combined_context = "\n\n".join(all_context_text)
+        retrieval_tokens = count_tokens(combined_context)
 
         return AskResponse(
             question=request.question,
@@ -77,7 +103,8 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
             num_results=len(contexts),
             mode=request.mode,
             llm_provider_used=request.llm_provider or "default",
-            message="Successfully retrieved relevant context"
+            message="Successfully retrieved relevant context",
+            retrieval_tokens=retrieval_tokens
         )
 
     except HTTPException:

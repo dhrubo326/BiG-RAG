@@ -11,6 +11,21 @@ from bigrag.utils import logger
 from ..core.dependencies import RAGDep, LLMDep, EmbeddingDep
 from ..models.models import ChatCompletionRequest
 
+# Token counting utility
+def count_tokens(text: str, model: str = "gpt-4o-mini") -> int:
+    """Count tokens using tiktoken (OpenAI tokenizer)"""
+    try:
+        import tiktoken
+        try:
+            encoding = tiktoken.encoding_for_model(model)
+        except KeyError:
+            # Fallback to cl100k_base for unknown models
+            encoding = tiktoken.get_encoding("cl100k_base")
+        return len(encoding.encode(text))
+    except ImportError:
+        # Fallback: rough estimate (1 token ≈ 4 characters)
+        return len(text) // 4
+
 
 router = APIRouter(prefix="/chat", tags=["LLM"])
 
@@ -58,31 +73,33 @@ async def chat_completions(
             raise HTTPException(status_code=400, detail="No user message found")
 
         # RAG: Retrieve context from knowledge graph
+        # IMPORTANT: Uses same parameters as /ask endpoint for consistent retrieval
         if request.use_rag:
             entity_match = None
             relation_match = None
 
             if embedding_manager.mode == "flagembedding":
-                entity_match = await embedding_manager.search_entities(user_prompt, 5)
-                relation_match = await embedding_manager.search_relations(user_prompt, 5)
+                entity_match = await embedding_manager.search_entities(user_prompt, request.top_k)
+                relation_match = await embedding_manager.search_relations(user_prompt, request.top_k)
 
             # Phase 3: Three-Path Retrieval + Semantic Reranking
+            # Uses same QueryParam as /ask for IDENTICAL retrieval results
             context_results = await rag.aquery(
                 user_prompt,
                 param=QueryParam(
-                    mode="hybrid",
+                    mode=request.mode,
                     only_need_context=True,
-                    top_k=5,
-                    enable_reranking=request.enable_reranking  # Phase 3.4: semantic reranking
+                    top_k=request.top_k,
+                    enable_reranking=request.enable_reranking
                 ),
                 entity_match=entity_match,
                 relation_match=relation_match
             )
 
             if context_results:
-                # Format retrieved contexts
+                # Format retrieved contexts (use all results, no slicing)
                 context_parts = []
-                for i, item in enumerate(context_results[:5], 1):
+                for i, item in enumerate(context_results, 1):
                     if isinstance(item, dict):
                         context = item.get("<knowledge>", str(item))
                     else:
@@ -121,6 +138,16 @@ Please provide a comprehensive answer based on the above context."""
             max_tokens=request.max_tokens
         )
 
+        # Calculate token usage
+        prompt_tokens = count_tokens(user_prompt, request.model)
+        if system_prompt:
+            prompt_tokens += count_tokens(system_prompt, request.model)
+        for msg in history_messages:
+            prompt_tokens += count_tokens(msg.get("content", ""), request.model)
+
+        completion_tokens = count_tokens(response_text, request.model)
+        total_tokens = prompt_tokens + completion_tokens
+
         # Format OpenAI-compatible response
         response = {
             "id": f"chatcmpl-{int(time.time())}",
@@ -138,9 +165,9 @@ Please provide a comprehensive answer based on the above context."""
                 }
             ],
             "usage": {
-                "prompt_tokens": -1,
-                "completion_tokens": -1,
-                "total_tokens": -1
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": total_tokens
             }
         }
 

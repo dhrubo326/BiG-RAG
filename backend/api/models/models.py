@@ -533,16 +533,16 @@ class ErrorResponse(BaseModel):
 class AskRequest(BaseModel):
     """Request model for /ask endpoint"""
     question: str = Field(..., min_length=1, description="Question text (required, non-empty)")
-    top_k: Optional[int] = 5
+    top_k: Optional[int] = 10  # Increased default to 10 for better context
     mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
     llm_provider: Optional[str] = None
-    enable_reranking: Optional[bool] = False
+    enable_reranking: Optional[bool] = False  # Default False for speed
 
     class Config:
         json_schema_extra = {
             "example": {
                 "question": "What is Artificial Intelligence?",
-                "top_k": 5,
+                "top_k": 10,
                 "mode": "hybrid",
                 "llm_provider": "openai",
                 "enable_reranking": False
@@ -558,6 +558,7 @@ class AskResponse(BaseModel):
     mode: str
     llm_provider_used: Optional[str] = None
     message: Optional[str] = None
+    retrieval_tokens: Optional[int] = None  # Token count for retrieved context
 
 
 class SearchRequest(BaseModel):
@@ -580,6 +581,8 @@ class ChatCompletionRequest(BaseModel):
     llm_provider: Optional[str] = None
     use_rag: Optional[bool] = True
     enable_reranking: Optional[bool] = False
+    top_k: Optional[int] = 10  # Match /ask default for consistent retrieval
+    mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"  # Match /ask default
 
     class Config:
         json_schema_extra = {
@@ -594,7 +597,9 @@ class ChatCompletionRequest(BaseModel):
                 "temperature": 0.7,
                 "max_tokens": 500,
                 "use_rag": True,
-                "enable_reranking": False
+                "enable_reranking": False,
+                "top_k": 10,
+                "mode": "hybrid"
             }
         }
 

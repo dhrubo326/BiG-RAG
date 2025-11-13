@@ -1,7 +1,8 @@
 # BiG-RAG Knowledge Graph Orphan Node Reduction - Implementation Plan
 
-**Version**: 1.0
+**Version**: 1.1
 **Date**: 2025-01-13
+**Last Updated**: 2025-01-13 (Added Step 1.5: Metadata Formatting Enhancement)
 **Status**: Ready for Implementation
 **Estimated Time**: 2-3 days
 **Target**: Reduce orphan relation rate from 22.5% to <5%
@@ -33,12 +34,13 @@
 LLM outputs consecutive `("relation"...)` records without extracting `("entity"...)` records, creating orphan relation nodes that are unreachable during retrieval.
 
 ### Solution Summary
-**5 Critical Improvements** inspired by LightRAG analysis:
-1. **Enforce entity extraction after each relation** (60% orphan reduction)
-2. **Enhanced input sanitization** (prevent parsing errors)
-3. **Smart gleaning merge** (improve entity quality)
-4. **Delimiter corruption handling** (recover from LLM format errors)
-5. **Post-extraction validation** (early orphan detection)
+**6 Critical Improvements** inspired by LightRAG analysis:
+1. **Metadata formatting enhancement** (bracket-style formatting for clearer boundaries)
+2. **Enforce entity extraction after each relation** (60% orphan reduction)
+3. **Enhanced input sanitization** (prevent parsing errors)
+4. **Smart gleaning merge** (improve entity quality)
+5. **Delimiter corruption handling** (recover from LLM format errors)
+6. **Post-extraction validation** (early orphan detection)
 
 ### Target State (After Implementation)
 - **Orphan relations**: <4/80 (<5%)
@@ -523,6 +525,147 @@ cp expr/football/graph_chunk_entity_relation.graphml expr/football_backup/
 # Record baseline metrics
 echo "Baseline (2025-01-13): 18 orphan relations out of 80 (22.5%)" > test_scripts/baseline_football.txt
 ```
+
+---
+
+### Implementation Step 1.5: Metadata Formatting Enhancement
+
+**File to modify:** `bigrag/operate.py`
+
+**Location:** Lines 567-588 (metadata context enrichment section)
+
+**Purpose:** Adopt bracket-style formatting (like LightRAG) to provide clearer semantic boundaries between metadata and content, preventing LLM from confusing metadata with extractable entities.
+
+**Current Implementation Analysis:**
+
+BiG-RAG already uses metadata during extraction (added in Phase 2.1):
+```python
+# Current format (lines 567-588):
+doc_title = chunk_dp.get("doc_title", "")
+doc_metadata = chunk_dp.get("doc_metadata", {})
+
+context_parts = []
+if doc_title:
+    context_parts.append(f"Document Title: {doc_title}")
+if doc_metadata:
+    metadata_str = ", ".join(
+        f"{k}: {v}" for k, v in doc_metadata.items()
+        if k != "title" and v
+    )
+    if metadata_str:
+        context_parts.append(f"Document Context: {metadata_str}")
+
+# Combine context with content
+if context_parts:
+    enriched_content = "\n".join(context_parts) + "\n\n" + content
+else:
+    enriched_content = content
+```
+
+**Current Output Format:**
+```
+Document Title: football and footballer related news
+Document Context: category: organisation, tags: epl, laliga
+
+[chunk content here...]
+```
+
+**Issue with Current Format:**
+- Plain text format lacks clear boundaries
+- LLM might extract "Document Title" as an entity
+- No explicit instruction that metadata is contextual, not extractable
+
+**LightRAG's Approach (for comparison):**
+```python
+# LightRAG uses brackets (lightrag/operate.py:2066-2087):
+content_parts = []
+if "doc_summary" in chunk_dp:
+    content_parts.append(f"[Document Context: {chunk_dp['doc_summary']}]")
+if "doc_metadata" in chunk_dp:
+    metadata_str = ", ".join(f"{k}: {v}" for k, v in chunk_dp["doc_metadata"].items())
+    content_parts.append(f"[Metadata: {metadata_str}]")
+content_parts.append(chunk_dp["content"])
+content = "\n".join(content_parts)
+```
+
+**Code Change:**
+
+Replace lines 567-588 in `bigrag/operate.py`:
+
+```python
+# Extract metadata for context enhancement (Phase 2.1 improvement)
+doc_title = chunk_dp.get("doc_title", "")
+doc_metadata = chunk_dp.get("doc_metadata", {})
+
+# Build context-enriched input text with bracket-style formatting
+# (Phase 3.1: Adopted from LightRAG to prevent metadata confusion)
+context_parts = []
+
+if doc_title:
+    context_parts.append(f"Title: {doc_title}")
+
+if doc_metadata:
+    metadata_str = ", ".join(
+        f"{k}: {v}" for k, v in doc_metadata.items()
+        if k != "title" and v  # Skip empty values and title (already included)
+    )
+    if metadata_str:
+        context_parts.append(f"Metadata: {metadata_str}")
+
+# Combine with bracket markers for clear semantic boundaries
+if context_parts:
+    metadata_block = "\n".join(context_parts)
+    enriched_content = (
+        f"[DOCUMENT CONTEXT]\n"
+        f"{metadata_block}\n\n"
+        f"[CHUNK CONTENT]\n"
+        f"{content}"
+    )
+else:
+    # No metadata available, use content as-is
+    enriched_content = content
+```
+
+**New Output Format:**
+```
+[DOCUMENT CONTEXT]
+Title: football and footballer related news
+Metadata: category: organisation, tags: epl, laliga
+
+[CHUNK CONTENT]
+[chunk content here...]
+```
+
+**Benefits:**
+
+1. **Clear Semantic Boundaries**: Brackets explicitly mark metadata vs content sections
+2. **Prevent LLM Confusion**: LLM won't extract "Document Title" or "DOCUMENT CONTEXT" as entities
+3. **Proven Pattern**: LightRAG uses this format successfully
+4. **Low Risk**: Cosmetic change to string formatting (no logic changes)
+5. **Aligns with Prompt**: Brackets match extraction prompt's delimiter style (`<|>`, `##`)
+
+**Expected Impact:**
+
+- **Orphan Reduction**: 5-10% reduction (combined with other improvements)
+- **Entity Extraction Quality**: Fewer false entities from metadata
+- **Consistency**: Better alignment between prompt instructions and input format
+
+**Testing:**
+
+After implementation, verify with football dataset:
+```bash
+# Rebuild graph with new formatting
+python script_build.py --data_source football
+
+# Check orphan count
+python test_scripts/test_orphan_detection.py football
+
+# Expected: Some reduction in orphan relations (target: 18 → 16-17)
+```
+
+**Estimated Time:** 15 minutes
+
+**Risk Level:** Very Low (cosmetic change, no logic modification)
 
 ---
 
@@ -1614,11 +1757,12 @@ cp expr/football/kv_store_*.json expr/football_backup/
 ### Phase 2: Implementation (Day 1, Afternoon - Day 2)
 
 **2.1: Implement in order**
-1. Step 2: Enhanced sanitization (utils.py) - 1 hour
-2. Step 3: Update extraction handlers (operate.py) - 2 hours
-3. Step 4: Post-extraction validation (operate.py) - 1 hour
-4. Step 5: Prompt improvements (prompt.py) - 30 minutes
-5. Test each step with unit tests
+1. Step 1.5: Metadata formatting enhancement (operate.py) - 15 minutes
+2. Step 2: Enhanced sanitization (utils.py) - 1 hour
+3. Step 3: Update extraction handlers (operate.py) - 2 hours
+4. Step 4: Post-extraction validation (operate.py) - 1 hour
+5. Step 5: Prompt improvements (prompt.py) - 30 minutes
+6. Test each step with unit tests
 
 **2.2: Unit tests**
 ```bash
@@ -1979,9 +2123,10 @@ python test_scripts/test_orphan_detection.py football
 
 **Morning (4 hours):**
 - [ ] 30min: Backup code, establish baseline
+- [ ] 15min: Implement Step 1.5 (metadata formatting)
 - [ ] 1h: Implement Step 2 (sanitization functions)
 - [ ] 1h: Implement Step 3 Part A-B (entity/relation handlers)
-- [ ] 1h: Unit tests for sanitization
+- [ ] 45min: Unit tests for sanitization
 - [ ] 30min: Break
 
 **Afternoon (4 hours):**

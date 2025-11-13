@@ -1,0 +1,145 @@
+{
+  "dataset": "SingleTopic",
+  "num_evaluated": 10,
+  "average_scores": {
+    "factual_correctness": 3.6,
+    "completeness": 3.3,
+    "relevance": 4.5,
+    "citation_quality": 1.8,
+    "user_helpfulness": 4.0,
+    "overall": 17.2
+  },
+  "verdict_distribution": {
+    "CORRECT": 1,
+    "MOSTLY_CORRECT": 6,
+    "PARTIALLY_CORRECT": 2,
+    "INCORRECT": 1
+  },
+  "accuracy_estimate": 10.0,
+  "mostly_correct_rate": 70.0,
+  "by_question_type": {
+    "multi_passage": 17.2
+  },
+  "per_question_evaluations": [
+    {
+      "factual_correctness": 5,
+      "completeness": 5,
+      "relevance": 5,
+      "citation_quality": 5,
+      "user_helpfulness": 5,
+      "overall_score": 25,
+      "reasoning": "The generated answer accurately reflects all key facts from the golden answer, provides complete information, remains relevant to the question, cites sources correctly, and offers helpful context.",
+      "verdict": "CORRECT",
+      "question": "Which enemy types wield an AK-47?",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 5,
+      "completeness": 4,
+      "relevance": 5,
+      "citation_quality": 4,
+      "user_helpfulness": 5,
+      "overall_score": 23,
+      "reasoning": "The generated answer accurately captures the key facts about jammed enemies and their behaviors, though it omits the detail about jammed Chance Kins. Citations are mostly appropriate and relevant.",
+      "verdict": "MOSTLY_CORRECT",
+      "question": "What makes jammed enemies different?",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 5,
+      "completeness": 5,
+      "relevance": 5,
+      "citation_quality": 0,
+      "user_helpfulness": 5,
+      "overall_score": 20,
+      "reasoning": "The generated answer accurately presents all key facts from the golden answer and provides additional context about the encounter, but it lacks citations from the retrieved context.",
+      "verdict": "MOSTLY_CORRECT",
+      "question": "What enemies are encountered in the second encounter?",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 2,
+      "completeness": 2,
+      "relevance": 5,
+      "citation_quality": 0,
+      "user_helpfulness": 3,
+      "overall_score": 12,
+      "reasoning": "The generated answer includes some monsters but misses key ones from the golden answer, lacks citations, and provides relevant context about the encountered monsters.",
+      "verdict": "PARTIALLY_CORRECT",
+      "question": "What monsters are encountered in this journey?",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 3,
+      "completeness": 3,
+      "relevance": 5,
+      "citation_quality": 0,
+      "user_helpfulness": 4,
+      "overall_score": 15,
+      "reasoning": "The generated answer correctly identifies LangChain as the chosen framework and mentions llmware, but it fails to mention Llamaindex and LitGPT, which are key alternatives. Additionally, there are no citations provided.",
+      "verdict": "MOSTLY_CORRECT",
+      "question": "What framework was chosen to execute the RAG process and what alternatives were considered?",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 1,
+      "completeness": 1,
+      "relevance": 3,
+      "citation_quality": 0,
+      "user_helpfulness": 2,
+      "overall_score": 7,
+      "reasoning": "The generated answer fails to mention any of the specific large language models and vector databases listed in the golden answer, making it largely incorrect and incomplete. While it provides some context, it does not directly address the question.",
+      "verdict": "INCORRECT",
+      "question": "Which large language models and vector databases were shortlisted for this project?",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 5,
+      "completeness": 4,
+      "relevance": 5,
+      "citation_quality": 3,
+      "user_helpfulness": 5,
+      "overall_score": 22,
+      "reasoning": "The generated answer accurately reflects the key facts about the bling-phi-3 model and its context, though it slightly expands on details not present in the golden answer. Citations are adequate but could be improved.",
+      "verdict": "MOSTLY_CORRECT",
+      "question": "What kind of model is the bling-phi-3 model",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 3,
+      "completeness": 3,
+      "relevance": 4,
+      "citation_quality": 3,
+      "user_helpfulness": 4,
+      "overall_score": 17,
+      "reasoning": "The generated answer includes some correct versions but misses key updates like 0.2.3 and 0.3.0, affecting completeness and factual correctness. It is mostly relevant and provides helpful context.",
+      "verdict": "MOSTLY_CORRECT",
+      "question": "In which versions were the SLIM models updated?",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 4,
+      "completeness": 3,
+      "relevance": 5,
+      "citation_quality": 3,
+      "user_helpfulness": 4,
+      "overall_score": 19,
+      "reasoning": "The generated answer accurately describes methods for grouping UI elements but misses some key points from the golden answer, such as the use of on_change handlers and forms. It is relevant and provides helpful context, but the citations could be improved.",
+      "verdict": "MOSTLY_CORRECT",
+      "question": "What are the ways of grouping UI elements together?",
+      "question_type": "multi_passage"
+    },
+    {
+      "factual_correctness": 3,
+      "completeness": 3,
+      "relevance": 3,
+      "citation_quality": 0,
+      "user_helpfulness": 3,
+      "overall_score": 12,
+      "reasoning": "The generated answer correctly infers the parameters but does not explicitly state them as required. It lacks citations and does not fully address the completeness of the information.",
+      "verdict": "PARTIALLY_CORRECT",
+      "question": "What are the parameters for the mo.ui.text function?",
+      "question_type": "multi_passage"
+    }
+  ]
+}

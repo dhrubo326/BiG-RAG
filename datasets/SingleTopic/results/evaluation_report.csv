@@ -1,0 +1,4 @@
+question_type,count,exact_match,f1_score,partial_match,fuzzy_match,refusal_rate,hallucination_rate
+single_passage,40,0.0,0.15382683665411714,0.2,0.0,,
+multi_passage,40,0.0,0.16763751836408888,0.075,0.0,,
+no_answer,40,,,,,0.275,0.725

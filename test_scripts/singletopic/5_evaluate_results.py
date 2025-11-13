@@ -211,10 +211,12 @@ def evaluate_results(results_df):
     print("[1/3] Calculating metrics for answerable questions...")
 
     # Filter successful questions (no errors)
-    successful_df = results_df[results_df['error'] == ''].copy()
+    # Note: Empty error cells are read as NaN by pandas, not empty string
+    successful_df = results_df[results_df['error'].isna()].copy()
 
     # Separate answerable vs no-answer questions
-    answerable_df = successful_df[successful_df['golden_answer'] != ''].copy()
+    # For no-answer questions, golden_answer is NaN
+    answerable_df = successful_df[successful_df['golden_answer'].notna()].copy()
     no_answer_df = successful_df[successful_df['question_type'] == 'no_answer'].copy()
 
     # Evaluate answerable questions

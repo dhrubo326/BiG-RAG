@@ -137,15 +137,21 @@ export const useDocuments = () => {
 
   // Delete a single document
   const handleDeleteDocument = useCallback(
-    async (id: string) => {
+    async (id: string, hardDelete: boolean = false) => {
       const document = documents.find((doc) => doc.id === id);
       if (!document) {
         toast.error('Document not found');
         return false;
       }
 
+      // Show confirmation with appropriate message
+      const deleteType = hardDelete ? 'permanently delete' : 'soft delete';
+      const warningMessage = hardDelete
+        ? `\n\nWARNING: This will permanently remove:\n- All knowledge graph data (chunks, entities, relations)\n- Document from corpus (prevents resurrection on rebuild)\n- All vector embeddings\n\nThis action cannot be undone!`
+        : '\n\nThe document will be marked as deleted but data will be preserved.';
+
       const confirmed = window.confirm(
-        `Are you sure you want to delete "${document.title}"?`
+        `Are you sure you want to ${deleteType} "${document.title}"?${warningMessage}`
       );
       if (!confirmed) return false;
 
@@ -153,9 +159,11 @@ export const useDocuments = () => {
       setError(null);
 
       try {
-        await deleteDocument(id);
+        await deleteDocument(id, hardDelete);
         removeDocument(id);
-        toast.success(`Document "${document.title}" deleted`);
+        toast.success(
+          `Document "${document.title}" ${hardDelete ? 'permanently deleted' : 'soft deleted'}`
+        );
         return true;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to delete document';
@@ -170,36 +178,47 @@ export const useDocuments = () => {
   );
 
   // Delete multiple documents
-  const handleDeleteMultiple = useCallback(async () => {
-    const ids = Array.from(selectedDocumentIds);
-    if (ids.length === 0) {
-      toast.warning('No documents selected');
-      return false;
-    }
+  const handleDeleteMultiple = useCallback(
+    async (hardDelete: boolean = false) => {
+      const ids = Array.from(selectedDocumentIds);
+      if (ids.length === 0) {
+        toast.warning('No documents selected');
+        return false;
+      }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${ids.length} document(s)?`
-    );
-    if (!confirmed) return false;
+      const deleteType = hardDelete ? 'permanently delete' : 'soft delete';
+      const warningMessage = hardDelete
+        ? `\n\nWARNING: This will permanently remove from ALL ${ids.length} document(s):\n- All knowledge graph data\n- Documents from corpus\n- All vector embeddings\n\nThis action cannot be undone!`
+        : '\n\nDocuments will be marked as deleted but data will be preserved.';
 
-    setLoading(true);
-    setError(null);
+      const confirmed = window.confirm(
+        `Are you sure you want to ${deleteType} ${ids.length} document(s)?${warningMessage}`
+      );
+      if (!confirmed) return false;
 
-    try {
-      await deleteMultipleDocuments(ids);
-      ids.forEach((id) => removeDocument(id));
-      clearSelection();
-      toast.success(`Deleted ${ids.length} document(s)`);
-      return true;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete documents';
-      setError(message);
-      toast.error(message);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedDocumentIds, removeDocument, clearSelection, setLoading, setError]);
+      setLoading(true);
+      setError(null);
+
+      try {
+        // Delete all documents with the same hardDelete setting
+        await Promise.all(ids.map((id) => deleteDocument(id, hardDelete)));
+        ids.forEach((id) => removeDocument(id));
+        clearSelection();
+        toast.success(
+          `${hardDelete ? 'Permanently deleted' : 'Soft deleted'} ${ids.length} document(s)`
+        );
+        return true;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to delete documents';
+        setError(message);
+        toast.error(message);
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedDocumentIds, removeDocument, clearSelection, setLoading, setError]
+  );
 
   // Export documents
   const exportDocuments = useCallback(

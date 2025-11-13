@@ -14,7 +14,7 @@ export const API_ENDPOINTS = {
   // Documents
   DOCUMENTS: '/documents',
   DOCUMENT_BY_ID: (id: string) => `/documents/${id}`,
-  UPLOAD_DOCUMENT: '/documents',
+  UPLOAD_DOCUMENT: '/documents/upload',
   DELETE_DOCUMENT: (id: string) => `/documents/${id}`,
 
   // Evaluation

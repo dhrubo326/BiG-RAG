@@ -12,7 +12,7 @@ interface DocumentListProps {
   onToggleSelect: (id: string) => void;
   onSelectAll: () => void;
   onSortChange: (field: string) => void;
-  onDeleteDocument: (id: string) => void;
+  onDeleteDocument: (id: string, hardDelete?: boolean) => void;
   onViewDocument: (doc: Document) => void;
   onDownloadDocument: (doc: Document) => void;
 }
@@ -180,12 +180,22 @@ const DocumentList: React.FC<DocumentListProps> = ({
                         <Download className="w-3 h-3" />
                         Download
                       </button>
+                      <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                       <button
-                        onClick={() => onDeleteDocument(doc.id)}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-red-500"
+                        onClick={() => onDeleteDocument(doc.id, false)}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-orange-500"
+                        title="Mark as deleted (soft delete)"
                       >
                         <Trash2 className="w-3 h-3" />
-                        Delete
+                        Soft Delete
+                      </button>
+                      <button
+                        onClick={() => onDeleteDocument(doc.id, true)}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 text-red-600"
+                        title="Permanently remove from all storage"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Hard Delete
                       </button>
                     </div>
                   </div>

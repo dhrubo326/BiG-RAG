@@ -3,18 +3,54 @@ import type { Document, DocumentMetadata } from '../types';
 import { API_ENDPOINTS } from '../utils/constants';
 
 /**
- * Get all documents
+ * Get all documents with basic info (paginated)
+ * Uses /documents?limit=X&offset=Y for efficient list loading
+ * Does NOT fetch detailed info - use getDocumentById for that
  */
-export const getDocuments = async (): Promise<Document[]> => {
-  const response = await api.get(API_ENDPOINTS.DOCUMENTS);
-  return response.data.documents || response.data || [];
+export const getDocuments = async (options?: {
+  page?: number;
+  limit?: number;
+  dataset?: string;
+}): Promise<{ documents: Document[]; total: number; page: number; limit: number }> => {
+  const { page = 1, limit = 50, dataset } = options || {};
+  const offset = (page - 1) * limit;
+
+  const response = await api.get(API_ENDPOINTS.DOCUMENTS, {
+    params: {
+      limit,
+      offset,
+      dataset,
+    },
+  });
+
+  const docs = response.data.documents || response.data || [];
+  const total = response.data.total || docs.length;
+
+  return {
+    documents: docs,
+    total,
+    page,
+    limit,
+  };
 };
 
 /**
- * Get a single document by ID
+ * Get a single document by ID with detailed information
+ * @param id - Document ID
+ * @param includeEntities - Include entities list
+ * @param includeRelated - Include related documents
  */
-export const getDocumentById = async (id: string): Promise<Document> => {
-  const response = await api.get(API_ENDPOINTS.DOCUMENT_BY_ID(id));
+export const getDocumentById = async (
+  id: string,
+  includeEntities: boolean = true,
+  includeRelated: boolean = true
+): Promise<Document> => {
+  const response = await api.get(API_ENDPOINTS.DOCUMENT_BY_ID(id), {
+    params: {
+      include_entities: includeEntities,
+      include_related: includeRelated,
+    },
+  });
   return response.data;
 };
 
@@ -29,13 +65,22 @@ export const uploadDocument = async (
   const formData = new FormData();
   formData.append('file', file);
 
-  // Add metadata fields
-  if (metadata.title) formData.append('title', metadata.title);
-  if (metadata.category) formData.append('category', metadata.category);
-  if (metadata.tags) formData.append('tags', JSON.stringify(metadata.tags));
-  if (metadata.author) formData.append('author', metadata.author);
-  if (metadata.source) formData.append('source', metadata.source);
-  if (metadata.url) formData.append('url', metadata.url);
+  // Add title separately (required field)
+  if (metadata.title) {
+    formData.append('title', metadata.title);
+  }
+
+  // Add metadata as JSON string (backend expects this format)
+  const metadataObj: Record<string, any> = {};
+  if (metadata.category) metadataObj.category = metadata.category;
+  if (metadata.tags && metadata.tags.length > 0) metadataObj.tags = metadata.tags;
+  if (metadata.author) metadataObj.author = metadata.author;
+  if (metadata.source) metadataObj.source = metadata.source;
+  if (metadata.url) metadataObj.url = metadata.url;
+
+  if (Object.keys(metadataObj).length > 0) {
+    formData.append('metadata', JSON.stringify(metadataObj));
+  }
 
   const response = await api.post(API_ENDPOINTS.UPLOAD_DOCUMENT, formData, {
     headers: {
@@ -69,9 +114,13 @@ export const uploadDocumentText = async (
 
 /**
  * Delete a document
+ * @param id - Document ID
+ * @param hardDelete - If true, permanently removes document from all storage layers (including corpus)
  */
-export const deleteDocument = async (id: string): Promise<void> => {
-  await api.delete(API_ENDPOINTS.DELETE_DOCUMENT(id));
+export const deleteDocument = async (id: string, hardDelete: boolean = false): Promise<void> => {
+  await api.delete(API_ENDPOINTS.DELETE_DOCUMENT(id), {
+    params: { hard_delete: hardDelete },
+  });
 };
 
 /**

@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from functools import wraps
 from hashlib import md5
-from typing import Any, Union, List, Optional
+from typing import Any, Union, List, Optional, Literal
 import xml.etree.ElementTree as ET
 
 import numpy as np
@@ -217,6 +217,251 @@ def clean_str(input: Any) -> str:
 
 def is_float_regex(value):
     return bool(re.match(r"^[-+]?[0-9]*\.?[0-9]+$", value))
+
+
+# ============================================================================
+# Text Sanitization for LLM Extraction Output
+# Added: 2025-01-13 for orphan node reduction
+# ============================================================================
+
+def sanitize_extracted_text(
+    text: str,
+    field_type: Literal["entity_name", "entity_type", "description", "relation", "general"] = "general"
+) -> str:
+    """
+    Sanitize LLM-extracted text with field-specific rules.
+
+    Purpose: Clean malformed LLM output to prevent parsing errors and
+             ensure consistent entity/relation data quality.
+
+    Args:
+        text: Raw text from LLM output
+        field_type: Type of field being sanitized
+            - "entity_name": Strict cleaning for entity identifiers
+            - "entity_type": Very strict (lowercase, no spaces)
+            - "description": Allow most characters, remove control chars
+            - "relation": Relation content cleaning
+            - "general": Basic cleaning
+
+    Returns:
+        Cleaned text string (may be empty if input is invalid)
+
+    Examples:
+        >>> sanitize_extracted_text('"  LIONEL MESSI  "', "entity_name")
+        'LIONEL MESSI'
+
+        >>> sanitize_extracted_text('  person  ', "entity_type")
+        'person'
+
+        >>> sanitize_extracted_text('" He is a player "', "description")
+        'He is a player'
+    """
+    if not text or not isinstance(text, str):
+        return ""
+
+    # Step 1: Remove outer quotes and whitespace
+    text = text.strip()
+
+    # Remove outer quotes (single or double, but not inner quotes)
+    if len(text) >= 2:
+        if (text[0] == '"' and text[-1] == '"') or (text[0] == "'" and text[-1] == "'"):
+            text = text[1:-1].strip()
+
+    # Step 2: Normalize whitespace (multiple spaces → single space)
+    text = re.sub(r'\s+', ' ', text)
+
+    # Step 3: Remove control characters (always)
+    text = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', text)
+
+    # Step 4: Field-specific cleaning
+    if field_type == "entity_name":
+        # Entity names: Remove ALL inner quotes
+        text = text.replace('"', '').replace("'", '')
+
+        # Check for delimiter corruption (entity names should never contain delimiters)
+        forbidden_patterns = ['<|>', '<SEP>', '##', '<GRAPH_FIELD_SEP>', '||', '<>', '|>']
+        for pattern in forbidden_patterns:
+            if pattern in text:
+                logger.warning(f"Entity name contains reserved delimiter '{pattern}': '{text}'")
+                return ""
+
+        # Entity name cannot be empty after cleaning
+        if not text.strip():
+            return ""
+
+    elif field_type == "entity_type":
+        # Entity type must be single word, lowercase, no spaces
+        text = text.replace(" ", "").lower()
+
+        # Reject if contains invalid characters
+        invalid_chars = ["'", '"', "(", ")", "<", ">", "|", "/", "\\", ",", ";", "!", "?"]
+        if any(char in text for char in invalid_chars):
+            logger.warning(f"Invalid entity type contains special characters: '{text}'")
+            return ""
+
+        # Type cannot be empty
+        if not text.strip():
+            return ""
+
+    elif field_type == "description":
+        # Descriptions: Allow most characters, just remove control chars (already done in Step 3)
+        # Remove any remaining double control characters
+        text = re.sub(r'\s+', ' ', text)
+
+        # Trim to reasonable length if extremely long
+        MAX_DESC_LENGTH = 2000
+        if len(text) > MAX_DESC_LENGTH:
+            logger.warning(f"Description truncated from {len(text)} to {MAX_DESC_LENGTH} chars")
+            text = text[:MAX_DESC_LENGTH] + "..."
+
+    elif field_type == "relation":
+        # Relation content: Similar to description
+        text = re.sub(r'\s+', ' ', text)
+
+        # Trim if extremely long
+        MAX_RELATION_LENGTH = 1000
+        if len(text) > MAX_RELATION_LENGTH:
+            logger.warning(f"Relation content truncated from {len(text)} to {MAX_RELATION_LENGTH} chars")
+            text = text[:MAX_RELATION_LENGTH] + "..."
+
+    # Final validation: Return empty string if only whitespace remains
+    return text.strip()
+
+
+def fix_delimiter_corruption(record: str, tuple_delimiter: str = "<|>") -> str:
+    """
+    Fix common LLM delimiter corruption patterns.
+
+    Purpose: LLM sometimes outputs variations of the tuple delimiter
+             (e.g., <> instead of <|>, || instead of <|>). This function
+             corrects these patterns to enable proper parsing.
+
+    Args:
+        record: Raw LLM output record (single line)
+        tuple_delimiter: Expected delimiter (default: "<|>" for BiG-RAG)
+
+    Returns:
+        Record with corrected delimiters
+
+    Examples:
+        >>> fix_delimiter_corruption('entity<>MESSI<>person', '<|>')
+        'entity<|>MESSI<|>person'
+
+        >>> fix_delimiter_corruption('relation||content||score', '<|>')
+        'relation<|>content<|>score'
+
+    Common Corruption Patterns:
+        - <> instead of <|>
+        - || instead of <|>
+        - <| or |> (incomplete)
+        - < | > (with spaces)
+        - <#> instead of <|#|> (if delimiter has core character)
+    """
+    if not record:
+        return record
+
+    # Extract core delimiter character if present
+    # For BiG-RAG: tuple_delimiter = "<|>" → core = "|"
+    # For LightRAG: tuple_delimiter = "<|#|>" → core = "#"
+    if len(tuple_delimiter) >= 3 and tuple_delimiter.startswith('<') and tuple_delimiter.endswith('>'):
+        core = tuple_delimiter[2:-2] if len(tuple_delimiter) > 4 else tuple_delimiter[1:-1]
+    else:
+        core = "|"  # Default fallback
+
+    # Define corruption patterns (ordered by likelihood)
+    corrupted_patterns = [
+        # Missing pipes
+        f"<{core}>",      # <#> instead of <|#|>
+        "<>",             # Empty brackets
+
+        # Missing brackets
+        f"|{core}|",      # |#| instead of <|#|>
+        "||",             # Double pipes
+
+        # Partial patterns
+        f"<|{core}>",     # <|#> instead of <|#|>
+        f"<{core}|>",     # <#|> instead of <|#|>
+        "<|",             # Opening only
+        "|>",             # Closing only
+
+        # With spaces
+        "< >",            # Brackets with space
+        "| |",            # Pipes with space
+        f"< {core} >",    # Brackets with spaces around core
+        f"< | {core} | >", # Full pattern with spaces
+        f"<| {core} |>",  # Spaces inside
+    ]
+
+    # Apply corrections
+    for pattern in corrupted_patterns:
+        if pattern in record:
+            record = record.replace(pattern, tuple_delimiter)
+            logger.debug(f"Fixed delimiter corruption: '{pattern}' → '{tuple_delimiter}'")
+
+    return record
+
+
+def description_quality_score(description: str) -> float:
+    """
+    Calculate quality score for entity/relation descriptions.
+
+    Purpose: During gleaning merge, compare quality of descriptions
+             to keep the better version (not just longer version).
+
+    Args:
+        description: Entity or relation description text
+
+    Returns:
+        Quality score (float, higher = better quality)
+
+    Scoring Factors:
+        - Base: Length (more detail assumed better)
+        - +10: Ends with proper sentence (period)
+        - -50%: Very short (<20 chars)
+        - +20: Contains specific keywords (who, which, known for, etc.)
+        - +10: Contains numbers/dates (specific facts)
+
+    Examples:
+        >>> description_quality_score("Messi is a player")
+        17  # Short, no period, no keywords
+
+        >>> description_quality_score("Lionel Messi is a professional footballer known for winning 8 Ballon d'Or awards.")
+        132  # Long (92) + period (+10) + keywords (+20) + numbers (+10)
+    """
+    if not description:
+        return 0.0
+
+    score = len(description)  # Base score: length
+
+    # Bonus: Complete sentence (ends with period)
+    if description.rstrip().endswith('.'):
+        score += 10
+
+    # Penalty: Very short descriptions (likely incomplete)
+    if len(description) < 20:
+        score *= 0.5
+
+    # Bonus: Contains specific keywords (indicates detailed description)
+    quality_keywords = [
+        'who', 'which', 'where', 'when', 'professional',
+        'known for', 'famous for', 'specialist', 'expert',
+        'won', 'achieved', 'played', 'founded', 'established'
+    ]
+    keyword_matches = sum(1 for kw in quality_keywords if kw.lower() in description.lower())
+    score += keyword_matches * 20
+
+    # Bonus: Contains numbers/dates (indicates specific facts)
+    has_numbers = bool(re.search(r'\d+', description))
+    if has_numbers:
+        score += 10
+
+    # Bonus: Mentions multiple entities (rich context)
+    # Heuristic: Count capitalized words (potential entity mentions)
+    capitalized_words = len([w for w in description.split() if w and w[0].isupper()])
+    if capitalized_words >= 3:
+        score += 15
+
+    return score
 
 
 def truncate_list_by_token_size(list_data: list, key: callable, max_token_size: int):

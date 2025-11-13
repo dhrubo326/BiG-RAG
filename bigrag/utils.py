@@ -368,21 +368,25 @@ def fix_delimiter_corruption(record: str, tuple_delimiter: str = "<|>") -> str:
     else:
         core = "|"  # Default fallback
 
+    print(f"[FIX_DELIM DEBUG] tuple_delimiter={repr(tuple_delimiter)}, core={repr(core)}")
+
     # Define corruption patterns (ordered by likelihood)
     corrupted_patterns = [
-        # Missing pipes
-        f"<{core}>",      # <#> instead of <|#|>
+        # Double brackets (LLM tends to output this)
+        f"<<{core}>>",    # <<|>> instead of <|>
+        f"<{core}{core}>", # <||> instead of <|>
+
+        # Missing pipes (but don't include pattern that matches valid delimiter!)
         "<>",             # Empty brackets
 
         # Missing brackets
         f"|{core}|",      # |#| instead of <|#|>
         "||",             # Double pipes
 
-        # Partial patterns
+        # Partial patterns (but ONLY for multi-character delimiters like <|#|>)
+        # Don't include <| or |> for <|> delimiter as they are substrings!
         f"<|{core}>",     # <|#> instead of <|#|>
         f"<{core}|>",     # <#|> instead of <|#|>
-        "<|",             # Opening only
-        "|>",             # Closing only
 
         # With spaces
         "< >",            # Brackets with space
@@ -393,8 +397,10 @@ def fix_delimiter_corruption(record: str, tuple_delimiter: str = "<|>") -> str:
     ]
 
     # Apply corrections
-    for pattern in corrupted_patterns:
+    print(f"[FIX_DELIM DEBUG] Checking {len(corrupted_patterns)} patterns...")
+    for i, pattern in enumerate(corrupted_patterns):
         if pattern in record:
+            print(f"[FIX_DELIM DEBUG] Pattern {i}: {repr(pattern)} FOUND, replacing...")
             record = record.replace(pattern, tuple_delimiter)
             logger.debug(f"Fixed delimiter corruption: '{pattern}' → '{tuple_delimiter}'")
 

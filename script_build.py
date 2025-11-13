@@ -25,13 +25,20 @@ os.makedirs(logs_dir, exist_ok=True)
 
 # Configure logging (UTF-8 encoding for Windows console)
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Changed to DEBUG to see detailed validation logs
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(os.path.join(logs_dir, 'build_graph.log'), encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
+
+# IMPORTANT: Set bigrag logger to DEBUG explicitly
+logging.getLogger("bigrag").setLevel(logging.DEBUG)
+
+# Reduce verbosity from other loggers
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("nano-vectordb").setLevel(logging.WARNING)
 
 # Fix Windows console encoding for Unicode characters
 import io

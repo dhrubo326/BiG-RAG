@@ -279,17 +279,31 @@ async def _handle_single_entity_extraction(
         dict or None: Entity data if valid, None if invalid
     """
 
+    # DEBUG: Log input
+    logger.debug(
+        f"{chunk_key}: ENTITY INPUT: {len(record_attributes)} fields, "
+        f"first={repr(record_attributes[0][:20] if record_attributes else 'EMPTY')}"
+    )
+    print(f"[ENTITY] {chunk_key}: {len(record_attributes)} fields, first={repr(record_attributes[0] if record_attributes else 'EMPTY')}")
+
     # Validate field count (EXACT, not >=)
     if len(record_attributes) != 5:
         if len(record_attributes) > 1 and '"entity"' in record_attributes[0]:
             logger.warning(
-                f"{chunk_key}: Entity has {len(record_attributes)}/5 fields "
+                f"{chunk_key}: [REJECT] Entity has {len(record_attributes)}/5 fields "
                 f"(expected exactly 5). Entity: {record_attributes[1] if len(record_attributes) > 1 else 'N/A'}"
             )
+        else:
+            logger.debug(f"{chunk_key}: [REJECT] Entity field count {len(record_attributes)} != 5")
+        print(f"[ENTITY REJECT] Field count {len(record_attributes)} != 5")
         return None
 
     # Validate first field is "entity"
     if record_attributes[0] != '"entity"':
+        logger.debug(
+            f"{chunk_key}: [REJECT] First field is {repr(record_attributes[0][:20])}, expected '\"entity\"'"
+        )
+        print(f"[ENTITY REJECT] First field is {repr(record_attributes[0])}, expected '\"entity\"'")
         return None
 
     # Validate relation context exists (prevent orphan entities)
@@ -303,10 +317,11 @@ async def _handle_single_entity_extraction(
     # Sanitize entity name
     entity_name_raw = record_attributes[1]
     entity_name = sanitize_extracted_text(entity_name_raw, "entity_name")
+    logger.debug(f"{chunk_key}: Entity name: '{entity_name_raw[:30]}' → '{entity_name[:30] if entity_name else 'EMPTY'}'")
 
     if not entity_name:
         logger.warning(
-            f"{chunk_key}: Entity name became empty after sanitization. "
+            f"{chunk_key}: [REJECT] Entity name became empty after sanitization. "
             f"Raw: '{entity_name_raw}'"
         )
         return None
@@ -317,10 +332,11 @@ async def _handle_single_entity_extraction(
     # Sanitize entity type
     entity_type_raw = record_attributes[2]
     entity_type = sanitize_extracted_text(entity_type_raw, "entity_type")
+    logger.debug(f"{chunk_key}: Entity type: '{entity_type_raw}' → '{entity_type}'")
 
     if not entity_type:
         logger.warning(
-            f"{chunk_key}: Entity type invalid for entity '{entity_name}'. "
+            f"{chunk_key}: [REJECT] Entity type invalid for entity '{entity_name}'. "
             f"Raw: '{entity_type_raw}'"
         )
         return None
@@ -331,10 +347,11 @@ async def _handle_single_entity_extraction(
     # Sanitize description
     description_raw = record_attributes[3]
     description = sanitize_extracted_text(description_raw, "description")
+    logger.debug(f"{chunk_key}: Description: {len(description_raw)} → {len(description)} chars")
 
     if not description:
         logger.warning(
-            f"{chunk_key}: Description empty for entity '{entity_name}' of type '{entity_type}'"
+            f"{chunk_key}: [REJECT] Description empty for entity '{entity_name}' of type '{entity_type}'"
         )
         return None
 
@@ -356,6 +373,8 @@ async def _handle_single_entity_extraction(
         weight = 50.0  # Default fallback
 
     # Return validated entity data
+    logger.debug(f"{chunk_key}: [SUCCESS] Entity '{entity_name}' ({entity_type}) weight={weight}")
+    print(f"[ENTITY SUCCESS] {entity_name} ({entity_type}) weight={weight}")
     return dict(
         entity_name=entity_name,
         entity_type=entity_type,
@@ -382,25 +401,41 @@ async def _handle_single_hyperrelation_extraction(
         dict or None: Relation data if valid, None if invalid
     """
 
+    # DEBUG: Log input
+    logger.debug(
+        f"{chunk_key}: RELATION INPUT: {len(record_attributes)} fields, "
+        f"first={repr(record_attributes[0][:20] if record_attributes else 'EMPTY')}"
+    )
+    print(f"[RELATION] {chunk_key}: {len(record_attributes)} fields")
+    print(f"  record_attributes = {record_attributes}")
+
     # Validate field count (EXACT, not >=)
     if len(record_attributes) != 3:
         if len(record_attributes) > 1 and '"relation"' in record_attributes[0]:
             logger.warning(
-                f"{chunk_key}: Relation has {len(record_attributes)}/3 fields (expected exactly 3)"
+                f"{chunk_key}: [REJECT] Relation has {len(record_attributes)}/3 fields (expected exactly 3)"
             )
+        else:
+            logger.debug(f"{chunk_key}: [REJECT] Relation field count {len(record_attributes)} != 3")
+        print(f"[RELATION REJECT] Field count {len(record_attributes)} != 3")
         return None
 
     # Validate first field is "relation"
     if record_attributes[0] != '"relation"':
+        logger.debug(
+            f"{chunk_key}: [REJECT] First field is {repr(record_attributes[0][:20])}, expected '\"relation\"'"
+        )
+        print(f"[RELATION REJECT] First field is {repr(record_attributes[0])}, expected '\"relation\"'")
         return None
 
     # Sanitize knowledge fragment (relation content)
     knowledge_fragment_raw = record_attributes[1]
     knowledge_fragment = sanitize_extracted_text(knowledge_fragment_raw, "relation")
+    logger.debug(f"{chunk_key}: Relation content: {len(knowledge_fragment_raw)} → {len(knowledge_fragment)} chars")
 
     if not knowledge_fragment:
         logger.warning(
-            f"{chunk_key}: Relation content became empty after sanitization. "
+            f"{chunk_key}: [REJECT] Relation content became empty after sanitization. "
             f"Raw: '{knowledge_fragment_raw[:50]}...'"
         )
         return None
@@ -408,6 +443,7 @@ async def _handle_single_hyperrelation_extraction(
     # Parse completeness score
     try:
         weight = float(record_attributes[2])
+        logger.debug(f"{chunk_key}: Relation score: {record_attributes[2]} → {weight}")
         # Validate reasonable range
         if weight < 0 or weight > 10:
             logger.warning(
@@ -427,6 +463,8 @@ async def _handle_single_hyperrelation_extraction(
     edge_id = compute_mdhash_id(knowledge_fragment, prefix=RELATION_PREFIX)
 
     # Return validated relation data
+    logger.debug(f"{chunk_key}: [SUCCESS] Relation '{knowledge_fragment[:40]}...' score={weight}")
+    print(f"[RELATION SUCCESS] {edge_id[:20]}... score={weight}")
     return dict(
         hyper_relation=edge_id,                # Relation node ID (hash-based)
         hyper_relation_content=knowledge_fragment,  # Actual content
@@ -793,6 +831,12 @@ async def extract_entities(
         async with llm_semaphore:
             final_result = await use_llm_func(hint_prompt)
 
+        # DEBUG: Log raw LLM response
+        logger.debug(f"{chunk_key}: LLM response length: {len(final_result)} chars")
+        logger.debug(f"{chunk_key}: LLM response preview: {final_result[:200] if final_result else 'EMPTY'}...")
+        print(f"\n[DEBUG] {chunk_key}: LLM response length: {len(final_result)} chars")
+        print(f"[DEBUG] {chunk_key}: LLM response preview:\n{final_result[:300] if final_result else 'EMPTY'}...\n")
+
         # Fix corrupted delimiters BEFORE parsing
         # (LLM sometimes outputs <> instead of <|>, || instead of <|>, etc.)
         final_result = fix_delimiter_corruption(
@@ -807,6 +851,10 @@ async def extract_entities(
             [context_base["record_delimiter"], context_base["completion_delimiter"]],
         )
 
+        # DEBUG: Log parsed records count
+        logger.debug(f"{chunk_key}: Parsed {len(records)} records from LLM response")
+        print(f"[DEBUG] {chunk_key}: Parsed {len(records)} records from LLM response")
+
         maybe_nodes = defaultdict(list)
         maybe_edges = defaultdict(list)
         now_hyper_relation=""
@@ -815,9 +863,17 @@ async def extract_entities(
             if record is None:
                 continue
             record = record.group(1)
+
+            # Fix delimiter corruption on individual record (CRITICAL FIX)
+            record = fix_delimiter_corruption(record, context_base["tuple_delimiter"])
+
+            # DEBUG: Print delimiter being used
+            print(f"[SPLIT DEBUG] tuple_delimiter = {repr(context_base['tuple_delimiter'])}")
+            print(f"[SPLIT DEBUG] record after fix = {repr(record[:80])}")
             record_attributes = split_string_by_multi_markers(
                 record, [context_base["tuple_delimiter"]]
             )
+            print(f"[SPLIT DEBUG] After split: {len(record_attributes)} parts, first={repr(record_attributes[0] if record_attributes else 'EMPTY')}")
             if_relation = await _handle_single_hyperrelation_extraction(
                 record_attributes, chunk_key
             )

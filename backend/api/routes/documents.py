@@ -32,7 +32,8 @@ from ..services.kg_utils import (
     get_document_content_from_corpus,
     rebuild_entire_graph,
     compute_doc_id,
-    add_document_to_corpus
+    add_document_to_corpus,
+    remove_from_corpus
 )
 
 
@@ -463,10 +464,19 @@ async def delete_document(
             raise HTTPException(status_code=404, detail=f"Document not found: {document_id}")
 
         if hard_delete:
-            # Hard delete: Remove from KG
+            # Hard delete: Remove from KG, corpus, and registry
+            doc_dataset = doc.get("dataset", get_data_source())
+
+            # 1. Delete from knowledge graph (chunks, entities, edges, vectors)
             await rag.adelete_document(document_id)
+
+            # 2. Remove from corpus.jsonl (prevents resurrection on rebuild)
+            await remove_from_corpus(doc_dataset, document_id)
+
+            # 3. Delete from document registry
             await registry.delete_document(document_id, hard=True)
-            message = f"Document {document_id} permanently deleted from system"
+
+            message = f"Document {document_id} permanently deleted from all storage layers"
         else:
             # Soft delete: Mark as deleted
             await registry.delete_document(document_id, hard=False)
@@ -476,7 +486,8 @@ async def delete_document(
             success=True,
             message=message,
             document_id=document_id,
-            hard_delete=hard_delete
+            hard_delete=hard_delete,
+            rebuild_required=False  # Cascade deletion handles everything
         )
 
     except HTTPException:

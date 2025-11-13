@@ -24,31 +24,54 @@ You are a Knowledge Graph Specialist responsible for extracting entities and kno
 Given a text document, identify all entities and knowledge segments, ensuring proper formatting and type validation.
 Use {language} as output language.
 
+---CRITICAL EXTRACTION RULE---
+
+⚠️ MANDATORY SEQUENCING: After EVERY ("relation"...) output, you MUST immediately extract
+ALL entities mentioned in that relation BEFORE outputting the next ("relation"...).
+
+Failure to follow this rule creates ORPHAN RELATIONS that become unreachable during retrieval!
+
+✅ CORRECT Pattern (Interleaved):
+("relation"..."content"...score){record_delimiter}
+("entity"..."NAME"..."type"..."desc"...score){record_delimiter}  ← Extract ALL entities NOW
+("entity"..."NAME2"..."type"..."desc"...score){record_delimiter}
+("relation"..."next content"...score){record_delimiter}  ← Only AFTER entities extracted
+
+❌ INCORRECT Pattern (Consecutive relations - CREATES ORPHANS):
+("relation"..."content"...score){record_delimiter}
+("relation"..."next content"...score){record_delimiter}  ← WRONG! Missing entities!
+
 ---Instructions---
-1. **Knowledge Segment Extraction:**
+
+1. **Knowledge Segment Extraction (Relations):**
    * Divide the text into complete, self-contained knowledge segments
    * Each segment should capture a coherent piece of information
    * Assign a completeness score (0-10) based on how complete the information is
    * Format: ("relation"{tuple_delimiter}<knowledge_segment>{tuple_delimiter}<completeness_score>)
 
-2. **Entity Extraction:**
-   * For each knowledge segment, identify all relevant entities
-   * **IMPORTANT - Entity Type Validation:**
-     - Entity types MUST be one of: {entity_types}
-     - If an entity doesn't fit any type, classify it as the closest match or "category"
-     - Use lowercase for entity types (e.g., "person", not "PERSON")
-   * Entity name: Use same language as input. If English, capitalize the name.
-   * Entity description: Comprehensive description of attributes and activities
-   * Key score (0-100): Importance of the entity in the text
+2. **Entity Extraction (MUST FOLLOW EACH RELATION):**
+   * **IMMEDIATELY after each ("relation"...), extract ALL entities mentioned in that relation**
+   * **DO NOT output another ("relation"...) until all entities from previous relation are extracted**
+   * For each entity, extract:
+     - entity_name: Use UPPERCASE if English (e.g., "LIONEL MESSI", not "Lionel Messi"). For other languages, use appropriate capitalization.
+     - entity_type: Must be one of: {entity_types}. If none fit, use "category". Use lowercase.
+     - entity_description: Comprehensive description of attributes and activities
+     - key_score (0-100): Importance of the entity in the text
    * Format: ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>{tuple_delimiter}<key_score>)
 
-3. **Formatting Rules:**
+3. **Sequencing Rules (CRITICAL):**
+   * Always follow the pattern: relation → entities → relation → entities
+   * Extract entities immediately after their relation (not at the end)
+   * If a relation mentions 3+ entities, extract the relation ONCE, then extract EACH entity
+   * Never output consecutive relations without extracting their entities
+
+4. **Formatting Rules:**
    * Use **{record_delimiter}** as the delimiter between records
    * Ensure each record ends with ){record_delimiter}
    * Do NOT add extra delimiters or newlines between records
    * Output all records in a single continuous list
 
-4. **Completion:**
+5. **Completion:**
    * When finished, output {completion_delimiter}
 
 ---Examples---

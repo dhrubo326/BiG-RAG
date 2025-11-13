@@ -15,6 +15,7 @@ export const useGraph = () => {
     error,
     searchQuery,
     stats,
+    orphanBreakdown,
     currentDataset,
     currentOffset,
     canLoadMore,
@@ -29,6 +30,7 @@ export const useGraph = () => {
     setLoading,
     setError,
     setStats,
+    setOrphanBreakdown,
     setCurrentDataset,
     setCurrentOffset,
     setCanLoadMore,
@@ -52,9 +54,11 @@ export const useGraph = () => {
 
         if (data.nodes && data.edges) {
           console.log(`[useGraph] Loaded ${data.nodes.length} nodes, ${data.edges.length} edges`);
+          console.log(`[useGraph] Orphan breakdown:`, data.orphanBreakdown);
           setNodes(data.nodes);
           setEdges(data.edges);
           setStats(data.stats || null);
+          setOrphanBreakdown(data.orphanBreakdown || null);  // ✅ NEW
 
           // ✅ PHASE 4.1: Track progressive loading state
           setCurrentDataset(dataSource);
@@ -79,7 +83,7 @@ export const useGraph = () => {
         setLoading(false);
       }
     },
-    [setNodes, setEdges, setStats, setLoading, setError, setCurrentDataset, setCurrentOffset, setCanLoadMore]
+    [setNodes, setEdges, setStats, setOrphanBreakdown, setLoading, setError, setCurrentDataset, setCurrentOffset, setCanLoadMore]
   );
 
   // ✅ PHASE 4.1: Load more nodes (progressive loading)
@@ -608,6 +612,7 @@ export const useGraph = () => {
     error,
     searchQuery,
     stats,
+    orphanBreakdown,  // ✅ NEW
     canLoadMore, // ✅ PHASE 4.1
 
     // Actions

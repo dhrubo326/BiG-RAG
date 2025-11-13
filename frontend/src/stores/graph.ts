@@ -6,6 +6,7 @@ import type {
   GraphLayout,
   GraphFilters,
   GraphStats,
+  OrphanBreakdown,
 } from '../types';
 import { DEFAULT_CONFIG } from '../utils/constants';
 
@@ -18,6 +19,7 @@ interface GraphState {
 
   // Stats
   stats: GraphStats | null;
+  orphanBreakdown: OrphanBreakdown | null;  // ✅ NEW
 
   // UI State
   layout: GraphLayout;
@@ -44,6 +46,7 @@ interface GraphState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setStats: (stats: GraphStats | null) => void;
+  setOrphanBreakdown: (breakdown: OrphanBreakdown | null) => void; // ✅ NEW
   setCurrentDataset: (dataset: string | null) => void; // ✅ PHASE 4.1
   setCurrentOffset: (offset: number) => void; // ✅ PHASE 4.1
   setCanLoadMore: (canLoadMore: boolean) => void; // ✅ PHASE 4.1
@@ -63,6 +66,7 @@ const useGraphStore = create<GraphState>()(
       selectedNode: null,
       hoveredNode: null,
       stats: null,
+      orphanBreakdown: null,  // ✅ NEW
       layout: DEFAULT_CONFIG.GRAPH_LAYOUT,
       filters: {
         showEntities: true,
@@ -70,6 +74,7 @@ const useGraphStore = create<GraphState>()(
         showChunks: true,
         minWeight: DEFAULT_CONFIG.GRAPH_MIN_WEIGHT,
         sourceDocument: null,
+        showOrphans: true,  // ✅ NEW: Show orphans by default
       },
       isLoading: false,
       error: null,
@@ -116,6 +121,7 @@ const useGraphStore = create<GraphState>()(
       setLoading: (loading) => set({ isLoading: loading }),
       setError: (error) => set({ error }),
       setStats: (stats) => set({ stats }),
+      setOrphanBreakdown: (breakdown) => set({ orphanBreakdown: breakdown }), // ✅ NEW
 
       // ✅ PHASE 4.1: Progressive loading setters
       setCurrentDataset: (dataset) => set({ currentDataset: dataset }),
@@ -149,6 +155,9 @@ const useGraphStore = create<GraphState>()(
           if (type === 'chunk' && !filters.showChunks) return false;
           return true;
         });
+
+        // ✅ NOTE: Orphan filtering is handled in Cytoscape (visual hide/show)
+        // NOT in the store, so all orphan nodes remain in the data
 
         // Filter by weight
         if (filters.minWeight > 0) {

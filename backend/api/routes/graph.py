@@ -56,7 +56,8 @@ async def export_graph(
     node_types: Optional[str] = None,
     edge_types: Optional[str] = None,
     min_weight: Optional[float] = 0.0,
-    sample_strategy: Optional[str] = "top_weighted"
+    sample_strategy: Optional[str] = "top_weighted",
+    include_all_orphans: Optional[bool] = False
 ):
     """
     Export the knowledge graph for a dataset in Cytoscape-compatible format.
@@ -70,12 +71,14 @@ async def export_graph(
     - edge_types: Comma-separated edge types to include
     - min_weight: Minimum node weight threshold (0.0-1.0)
     - sample_strategy: "top_weighted" (highest weight), "random", "diverse" (balanced types)
+    - include_all_orphans: If true, include ALL orphan nodes regardless of limit (for debugging)
 
     **Returns:**
     - nodes: Sampled list of graph nodes
     - edges: Edges connecting sampled nodes
     - stats: Full graph statistics (unsampled)
     - sampling_info: Information about sampling applied
+    - orphan_breakdown: Detailed breakdown of orphan nodes by type
 
     **Example usage:**
     ```bash
@@ -90,6 +93,9 @@ async def export_graph(
 
     # Use diverse sampling strategy
     curl "http://localhost:8001/graph/export?data_source=demo_test&limit=1000&sample_strategy=diverse"
+
+    # DEBUG: Include ALL orphan nodes for investigation
+    curl "http://localhost:8001/graph/export?data_source=football&include_all_orphans=true"
     ```
     """
     try:
@@ -99,7 +105,8 @@ async def export_graph(
             node_types=node_types.split(',') if node_types else None,
             edge_types=edge_types.split(',') if edge_types else None,
             min_weight=min_weight,
-            sample_strategy=sample_strategy
+            sample_strategy=sample_strategy,
+            include_all_orphans=include_all_orphans
         )
         return graph_data
 

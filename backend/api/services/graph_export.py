@@ -50,7 +50,8 @@ async def export_graph_for_cytoscape(
     node_types: Optional[list] = None,
     edge_types: Optional[list] = None,
     min_weight: float = 0.0,
-    sample_strategy: str = "top_weighted"
+    sample_strategy: str = "top_weighted",
+    include_all_orphans: bool = False
 ):
     """
     Export the knowledge graph for a dataset in Cytoscape-compatible format.
@@ -64,12 +65,14 @@ async def export_graph_for_cytoscape(
     - edge_types: List of edge types to include (not currently used)
     - min_weight: Minimum node weight threshold (0.0-1.0)
     - sample_strategy: "top_weighted" (highest weight), "random", "diverse" (balanced types)
+    - include_all_orphans: If True, include ALL orphan nodes regardless of limit (for debugging)
 
     Returns:
     - nodes: Sampled list of graph nodes
     - edges: Edges connecting sampled nodes
     - stats: Full graph statistics (unsampled)
     - sampling_info: Information about sampling applied
+    - orphan_breakdown: Detailed breakdown of orphan nodes by type
     """
     try:
         # Enforce maximum limit for browser performance
@@ -203,13 +206,37 @@ async def export_graph_for_cytoscape(
             sampling_applied = True
             logger.info(f"Applying {sample_strategy} sampling to get {limit} nodes from {len(all_nodes)}")
 
-            # ✅ IMPORTANT: Always include ALL orphan nodes (up to 20% of limit)
-            # Orphan nodes are important for debugging graph construction issues
-            max_orphans_to_include = min(len(orphan_nodes), int(limit * 0.2))
-            included_orphans = orphan_nodes[:max_orphans_to_include]
-            remaining_limit = limit - len(included_orphans)
+            # ✅ NEW: Handle orphan node inclusion
+            if include_all_orphans:
+                # DEBUG MODE: Include ALL orphan nodes regardless of limit
+                logger.info(f"[DEBUG MODE] Including ALL {len(orphan_nodes)} orphan nodes (include_all_orphans=True)")
+                included_orphans = orphan_nodes
+                remaining_limit = max(0, limit - len(included_orphans))
+                logger.info(f"Including {len(included_orphans)} orphan nodes + {remaining_limit} regular nodes")
+            else:
+                # NORMAL MODE: Include orphan nodes up to 20% of limit with type-balanced selection
+                max_orphans_to_include = min(len(orphan_nodes), int(limit * 0.2))
 
-            logger.info(f"Including {len(included_orphans)} orphan nodes + {remaining_limit} regular nodes")
+                # Type-balanced orphan selection
+                if len(orphan_nodes) > 0:
+                    entity_orphan_limit = int(max_orphans_to_include * len(orphan_entities) / len(orphan_nodes))
+                    relation_orphan_limit = int(max_orphans_to_include * len(orphan_relations) / len(orphan_nodes))
+                    chunk_orphan_limit = max_orphans_to_include - entity_orphan_limit - relation_orphan_limit
+
+                    # Sort each type by weight (highest first) and take top N
+                    selected_entity_orphans = sorted(orphan_entities, key=lambda x: x["weight"], reverse=True)[:entity_orphan_limit]
+                    selected_relation_orphans = sorted(orphan_relations, key=lambda x: x["weight"], reverse=True)[:relation_orphan_limit]
+                    selected_chunk_orphans = sorted(orphan_chunks, key=lambda x: x["weight"], reverse=True)[:chunk_orphan_limit]
+
+                    included_orphans = selected_entity_orphans + selected_relation_orphans + selected_chunk_orphans
+
+                    logger.info(f"Type-balanced orphan selection: {len(selected_entity_orphans)} entities, "
+                               f"{len(selected_relation_orphans)} relations, {len(selected_chunk_orphans)} chunks")
+                else:
+                    included_orphans = []
+
+                remaining_limit = limit - len(included_orphans)
+                logger.info(f"Including {len(included_orphans)} orphan nodes + {remaining_limit} regular nodes")
 
             if sample_strategy == "top_weighted":
                 # Sort by weight descending, take top N
@@ -320,7 +347,19 @@ async def export_graph_for_cytoscape(
             }
         }
 
+        # ✅ NEW: Orphan breakdown statistics
+        orphan_breakdown = {
+            "total": len(orphan_nodes),
+            "entities": len(orphan_entities),
+            "relations": len(orphan_relations),
+            "chunks": len(orphan_chunks),
+            "included_in_response": len([n for n in sampled_nodes if n["connections"] == 0]),
+            "include_all_orphans_mode": include_all_orphans
+        }
+
         logger.info(f"Graph export complete: {len(sampled_nodes)} nodes, {len(edges)} edges (sampled: {sampling_applied})")
+        logger.info(f"Orphan breakdown: {orphan_breakdown['total']} total ({orphan_breakdown['entities']} entities, "
+                   f"{orphan_breakdown['relations']} relations, {orphan_breakdown['chunks']} chunks)")
 
         return {
             "success": True,
@@ -328,7 +367,8 @@ async def export_graph_for_cytoscape(
             "nodes": sampled_nodes,
             "edges": edges,
             "stats": stats,
-            "sampling_info": sampling_info
+            "sampling_info": sampling_info,
+            "orphan_breakdown": orphan_breakdown
         }
 
     except HTTPException:

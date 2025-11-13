@@ -1,5 +1,5 @@
 import api from './api';
-import type { CytoscapeNode, CytoscapeEdge, GraphStats } from '../types';
+import type { CytoscapeNode, CytoscapeEdge, GraphStats, OrphanBreakdown } from '../types';
 import { API_ENDPOINTS } from '../utils/constants';
 import { toast } from 'sonner';
 
@@ -7,6 +7,7 @@ interface GraphData {
   nodes: CytoscapeNode[];
   edges: CytoscapeEdge[];
   stats?: GraphStats;
+  orphanBreakdown?: OrphanBreakdown;    // ✅ NEW
   samplingInfo?: {
     sampling_applied: boolean;
     strategy?: string;
@@ -22,6 +23,7 @@ export interface GraphLoadOptions {
   nodeTypes?: string;
   minWeight?: number;
   sampleStrategy?: 'top_weighted' | 'random' | 'diverse';
+  includeAllOrphans?: boolean;  // ✅ NEW: Include ALL orphan nodes (debug mode)
 }
 
 // ✅ PHASE 4.4: Cache for API responses
@@ -66,6 +68,7 @@ export const getGraphData = async (
     nodeTypes,
     minWeight = 0.0,
     sampleStrategy = 'top_weighted',
+    includeAllOrphans = false,  // ✅ NEW
   } = options;
 
   // ✅ PHASE 4.4: Check cache first
@@ -88,6 +91,7 @@ export const getGraphData = async (
       node_types: nodeTypes,
       min_weight: minWeight,
       sample_strategy: sampleStrategy,
+      include_all_orphans: includeAllOrphans,  // ✅ NEW
     },
     timeout: 60000, // 60 second timeout for large graphs
   });
@@ -145,6 +149,7 @@ export const getGraphData = async (
     edges,
     stats,
     samplingInfo: graphData.sampling_info,
+    orphanBreakdown: graphData.orphan_breakdown,  // ✅ NEW
   };
 
   // ✅ PHASE 4.4: Store in cache

@@ -70,6 +70,7 @@ export interface GraphFilters {
   showChunks: boolean;
   minWeight: number;
   sourceDocument: string | null;
+  showOrphans: boolean;         // ✅ NEW: Show/hide orphan nodes
 }
 
 export interface GraphStats {
@@ -80,6 +81,16 @@ export interface GraphStats {
   chunks: number;
   documents: number;
   orphanNodes?: number;       // ✅ NEW: Nodes with no connections
+}
+
+// ✅ NEW: Orphan node breakdown by type
+export interface OrphanBreakdown {
+  total: number;
+  entities: number;
+  relations: number;
+  chunks: number;
+  included_in_response: number;
+  include_all_orphans_mode: boolean;
 }
 
 export interface GraphExportOptions {

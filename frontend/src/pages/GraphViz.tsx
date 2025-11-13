@@ -34,6 +34,7 @@ export function GraphViz() {
     error,
     searchQuery,
     stats,
+    orphanBreakdown,  // ✅ NEW
     canLoadMore, // ✅ PHASE 4.1
     loadGraph,
     loadMoreNodes, // ✅ PHASE 4.1
@@ -65,6 +66,10 @@ export function GraphViz() {
     'PopQA',
     'TriviaQA'
   ]);
+
+  // ✅ NEW: Debug mode state
+  const [debugMode, setDebugMode] = useState(false);
+  const [showOrphanPanel, setShowOrphanPanel] = useState(false);
 
   // Search state
   const [localSearchQuery, setLocalSearchQuery] = useState('');
@@ -105,11 +110,14 @@ export function GraphViz() {
     // Only load if dataset is set (wait for server fetch to complete)
     if (!selectedDataset) return;
 
+    console.log('[GraphViz] Loading graph with selectedDataset:', selectedDataset, 'debugMode:', debugMode);
+
     const loadGraphData = async () => {
       try {
         await loadGraph(selectedDataset, {
           limit: 1000, // Show top 1000 nodes
           sampleStrategy: 'diverse', // Get balanced mix of entities, relations, chunks
+          includeAllOrphans: debugMode, // ✅ NEW: Use debug mode
         });
       } catch (err) {
         console.error('[GraphViz] Failed to load graph:', err);
@@ -118,7 +126,27 @@ export function GraphViz() {
     };
 
     loadGraphData();
-  }, [selectedDataset, loadGraph]); // Reload when dataset changes
+  }, [selectedDataset, debugMode, loadGraph]); // Reload when dataset or debug mode changes
+
+  // ✅ NEW: Update Cytoscape when orphan filter changes
+  useEffect(() => {
+    if (!cyInstance) return;
+
+    if (filters.showOrphans) {
+      // Show all nodes
+      cyInstance.nodes().style('display', 'element');
+    } else {
+      // Hide orphan nodes (connections = 0)
+      cyInstance.nodes().forEach((node: any) => {
+        const connections = node.data('connections') || 0;
+        if (connections === 0) {
+          node.style('display', 'none');
+        } else {
+          node.style('display', 'element');
+        }
+      });
+    }
+  }, [filters.showOrphans, cyInstance]);
 
   // ✅ PHASE 2: Handle error boundary reset
   const handleErrorReset = () => {
@@ -132,6 +160,7 @@ export function GraphViz() {
 
   // Handle dataset change
   const handleDatasetChange = (newDataset: string) => {
+    console.log('[GraphViz] Dataset changed from', selectedDataset, 'to', newDataset);
     setSelectedDataset(newDataset);
     toast.info(`Switching to ${newDataset} dataset...`);
   };
@@ -409,6 +438,154 @@ export function GraphViz() {
                 <div className="text-xs text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
                   {stats.orphanNodes} orphan
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ✅ NEW: Orphan Debug Button */}
+          {orphanBreakdown && orphanBreakdown.total > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowOrphanPanel(!showOrphanPanel)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 rounded-lg border border-yellow-300 dark:border-yellow-700 transition-colors"
+              >
+                <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+                <span className="font-medium">Orphan Debug</span>
+                <svg className={`w-4 h-4 transition-transform ${showOrphanPanel ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Dropdown Panel */}
+              {showOrphanPanel && (
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4 text-sm z-50">
+                  <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">Orphan Nodes Debug</h4>
+                    <button
+                      onClick={() => setShowOrphanPanel(false)}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Total:</span>
+                      <span className="font-bold text-gray-900 dark:text-gray-100">{orphanBreakdown.total}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Entities:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{orphanBreakdown.entities}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Relations:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{orphanBreakdown.relations}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Chunks:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{orphanBreakdown.chunks}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Displayed:</span>
+                      <span className="font-bold text-gray-900 dark:text-gray-100">{orphanBreakdown.included_in_response}</span>
+                    </div>
+                  </div>
+
+                  {/* Show/Hide Toggle */}
+                  <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => updateFilters({ showOrphans: !filters.showOrphans })}
+                      className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        filters.showOrphans
+                          ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                          : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100'
+                      }`}
+                    >
+                      {filters.showOrphans ? 'Hide Orphan Nodes' : 'Show Orphan Nodes'}
+                    </button>
+                  </div>
+
+                  {/* Debug Mode Toggle */}
+                  <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={debugMode}
+                        onChange={(e) => {
+                          console.log('[GraphViz] Debug mode toggled:', e.target.checked, 'for dataset:', selectedDataset);
+                          setDebugMode(e.target.checked);
+                          toast.info(e.target.checked ? 'Loading ALL orphan nodes...' : 'Reloading with 20% cap...');
+                        }}
+                        className="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
+                      />
+                      <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                        Debug Mode (Show ALL)
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
+                      Bypass 20% cap for large graphs
+                    </p>
+                    {orphanBreakdown.include_all_orphans_mode && (
+                      <div className="text-xs text-green-600 dark:text-green-400 font-medium mt-2 ml-6">
+                        ✓ Debug mode active
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CSV Export Button */}
+                  <button
+                    onClick={() => {
+                      if (!cyInstance) {
+                        toast.error('Graph not loaded');
+                        return;
+                      }
+
+                      const orphanNodesData: any[] = [];
+                      cyInstance.nodes().forEach((node: any) => {
+                        const connections = node.data('connections') || 0;
+                        if (connections === 0) {
+                          orphanNodesData.push({
+                            type: node.data('type'),
+                            label: (node.data('label') || '').replace(/"/g, '""'),
+                            weight: node.data('weight') || 0,
+                            connections: connections,
+                            source_id: node.data('source_id') || node.data('sourceId') || '',
+                          });
+                        }
+                      });
+
+                      if (orphanNodesData.length === 0) {
+                        toast.info('No orphan nodes to export');
+                        return;
+                      }
+
+                      const csv = ['Type,Label,Weight,Connections,Source ID'].concat(
+                        orphanNodesData.map(n =>
+                          `${n.type},"${n.label}",${n.weight},${n.connections},"${n.source_id}"`
+                        )
+                      ).join('\n');
+
+                      const blob = new Blob([csv], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `orphan-nodes-${selectedDataset}-${new Date().toISOString().slice(0,10)}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+
+                      toast.success(`Exported ${orphanNodesData.length} orphan nodes`);
+                      setShowOrphanPanel(false);
+                    }}
+                    className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export to CSV
+                  </button>
                 </div>
               )}
             </div>

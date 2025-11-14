@@ -368,7 +368,6 @@ def fix_delimiter_corruption(record: str, tuple_delimiter: str = "<|>") -> str:
     else:
         core = "|"  # Default fallback
 
-    print(f"[FIX_DELIM DEBUG] tuple_delimiter={repr(tuple_delimiter)}, core={repr(core)}")
 
     # Define corruption patterns (ordered by likelihood)
     corrupted_patterns = [
@@ -397,10 +396,8 @@ def fix_delimiter_corruption(record: str, tuple_delimiter: str = "<|>") -> str:
     ]
 
     # Apply corrections
-    print(f"[FIX_DELIM DEBUG] Checking {len(corrupted_patterns)} patterns...")
     for i, pattern in enumerate(corrupted_patterns):
         if pattern in record:
-            print(f"[FIX_DELIM DEBUG] Pattern {i}: {repr(pattern)} FOUND, replacing...")
             record = record.replace(pattern, tuple_delimiter)
             logger.debug(f"Fixed delimiter corruption: '{pattern}' → '{tuple_delimiter}'")
 

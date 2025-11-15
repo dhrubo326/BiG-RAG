@@ -21,6 +21,9 @@ from .utils import (
     handle_cache,
     save_to_cache,
     CacheData,
+    sanitize_extracted_text,         # Added for orphan node reduction
+    fix_delimiter_corruption,        # Added for orphan node reduction
+    description_quality_score,       # Added for orphan node reduction
 )
 from .base import (
     BaseGraphStorage,
@@ -263,28 +266,124 @@ async def _handle_single_entity_extraction(
     chunk_key: str,
     now_hyper_relation: str,
 ):
-    if len(record_attributes) < 5 or record_attributes[0] != '"entity"' or now_hyper_relation == "":
-        return None
-    # add this record as a node in the G
-    entity_name = clean_str(record_attributes[1].upper())
-    if not entity_name.strip():
-        return None
-    # Normalize entity type to ensure consistency (A2)
-    raw_entity_type = clean_str(record_attributes[2])
-    entity_type = normalize_entity_type(raw_entity_type)
-    entity_description = clean_str(record_attributes[3])
-    weight = (
-        float(record_attributes[-1]) if is_float_regex(record_attributes[-1]) else 50.0
+    """
+    Extract and validate a single entity from LLM output.
+
+    Validation:
+    - Exactly 5 fields (not <5, not >5)
+    - Must have relation context (prevent orphan entities)
+    - Sanitize all fields
+    - Validate entity name/type/description
+
+    Returns:
+        dict or None: Entity data if valid, None if invalid
+    """
+
+    # DEBUG: Log input
+    logger.debug(
+        f"{chunk_key}: ENTITY INPUT: {len(record_attributes)} fields, "
+        f"first={repr(record_attributes[0][:20] if record_attributes else 'EMPTY')}"
     )
-    hyper_relation = now_hyper_relation
-    entity_source_id = chunk_key
+
+    # Validate field count (EXACT, not >=)
+    if len(record_attributes) != 5:
+        if len(record_attributes) > 1 and '"entity"' in record_attributes[0]:
+            logger.warning(
+                f"{chunk_key}: [REJECT] Entity has {len(record_attributes)}/5 fields "
+                f"(expected exactly 5). Entity: {record_attributes[1] if len(record_attributes) > 1 else 'N/A'}"
+            )
+        else:
+            logger.debug(f"{chunk_key}: [REJECT] Entity field count {len(record_attributes)} != 5")
+        return None
+
+    # Validate first field is "entity"
+    if record_attributes[0] != '"entity"':
+        logger.debug(
+            f"{chunk_key}: [REJECT] First field is {repr(record_attributes[0][:20])}, expected '\"entity\"'"
+        )
+        return None
+
+    # Validate relation context exists (prevent orphan entities)
+    if not now_hyper_relation or now_hyper_relation == "":
+        logger.warning(
+            f"{chunk_key}: Entity extracted without relation context. "
+            f"Creating default relation to prevent data loss. Entity: {record_attributes[1]}"
+        )
+        # Create a default relation for this chunk to link orphan entities
+        # This prevents data loss while still tracking the sequencing issue
+        from .constants import RELATION_PREFIX
+        default_relation_content = f"General context for chunk {chunk_key}"
+        now_hyper_relation = compute_mdhash_id(default_relation_content, prefix=RELATION_PREFIX)
+        # Note: The default relation won't be stored in maybe_edges,
+        # but entities will have a valid hyper_relation reference
+
+    # Sanitize entity name
+    entity_name_raw = record_attributes[1]
+    entity_name = sanitize_extracted_text(entity_name_raw, "entity_name")
+    logger.debug(f"{chunk_key}: Entity name: '{entity_name_raw[:30]}' → '{entity_name[:30] if entity_name else 'EMPTY'}'")
+
+    if not entity_name:
+        logger.warning(
+            f"{chunk_key}: [REJECT] Entity name became empty after sanitization. "
+            f"Raw: '{entity_name_raw}'"
+        )
+        return None
+
+    # Apply BiG-RAG convention: UPPERCASE entity names
+    entity_name = entity_name.upper()
+
+    # Sanitize entity type
+    entity_type_raw = record_attributes[2]
+    entity_type = sanitize_extracted_text(entity_type_raw, "entity_type")
+    logger.debug(f"{chunk_key}: Entity type: '{entity_type_raw}' → '{entity_type}'")
+
+    if not entity_type:
+        logger.warning(
+            f"{chunk_key}: [REJECT] Entity type invalid for entity '{entity_name}'. "
+            f"Raw: '{entity_type_raw}'"
+        )
+        return None
+
+    # Normalize entity type (e.g., "PERSON" → "person", "Organization" → "organization")
+    entity_type = normalize_entity_type(entity_type)
+
+    # Sanitize description
+    description_raw = record_attributes[3]
+    description = sanitize_extracted_text(description_raw, "description")
+    logger.debug(f"{chunk_key}: Description: {len(description_raw)} → {len(description)} chars")
+
+    if not description:
+        logger.warning(
+            f"{chunk_key}: [REJECT] Description empty for entity '{entity_name}' of type '{entity_type}'"
+        )
+        return None
+
+    # Parse weight (key score)
+    try:
+        weight = float(record_attributes[4])
+        # Validate reasonable range
+        if weight < 0 or weight > 100:
+            logger.warning(
+                f"{chunk_key}: Entity weight out of range (0-100): {weight} for '{entity_name}'. "
+                f"Using clamped value."
+            )
+            weight = max(0, min(100, weight))
+    except (ValueError, IndexError) as e:
+        logger.warning(
+            f"{chunk_key}: Invalid weight for entity '{entity_name}': {record_attributes[4]}. "
+            f"Using default 50.0. Error: {e}"
+        )
+        weight = 50.0  # Default fallback
+
+    # Return validated entity data
+    logger.debug(f"{chunk_key}: [SUCCESS] Entity '{entity_name}' ({entity_type}) weight={weight}")
     return dict(
         entity_name=entity_name,
         entity_type=entity_type,
-        description=entity_description,
+        description=description,
+        source_id=chunk_key,
         weight=weight,
-        hyper_relation=hyper_relation,
-        source_id=entity_source_id,
+        hyper_relation=now_hyper_relation,  # Link to parent relation
     )
 
 
@@ -292,25 +391,82 @@ async def _handle_single_hyperrelation_extraction(
     record_attributes: list[str],
     chunk_key: str,
 ):
-    if len(record_attributes) < 3 or record_attributes[0] != '"relation"':
-        return None
-    # add this record as edge
-    knowledge_fragment = clean_str(record_attributes[1])
-    edge_source_id = chunk_key
-    weight = (
-        float(record_attributes[-1]) if is_float_regex(record_attributes[-1]) else 1.0
+    """
+    Extract and validate a single relation from LLM output.
+
+    Validation:
+    - Exactly 3 fields (not <3, not >3)
+    - Sanitize content
+    - Validate completeness score range
+
+    Returns:
+        dict or None: Relation data if valid, None if invalid
+    """
+
+    # DEBUG: Log input
+    logger.debug(
+        f"{chunk_key}: RELATION INPUT: {len(record_attributes)} fields, "
+        f"first={repr(record_attributes[0][:20] if record_attributes else 'EMPTY')}"
     )
 
-    # A1: Generate hash-based ID instead of using content directly
-    # This reduces GraphML file size by 30-40% and improves query performance
+    # Validate field count (EXACT, not >=)
+    if len(record_attributes) != 3:
+        if len(record_attributes) > 1 and '"relation"' in record_attributes[0]:
+            logger.warning(
+                f"{chunk_key}: [REJECT] Relation has {len(record_attributes)}/3 fields (expected exactly 3)"
+            )
+        else:
+            logger.debug(f"{chunk_key}: [REJECT] Relation field count {len(record_attributes)} != 3")
+        return None
+
+    # Validate first field is "relation"
+    if record_attributes[0] != '"relation"':
+        logger.debug(
+            f"{chunk_key}: [REJECT] First field is {repr(record_attributes[0][:20])}, expected '\"relation\"'"
+        )
+        return None
+
+    # Sanitize knowledge fragment (relation content)
+    knowledge_fragment_raw = record_attributes[1]
+    knowledge_fragment = sanitize_extracted_text(knowledge_fragment_raw, "relation")
+    logger.debug(f"{chunk_key}: Relation content: {len(knowledge_fragment_raw)} → {len(knowledge_fragment)} chars")
+
+    if not knowledge_fragment:
+        logger.warning(
+            f"{chunk_key}: [REJECT] Relation content became empty after sanitization. "
+            f"Raw: '{knowledge_fragment_raw[:50]}...'"
+        )
+        return None
+
+    # Parse completeness score
+    try:
+        weight = float(record_attributes[2])
+        logger.debug(f"{chunk_key}: Relation score: {record_attributes[2]} → {weight}")
+        # Validate reasonable range
+        if weight < 0 or weight > 10:
+            logger.warning(
+                f"{chunk_key}: Relation completeness score out of range (0-10): {weight}. "
+                f"Using clamped value."
+            )
+            weight = max(0, min(10, weight))
+    except (ValueError, IndexError) as e:
+        logger.warning(
+            f"{chunk_key}: Invalid completeness score: {record_attributes[2]}. "
+            f"Using default 5.0. Error: {e}"
+        )
+        weight = 5.0  # Default fallback
+
+    # Generate hash-based ID for relation node
     from .constants import RELATION_PREFIX
     edge_id = compute_mdhash_id(knowledge_fragment, prefix=RELATION_PREFIX)
 
+    # Return validated relation data
+    logger.debug(f"{chunk_key}: [SUCCESS] Relation '{knowledge_fragment[:40]}...' score={weight}")
     return dict(
-        hyper_relation=edge_id,  # Hash ID: "rel-abc123..."
-        hyper_relation_content=knowledge_fragment,  # Store content separately
-        weight=weight,
-        source_id=edge_source_id,
+        hyper_relation=edge_id,                # Relation node ID (hash-based)
+        hyper_relation_content=knowledge_fragment,  # Actual content
+        weight=weight,                         # Completeness score
+        source_id=chunk_key,                   # Which chunk this came from
     )
     
 
@@ -558,6 +714,73 @@ async def extract_entities(
     already_entities = 0
     already_relations = 0
 
+    def validate_extraction_results(
+        maybe_nodes: dict,
+        maybe_edges: dict,
+        chunk_key: str
+    ) -> dict:
+        """
+        Validate extraction results and detect potential orphan relations.
+
+        Purpose: Catch orphan relations early (at extraction time) before they're
+                 stored in the graph, allowing for corrective action or warnings.
+
+        Args:
+            maybe_nodes: dict[entity_name, list[entity_data]]
+            maybe_edges: dict[relation_id, list[relation_data]]
+            chunk_key: Chunk identifier for logging
+
+        Returns:
+            dict: {
+                "total_entities": int,
+                "total_relations": int,
+                "orphan_relations": list[str],  # Relation IDs without entities
+                "warnings": list[str]
+            }
+        """
+        validation_report = {
+            "total_entities": len(maybe_nodes),
+            "total_relations": len(maybe_edges),
+            "orphan_relations": [],
+            "warnings": []
+        }
+
+        # Check each relation for linked entities
+        for relation_id, relation_list in maybe_edges.items():
+            relation_content = relation_list[0].get("hyper_relation_content", "")
+
+            # Find entities that reference this relation
+            linked_entities = []
+            for entity_name, entity_list in maybe_nodes.items():
+                entity_relation = entity_list[0].get("hyper_relation", "")
+                if entity_relation == relation_id:
+                    linked_entities.append(entity_name)
+
+            if len(linked_entities) == 0:
+                # Orphan relation detected!
+                validation_report["orphan_relations"].append(relation_id)
+
+                # Log warning with truncated content
+                display_content = relation_content[:80] + "..." if len(relation_content) > 80 else relation_content
+                warning = (
+                    f"ORPHAN RELATION (no entities): '{display_content}'"
+                )
+                validation_report["warnings"].append(warning)
+                logger.warning(f"{chunk_key}: {warning}")
+
+        # Log summary
+        if validation_report["orphan_relations"]:
+            orphan_count = len(validation_report["orphan_relations"])
+            total_count = validation_report["total_relations"]
+            orphan_rate = orphan_count / total_count if total_count > 0 else 0
+
+            logger.warning(
+                f"{chunk_key}: Found {orphan_count} orphan relations "
+                f"out of {total_count} total relations ({orphan_rate:.1%})"
+            )
+
+        return validation_report
+
     async def _process_single_content(chunk_key_dp: tuple[str, TextChunkSchema]):
         nonlocal already_processed, already_entities, already_relations
         chunk_key = chunk_key_dp[0]
@@ -568,23 +791,32 @@ async def extract_entities(
         doc_title = chunk_dp.get("doc_title", "")
         doc_metadata = chunk_dp.get("doc_metadata", {})
 
-        # Build context-enriched input text
+        # Build context-enriched input text with bracket-style formatting
+        # (Phase 3.1: Adopted from LightRAG to prevent metadata confusion)
         context_parts = []
+
         if doc_title:
-            context_parts.append(f"Document Title: {doc_title}")
+            context_parts.append(f"Title: {doc_title}")
+
         if doc_metadata:
-            # Format metadata nicely
             metadata_str = ", ".join(
                 f"{k}: {v}" for k, v in doc_metadata.items()
-                if k != "title" and v  # Skip empty values and title (already shown)
+                if k != "title" and v  # Skip empty values and title (already included)
             )
             if metadata_str:
-                context_parts.append(f"Document Context: {metadata_str}")
+                context_parts.append(f"Metadata: {metadata_str}")
 
-        # Combine context with content
+        # Combine with bracket markers for clear semantic boundaries
         if context_parts:
-            enriched_content = "\n".join(context_parts) + "\n\n" + content
+            metadata_block = "\n".join(context_parts)
+            enriched_content = (
+                f"[DOCUMENT CONTEXT]\n"
+                f"{metadata_block}\n\n"
+                f"[CHUNK CONTENT]\n"
+                f"{content}"
+            )
         else:
+            # No metadata available, use content as-is
             enriched_content = content
 
         # hint_prompt = entity_extract_prompt.format(**context_base, input_text=enriched_content)
@@ -595,28 +827,28 @@ async def extract_entities(
         # B5: Use semaphore to limit concurrent LLM calls
         async with llm_semaphore:
             final_result = await use_llm_func(hint_prompt)
+
+        # DEBUG: Log raw LLM response
+        logger.debug(f"{chunk_key}: LLM response length: {len(final_result)} chars")
+        logger.debug(f"{chunk_key}: LLM response preview: {final_result[:200] if final_result else 'EMPTY'}...")
+        print(f"\n[DEBUG] {chunk_key}: LLM response length: {len(final_result)} chars")
+
+        # Fix corrupted delimiters BEFORE parsing
+        # (LLM sometimes outputs <> instead of <|>, || instead of <|>, etc.)
+        final_result = fix_delimiter_corruption(
+            final_result,
+            context_base["tuple_delimiter"]
+        )
+
         history = pack_user_ass_to_openai_messages(hint_prompt, final_result)
-        for now_glean_index in range(entity_extract_max_gleaning):
-            async with llm_semaphore:
-                glean_result = await use_llm_func(continue_prompt, history_messages=history)
-
-            history += pack_user_ass_to_openai_messages(continue_prompt, glean_result)
-            final_result += glean_result
-            if now_glean_index == entity_extract_max_gleaning - 1:
-                break
-
-            async with llm_semaphore:
-                if_loop_result: str = await use_llm_func(
-                    if_loop_prompt, history_messages=history
-                )
-            if_loop_result = if_loop_result.strip().strip('"').strip("'").lower()
-            if if_loop_result != "yes":
-                break
-
+        # Parse initial extraction results FIRST
         records = split_string_by_multi_markers(
             final_result,
             [context_base["record_delimiter"], context_base["completion_delimiter"]],
         )
+
+        # DEBUG: Log parsed records count
+        logger.debug(f"{chunk_key}: Parsed {len(records)} records from LLM response")
 
         maybe_nodes = defaultdict(list)
         maybe_edges = defaultdict(list)
@@ -626,6 +858,11 @@ async def extract_entities(
             if record is None:
                 continue
             record = record.group(1)
+
+            # Fix delimiter corruption on individual record (CRITICAL FIX)
+            record = fix_delimiter_corruption(record, context_base["tuple_delimiter"])
+
+            # DEBUG: Print delimiter being used
             record_attributes = split_string_by_multi_markers(
                 record, [context_base["tuple_delimiter"]]
             )
@@ -637,14 +874,148 @@ async def extract_entities(
                     if_relation
                 )
                 now_hyper_relation = if_relation["hyper_relation"]
-                
+
             if_entities = await _handle_single_entity_extraction(
                 record_attributes, chunk_key, now_hyper_relation
             )
             if if_entities is not None:
                 maybe_nodes[if_entities["entity_name"]].append(if_entities)
                 continue
-            
+
+        # Gleaning loop with smart merge (quality-based)
+        for now_glean_index in range(entity_extract_max_gleaning):
+            async with llm_semaphore:
+                glean_result = await use_llm_func(continue_prompt, history_messages=history)
+
+            # Fix corrupted delimiters in gleaning result
+            glean_result = fix_delimiter_corruption(
+                glean_result,
+                context_base["tuple_delimiter"]
+            )
+
+            history += pack_user_ass_to_openai_messages(continue_prompt, glean_result)
+
+            # Parse gleaning results into separate structures
+            glean_records = split_string_by_multi_markers(
+                glean_result,
+                [context_base["record_delimiter"], context_base["completion_delimiter"]],
+            )
+
+            maybe_glean_nodes = defaultdict(list)
+            maybe_glean_edges = defaultdict(list)
+            glean_hyper_relation = now_hyper_relation  # Carry forward last relation context
+
+            # Parse each gleaning record
+            for record in glean_records:
+                record = re.search(r"\((.*)\)", record)
+                if record is None:
+                    continue
+                record = record.group(1)
+                record_attributes = split_string_by_multi_markers(
+                    record, [context_base["tuple_delimiter"]]
+                )
+
+                # Try parsing as relation
+                if_relation = await _handle_single_hyperrelation_extraction(
+                    record_attributes, chunk_key
+                )
+                if if_relation is not None:
+                    relation_id = if_relation["hyper_relation"]
+                    maybe_glean_edges[relation_id].append(if_relation)
+                    glean_hyper_relation = relation_id
+
+                # Try parsing as entity
+                if_entities = await _handle_single_entity_extraction(
+                    record_attributes, chunk_key, glean_hyper_relation
+                )
+                if if_entities is not None:
+                    entity_name = if_entities["entity_name"]
+                    maybe_glean_nodes[entity_name].append(if_entities)
+
+            # SMART MERGE: Compare quality and keep better version
+            # Merge entities
+            for entity_name, glean_entity_list in maybe_glean_nodes.items():
+                if entity_name in maybe_nodes:
+                    # Entity already exists - compare descriptions
+                    original_desc = maybe_nodes[entity_name][0].get("description", "")
+                    glean_desc = glean_entity_list[0].get("description", "")
+
+                    # Use quality scoring (considers length, keywords, completeness)
+                    original_quality = description_quality_score(original_desc)
+                    glean_quality = description_quality_score(glean_desc)
+
+                    if glean_quality > original_quality:
+                        logger.debug(
+                            f"{chunk_key}: Gleaning improved entity '{entity_name}': "
+                            f"quality {original_quality:.0f} → {glean_quality:.0f}"
+                        )
+                        maybe_nodes[entity_name] = glean_entity_list
+                    else:
+                        # Keep original (better quality)
+                        logger.debug(
+                            f"{chunk_key}: Keeping original entity '{entity_name}' "
+                            f"(better quality: {original_quality:.0f} vs {glean_quality:.0f})"
+                        )
+                else:
+                    # New entity from gleaning
+                    logger.debug(f"{chunk_key}: Gleaning found new entity: '{entity_name}'")
+                    maybe_nodes[entity_name] = glean_entity_list
+
+            # Merge relations
+            for relation_id, glean_relation_list in maybe_glean_edges.items():
+                if relation_id in maybe_edges:
+                    # Relation already exists - compare content quality
+                    original_content = maybe_edges[relation_id][0].get("hyper_relation_content", "")
+                    glean_content = glean_relation_list[0].get("hyper_relation_content", "")
+
+                    original_quality = description_quality_score(original_content)
+                    glean_quality = description_quality_score(glean_content)
+
+                    if glean_quality > original_quality:
+                        logger.debug(
+                            f"{chunk_key}: Gleaning improved relation {relation_id[:16]}..."
+                        )
+                        maybe_edges[relation_id] = glean_relation_list
+                else:
+                    # New relation from gleaning
+                    logger.debug(f"{chunk_key}: Gleaning found new relation: {relation_id[:16]}...")
+                    maybe_edges[relation_id] = glean_relation_list
+
+            # Check if should continue gleaning
+            if now_glean_index == entity_extract_max_gleaning - 1:
+                break
+
+            async with llm_semaphore:
+                if_loop_result: str = await use_llm_func(
+                    if_loop_prompt, history_messages=history
+                )
+            if_loop_result = if_loop_result.strip().strip('"').strip("'").lower()
+            if if_loop_result != "yes":
+                break
+
+        # Validate extraction results (detect orphans early)
+        validation_report = validate_extraction_results(
+            maybe_nodes,
+            maybe_edges,
+            chunk_key
+        )
+
+        # If orphan rate is very high, log error
+        if validation_report["total_relations"] > 0:
+            orphan_rate = (
+                len(validation_report["orphan_relations"]) /
+                validation_report["total_relations"]
+            )
+
+            # Threshold: 10% (not 30% as in original plan)
+            if orphan_rate > 0.10:
+                logger.error(
+                    f"{chunk_key}: HIGH ORPHAN RATE ({orphan_rate:.1%})! "
+                    f"Expected <5%, found {len(validation_report['orphan_relations'])}/"
+                    f"{validation_report['total_relations']} orphans. "
+                    f"LLM may not be following extraction rules."
+                )
+
         already_processed += 1
         already_entities += len(maybe_nodes)
         already_relations += len(maybe_edges)

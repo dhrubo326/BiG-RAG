@@ -25,13 +25,17 @@ os.makedirs(logs_dir, exist_ok=True)
 
 # Configure logging (UTF-8 encoding for Windows console)
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.INFO,  # Back to INFO for production
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(os.path.join(logs_dir, 'build_graph.log'), encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
+
+# Reduce verbosity from other loggers
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("nano-vectordb").setLevel(logging.WARNING)
 
 # Fix Windows console encoding for Unicode characters
 import io

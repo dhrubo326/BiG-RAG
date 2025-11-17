@@ -4,14 +4,6 @@
 
 ---
 
-**Authors:**
-
-**Reduanul Bari Shovon**
-University of Scholars
-reduanul.bari@ius.edu.bd
-
----
-
 ## Abstract
 
 Retrieval-Augmented Generation systems enhance large language models with external knowledge but face critical limitations: conventional approaches fragment complex multi-entity relationships into binary triples, losing semantic integrity, while existing graph-based methods employ fixed retrieval strategies unsuited to diverse query complexities. We present **BiG-RAG** (Bipartite Graph Retrieval-Augmented Generation), a unified framework addressing both challenges through n-ary relational representation and adaptive multi-turn reasoning. Recent enhancements include three-path retrieval combining entity, relation, and chunk-based search; semantic reranking using cross-encoders; robust entity extraction with corruption recovery; and dynamic document management with cascade deletion.

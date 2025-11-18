@@ -73,6 +73,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ⚠️ **CRITICAL**: Do NOT commit changes until explicitly instructed by the project maintainer
 - Wait for explicit permission to commit (user will say "commit" or "push")
 - This allows for review and iteration before changes are finalized
+- **Commit Message Format**: Do NOT include Claude Code attribution footer in commit messages (no "🤖 Generated with Claude Code" or "Co-Authored-By: Claude" lines)
 
 **New File Creation Policy:**
 - ⚠️ **CRITICAL**: Do NOT generate new documentation files each time unless it is a significant change

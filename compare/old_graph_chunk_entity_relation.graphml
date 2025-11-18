@@ -1,0 +1,1837 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d7" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d6" for="edge" attr.name="weight" attr.type="double" />
+  <key id="d5" for="node" attr.name="description" attr.type="string" />
+  <key id="d4" for="node" attr.name="entity_type" attr.type="string" />
+  <key id="d3" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d2" for="node" attr.name="weight" attr.type="double" />
+  <key id="d1" for="node" attr.name="content" attr.type="string" />
+  <key id="d0" for="node" attr.name="role" attr.type="string" />
+  <graph edgedefault="undirected">
+    <node id="rel-ef6ae313b49e82704c4dc95f15532d8a">
+      <data key="d0">relation</data>
+      <data key="d1">For foreign applicants, specific percentage requirements in designated subjects are outlined.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-a0684e52cd29e816eb75657192d10115">
+      <data key="d0">relation</data>
+      <data key="d1">Applicants must be citizens of Bangladesh.</data>
+      <data key="d2">10.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-98bdd910decb069274f86cb85402a03a">
+      <data key="d0">relation</data>
+      <data key="d1">Candidates are expected to prepare well according to the syllabus outlined for the admission test.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-e9f145bddbf7c7f2ddef2eb4a96c5519">
+      <data key="d0">relation</data>
+      <data key="d1">The admission test topics and allocated marks will be based on the curriculum of the higher secondary examination in Mathematics, Physics, and Chemistry, as well as Functional English.</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-5a1a826c3e6455c009a215a460c8b346">
+      <data key="d0">relation</data>
+      <data key="d1">The Mechanical Engineering Faculty encompasses Mechanical Engineering, Industrial and Production Engineering, and Textile Engineering.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-4bf955580b9c82318d8ca33b37a5aebd">
+      <data key="d0">relation</data>
+      <data key="d1">The subjects and their distribution of marks include: Mathematics - 150, Physics - 150, Chemistry - 150, English - 50, drawing (B.Arch) - 100.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-c3aa062ac193f7820e7ea467a81f29d1">
+      <data key="d0">relation</data>
+      <data key="d1">The eligible candidates' list for the admission test will be published on December 30, 2024.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-534d485da9b2826ee7c570f8d80db7e9">
+      <data key="d0">relation</data>
+      <data key="d1">The examination for the B.Arch course will include a common question paper for the listed courses.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-a7d41d9ac81697dccc38eb572169f0e9">
+      <data key="d0">relation</data>
+      <data key="d1">In case of increased applicant numbers, a merit list will determine candidates based on their grades from the specified subjects.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-ad3ad7b90a0ef521deeca0dfeb42d774">
+      <data key="d0">relation</data>
+      <data key="d1">Students intending to apply are encouraged to familiarize themselves with the syllabus of the mentioned subjects.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-67b1843eea74940d407932225fe4f5f3">
+      <data key="d0">relation</data>
+      <data key="d1">The document outlines the eligibility criteria for admission to the specified courses.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-8a129540724ec1dfd53d3352f614c974">
+      <data key="d0">relation</data>
+      <data key="d1">The merit list will be prepared based on the grade points obtained in mathematics, physics, chemistry, and English.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-fdb7482d9dae9fd2fda020b51601d192">
+      <data key="d0">relation</data>
+      <data key="d1">Khulna University of Engineering and Technology (KUET) is inviting applications for admission to the 1st year B.Sc. Engineering, BEURP, and B.Arch courses for the academic session 2024-2025.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-42142a7bf41e42474190cb9eb66bcaa1">
+      <data key="d0">relation</data>
+      <data key="d1">The announcement regarding the admission schedule and criteria was made public for prospective students.</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-d5bf92d2369976fd06049982669dc670">
+      <data key="d0">relation</data>
+      <data key="d1">The test will be a 3-hour MCQ examination with a total of 500 marks.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-47f9d7c95ba193183f2b58e905f27c58">
+      <data key="d0">relation</data>
+      <data key="d1">The admission process for the 1st year B.Sc. Engineering, BEURP, and B.Arch courses will involve a 3-hour MCQ exam based on Mathematics, Physics, Chemistry, and Functional English.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-98e442c433888ebb7948b9510d6d8844">
+      <data key="d0">relation</data>
+      <data key="d1">A 5-year degree is awarded in Architecture and a 4-year degree is awarded in all other subjects.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-506f29fbbf98e547a7074d8e15dfa5a6">
+      <data key="d0">relation</data>
+      <data key="d1">The admission test will take place on January 11, 2025, from 9:30 AM to 12:30 PM.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-08fa7d2345b0d84a2fab42356c795cb7">
+      <data key="d0">relation</data>
+      <data key="d1">The drawing test for B.Arch candidates is intended to assess their artistic skills.</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-a20be89f98b6d2aae2399da7e71139ca">
+      <data key="d0">relation</data>
+      <data key="d1">More than 20,000 candidates will be allowed to participate in the admission test from this list.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-80c338dcde1f3a997061e4e6a28a6644">
+      <data key="d0">relation</data>
+      <data key="d1">Applicants from Bangladesh must fulfill specific academic requirements including GPA standards in various subjects.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-7bf0e0cd293c3a7107ef61c09e7c6789">
+      <data key="d0">relation</data>
+      <data key="d1">If the number of candidates exceeds the limit, the list will select the first 20,000 candidates based on their grades.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-69695b12e7ef51328e0ffdd41348e75c">
+      <data key="d0">relation</data>
+      <data key="d1">Applicants must have passed secondary or equivalent examinations with at least GPA 4.00 in 2021 or 2022.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-1215ac1953d92d94de04e6130c2f3e34">
+      <data key="d0">relation</data>
+      <data key="d1">The guidelines for filling out the application form must be strictly followed to avoid disqualification.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-9dc90c342bff7b49b3b71ea6aef210d8">
+      <data key="d0">relation</data>
+      <data key="d1">The total number of marks for the exam is 500.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-70ed0e1553f6d185225f5f611f035c9a">
+      <data key="d0">relation</data>
+      <data key="d1">The admission test specifics will include multiple-choice questions based on the curriculum covered in higher secondary education.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-35f87504d4d86d70580342ba569ddd43">
+      <data key="d0">relation</data>
+      <data key="d1">There are reserved seats for small ethnic groups and residents of the hill districts of Chittagong among the 1,065 seats.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-35f3ebbb75b3f7b36f2e088ed4a0022c">
+      <data key="d0">relation</data>
+      <data key="d1">The list of merit order for the candidates participating in the admission test will be published on January 26, 2025.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-6ca36dbd21553b2e2f42dcee2d48d91c">
+      <data key="d0">relation</data>
+      <data key="d1">The university also provides a variety of resources to support prospective students.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-dae510da627343a0366bb22fdccb3e8f">
+      <data key="d0">relation</data>
+      <data key="d1">The 20,000th candidate will be determined based on the grades received in Mathematics, Physics, Chemistry, and English in the higher secondary examination.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-f1abd3bea44fae7d50e320ecbcbd9711">
+      <data key="d0">relation</data>
+      <data key="d1">The document states that candidates must achieve a total GPA of 18.00 across specific subjects for eligibility to apply.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-4ea38f3f2d96061065b36f4901cb0e65">
+      <data key="d0">relation</data>
+      <data key="d1">The logo of Khulna University of Engineering and Technology is a circular green seal with the university's name in Bengali written around the circumference.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-1d24ba6322d9eeb20bf7e451c85e2fcf">
+      <data key="d0">relation</data>
+      <data key="d1">For Bangladeshi students, the eligibility criteria for participating in the entrance exam are outlined.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-df0cda7a57229608a9d56006b73f4680">
+      <data key="d0">relation</data>
+      <data key="d1">Disqualification may occur if the application form is not completed properly or submitted on time.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-10d79d26419ae0d1a6afc594e82369ed">
+      <data key="d0">relation</data>
+      <data key="d1">The breakdown of questions and marks for the exam includes 15 questions from Mathematics, 15 from Physics, 15 from Chemistry, 10 from English, and 4 from drawing for B.Arch.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-e622895003f05022ebe687c7ea850341">
+      <data key="d0">relation</data>
+      <data key="d1">The admission process and criteria for eligibility are structured and must follow the guidelines provided.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-3706d61d44b381bb379c475556871bca">
+      <data key="d0">relation</data>
+      <data key="d1">He is also the Dean of the Faculty of Electrical and Electronic Engineering at Khulna University of Engineering &amp; Technology.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-1f0de4addfe90ae1ce7189704bebf773">
+      <data key="d0">relation</data>
+      <data key="d1">Online application forms must be filled out and submitted according to the instructions provided on the website.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-351e9cf0bb8abe34cc541fbab530be34">
+      <data key="d0">relation</data>
+      <data key="d1">Various departmental names, codes, and seat distribution are specified.</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-1e9c651bf19a366044f5f2852da49f0f">
+      <data key="d0">relation</data>
+      <data key="d1">Candidates must complete the online form to apply for admission.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-09e66f093977b1476d73d560b3520fb9">
+      <data key="d0">relation</data>
+      <data key="d1">Admission schedule: Online application filling and submission starts on December 4, 2024.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-26cc65c350963f11ab3e72cf42969bcd">
+      <data key="d0">relation</data>
+      <data key="d1">For any problems filling out the online form, candidates can contact 01799273655 during office hours.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-a673ee9c93298d9b342613ba818fa643">
+      <data key="d0">relation</data>
+      <data key="d1">For biomedical engineering, candidates must have a minimum GPA of 4.00 in biology.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-d2584d58b8217347478c5463ee0f174d">
+      <data key="d0">relation</data>
+      <data key="d1">The motto 'প্রভু! আমায় জ্ঞান দাও' translates to 'Lord! Give me knowledge' and is featured above the open book in the logo.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-c115152b981c6a7838642b8b2675a52b">
+      <data key="d0">relation</data>
+      <data key="d1">Additionally, candidates must pass the higher secondary or equivalent exam in 2024 or obtain an 'A' level certificate after November 2023.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-9b080c3d7d00bd7f48795795e5d68bb4">
+      <data key="d0">relation</data>
+      <data key="d1">The last date for depositing money is December 15, 2024, by 5 PM.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-2366b2d38e6993d7866562b5dcf4a8b3">
+      <data key="d0">relation</data>
+      <data key="d1">All applicants are required to meet the eligibility criteria set forth by the university.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-26a02829bb035e671c60a3ee2917bd35">
+      <data key="d0">relation</data>
+      <data key="d1">A fee waiver may be available for certain candidates based on specific criteria.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-da6ad1268e572ee147f174d82df45096">
+      <data key="d0">relation</data>
+      <data key="d1">Candidates for the B.Arch course must also participate in a 1-hour drawing test with a total of 100 marks.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-33894fbb1978ec64a8451d7d77b32dd7">
+      <data key="d0">relation</data>
+      <data key="d1">The reserved seats will benefit specific communities including small ethnic groups and hill district residents.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-4a3221cf7cdfcb3ae6a0fd045ec4eaf8">
+      <data key="d0">relation</data>
+      <data key="d1">The admission committee will review applications thoroughly to ensure fairness in the selection process.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-53967d649a0737a237415c726adaaa41">
+      <data key="d0">relation</data>
+      <data key="d1">The admission test fee for Engineering and URP is 1,100 taka.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-09419bc0872d7b64bd3c529a61a46d2f">
+      <data key="d0">relation</data>
+      <data key="d1">The admission exam will consist of multiple-choice questions (MCQs) covering the designated subjects.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-13eb4d16e40e2dca470f7d7416fc2298">
+      <data key="d0">relation</data>
+      <data key="d1">The Civil Engineering Faculty includes Civil Engineering, Building Engineering, and Urban and Regional Planning.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-b80efaf3ab72d06f377f72d364e6504e">
+      <data key="d0">relation</data>
+      <data key="d1">Professor Dr. Mohammad Rafiqul Islam is the head of the admission committee for the B.Sc. Engineering, BEURP, and B.Arch courses.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-849df1b8579aed056263555ccb2ea43a">
+      <data key="d0">relation</data>
+      <data key="d1">Online application filling and submission end on December 14, 2024 at 11:59 PM.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-86c5b334146c43a736c1456cadcc938d">
+      <data key="d0">relation</data>
+      <data key="d1">All admission information can be found on the website admission.kuet.ac.bd and the university's notice board.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-c86bf3016a2e7903218f381e277cd377">
+      <data key="d0">relation</data>
+      <data key="d1">For foreign applicants, specific conditions related to their educational background must be met for eligibility.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-3a815db498b2eb8d921abac65beaf20a">
+      <data key="d0">relation</data>
+      <data key="d1">The admission notice is for the 1st year B.Sc. Engineering courses including BEURP and B.Arch for the academic session 2024-2025.</data>
+      <data key="d2">10.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-a4e1facaabd0479dcc559099ca48a88b">
+      <data key="d0">relation</data>
+      <data key="d1">Candidates with GCE 'O' level and 'A' level must achieve specified grades to participate in the entrance exam.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-425562b210c8eb2e6bdd6925c2f85a9b">
+      <data key="d0">relation</data>
+      <data key="d1">Applicants wishing to enroll must participate in the entrance exam online.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-d6de03b990e27ef6027b2f4e15d34026">
+      <data key="d0">relation</data>
+      <data key="d1">The admission test fee for Engineering, URP, and Architecture is 1,200 taka.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-960d56cffd9da0580d7dd825f8f0cc8e">
+      <data key="d0">relation</data>
+      <data key="d1">The Electrical and Electronic Engineering Faculty includes Electrical and Electronic Engineering, Computer Science and Engineering, and Electronics and Communication Engineering.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-f4252fc0ad5ffd569068dd74c58c8e2f">
+      <data key="d0">relation</data>
+      <data key="d1">For any inquiries regarding the admission test, candidates can email admission@kuet.ac.bd.</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-e9fa337d198a87a58a1e3b8b4508eb48">
+      <data key="d0">relation</data>
+      <data key="d1">The minimum score requirement across subjects for foreign applicants includes obtaining at least 80% marks in designated subjects.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-a835757981bc6408f8a1e5f2034cb642">
+      <data key="d0">relation</data>
+      <data key="d1">The courses offered include Civil Engineering, Electrical and Electronic Engineering, and Mechanical Engineering across a total of 1065 seats.</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="KHULNA UNIVERSITY OF ENGINEERING AND TECHNOLOGY">
+      <data key="d0">entity</data>
+      <data key="d4">organization</data>
+      <data key="d5">Khulna University of Engineering and Technology is an educational institution inviting applications for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">95.0</data>
+    </node>
+    <node id="DECEMBER 14, 2024">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The end date for online application filling and submission.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="UNIVERSITYS NOTICE BOARD">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The university's notice board contains admission information.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="01799273655">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The contact number for assistance with the online form.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="MOTTO">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The motto reflects the aspiration for knowledge at Khulna University of Engineering and Technology.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="1,100 TAKA">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The admission test fee for Engineering and URP is 1,100 taka.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="KUET">
+      <data key="d0">entity</data>
+      <data key="d4">organization</data>
+      <data key="d5">KUET is an abbreviation for Khulna University of Engineering and Technology.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="DECEMBER 15, 2024">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The last date for depositing application fees.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="ADMISSION@KUET.AC.BD">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The email address for inquiries regarding the admission test.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="প্রভু! আমায় জ্ঞান দাও">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The motto of the university which emphasizes the pursuit of knowledge.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="1,200 TAKA">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The admission test fee for Engineering, URP, and Architecture is 1,200 taka.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="B.SC. ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">B.Sc. Engineering is one of the courses offered for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="DECEMBER 30, 2024">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The publication date for the eligible candidates' list for the admission test.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="PROFESSOR DR. MOHAMMAD RAFIQUL ISLAM">
+      <data key="d0">entity</data>
+      <data key="d4">person</data>
+      <data key="d5">The head of the admission committee for the B.Sc. Engineering, BEURP, and B.Arch courses.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="ADMISSION NOTICE">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The admission notice provides details for prospective students.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="ADMISSION TEST TOPICS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The admission test will focus on specific topics from the curriculum.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="APPLICANTS">
+      <data key="d0">entity</data>
+      <data key="d4">person</data>
+      <data key="d5">Applicants are individuals wishing to enroll at KUET.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="JANUARY 11, 2025">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The date for the admission test.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="ADMISSION COMMITTEE">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The committee overseeing the admission process for various courses.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ACADEMIC SESSION 2024-2025">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">This is the specific academic year for which admissions are being conducted.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="HIGHER SECONDARY EXAMINATION">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">The examination will be based on the curriculum from the higher secondary examination.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ENTRANCE EXAM">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">The entrance exam is required for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="JANUARY 26, 2025">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The publication date for the merit order list of candidates.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="DEAN">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The role of Dean of the Faculty of Electrical and Electronic Engineering.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="CIVIL ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Civil Engineering Faculty.&lt;SEP&gt;Civil Engineering is one of the courses available for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">175.0</data>
+    </node>
+    <node id="CURRICULUM">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The curriculum covers Mathematics, Physics, Chemistry, and Functional English.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="BANGLADESHI STUDENTS">
+      <data key="d0">entity</data>
+      <data key="d4">person</data>
+      <data key="d5">Bangladeshi students are eligible to apply for admission at KUET.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="BEURP">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">BEURP is a course included in the admission process at Khulna University of Engineering &amp; Technology.&lt;SEP&gt;BEURP is one of the courses offered for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">170.0</data>
+    </node>
+    <node id="DEPARTMENT NAMES">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Various departmental names, codes, and seat distribution are specified.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="FACULTY OF ELECTRICAL AND ELECTRONIC ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The Faculty where Professor Dr. Mohammad Rafiqul Islam is Dean.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ELECTRICAL AND ELECTRONIC ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Electrical and Electronic Engineering Faculty.&lt;SEP&gt;Electrical and Electronic Engineering is one of the courses available for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">175.0</data>
+    </node>
+    <node id="3-HOUR MCQ EXAMINATION">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">The test will last for 3 hours and consist of MCQs.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="1ST YEAR B.SC. ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The 1st year B.Sc. Engineering course is part of the admission process at Khulna University of Engineering &amp; Technology.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="BANGLADESH">
+      <data key="d0">entity</data>
+      <data key="d4">geo</data>
+      <data key="d5">Bangladesh is the country of citizenship required for applicants.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">95.0</data>
+    </node>
+    <node id="CODES">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Codes for various departments are provided.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="KHULNA UNIVERSITY OF ENGINEERING &amp; TECHNOLOGY">
+      <data key="d0">entity</data>
+      <data key="d4">organization</data>
+      <data key="d5">The university where the courses and admission process are being discussed.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">95.0</data>
+    </node>
+    <node id="MECHANICAL ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Mechanical Engineering Faculty.&lt;SEP&gt;Mechanical Engineering is one of the courses available for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">175.0</data>
+    </node>
+    <node id="ADMISSION TEST SPECIFICS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The admission test will focus on specifics from the higher secondary curriculum.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="SECONDARY EXAMINATIONS">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">Secondary examinations are required for admission eligibility.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="CIVIL ENGINEERING FACULTY">
+      <data key="d0">entity</data>
+      <data key="d4">organization</data>
+      <data key="d5">The Civil Engineering Faculty includes multiple disciplines.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="500 MARKS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The test will be graded out of 500 marks.&lt;SEP&gt;The total marks for the admission exam.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">180.0</data>
+    </node>
+    <node id="1065 SEATS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A total of 1065 seats are available for various courses at the university.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="MULTIPLE-CHOICE QUESTIONS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The format of the admission test will include multiple-choice questions.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="B.ARCH">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">B.Arch is a course included in the admission process at Khulna University of Engineering &amp; Technology.&lt;SEP&gt;B.Arch is one of the courses offered for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">170.0</data>
+    </node>
+    <node id="GPA 4.00">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">GPA 4.00 is the minimum score required for eligibility.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="BUILDING ENGINEERING AND CONSTRUCTION MANAGEMENT">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Civil Engineering Faculty.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="MATHEMATICS - 150 MARKS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Mathematics contributes 150 marks to the exam.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="ACADEMIC REQUIREMENTS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The academic requirements include GPA standards for Bangladeshi applicants.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="ADMISSION PROCESS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The structured process is necessary for candidate eligibility.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="MCQ EXAM">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">A 3-hour MCQ exam will be held as part of the admission process.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="HIGHER SECONDARY EXAM">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">Higher secondary exam is required as part of the admission criteria.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="URBAN AND REGIONAL PLANNING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Civil Engineering Faculty.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="PHYSICS - 150 MARKS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Physics contributes 150 marks to the exam.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="TOTAL GPA 18.00">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A total GPA of 18.00 is required across key subjects for eligibility.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="SPECIFIC COMMUNITIES">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The reserved seats are intended for specific communities.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="MATHEMATICS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Grades in Mathematics will determine the 20,000th candidate.&lt;SEP&gt;Mathematics is one of the subjects considered in the merit list.&lt;SEP&gt;Mathematics is one of the subjects for the admission exam.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">260.0</data>
+    </node>
+    <node id="A LEVEL CERTIFICATE">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">An 'A' level certificate is an alternative qualification for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ELECTRICAL AND ELECTRONIC ENGINEERING FACULTY">
+      <data key="d0">entity</data>
+      <data key="d4">organization</data>
+      <data key="d5">The Electrical and Electronic Engineering Faculty includes multiple disciplines.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="SUBJECTS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The specific subjects include mathematics, physics, chemistry, and English.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="CHEMISTRY - 150 MARKS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Chemistry contributes 150 marks to the exam.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="HILL DISTRICT RESIDENTS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The reserved seats are also for residents of the hill districts.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="PHYSICS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Grades in Physics will determine the 20,000th candidate.&lt;SEP&gt;Physics is one of the subjects considered in the merit list.&lt;SEP&gt;Physics is one of the subjects for the admission exam.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">260.0</data>
+    </node>
+    <node id="GCE O LEVEL">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">GCE 'O' level is an examination framework for eligibility.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="COMPUTER SCIENCE AND ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Electrical and Electronic Engineering Faculty.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ENGLISH - 50 MARKS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">English contributes 50 marks to the exam.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="BIOMEDICAL ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Biomedical engineering is a specific course with additional criteria for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ANNOUNCEMENT">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The announcement details the admission schedule and criteria.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="CHEMISTRY">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Chemistry is one of the subjects considered in the merit list.&lt;SEP&gt;Chemistry is one of the subjects for the admission exam.&lt;SEP&gt;Grades in Chemistry will determine the 20,000th candidate.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">260.0</data>
+    </node>
+    <node id="GCE A LEVEL">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">GCE 'A' level is an examination framework for eligibility.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ELECTRONICS AND COMMUNICATION ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Electrical and Electronic Engineering Faculty.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="DRAWING (B.ARCH) - 100 MARKS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Drawing for the B.Arch course contributes 100 marks to the exam.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="GPA 4.00 IN BIOLOGY">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A minimum GPA of 4.00 in biology is required for biomedical engineering admissions.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="PROSPECTIVE STUDENTS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The announcement is intended for prospective students.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="FUNCTIONAL ENGLISH">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Functional English is included in the admission exam.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="GRADES">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Specified grades are required for admission eligibility based on examinations.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="MECHANICAL ENGINEERING FACULTY">
+      <data key="d0">entity</data>
+      <data key="d4">organization</data>
+      <data key="d5">The Mechanical Engineering Faculty includes multiple disciplines.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="MULTIPLE-CHOICE QUESTIONS (MCQS)">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The format of questions included in the admission exam.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="80% MARKS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A minimum of 80% marks in designated subjects is required for foreign applicants.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="GUIDELINES">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The guidelines must be followed for filling out the application form.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="B.ARCH COURSE">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The B.Arch course requires candidates to participate in a drawing test.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="FOREIGN APPLICANTS">
+      <data key="d0">entity</data>
+      <data key="d4">person</data>
+      <data key="d5">Foreign applicants are individuals from outside Bangladesh applying for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="INDUSTRIAL AND PRODUCTION ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Mechanical Engineering Faculty.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="WEBSITE">
+      <data key="d0">entity</data>
+      <data key="d4">geo</data>
+      <data key="d5">Instructions for online submission are provided on the website.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ARTISTIC SKILLS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The drawing test aims to evaluate the candidates' artistic skills.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="INCREASED APPLICANT NUMBERS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Increased applicant numbers necessitate a merit list for selection.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="APPLICATION FORM">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The application form needs to be filled out correctly according to the guidelines.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="DRAWING TEST">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">A drawing test is part of the admission process for the B.Arch course.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="MERIT LIST">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A merit list is created for selecting candidates for the entrance exam.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="TEXTILE ENGINEERING">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">A discipline under the Mechanical Engineering Faculty.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ONLINE FORM">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The form that candidates must complete to apply for admission.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="SPECIFIED SUBJECTS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The specified subjects are used for creating the merit list.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="DISQUALIFICATION">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Candidates may face disqualification based on improper submission.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="MATHEMATICS QUESTIONS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The exam includes 15 questions from Mathematics worth 150 marks.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ENGLISH">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">English is one of the subjects considered in the merit list.&lt;SEP&gt;Grades in English will determine the 20,000th candidate.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">170.0</data>
+    </node>
+    <node id="ARCHITECTURE">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Architecture has a 5-year degree program.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="COMMON QUESTION PAPER">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The examination will use a shared question paper for B.Arch and other courses.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="20,000">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">20,000 candidates will be allowed to participate in the admission test.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="SUBMISSION TIME">
+      <data key="d0">entity</data>
+      <data key="d4">event</data>
+      <data key="d5">Application forms must be submitted within the specified time frame to avoid disqualification.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="PHYSICS QUESTIONS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The exam includes 15 questions from Physics worth 150 marks.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="GRADE POINTS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Grade points obtained in subjects are crucial for the merit list.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="4-YEAR DEGREE">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">All other subjects award a 4-year degree program.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="SYLLABUS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The syllabus of the mentioned subjects that students need to understand.&lt;SEP&gt;The syllabus outlines the subjects to be covered in the admission test.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">175.0</data>
+    </node>
+    <node id="CANDIDATES">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Candidates need to prepare adequately for the test based on the syllabus.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="FEE WAIVER">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Candidates may receive a fee waiver under particular conditions.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="CHEMISTRY QUESTIONS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The exam includes 15 questions from Chemistry worth 150 marks.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="20,000 CANDIDATES">
+      <data key="d0">entity</data>
+      <data key="d4">person</data>
+      <data key="d5">The first 20,000 candidates selected will be allowed to participate in the entrance exam.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="RESERVED SEATS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Reserved seats are available for specific communities among the total seats.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="RESOURCES">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Materials and tools available to assist prospective students during their application process.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="20,000TH CANDIDATE">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The 20,000th candidate will be selected based on grades.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="SPECIFIC CRITERIA">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Fee waivers depend on specific criteria set by the admission authority.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ENGLISH QUESTIONS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The exam includes 10 questions from English worth 50 marks.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="LOGO">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The logo represents Khulna University of Engineering and Technology.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="SMALL ETHNIC GROUPS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The reserved seats are available for small ethnic groups.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ADMISSION COMMITTEE REVIEW">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The process by which the committee evaluates applications for fairness.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="ADMISSION SCHEDULE">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The admission schedule outlines important dates for the admission process.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="DRAWING QUESTIONS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The B.Arch exam includes 4 drawing questions worth 100 marks.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="CIRCULAR GREEN SEAL">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The logo features a circular green seal.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="HILL DISTRICTS OF CHITTAGONG">
+      <data key="d0">entity</data>
+      <data key="d4">geo</data>
+      <data key="d5">Reserved seats are available for residents of the hill districts of Chittagong.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="ELIGIBILITY CRITERIA">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Candidates must meet the eligibility criteria for admission.&lt;SEP&gt;Eligibility criteria are outlined for prospective students.&lt;SEP&gt;Requirements that applicants must fulfill to be considered for admission.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4&lt;SEP&gt;chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">265.0</data>
+    </node>
+    <node id="DECEMBER 4, 2024">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The start date for online application filling and submission.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="ADMISSION.KUET.AC.BD">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">The website where all admission information is available.</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="BENGALI">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Bengali is the language in which the university's name is written on the logo.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="ONLINE APPLICATION FORMS">
+      <data key="d0">entity</data>
+      <data key="d4">category</data>
+      <data key="d5">Online application forms must be completed and submitted.</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়">
+      <data key="d0">entity</data>
+      <data key="d4">organization</data>
+      <data key="d5">This is the name of Khulna University of Engineering and Technology in Bengali.</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <edge source="rel-ef6ae313b49e82704c4dc95f15532d8a" target="FOREIGN APPLICANTS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a0684e52cd29e816eb75657192d10115" target="BANGLADESH">
+      <data key="d6">95.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-98bdd910decb069274f86cb85402a03a" target="SYLLABUS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-98bdd910decb069274f86cb85402a03a" target="CANDIDATES">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-e9f145bddbf7c7f2ddef2eb4a96c5519" target="ADMISSION TEST TOPICS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-e9f145bddbf7c7f2ddef2eb4a96c5519" target="HIGHER SECONDARY EXAMINATION">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-e9f145bddbf7c7f2ddef2eb4a96c5519" target="CURRICULUM">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-5a1a826c3e6455c009a215a460c8b346" target="MECHANICAL ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-5a1a826c3e6455c009a215a460c8b346" target="MECHANICAL ENGINEERING FACULTY">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-5a1a826c3e6455c009a215a460c8b346" target="INDUSTRIAL AND PRODUCTION ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-5a1a826c3e6455c009a215a460c8b346" target="TEXTILE ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-4bf955580b9c82318d8ca33b37a5aebd" target="PHYSICS - 150 MARKS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-4bf955580b9c82318d8ca33b37a5aebd" target="CHEMISTRY - 150 MARKS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-4bf955580b9c82318d8ca33b37a5aebd" target="ENGLISH - 50 MARKS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-4bf955580b9c82318d8ca33b37a5aebd" target="MATHEMATICS - 150 MARKS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-4bf955580b9c82318d8ca33b37a5aebd" target="DRAWING (B.ARCH) - 100 MARKS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-c3aa062ac193f7820e7ea467a81f29d1" target="DECEMBER 30, 2024">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-534d485da9b2826ee7c570f8d80db7e9" target="COMMON QUESTION PAPER">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-a7d41d9ac81697dccc38eb572169f0e9" target="INCREASED APPLICANT NUMBERS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a7d41d9ac81697dccc38eb572169f0e9" target="SPECIFIED SUBJECTS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-ad3ad7b90a0ef521deeca0dfeb42d774" target="SYLLABUS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-67b1843eea74940d407932225fe4f5f3" target="ELIGIBILITY CRITERIA">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8a129540724ec1dfd53d3352f614c974" target="MERIT LIST">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8a129540724ec1dfd53d3352f614c974" target="PHYSICS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8a129540724ec1dfd53d3352f614c974" target="ENGLISH">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8a129540724ec1dfd53d3352f614c974" target="GRADE POINTS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8a129540724ec1dfd53d3352f614c974" target="MATHEMATICS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8a129540724ec1dfd53d3352f614c974" target="CHEMISTRY">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-fdb7482d9dae9fd2fda020b51601d192" target="KUET">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-fdb7482d9dae9fd2fda020b51601d192" target="B.SC. ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-fdb7482d9dae9fd2fda020b51601d192" target="B.ARCH">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-fdb7482d9dae9fd2fda020b51601d192" target="BEURP">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-fdb7482d9dae9fd2fda020b51601d192" target="KHULNA UNIVERSITY OF ENGINEERING AND TECHNOLOGY">
+      <data key="d6">95.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-42142a7bf41e42474190cb9eb66bcaa1" target="ANNOUNCEMENT">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-42142a7bf41e42474190cb9eb66bcaa1" target="PROSPECTIVE STUDENTS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-d5bf92d2369976fd06049982669dc670" target="500 MARKS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-d5bf92d2369976fd06049982669dc670" target="3-HOUR MCQ EXAMINATION">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-47f9d7c95ba193183f2b58e905f27c58" target="FUNCTIONAL ENGLISH">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-47f9d7c95ba193183f2b58e905f27c58" target="PHYSICS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-47f9d7c95ba193183f2b58e905f27c58" target="B.ARCH">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-47f9d7c95ba193183f2b58e905f27c58" target="MATHEMATICS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-47f9d7c95ba193183f2b58e905f27c58" target="MCQ EXAM">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-47f9d7c95ba193183f2b58e905f27c58" target="BEURP">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-47f9d7c95ba193183f2b58e905f27c58" target="1ST YEAR B.SC. ENGINEERING">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-47f9d7c95ba193183f2b58e905f27c58" target="CHEMISTRY">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-98e442c433888ebb7948b9510d6d8844" target="ARCHITECTURE">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-98e442c433888ebb7948b9510d6d8844" target="4-YEAR DEGREE">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-506f29fbbf98e547a7074d8e15dfa5a6" target="JANUARY 11, 2025">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-08fa7d2345b0d84a2fab42356c795cb7" target="ARTISTIC SKILLS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-a20be89f98b6d2aae2399da7e71139ca" target="20,000">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-80c338dcde1f3a997061e4e6a28a6644" target="ACADEMIC REQUIREMENTS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-7bf0e0cd293c3a7107ef61c09e7c6789" target="20,000 CANDIDATES">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-69695b12e7ef51328e0ffdd41348e75c" target="GPA 4.00">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-69695b12e7ef51328e0ffdd41348e75c" target="SECONDARY EXAMINATIONS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-1215ac1953d92d94de04e6130c2f3e34" target="GUIDELINES">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-1215ac1953d92d94de04e6130c2f3e34" target="APPLICATION FORM">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-9dc90c342bff7b49b3b71ea6aef210d8" target="500 MARKS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-70ed0e1553f6d185225f5f611f035c9a" target="ADMISSION TEST SPECIFICS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-70ed0e1553f6d185225f5f611f035c9a" target="MULTIPLE-CHOICE QUESTIONS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-35f87504d4d86d70580342ba569ddd43" target="RESERVED SEATS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-35f87504d4d86d70580342ba569ddd43" target="HILL DISTRICTS OF CHITTAGONG">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-35f3ebbb75b3f7b36f2e088ed4a0022c" target="JANUARY 26, 2025">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-6ca36dbd21553b2e2f42dcee2d48d91c" target="RESOURCES">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-dae510da627343a0366bb22fdccb3e8f" target="PHYSICS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-dae510da627343a0366bb22fdccb3e8f" target="ENGLISH">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-dae510da627343a0366bb22fdccb3e8f" target="20,000TH CANDIDATE">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-dae510da627343a0366bb22fdccb3e8f" target="MATHEMATICS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-dae510da627343a0366bb22fdccb3e8f" target="CHEMISTRY">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-f1abd3bea44fae7d50e320ecbcbd9711" target="TOTAL GPA 18.00">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-f1abd3bea44fae7d50e320ecbcbd9711" target="SUBJECTS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-4ea38f3f2d96061065b36f4901cb0e65" target="খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-4ea38f3f2d96061065b36f4901cb0e65" target="LOGO">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-4ea38f3f2d96061065b36f4901cb0e65" target="CIRCULAR GREEN SEAL">
+      <data key="d6">80.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-4ea38f3f2d96061065b36f4901cb0e65" target="BENGALI">
+      <data key="d6">80.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-1d24ba6322d9eeb20bf7e451c85e2fcf" target="BANGLADESHI STUDENTS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-df0cda7a57229608a9d56006b73f4680" target="DISQUALIFICATION">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-df0cda7a57229608a9d56006b73f4680" target="SUBMISSION TIME">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-10d79d26419ae0d1a6afc594e82369ed" target="ENGLISH QUESTIONS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-10d79d26419ae0d1a6afc594e82369ed" target="PHYSICS QUESTIONS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-10d79d26419ae0d1a6afc594e82369ed" target="CHEMISTRY QUESTIONS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-10d79d26419ae0d1a6afc594e82369ed" target="DRAWING QUESTIONS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-10d79d26419ae0d1a6afc594e82369ed" target="MATHEMATICS QUESTIONS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-e622895003f05022ebe687c7ea850341" target="ELIGIBILITY CRITERIA">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-e622895003f05022ebe687c7ea850341" target="ADMISSION PROCESS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-3706d61d44b381bb379c475556871bca" target="DEAN">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-3706d61d44b381bb379c475556871bca" target="FACULTY OF ELECTRICAL AND ELECTRONIC ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-3706d61d44b381bb379c475556871bca" target="KHULNA UNIVERSITY OF ENGINEERING &amp; TECHNOLOGY">
+      <data key="d6">95.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-1f0de4addfe90ae1ce7189704bebf773" target="ONLINE APPLICATION FORMS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-1f0de4addfe90ae1ce7189704bebf773" target="WEBSITE">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-351e9cf0bb8abe34cc541fbab530be34" target="DEPARTMENT NAMES">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-351e9cf0bb8abe34cc541fbab530be34" target="CODES">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-1e9c651bf19a366044f5f2852da49f0f" target="ONLINE FORM">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-09e66f093977b1476d73d560b3520fb9" target="ADMISSION SCHEDULE">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-09e66f093977b1476d73d560b3520fb9" target="DECEMBER 4, 2024">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-26cc65c350963f11ab3e72cf42969bcd" target="01799273655">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-a673ee9c93298d9b342613ba818fa643" target="BIOMEDICAL ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a673ee9c93298d9b342613ba818fa643" target="GPA 4.00 IN BIOLOGY">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-d2584d58b8217347478c5463ee0f174d" target="MOTTO">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-d2584d58b8217347478c5463ee0f174d" target="প্রভু! আমায় জ্ঞান দাও">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-c115152b981c6a7838642b8b2675a52b" target="HIGHER SECONDARY EXAM">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-c115152b981c6a7838642b8b2675a52b" target="A LEVEL CERTIFICATE">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-9b080c3d7d00bd7f48795795e5d68bb4" target="DECEMBER 15, 2024">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-2366b2d38e6993d7866562b5dcf4a8b3" target="ELIGIBILITY CRITERIA">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-26a02829bb035e671c60a3ee2917bd35" target="FEE WAIVER">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-26a02829bb035e671c60a3ee2917bd35" target="SPECIFIC CRITERIA">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-da6ad1268e572ee147f174d82df45096" target="B.ARCH COURSE">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-da6ad1268e572ee147f174d82df45096" target="DRAWING TEST">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-33894fbb1978ec64a8451d7d77b32dd7" target="SPECIFIC COMMUNITIES">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-33894fbb1978ec64a8451d7d77b32dd7" target="HILL DISTRICT RESIDENTS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-33894fbb1978ec64a8451d7d77b32dd7" target="SMALL ETHNIC GROUPS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-4a3221cf7cdfcb3ae6a0fd045ec4eaf8" target="ADMISSION COMMITTEE REVIEW">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-53967d649a0737a237415c726adaaa41" target="1,100 TAKA">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-09419bc0872d7b64bd3c529a61a46d2f" target="MULTIPLE-CHOICE QUESTIONS (MCQS)">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-13eb4d16e40e2dca470f7d7416fc2298" target="URBAN AND REGIONAL PLANNING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-13eb4d16e40e2dca470f7d7416fc2298" target="BUILDING ENGINEERING AND CONSTRUCTION MANAGEMENT">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-13eb4d16e40e2dca470f7d7416fc2298" target="CIVIL ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-13eb4d16e40e2dca470f7d7416fc2298" target="CIVIL ENGINEERING FACULTY">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b80efaf3ab72d06f377f72d364e6504e" target="ADMISSION COMMITTEE">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-b80efaf3ab72d06f377f72d364e6504e" target="PROFESSOR DR. MOHAMMAD RAFIQUL ISLAM">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-849df1b8579aed056263555ccb2ea43a" target="DECEMBER 14, 2024">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-86c5b334146c43a736c1456cadcc938d" target="ADMISSION.KUET.AC.BD">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-86c5b334146c43a736c1456cadcc938d" target="UNIVERSITYS NOTICE BOARD">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-3a815db498b2eb8d921abac65beaf20a" target="ACADEMIC SESSION 2024-2025">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-3a815db498b2eb8d921abac65beaf20a" target="ADMISSION NOTICE">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a4e1facaabd0479dcc559099ca48a88b" target="GCE A LEVEL">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a4e1facaabd0479dcc559099ca48a88b" target="GRADES">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a4e1facaabd0479dcc559099ca48a88b" target="GCE O LEVEL">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-425562b210c8eb2e6bdd6925c2f85a9b" target="APPLICANTS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-425562b210c8eb2e6bdd6925c2f85a9b" target="ENTRANCE EXAM">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-d6de03b990e27ef6027b2f4e15d34026" target="1,200 TAKA">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-960d56cffd9da0580d7dd825f8f0cc8e" target="ELECTRICAL AND ELECTRONIC ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-960d56cffd9da0580d7dd825f8f0cc8e" target="ELECTRICAL AND ELECTRONIC ENGINEERING FACULTY">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-960d56cffd9da0580d7dd825f8f0cc8e" target="COMPUTER SCIENCE AND ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-960d56cffd9da0580d7dd825f8f0cc8e" target="ELECTRONICS AND COMMUNICATION ENGINEERING">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-f4252fc0ad5ffd569068dd74c58c8e2f" target="ADMISSION@KUET.AC.BD">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-e9fa337d198a87a58a1e3b8b4508eb48" target="80% MARKS">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a835757981bc6408f8a1e5f2034cb642" target="ELECTRICAL AND ELECTRONIC ENGINEERING">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a835757981bc6408f8a1e5f2034cb642" target="MECHANICAL ENGINEERING">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a835757981bc6408f8a1e5f2034cb642" target="1065 SEATS">
+      <data key="d6">85.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a835757981bc6408f8a1e5f2034cb642" target="CIVIL ENGINEERING">
+      <data key="d6">90.0</data>
+      <data key="d7">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+  </graph>
+</graphml>

@@ -222,6 +222,66 @@ def chunking_by_token_size(
     return results
 
 
+def _normalize_entity_name(entity_name: str) -> str:
+    """
+    Normalize entity name based on script type (language-aware).
+
+    Convention:
+    - Latin scripts (English, Spanish, French, etc.): UPPERCASE for consistency
+    - Non-Latin scripts (Bangla, Arabic, Hindi, Chinese, Japanese, etc.): Natural form
+
+    This prevents breaking non-Latin entity names which don't have uppercase variants.
+
+    Args:
+        entity_name: Raw entity name from LLM extraction
+
+    Returns:
+        Normalized entity name (uppercase for Latin, natural for non-Latin)
+
+    Examples:
+        >>> _normalize_entity_name("albert einstein")
+        "ALBERT EINSTEIN"
+
+        >>> _normalize_entity_name("আইনস্টাইন")  # Bangla
+        "আইনস্টাইন"
+
+        >>> _normalize_entity_name("爱因斯坦")  # Chinese
+        "爱因斯坦"
+    """
+    # Define Unicode ranges for non-Latin scripts
+    NON_LATIN_RANGES = [
+        (0x0980, 0x09FF),  # Bangla/Bengali
+        (0x0600, 0x06FF),  # Arabic
+        (0x0900, 0x097F),  # Devanagari (Hindi, Sanskrit, etc.)
+        (0x0C00, 0x0C7F),  # Telugu
+        (0x0B80, 0x0BFF),  # Tamil
+        (0x0A80, 0x0AFF),  # Gujarati
+        (0x0D00, 0x0D7F),  # Malayalam
+        (0x0B00, 0x0B7F),  # Oriya
+        (0x0A00, 0x0A7F),  # Gurmukhi (Punjabi)
+        (0x0C80, 0x0CFF),  # Kannada
+        (0x4E00, 0x9FFF),  # CJK Unified Ideographs (Chinese)
+        (0x3040, 0x309F),  # Hiragana (Japanese)
+        (0x30A0, 0x30FF),  # Katakana (Japanese)
+        (0xAC00, 0xD7AF),  # Hangul (Korean)
+        (0x0E00, 0x0E7F),  # Thai
+        (0x1780, 0x17FF),  # Khmer
+        (0x0F00, 0x0FFF),  # Tibetan
+        (0x1000, 0x109F),  # Myanmar/Burmese
+    ]
+
+    # Check if entity name contains non-Latin characters
+    for char in entity_name:
+        char_code = ord(char)
+        for start, end in NON_LATIN_RANGES:
+            if start <= char_code <= end:
+                # Found non-Latin character, return as-is
+                return entity_name
+
+    # Only Latin characters found, apply UPPERCASE convention
+    return entity_name.upper()
+
+
 async def _handle_entity_relation_summary(
     entity_or_relation_name: str,
     description: str,
@@ -329,8 +389,9 @@ async def _handle_single_entity_extraction(
         )
         return None
 
-    # Apply BiG-RAG convention: UPPERCASE entity names
-    entity_name = entity_name.upper()
+    # Apply BiG-RAG convention: UPPERCASE entity names (language-aware)
+    # Only uppercase Latin scripts; keep non-Latin scripts (Bangla, Arabic, Chinese, etc.) in natural form
+    entity_name = _normalize_entity_name(entity_name)
 
     # Sanitize entity type
     entity_type_raw = record_attributes[2]

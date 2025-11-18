@@ -262,6 +262,52 @@ npm run dev
 # Open http://localhost:5173 in browser
 ```
 
+#### Per-Query Language Override (Optional)
+
+**NEW (January 2025)**: Support for per-query language parameter for multilingual retrieval:
+
+```bash
+# Example 1: Auto (uses DEFAULT_LANGUAGE from .env)
+curl -X POST http://localhost:8001/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "কুয়েটে আসন সংখ্যা?"}],
+    "use_rag": true
+  }'
+
+# Example 2: Explicit English override
+curl -X POST http://localhost:8001/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "How many seats at KUET?"}],
+    "use_rag": true,
+    "language": "English"
+  }'
+
+# Example 3: Banglish to Bangla conversion
+curl -X POST http://localhost:8001/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [{"role": "user", "content": "KUET e CSE te koyti seat ache?"}],
+    "use_rag": true,
+    "language": "Bangla"
+  }'
+```
+
+**Supported Languages**: English, Bangla, Hindi, Arabic, Chinese, Spanish, French, German, Japanese, Korean
+
+**Frontend**: Language selector available in Chat Settings panel (gear icon).
+
+**Use Cases**:
+- Mixed-language document corpora
+- Banglish/romanized query normalization
+- Cross-lingual search (with caveats - best when query matches document language)
+
+---
+
 #### Step 4: Run RL Training
 
 ```bash

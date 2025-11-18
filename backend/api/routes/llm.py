@@ -90,7 +90,8 @@ async def chat_completions(
                     mode=request.mode,
                     only_need_context=False,  # Returns formatted string with sections
                     top_k=request.top_k,
-                    enable_reranking=request.enable_reranking
+                    enable_reranking=request.enable_reranking,
+                    language=request.language  # Pass language from request (optional override)
                 ),
                 entity_match=entity_match,
                 relation_match=relation_match

@@ -101,6 +101,7 @@ rag = BiGRAG(
     chunk_token_size=config.chunk_size,
     chunk_overlap_token_size=config.chunk_overlap_size,
     enable_llm_cache=config.enable_llm_cache,
+    addon_params={"language": config.default_language},  # Language config for entity extraction and query preprocessing
 )
 
 # Set global instances for dependency injection
@@ -110,6 +111,7 @@ dependencies.set_embedding_manager(embedding_manager)
 dependencies.set_server_metadata(server_start_time, args.data_source, working_dir)
 
 api_logger.info(f"BiG-RAG core initialized")
+api_logger.info(f"Language configuration: {config.default_language}")
 api_logger.info(f"Embedding mode: {embedding_manager.mode}")
 api_logger.info(f"Available LLM providers: {', '.join(llm_manager.get_available_providers())}")
 api_logger.info(f"Default LLM provider: {args.llm_provider}")

@@ -1261,8 +1261,18 @@ async def preprocess_query(
         #         }
         #     })
 
-        logger.info(f"[Query Preprocess] Normalized: {normalized_query[:50]}...")
-        logger.info(f"[Query Preprocess] Statement: {statement_query[:50]}...")
+        # Print detailed comparison for debugging
+        logger.info("=" * 80)
+        logger.info("[Query Preprocessing] Comparison:")
+        logger.info("-" * 80)
+        logger.info(f"LANGUAGE: {language}")
+        logger.info("-" * 80)
+        logger.info(f"ORIGINAL QUERY:\n  {query}")
+        logger.info("-" * 80)
+        logger.info(f"NORMALIZED QUERY:\n  {normalized_query}")
+        logger.info("-" * 80)
+        logger.info(f"STATEMENT QUERY:\n  {statement_query}")
+        logger.info("=" * 80)
 
         return normalized_query, statement_query
 
@@ -1369,7 +1379,16 @@ async def kg_query(
 
     if ENABLE_PREPROCESSING:
         # Preprocess query
-        language = global_config.get("default_language", PROMPTS["DEFAULT_LANGUAGE"])
+        # Cascading language priority:
+        # Priority 1: query_param.language (per-query override)
+        # Priority 2: global_config["addon_params"]["language"] (from .env)
+        # Priority 3: PROMPTS["DEFAULT_LANGUAGE"] (hardcoded fallback = "English")
+        if query_param.language is not None:
+            language = query_param.language
+            logger.info(f"[Query Preprocess] Using per-query language override: {language}")
+        else:
+            language = global_config["addon_params"].get("language", PROMPTS["DEFAULT_LANGUAGE"])
+
         llm_func = global_config["llm_model_func"]
         normalized_query, statement_query = await preprocess_query(
             query=query,

@@ -553,6 +553,7 @@ class AskRequest(BaseModel):
     mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
     llm_provider: Optional[str] = None
     enable_reranking: Optional[bool] = False  # Default False for speed
+    language: Optional[str] = None  # Query language override (e.g., "Bangla", "English", "Hindi")
 
     class Config:
         json_schema_extra = {
@@ -561,7 +562,8 @@ class AskRequest(BaseModel):
                 "top_k": 10,
                 "mode": "hybrid",
                 "llm_provider": "openai",
-                "enable_reranking": False
+                "enable_reranking": False,
+                "language": None  # Optional: "Bangla", "English", etc.
             }
         }
 
@@ -599,6 +601,7 @@ class ChatCompletionRequest(BaseModel):
     enable_reranking: Optional[bool] = False
     top_k: Optional[int] = 10  # Match /ask default for consistent retrieval
     mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"  # Match /ask default
+    language: Optional[str] = None  # Query language override (e.g., "Bangla", "English", "Hindi")
 
     class Config:
         json_schema_extra = {
@@ -615,7 +618,8 @@ class ChatCompletionRequest(BaseModel):
                 "use_rag": True,
                 "enable_reranking": False,
                 "top_k": 10,
-                "mode": "hybrid"
+                "mode": "hybrid",
+                "language": None  # Optional: "Bangla", "English", etc.
             }
         }
 

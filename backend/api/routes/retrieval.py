@@ -55,7 +55,8 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
                 mode=request.mode,
                 only_need_context=True,
                 top_k=request.top_k,
-                enable_reranking=request.enable_reranking  # Phase 3.4: semantic reranking
+                enable_reranking=request.enable_reranking,  # Phase 3.4: semantic reranking
+                language=request.language  # Pass language from request (optional override)
             ),
             entity_match=entity_match,
             relation_match=relation_match

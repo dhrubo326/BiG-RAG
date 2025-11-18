@@ -47,6 +47,11 @@ class QueryParam:
     # Uses cross-encoder to rerank top-10 chunks → top-5 by relevance
     # Improves precision at cost of ~50-100ms latency
     enable_reranking: bool = True
+    # Query language override (optional)
+    # If None, uses default from global_config["addon_params"]["language"]
+    # Useful for mixed-language corpora or per-query language switching
+    # Examples: "Bangla", "English", "Hindi", "Arabic", "Chinese"
+    language: Union[str, None] = None
 
     def __post_init__(self):
         """Validate QueryParam parameters at runtime"""
@@ -65,6 +70,9 @@ class QueryParam:
             raise ValueError(f"max_token_for_global_context must be >= 1, got {self.max_token_for_global_context}")
         if self.max_token_for_local_context < 1:
             raise ValueError(f"max_token_for_local_context must be >= 1, got {self.max_token_for_local_context}")
+        # Validate language if provided
+        if self.language is not None and not isinstance(self.language, str):
+            raise ValueError(f"language must be a string or None, got {type(self.language)}")
 
 
 @dataclass

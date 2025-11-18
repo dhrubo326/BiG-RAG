@@ -78,18 +78,30 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
         for i, item in enumerate(result, 1):
             if isinstance(item, dict):
                 context_text = item.get("<knowledge>", str(item))
-                contexts.append({
+                context_item = {
                     "rank": i,
                     "context": context_text,
-                    "coherence_score": item.get("<coherence>", 0.0)
-                })
+                    "coherence_score": item.get("<coherence>", 0.0),
+                    "type": item.get("<type>", "unknown")  # Add type (entity/relation/chunk)
+                }
+
+                # Add metadata if present (from chunk retrieval)
+                if item.get("<metadata>"):
+                    context_item["metadata"] = item["<metadata>"]
+
+                # Add source IDs if present
+                if item.get("<source_ids>"):
+                    context_item["source_ids"] = item["<source_ids>"]
+
+                contexts.append(context_item)
                 all_context_text.append(context_text)
             else:
                 context_text = str(item)
                 contexts.append({
                     "rank": i,
                     "context": context_text,
-                    "coherence_score": 0.0
+                    "coherence_score": 0.0,
+                    "type": "unknown"
                 })
                 all_context_text.append(context_text)
 

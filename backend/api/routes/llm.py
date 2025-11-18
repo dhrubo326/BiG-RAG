@@ -73,7 +73,7 @@ async def chat_completions(
             raise HTTPException(status_code=400, detail="No user message found")
 
         # RAG: Retrieve context from knowledge graph
-        # IMPORTANT: Uses same parameters as /ask endpoint for consistent retrieval
+        # IMPORTANT: Uses structured formatting with metadata display
         if request.use_rag:
             entity_match = None
             relation_match = None
@@ -82,13 +82,13 @@ async def chat_completions(
                 entity_match = await embedding_manager.search_entities(user_prompt, request.top_k)
                 relation_match = await embedding_manager.search_relations(user_prompt, request.top_k)
 
-            # Phase 3: Three-Path Retrieval + Semantic Reranking
-            # Uses same QueryParam as /ask for IDENTICAL retrieval results
-            context_results = await rag.aquery(
+            # Phase 3: Three-Path Retrieval + Semantic Reranking + Structured Formatting
+            # Uses only_need_context=False to get formatted string with sections and metadata
+            context_str = await rag.aquery(
                 user_prompt,
                 param=QueryParam(
                     mode=request.mode,
-                    only_need_context=True,
+                    only_need_context=False,  # Returns formatted string with sections
                     top_k=request.top_k,
                     enable_reranking=request.enable_reranking
                 ),
@@ -96,36 +96,36 @@ async def chat_completions(
                 relation_match=relation_match
             )
 
-            if context_results:
-                # Format retrieved contexts (use all results, no slicing)
-                context_parts = []
-                for i, item in enumerate(context_results, 1):
-                    if isinstance(item, dict):
-                        context = item.get("<knowledge>", str(item))
-                    else:
-                        context = str(item)
-                    context_parts.append(f"[Source {i}]\n{context}")
-
-                context_str = "\n\n".join(context_parts)
-
+            # context_str is now a structured string with:
+            # - ### Knowledge Graph - Entities (with relevance scores)
+            # - ### Knowledge Graph - Relations (with relevance scores)
+            # - ### Document Chunks (with metadata: category, title, tags)
+            if context_str and context_str != "No relevant knowledge found.":
                 # Create RAG system prompt
                 if not system_prompt:
-                    system_prompt = """You are a helpful AI assistant. Answer the user's question based on the provided context from the knowledge graph.
+                    system_prompt = """You are an expert AI assistant specializing in synthesizing information from a knowledge graph.
 
 Instructions:
-- Use the information from the context sources to provide a comprehensive answer
-- Be clear, accurate, and concise
-- If the context doesn't fully answer the question, acknowledge what you know and what's uncertain
-- Cite relevant information from the sources when appropriate"""
+- Analyze the provided context which contains three types of information:
+  1. Knowledge Graph Entities (key concepts and their descriptions)
+  2. Knowledge Graph Relations (facts and relationships between concepts)
+  3. Document Chunks (detailed textual evidence with metadata)
+- Pay attention to metadata fields (Category, Title, Tags) which provide context about the source
+- Synthesize a comprehensive, well-structured answer using information from all three sources
+- Be accurate and cite relevant information when appropriate
+- If the context doesn't fully answer the question, acknowledge what you know and what's uncertain"""
 
                 # Prepend context to user prompt
+                original_question = user_prompt
                 user_prompt = f"""Based on the following context from the knowledge graph:
 
 {context_str}
 
-Question: {user_prompt}
+---
 
-Please provide a comprehensive answer based on the above context."""
+Question: {original_question}
+
+Please provide a comprehensive answer by synthesizing information from the entities, relations, and document chunks above."""
 
         # Call LLM to synthesize answer
         response_text = await llm_manager.complete(

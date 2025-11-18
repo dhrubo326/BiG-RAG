@@ -1271,9 +1271,9 @@ async def preprocess_query(
         return query, query  # Graceful degradation
 
 
-def _format_knowledge_as_string(knowledge_list: list[dict]) -> str:
+def _format_knowledge_as_structured(knowledge_list: list[dict]) -> str:
     """
-    Convert structured knowledge list to clean string for LLM context injection.
+    Convert structured knowledge list to formatted string with sections.
 
     Args:
         knowledge_list: List of dicts with structure:
@@ -1281,32 +1281,75 @@ def _format_knowledge_as_string(knowledge_list: list[dict]) -> str:
                 "<knowledge>": "text content",
                 "<coherence>": 0.95,
                 "<source_ids>": ["id1", "id2"],
-                "<type>": "entity" | "relation" | "chunk"
+                "<type>": "entity" | "relation" | "chunk" | "chunk_reranked",
+                "<metadata>": {"category": "...", "title": "...", "tags": [...]}  # optional
             }
 
     Returns:
-        Clean, newline-separated knowledge text without metadata.
-        Already sorted by coherence (highest first) from _build_query_context.
-
-    Example:
-        Input: [
-            {"<knowledge>": "Messi plays for Inter Miami", "<coherence>": 0.95},
-            {"<knowledge>": "Messi won World Cup 2022", "<coherence>": 0.88}
-        ]
-        Output: "Messi plays for Inter Miami\n\nMessi won World Cup 2022"
+        Formatted string with three sections: Entities, Relations, Chunks
     """
     if not knowledge_list:
-        return ""
+        return "No relevant knowledge found."
 
-    # Extract knowledge text only (no metadata clutter for LLM)
-    knowledge_texts = [
-        item.get("<knowledge>", "").strip()
-        for item in knowledge_list
-        if item.get("<knowledge>")
-    ]
+    # Step 1: Separate by type
+    entities = [k for k in knowledge_list if k.get("<type>") == "entity"]
+    relations = [k for k in knowledge_list if k.get("<type>") == "relation"]
+    chunks = [k for k in knowledge_list if k.get("<type>") in ["chunk_reranked", "chunk", "direct_vector", "indirect_graph"]]
 
-    # Join with double newlines for readability
-    return "\n\n".join(knowledge_texts)
+    sections = []
+
+    # Section 1: Entities
+    if entities:
+        entity_section = "### Knowledge Graph - Entities\n\n"
+        for i, ent in enumerate(entities, 1):
+            entity_section += f"{i}. {ent['<knowledge>']}\n"
+            if ent.get("<coherence>") is not None:
+                entity_section += f"   Relevance Score: {ent['<coherence>']:.2f}\n"
+            if ent.get("<source_ids>"):
+                sources = ent["<source_ids>"][:3]  # Limit to 3
+                entity_section += f"   Sources: {', '.join(sources)}\n"
+            entity_section += "\n"
+        sections.append(entity_section)
+
+    # Section 2: Relations
+    if relations:
+        relation_section = "### Knowledge Graph - Relations\n\n"
+        for i, rel in enumerate(relations, 1):
+            relation_section += f"{i}. {rel['<knowledge>']}\n"
+            if rel.get("<coherence>") is not None:
+                relation_section += f"   Relevance Score: {rel['<coherence>']:.2f}\n"
+            if rel.get("<source_ids>"):
+                sources = rel["<source_ids>"][:3]
+                relation_section += f"   Sources: {', '.join(sources)}\n"
+            relation_section += "\n"
+        sections.append(relation_section)
+
+    # Section 3: Document Chunks
+    if chunks:
+        chunk_section = "### Document Chunks\n\n"
+        for i, chunk in enumerate(chunks, 1):
+            chunk_section += f"{i}. {chunk['<knowledge>']}\n"
+
+            # Add metadata if present
+            if chunk.get("<metadata>"):
+                meta = chunk["<metadata>"]
+                meta_parts = []
+                if meta.get("category"):
+                    meta_parts.append(f"Category={meta['category']}")
+                if meta.get("title"):
+                    meta_parts.append(f"Title={meta['title']}")
+                if meta.get("tags") and isinstance(meta["tags"], list):
+                    meta_parts.append(f"Tags={','.join(meta['tags'][:3])}")
+                if meta_parts:
+                    chunk_section += f"   [Metadata: {', '.join(meta_parts)}]\n"
+
+            # Add source reference
+            if chunk.get("<source_ids>"):
+                chunk_section += f"   Source: {chunk['<source_ids>'][0]}\n"
+            chunk_section += "\n"
+        sections.append(chunk_section)
+
+    return "\n".join(sections).strip()
 
 
 async def kg_query(
@@ -1361,7 +1404,7 @@ async def kg_query(
     if query_param.only_need_context:
         return knowledge_list  # Return list of dicts for API endpoints
     else:
-        return _format_knowledge_as_string(knowledge_list)  # Return formatted string for LLM
+        return _format_knowledge_as_structured(knowledge_list)  # Return formatted string for LLM
 
 
 
@@ -1530,12 +1573,18 @@ async def _build_query_context(
 
     # Add chunk knowledge (already top-5 after reranking)
     for chunk in chunk_knowledge[:5]:  # Top-5 chunks
-        knowledge.append({
+        chunk_item = {
             "<knowledge>": chunk["content"],
             "<coherence>": round(chunk["score"], 3),
             "<source_ids>": chunk["sources"],
             "<type>": chunk["type"]
-        })
+        }
+
+        # NEW: Add metadata if present
+        if chunk.get("metadata"):
+            chunk_item["<metadata>"] = chunk["metadata"]
+
+        knowledge.append(chunk_item)
 
     logger.info(f"[Three-Path Retrieval] Returning {len(knowledge)} items: "
                 f"{len(structured_knowledge)} structured + {len(chunk_knowledge[:5])} chunks")
@@ -1913,12 +1962,34 @@ async def _get_chunk_data(
                 if chunk_id:
                     chunk_data = await text_chunks_db.get_by_id(chunk_id)
                     if chunk_data and "content" in chunk_data:
-                        chunk_candidates.append({
+                        chunk_dict = {
                             "content": chunk_data["content"],
                             "source_id": chunk_id,
                             "source": "direct_vector",
                             "score": result.get("score", 0.0),
-                        })
+                        }
+
+                        # NEW: Extract metadata from chunk_data
+                        metadata = {}
+                        if chunk_data.get("doc_title"):
+                            metadata["title"] = chunk_data["doc_title"]
+
+                        if chunk_data.get("doc_metadata"):
+                            doc_meta = chunk_data["doc_metadata"]
+                            if isinstance(doc_meta, dict):
+                                if doc_meta.get("category"):
+                                    metadata["category"] = doc_meta["category"]
+                                if doc_meta.get("tags"):
+                                    metadata["tags"] = doc_meta["tags"]
+                                # Add other fields as needed
+                                for key in ["department", "author", "date"]:
+                                    if doc_meta.get(key):
+                                        metadata[key] = doc_meta[key]
+
+                        if metadata:
+                            chunk_dict["metadata"] = metadata
+
+                        chunk_candidates.append(chunk_dict)
             logger.info(f"[Path C] Found {len(chunk_candidates)} chunks via direct vector search")
     except Exception as e:
         logger.warning(f"[Path C] Direct vector search failed: {e}")
@@ -1934,12 +2005,34 @@ async def _get_chunk_data(
 
             chunk_data = await text_chunks_db.get_by_id(chunk_id)
             if chunk_data and "content" in chunk_data:
-                chunk_candidates.append({
+                chunk_dict = {
                     "content": chunk_data["content"],
                     "source_id": chunk_id,
                     "source": "indirect_graph",
                     "score": 0.5,  # Default score for indirect
-                })
+                }
+
+                # NEW: Extract metadata from chunk_data (SAME pattern as direct chunks)
+                metadata = {}
+                if chunk_data.get("doc_title"):
+                    metadata["title"] = chunk_data["doc_title"]
+
+                if chunk_data.get("doc_metadata"):
+                    doc_meta = chunk_data["doc_metadata"]
+                    if isinstance(doc_meta, dict):
+                        if doc_meta.get("category"):
+                            metadata["category"] = doc_meta["category"]
+                        if doc_meta.get("tags"):
+                            metadata["tags"] = doc_meta["tags"]
+                        # Add other fields as needed
+                        for key in ["department", "author", "date"]:
+                            if doc_meta.get(key):
+                                metadata[key] = doc_meta[key]
+
+                if metadata:
+                    chunk_dict["metadata"] = metadata
+
+                chunk_candidates.append(chunk_dict)
 
         logger.info(f"[Path C] Added {len([c for c in chunk_candidates if c['source'] == 'indirect_graph'])} indirect chunks from graph traversal")
 

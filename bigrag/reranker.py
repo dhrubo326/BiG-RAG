@@ -156,7 +156,7 @@ class SemanticReranker:
     def rerank_sync(
         self,
         query: str,
-        candidates: List[Tuple[str, List[str]]],
+        candidates: List[Tuple[str, List[str], Optional[dict]]],
         top_k: int = 5,
     ) -> List[dict]:
         """

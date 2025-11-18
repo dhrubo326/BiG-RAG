@@ -18,11 +18,15 @@ PROMPTS["process_tickers"] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "
 PROMPTS["DEFAULT_ENTITY_TYPES"] = DEFAULT_ENTITY_TYPES
 
 PROMPTS["entity_extraction"] = """---Role---
-You are a Knowledge Graph Specialist responsible for extracting entities and knowledge segments from text documents.
+You are a Knowledge Graph Specialist responsible for extracting entities and knowledge segments from text documents in ANY language.
 
 ---Goal---
 Given a text document, identify all entities and knowledge segments, ensuring proper formatting and type validation.
-Use {language} as output language.
+
+**CRITICAL LANGUAGE RULE:**
+- The entire output (entity names, entity descriptions, and knowledge segment text) MUST be written in {language}.
+- Proper nouns (person names, place names, organization names) should be retained in their ORIGINAL language OR use the widely-accepted translation in {language}.
+- For scripts without case distinction (Bangla, Arabic, Hindi, Chinese, Japanese), use the natural script form.
 
 ---CRITICAL EXTRACTION RULE---
 
@@ -45,7 +49,8 @@ Failure to follow this rule creates ORPHAN RELATIONS that become unreachable dur
 
 1. **Knowledge Segment Extraction (Relations):**
    * Divide the text into complete, self-contained knowledge segments
-   * Each segment should capture a coherent piece of information
+   * Each segment should capture a coherent piece of information in {language}
+   * Write all knowledge segment text in {language}
    * Assign a completeness score (0-10) based on how complete the information is
    * Format: ("relation"{tuple_delimiter}<knowledge_segment>{tuple_delimiter}<completeness_score>)
 
@@ -53,9 +58,13 @@ Failure to follow this rule creates ORPHAN RELATIONS that become unreachable dur
    * **IMMEDIATELY after each ("relation"...), extract ALL entities mentioned in that relation**
    * **DO NOT output another ("relation"...) until all entities from previous relation are extracted**
    * For each entity, extract:
-     - entity_name: Use UPPERCASE if English (e.g., "LIONEL MESSI", not "Lionel Messi"). For other languages, use appropriate capitalization.
-     - entity_type: Must be one of: {entity_types}. If none fit, use "category". Use lowercase.
-     - entity_description: Comprehensive description of attributes and activities
+     - entity_name:
+       • For Latin scripts (English, Spanish, French, etc.): Use UPPERCASE (e.g., "ALBERT EINSTEIN")
+       • For non-Latin scripts (Bangla, Arabic, Hindi, Chinese, Japanese, etc.): Use the script's natural form
+       • Examples: "ISAAC NEWTON" (English), "আইজাক নিউটন" (Bangla), "ألبرت أينشتاين" (Arabic), "艾萨克·牛顿" (Chinese)
+       • Proper nouns should be kept in their original language OR widely-accepted {language} translation
+     - entity_type: Must be one of: {entity_types}. If none fit exactly, use "category". Use lowercase.
+     - entity_description: Comprehensive description of attributes and activities, written in {language}
      - key_score (0-100): Importance of the entity in the text
    * Format: ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>{tuple_delimiter}<key_score>)
 
@@ -65,13 +74,22 @@ Failure to follow this rule creates ORPHAN RELATIONS that become unreachable dur
    * If a relation mentions 3+ entities, extract the relation ONCE, then extract EACH entity
    * Never output consecutive relations without extracting their entities
 
-4. **Formatting Rules:**
+4. **Language and Objectivity:**
+   * All output (knowledge segments, entity names, entity descriptions) MUST be in {language}
+   * Write all content from an objective, third-person perspective
+   * Explicitly name the subject or object; AVOID using pronouns such as:
+     - "this article", "this paper", "this book", "our company", "our theory"
+     - "I", "you", "he/she" (without clear antecedent)
+     - For Bangla: Avoid "এই নিবন্ধ", "এই বই", "আমাদের", "তিনি" without clear reference
+   * Instead, explicitly state the entity name each time
+
+5. **Formatting Rules:**
    * Use **{record_delimiter}** as the delimiter between records
    * Ensure each record ends with ){record_delimiter}
    * Do NOT add extra delimiters or newlines between records
    * Output all records in a single continuous list
 
-5. **Completion:**
+6. **Completion:**
    * When finished, output {completion_delimiter}
 
 ---Examples---
@@ -194,6 +212,31 @@ Output:
 ("relation"{tuple_delimiter}"The encrypted dialogue continued to unfold, its intricate patterns showing an almost uncanny anticipation."{tuple_delimiter}8){record_delimiter}
 ("entity"{tuple_delimiter}"encrypted dialogue"{tuple_delimiter}"object"{tuple_delimiter}"The encrypted dialogue continued to unfold."{tuple_delimiter}85){record_delimiter}
 ("entity"{tuple_delimiter}"patterns"{tuple_delimiter}"concept"{tuple_delimiter}"The encrypted dialogue showed intricate patterns."{tuple_delimiter}85){record_delimiter}
+#############################""",
+    """Example 4 (Bangla - Newton's Law of Gravitation):
+
+Text:
+নিউটনের মহাকর্ষ সূত্র অনুযায়ী, মহাবিশ্বের প্রতিটি বস্তু একে অপরকে আকর্ষণ করে। এই আকর্ষণ বলের মান বস্তুদ্বয়ের ভরের গুণফল ও তাদের মধ্যবর্তী দূরত্বের বর্গের ব্যস্তানুপাতিক। আইজাক নিউটন ১৬৮৭ সালে তার বিখ্যাত গ্রন্থ "ফিলসফিয়া ন্যাচারালিস প্রিন্সিপিয়া ম্যাথামেটিকা"-তে এই সূত্র প্রকাশ করেন। মহাকর্ষ বল মহাবিশ্বের সকল বস্তুর মধ্যে ক্রিয়াশীল একটি মৌলিক বল। নিউটনের এই আবিষ্কার পদার্থবিজ্ঞানে একটি যুগান্তকারী মাইলফলক হিসেবে বিবেচিত হয়।
+################
+Output:
+("relation"{tuple_delimiter}"নিউটনের মহাকর্ষ সূত্র অনুযায়ী, মহাবিশ্বের প্রতিটি বস্তু একে অপরকে আকর্ষণ করে।"{tuple_delimiter}9){record_delimiter}
+("entity"{tuple_delimiter}"নিউটনের মহাকর্ষ সূত্র"{tuple_delimiter}"concept"{tuple_delimiter}"নিউটনের মহাকর্ষ সূত্র হলো পদার্থবিদ্যার একটি মৌলিক সূত্র যা মহাবিশ্বের বস্তুসমূহের মধ্যে আকর্ষণ বল ব্যাখ্যা করে।"{tuple_delimiter}95){record_delimiter}
+("entity"{tuple_delimiter}"মহাবিশ্ব"{tuple_delimiter}"location"{tuple_delimiter}"মহাবিশ্ব হলো সমস্ত বস্তু, শক্তি, স্থান ও সময়ের সমষ্টি।"{tuple_delimiter}85){record_delimiter}
+("entity"{tuple_delimiter}"বস্তু"{tuple_delimiter}"concept"{tuple_delimiter}"বস্তু হলো ভর ও আয়তন বিশিষ্ট যেকোনো পদার্থ।"{tuple_delimiter}80){record_delimiter}
+("relation"{tuple_delimiter}"এই আকর্ষণ বলের মান বস্তুদ্বয়ের ভরের গুণফল ও তাদের মধ্যবর্তী দূরত্বের বর্গের ব্যস্তানুপাতিক।"{tuple_delimiter}10){record_delimiter}
+("entity"{tuple_delimiter}"আকর্ষণ বল"{tuple_delimiter}"concept"{tuple_delimiter}"আকর্ষণ বল হলো দুই বস্তুর মধ্যে ক্রিয়াশীল মহাকর্ষীয় বল যা তাদের একে অপরের দিকে টানে।"{tuple_delimiter}90){record_delimiter}
+("entity"{tuple_delimiter}"ভর"{tuple_delimiter}"concept"{tuple_delimiter}"ভর হলো বস্তুর মধ্যে থাকা পদার্থের পরিমাণের পরিমাপ।"{tuple_delimiter}85){record_delimiter}
+("entity"{tuple_delimiter}"দূরত্ব"{tuple_delimiter}"concept"{tuple_delimiter}"দূরত্ব হলো দুই বস্তুর কেন্দ্রের মধ্যবর্তী ব্যবধান।"{tuple_delimiter}85){record_delimiter}
+("relation"{tuple_delimiter}"আইজাক নিউটন ১৬৮৭ সালে তার বিখ্যাত গ্রন্থ 'ফিলসফিয়া ন্যাচারালিস প্রিন্সিপিয়া ম্যাথামেটিকা'-তে এই সূত্র প্রকাশ করেন।"{tuple_delimiter}9){record_delimiter}
+("entity"{tuple_delimiter}"আইজাক নিউটন"{tuple_delimiter}"person"{tuple_delimiter}"আইজাক নিউটন ছিলেন একজন ইংরেজ পদার্থবিজ্ঞানী ও গণিতবিদ যিনি মহাকর্ষ সূত্র আবিষ্কার করেন।"{tuple_delimiter}95){record_delimiter}
+("entity"{tuple_delimiter}"১৬৮৭"{tuple_delimiter}"time"{tuple_delimiter}"১৬৮৭ সাল হলো সেই সময় যখন নিউটন তার মহাকর্ষ সূত্র প্রকাশ করেন।"{tuple_delimiter}80){record_delimiter}
+("entity"{tuple_delimiter}"ফিলসফিয়া ন্যাচারালিস প্রিন্সিপিয়া ম্যাথামেটিকা"{tuple_delimiter}"object"{tuple_delimiter}"ফিলসফিয়া ন্যাচারালিস প্রিন্সিপিয়া ম্যাথামেটিকা হলো নিউটনের বিখ্যাত গ্রন্থ যেখানে মহাকর্ষ সূত্র প্রথম প্রকাশিত হয়।"{tuple_delimiter}90){record_delimiter}
+("relation"{tuple_delimiter}"মহাকর্ষ বল মহাবিশ্বের সকল বস্তুর মধ্যে ক্রিয়াশীল একটি মৌলিক বল।"{tuple_delimiter}9){record_delimiter}
+("entity"{tuple_delimiter}"মহাকর্ষ বল"{tuple_delimiter}"concept"{tuple_delimiter}"মহাকর্ষ বল হলো প্রকৃতির চারটি মৌলিক বলের একটি যা সকল ভরযুক্ত বস্তুর মধ্যে কাজ করে।"{tuple_delimiter}92){record_delimiter}
+("entity"{tuple_delimiter}"মৌলিক বল"{tuple_delimiter}"concept"{tuple_delimiter}"মৌলিক বল হলো প্রকৃতির মৌলিক শক্তি যা বস্তুসমূহের মধ্যে মিথস্ক্রিয়া ঘটায়।"{tuple_delimiter}88){record_delimiter}
+("relation"{tuple_delimiter}"নিউটনের এই আবিষ্কার পদার্থবিজ্ঞানে একটি যুগান্তকারী মাইলফলক হিসেবে বিবেচিত হয়।"{tuple_delimiter}8){record_delimiter}
+("entity"{tuple_delimiter}"আবিষ্কার"{tuple_delimiter}"event"{tuple_delimiter}"নিউটনের মহাকর্ষ সূত্র আবিষ্কার ছিল পদার্থবিজ্ঞানের ইতিহাসে একটি গুরুত্বপূর্ণ ঘটনা।"{tuple_delimiter}85){record_delimiter}
+("entity"{tuple_delimiter}"পদার্থবিজ্ঞান"{tuple_delimiter}"concept"{tuple_delimiter}"পদার্থবিজ্ঞান হলো প্রকৃতি ও পদার্থের বৈশিষ্ট্য ও আচরণ নিয়ে অধ্যয়নকারী বিজ্ঞান।"{tuple_delimiter}87){record_delimiter}
 #############################""",
 ]
 

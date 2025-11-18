@@ -79,8 +79,20 @@ DEFAULT_CHUNK_SIZE = 1200
 DEFAULT_CHUNK_OVERLAP = 100
 """Default overlap between adjacent chunks in tokens"""
 
-DEFAULT_ENTITY_TYPES = ["organization", "person", "geo", "event", "category"]
-"""Default entity types for extraction"""
+DEFAULT_ENTITY_TYPES = [
+    "person",          # Individual humans, characters
+    "organization",    # Companies, institutions, teams, groups
+    "location",        # Places, geographic locations (replaces "geo")
+    "event",           # Events, incidents, occurrences
+    "concept",         # Abstract ideas, theories, principles
+    "method",          # Processes, techniques, procedures
+    "object",          # Physical objects, equipment, artifacts
+    "data",            # Datasets, information, statistics
+    "natural_object",  # Natural phenomena, biological entities
+    "time",            # Time periods, dates, temporal references
+    "category",        # Classifications, types, categories
+]
+"""Default entity types for extraction (expanded to match LightRAG for multilingual support)"""
 
 DEFAULT_MAX_ENTITY_TOKENS = 6000
 """Maximum tokens for entity context"""

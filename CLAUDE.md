@@ -69,11 +69,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Use commit messages for change rationale
 - Only create new `.md` files for major features or when specifically requested
 
+**Git Commit Policy:**
+- ⚠️ **CRITICAL**: Do NOT commit changes until explicitly instructed by the project maintainer
+- Wait for explicit permission to commit (user will say "commit" or "push")
+- This allows for review and iteration before changes are finalized
+
+**New File Creation Policy:**
+- ⚠️ **CRITICAL**: Do NOT generate new documentation files each time unless it is a significant change
+- Only create new `.md` files when explicitly requested or for major features
+- Update existing documentation files instead of creating new ones
+
 **This policy helps maintain:**
 - Clean repository structure
 - Focus on working code over documentation overhead
 - Easy navigation without excessive files
 - Documentation that stays synchronized with code
+- Controlled version history with explicit commit points
 
 ---
 

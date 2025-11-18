@@ -1519,19 +1519,28 @@ async def _build_query_context(
             # Indirect chunks get 70% weight (structural relevance)
             score = 0.7 * (1/(i+1))
 
-        chunk_knowledge.append({
+        chunk_dict = {
             "content": chunk["content"],
             "score": score,
             "sources": [chunk["source_id"]],
             "type": chunk["source"]  # Preserve source type for debugging
-        })
+        }
+
+        # BUG FIX: Preserve metadata from _get_chunk_data()
+        if chunk.get("metadata"):
+            chunk_dict["metadata"] = chunk["metadata"]
+
+        chunk_knowledge.append(chunk_dict)
 
     # Phase 3.4: Apply semantic reranking to chunks if enabled
     if query_param.enable_reranking and chunk_knowledge:
         try:
             from .reranker import rerank_chunks
-            # Prepare chunks for reranking: (content, source_ids)
-            chunk_candidates = [(c["content"], c["sources"]) for c in chunk_knowledge]
+            # Prepare chunks for reranking: (content, source_ids, metadata)
+            chunk_candidates = [
+                (c["content"], c["sources"], c.get("metadata"))
+                for c in chunk_knowledge
+            ]
             # Rerank and get top-5
             reranked = await rerank_chunks(
                 query=ll_keywords,  # Use normalized query (same as entity search)
@@ -1540,13 +1549,14 @@ async def _build_query_context(
                 use_reranking=True
             )
             # Update chunk_knowledge with reranked results and scores
-            # reranked is a list of dicts: [{"content": str, "sources": list, "score": float}, ...]
+            # reranked is a list of dicts: [{"content": str, "sources": list, "score": float, "metadata": dict (optional)}, ...]
             chunk_knowledge = [
                 {
                     "content": item["content"],
                     "score": item["score"],
                     "sources": item["sources"],
-                    "type": "chunk_reranked"
+                    "type": "chunk_reranked",
+                    **({'metadata': item['metadata']} if item.get('metadata') else {})
                 }
                 for item in reranked
             ]

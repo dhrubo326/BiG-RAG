@@ -66,7 +66,7 @@ class SemanticReranker:
     async def rerank(
         self,
         query: str,
-        candidates: List[Tuple[str, List[str]]],  # List of (content, [source_ids])
+        candidates: List[Tuple[str, List[str], Optional[dict]]],  # List of (content, [source_ids], metadata)
         top_k: int = 5,
     ) -> List[dict]:
         """
@@ -74,20 +74,25 @@ class SemanticReranker:
 
         Args:
             query: User query string
-            candidates: List of (chunk_content, source_ids) tuples
+            candidates: List of (chunk_content, source_ids, metadata) tuples
             top_k: Number of top results to return
 
         Returns:
-            List of dicts with keys: content (str), sources (list), score (float)
+            List of dicts with keys: content (str), sources (list), score (float), metadata (dict, optional)
             Sorted by relevance (highest score first)
             Returns original candidates (unranked) if model unavailable
         """
         if not self.is_available():
             logger.warning("[Reranker] Model not available, returning candidates unranked")
-            # Return original candidates with default scores
+            # Return original candidates with default scores, preserving metadata
             return [
-                {"content": content, "sources": sources, "score": 0.5}
-                for content, sources in candidates[:top_k]
+                {
+                    "content": content,
+                    "sources": sources,
+                    "score": 0.5,
+                    **({'metadata': metadata} if metadata else {})
+                }
+                for content, sources, metadata in candidates[:top_k]
             ]
 
         if not candidates:
@@ -101,12 +106,12 @@ class SemanticReranker:
     def _rerank_sync(
         self,
         query: str,
-        candidates: List[Tuple[str, List[str]]],
+        candidates: List[Tuple[str, List[str], Optional[dict]]],
         top_k: int,
     ) -> List[dict]:
         """Synchronous reranking (called in thread pool)"""
         # Extract just the content for scoring
-        contents = [content for content, _ in candidates]
+        contents = [content for content, _, _ in candidates]
 
         # Create query-document pairs
         query_doc_pairs = [[query, doc] for doc in contents]
@@ -116,16 +121,26 @@ class SemanticReranker:
             scores = self.model.predict(query_doc_pairs, batch_size=self.batch_size)
         except Exception as e:
             logger.error(f"[Reranker] Prediction failed: {e}")
-            # Fallback: return unranked with default scores
+            # Fallback: return unranked with default scores, preserving metadata
             return [
-                {"content": content, "sources": sources, "score": 0.5}
-                for content, sources in candidates[:top_k]
+                {
+                    "content": content,
+                    "sources": sources,
+                    "score": 0.5,
+                    **({'metadata': metadata} if metadata else {})
+                }
+                for content, sources, metadata in candidates[:top_k]
             ]
 
-        # Combine candidates with scores
+        # Combine candidates with scores, preserving metadata
         scored_candidates = [
-            {"content": content, "sources": sources, "score": float(score)}
-            for (content, sources), score in zip(candidates, scores)
+            {
+                "content": content,
+                "sources": sources,
+                "score": float(score),
+                **({'metadata': metadata} if metadata else {})
+            }
+            for (content, sources, metadata), score in zip(candidates, scores)
         ]
 
         # Sort by score (descending) and take top-k
@@ -166,7 +181,7 @@ def get_reranker() -> SemanticReranker:
 
 async def rerank_chunks(
     query: str,
-    chunks: List[Tuple[str, List[str]]],
+    chunks: List[Tuple[str, List[str], Optional[dict]]],
     top_k: int = 5,
     use_reranking: bool = True,
 ) -> List[dict]:
@@ -175,18 +190,23 @@ async def rerank_chunks(
 
     Args:
         query: User query
-        chunks: List of (content, source_ids) tuples
+        chunks: List of (content, source_ids, metadata) tuples
         top_k: Number of results to return
         use_reranking: Whether to use reranking (if False, returns original order)
 
     Returns:
-        List of dicts with keys: content (str), sources (list), score (float)
+        List of dicts with keys: content (str), sources (list), score (float), metadata (dict, optional)
     """
     if not use_reranking:
-        # Return original chunks with default scores
+        # Return original chunks with default scores, preserving metadata
         return [
-            {"content": content, "sources": sources, "score": 0.5}
-            for content, sources in chunks[:top_k]
+            {
+                "content": content,
+                "sources": sources,
+                "score": 0.5,
+                **({'metadata': metadata} if metadata else {})
+            }
+            for content, sources, metadata in chunks[:top_k]
         ]
 
     reranker = get_reranker()

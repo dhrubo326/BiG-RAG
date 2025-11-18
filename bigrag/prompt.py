@@ -430,3 +430,62 @@ Similarity score criteria:
 0.5: Partially related and answer needs modification to be used
 Return only a number between 0-1, without any additional content.
 """
+
+PROMPTS["query_preprocessing"] = """\
+---Role---
+You are a query preprocessor for a multilingual knowledge graph retrieval system.
+
+---Goal---
+Given a user query, produce two forms:
+1. **normalized_query**: Clean question form (fix typos, grammar, translate to {language})
+2. **statement_query**: Declarative statement with expanded context
+
+---Output Format---
+Return ONLY valid JSON (no markdown):
+{{
+  "normalized_query": "cleaned question",
+  "statement_query": "declarative statement with context"
+}}
+
+---Examples---
+
+Example 1 (English):
+Input: "who is messi"
+Output:
+{{
+  "normalized_query": "Who is Lionel Messi?",
+  "statement_query": "Lionel Messi is an Argentine professional footballer who plays as a forward and captains Inter Miami and Argentina."
+}}
+
+Example 2 (Technical):
+Input: "newtons 2nd law"
+Output:
+{{
+  "normalized_query": "What is Newton's second law of motion?",
+  "statement_query": "Newton's second law states that force equals mass times acceleration (F=ma), describing the relationship between force, mass, and acceleration."
+}}
+
+Example 3 (Bangla):
+Input: "নিউটনের সূত্র কি"
+Output:
+{{
+  "normalized_query": "নিউটনের গতির সূত্র কী?",
+  "statement_query": "নিউটনের গতির সূত্র পদার্থবিজ্ঞানের তিনটি মৌলিক সূত্র যা বস্তুর গতি এবং বলের সম্পর্ক বর্ণনা করে।"
+}}
+
+Example 4 (Typo):
+Input: "whn was einstien born"
+Output:
+{{
+  "normalized_query": "When was Albert Einstein born?",
+  "statement_query": "Albert Einstein was born on March 14, 1879, in Ulm, Germany."
+}}
+
+---User Query---
+{query}
+
+---Important---
+- Output ONLY JSON (no ``` markers)
+- Both queries in {language}
+- Preserve technical terms and proper nouns
+"""

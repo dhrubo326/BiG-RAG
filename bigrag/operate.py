@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import re
 from tqdm.asyncio import tqdm as tqdm_async
 from typing import Union
@@ -1204,6 +1205,72 @@ async def extract_entities(
     return knowledge_graph_inst
 
 
+async def preprocess_query(
+    query: str,
+    language: str,
+    llm_func: callable,
+    global_config: dict,
+    hashing_kv: BaseKVStorage = None,
+) -> tuple[str, str]:
+    """
+    Preprocess query to generate normalized and statement forms.
+
+    Returns:
+        (normalized_query, statement_query)
+    """
+    # OPTIONAL: Check cache (can be implemented later)
+    # if hashing_kv is not None:
+    #     args_hash = compute_mdhash_id(query + language, prefix="query_preprocess-")
+    #     cached_result = await hashing_kv.get_by_id(args_hash)
+    #     if cached_result is not None:
+    #         cached_data = json.loads(cached_result.get("return_response", "{}"))
+    #         return (
+    #             cached_data.get("normalized_query", query),
+    #             cached_data.get("statement_query", query)
+    #         )
+
+    # Build prompt
+    prompt = PROMPTS["query_preprocessing"].format(query=query, language=language)
+
+    # Call LLM
+    try:
+        response = await llm_func(
+            prompt,
+            max_tokens=512,
+            temperature=0.0,
+        )
+
+        # Parse JSON (handle potential markdown wrapping)
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+
+        result = json.loads(response_text)
+        normalized_query = result.get("normalized_query", query)
+        statement_query = result.get("statement_query", query)
+
+        # OPTIONAL: Save to cache (can be implemented later)
+        # if hashing_kv is not None:
+        #     await hashing_kv.upsert({
+        #         args_hash: {
+        #             "query": query,
+        #             "language": language,
+        #             "return_response": json.dumps(result),
+        #         }
+        #     })
+
+        logger.info(f"[Query Preprocess] Normalized: {normalized_query[:50]}...")
+        logger.info(f"[Query Preprocess] Statement: {statement_query[:50]}...")
+
+        return normalized_query, statement_query
+
+    except Exception as e:
+        logger.warning(f"[Query Preprocess] Failed: {e}. Using raw query.")
+        return query, query  # Graceful degradation
+
+
 def _format_knowledge_as_string(knowledge_list: list[dict]) -> str:
     """
     Convert structured knowledge list to clean string for LLM context injection.
@@ -1254,8 +1321,31 @@ async def kg_query(
     hashing_kv: BaseKVStorage = None,
 ) -> Union[str, list]:
 
-    hl_keywords = query
-    ll_keywords = query
+    # Feature flag for easy rollback
+    ENABLE_PREPROCESSING = os.getenv("ENABLE_QUERY_PREPROCESSING", "true").lower() == "true"
+
+    if ENABLE_PREPROCESSING:
+        # Preprocess query
+        language = global_config.get("default_language", PROMPTS["DEFAULT_LANGUAGE"])
+        llm_func = global_config["llm_model_func"]
+        normalized_query, statement_query = await preprocess_query(
+            query=query,
+            language=language,
+            llm_func=llm_func,
+            global_config=global_config,
+            hashing_kv=hashing_kv,
+        )
+    else:
+        # Fallback: use raw query for both paths
+        normalized_query = query
+        statement_query = query
+
+    # Path A: Use normalized query (entity names + PRF)
+    ll_keywords = normalized_query
+
+    # Path B & C: Use statement query (knowledge segments + chunks)
+    hl_keywords = statement_query
+
     keywords = [ll_keywords, hl_keywords]
     knowledge_list = await _build_query_context(
         keywords,
@@ -1295,11 +1385,11 @@ async def _build_query_context(
     Returns 5 structured knowledge items + 5 chunk items = 10 total context items
     """
 
-    ll_kewwords, hl_keywrds = query[0], query[1]
+    ll_keywords, hl_keywords = query[0], query[1]
 
     # Path A: Entity retrieval
     knowledge_list_1 = await _get_node_data(
-        ll_kewwords,
+        ll_keywords,
         knowledge_graph_inst,
         vdb_entities,
         text_chunks_db,
@@ -1308,7 +1398,7 @@ async def _build_query_context(
 
     # Path B: Relation retrieval
     knowledge_list_2 = await _get_edge_data(
-        hl_keywrds,
+        hl_keywords,
         knowledge_graph_inst,
         vdb_relations,
         text_chunks_db,
@@ -1328,7 +1418,7 @@ async def _build_query_context(
 
     # Path C: Chunk retrieval (direct + indirect from Path A + B)
     knowledge_list_3 = await _get_chunk_data(
-        ll_kewwords,  # Use same query as entity search
+        hl_keywords,  # Use statement query for chunk search
         vdb_chunks,
         text_chunks_db,
         entity_source_ids,
@@ -1401,7 +1491,7 @@ async def _build_query_context(
             chunk_candidates = [(c["content"], c["sources"]) for c in chunk_knowledge]
             # Rerank and get top-5
             reranked = await rerank_chunks(
-                query=ll_kewwords,  # Use original query
+                query=ll_keywords,  # Use normalized query (same as entity search)
                 chunks=chunk_candidates,
                 top_k=5,
                 use_reranking=True

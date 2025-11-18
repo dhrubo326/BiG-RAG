@@ -169,6 +169,7 @@ class BiGRAGConfig:
     entity_types: List[str] = field(default_factory=lambda: json.loads(
         os.getenv('ENTITY_TYPES', '["organization", "person", "geo", "time"]')
     ))
+    default_language: str = field(default_factory=lambda: os.getenv('DEFAULT_LANGUAGE', 'English'))
     max_async: int = field(default_factory=lambda: int(os.getenv('MAX_ASYNC', '4')))
     enable_llm_cache_for_extract: bool = field(default_factory=lambda: parse_bool(os.getenv(
         'ENABLE_LLM_CACHE_FOR_EXTRACT',

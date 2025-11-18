@@ -253,6 +253,7 @@ def main():
     logger.info(f"  Working directory: {working_dir}")
     logger.info(f"  Chunk size: {config.chunk_size} tokens")
     logger.info(f"  Chunk overlap: {config.chunk_overlap_size} tokens")
+    logger.info(f"  Extraction language: {config.default_language}")
     logger.info(f"  LLM cache: {config.enable_llm_cache}")
     print("")
 
@@ -269,6 +270,8 @@ def main():
         entity_summary_to_max_tokens=500,
         # Caching from config
         enable_llm_cache=config.enable_llm_cache,
+        # Language configuration for entity extraction
+        addon_params={"language": config.default_language},
     )
 
     logger.info("BiG-RAG initialized successfully")

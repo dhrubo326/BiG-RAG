@@ -48,6 +48,7 @@ from api.core import dependencies
 
 # Import route modules
 from api.routes import health, documents, graph, evaluation, retrieval, jobs, llm
+from api import agent
 
 
 # ============================================================================
@@ -198,6 +199,9 @@ app.include_router(jobs.router)
 # LLM chat completion routes
 app.include_router(llm.router)
 
+# Agent routes (multi-hop reasoning)
+app.include_router(agent.router)
+
 
 # ============================================================================
 # Startup/Shutdown Events
@@ -205,9 +209,14 @@ app.include_router(llm.router)
 
 @app.on_event("startup")
 async def startup_event():
+    # Initialize agent
+    agent_model = os.getenv("AGENT_DEFAULT_MODEL", "gpt-4o")
+    agent.initialize_agent(rag, model=agent_model)
+
     api_logger.info("=" * 60)
     api_logger.info("BiG-RAG API Server started")
     api_logger.info(f"Documentation: http://{args.host}:{args.port}/docs")
+    api_logger.info(f"Agent endpoint: http://{args.host}:{args.port}/agent/query")
     api_logger.info("=" * 60)
 
 

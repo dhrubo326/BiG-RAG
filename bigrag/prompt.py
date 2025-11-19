@@ -47,20 +47,44 @@ Failure to follow this rule creates ORPHAN RELATIONS that become unreachable dur
 
 ---Instructions---
 
+⚠️ **CRITICAL INSTRUCTION FOR STRUCTURED TABLES (MUST READ FIRST):**
+
+⚠️ CRITICAL: For every table row, create ONE separate relation record.
+Example: If table has 15 departments, output 15 relation records - DO NOT SKIP ANY!
+
+When you encounter markdown tables with format:
+| Column1 | Column2 | Column3 | Column4 |
+| Value1  | Value2  | Value3  | Value4  |
+
+YOU MUST:
+1. Extract EACH TABLE ROW as a SEPARATE ("relation"...) - DO NOT skip any rows
+2. Include ALL column values in the relation text in natural language
+3. Preserve ALL numerical values EXACTLY as written (seat counts, dates, amounts, IDs, percentages)
+4. After EACH table row relation, extract ALL entities from that row (department names, codes, numbers)
+5. Create entity nodes for numerical values with type "number"
+
+✅ CORRECT Example for table row:
+| ২ | কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং | CSE | ১৮০ |
+
+Output:
+("relation"{tuple_delimiter}"কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগ, কোড CSE, আসন সংখ্যা ১৮০।"{tuple_delimiter}10){record_delimiter}
+("entity"{tuple_delimiter}"কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং"{tuple_delimiter}"organization"{tuple_delimiter}"কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং একটি বিভাগ।"{tuple_delimiter}90){record_delimiter}
+("entity"{tuple_delimiter}"CSE"{tuple_delimiter}"concept"{tuple_delimiter}"CSE হল কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং এর সংক্ষিপ্ত রূপ।"{tuple_delimiter}85){record_delimiter}
+("entity"{tuple_delimiter}"১৮০"{tuple_delimiter}"number"{tuple_delimiter}"১৮০ হল কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।"{tuple_delimiter}90){record_delimiter}
+
+❌ WRONG (DO NOT DO THIS):
+("relation"{tuple_delimiter}"বিভাগের তালিকা প্রদান করা হয়েছে।"{tuple_delimiter}7){record_delimiter}  ← TOO GENERIC! Missing actual data!
+
+If a table has 10 rows, you MUST create 10+ separate relation records (one per row).
+
+---
+
 1. **Knowledge Segment Extraction (Relations):**
    * Divide the text into complete, self-contained knowledge segments
    * Each segment should capture a coherent piece of information in {language}
    * Write all knowledge segment text in {language}
    * Assign a completeness score (0-10) based on how complete the information is
    * Format: ("relation"{tuple_delimiter}<knowledge_segment>{tuple_delimiter}<completeness_score>)
-
-   **SPECIAL INSTRUCTION FOR STRUCTURED TABLES:**
-   * When you encounter markdown tables (rows with `|` delimiters), extract EACH ROW as a SEPARATE relation
-   * Preserve ALL numerical data exactly as written (seat counts, dates, amounts, percentages, etc.)
-   * Each table row contains distinct factual information that must be individually indexed for retrieval
-   * Example: If a table has 10 department rows, create 10 separate relation records - one per row
-   * DO NOT aggregate multiple table rows into a single generic statement
-   * Table headers and section titles should also be extracted as separate relations when they provide context
 
 2. **Entity Extraction (MUST FOLLOW EACH RELATION):**
    * **IMMEDIATELY after each ("relation"...), extract ALL entities mentioned in that relation**

@@ -425,12 +425,12 @@ class BiGRAG:
                 def _build_contextualized_chunk_content(chunk_data: dict) -> str:
                     """Build chunk content with document context prefix for embedding.
 
-                    This enriches chunk embeddings with document metadata (title + tags) to make
+                    This enriches chunk embeddings with document metadata (title + category + tags) to make
                     chunks from different documents distinguishable even if content is similar.
 
                     Example:
-                        Input: {"content": "CSE has 180 seats", "doc_title": "RUET", "doc_metadata": {"tags": ["Engineering"]}}
-                        Output: "[RUET | Engineering] CSE has 180 seats"
+                        Input: {"content": "CSE has 180 seats", "doc_title": "RUET", "doc_metadata": {"category": "university", "tags": ["Engineering"]}}
+                        Output: "[RUET | university | Engineering] CSE has 180 seats"
                     """
                     content = chunk_data.get("content", "")
                     doc_title = chunk_data.get("doc_title", "")
@@ -439,6 +439,9 @@ class BiGRAG:
                     context_parts = []
                     if doc_title:
                         context_parts.append(doc_title)
+                    # Add category for better document type distinction
+                    if doc_metadata.get("category"):
+                        context_parts.append(doc_metadata["category"])
                     if doc_metadata.get("tags"):
                         tags = doc_metadata["tags"]
                         if isinstance(tags, list):
@@ -488,21 +491,61 @@ class BiGRAG:
     async def ainsert_custom_kg(self, custom_kg: dict):
         update_storage = False
         try:
+            # Helper function for contextualized chunk content (same as in ainsert)
+            def _build_contextualized_chunk_content(chunk_data: dict) -> str:
+                """Build chunk content with document context prefix for embedding."""
+                content = chunk_data.get("content", "")
+                doc_title = chunk_data.get("doc_title", "")
+                doc_metadata = chunk_data.get("doc_metadata", {})
+
+                context_parts = []
+                if doc_title:
+                    context_parts.append(doc_title)
+                if doc_metadata.get("category"):
+                    context_parts.append(doc_metadata["category"])
+                if doc_metadata.get("tags"):
+                    tags = doc_metadata["tags"]
+                    if isinstance(tags, list):
+                        context_parts.extend(tags)
+                    else:
+                        context_parts.append(str(tags))
+
+                if context_parts:
+                    context_prefix = "[" + " | ".join(context_parts) + "] "
+                    return context_prefix + content
+                else:
+                    return content
+
             # Insert chunks into vector storage
             all_chunks_data = {}
+            all_chunks_data_for_vdb = {}  # Separate dict for VDB with contextualized content
             chunk_to_source_map = {}
             for chunk_data in custom_kg.get("chunks", []):
                 chunk_content = chunk_data["content"]
                 source_id = chunk_data["source_id"]
                 chunk_id = compute_mdhash_id(chunk_content.strip(), prefix="chunk-")
 
+                # For KV storage: store raw content with metadata
                 chunk_entry = {"content": chunk_content.strip(), "source_id": source_id}
+                # Preserve metadata if provided
+                if chunk_data.get("doc_title"):
+                    chunk_entry["doc_title"] = chunk_data["doc_title"]
+                if chunk_data.get("doc_metadata"):
+                    chunk_entry["doc_metadata"] = chunk_data["doc_metadata"]
+
                 all_chunks_data[chunk_id] = chunk_entry
+
+                # For VDB: store contextualized content for better embedding
+                all_chunks_data_for_vdb[chunk_id] = {
+                    "content": _build_contextualized_chunk_content(chunk_data),
+                    "full_doc_id": chunk_data.get("full_doc_id", ""),
+                }
+
                 chunk_to_source_map[source_id] = chunk_id
                 update_storage = True
 
-            if self.vdb_chunks is not None and all_chunks_data:
-                await self.vdb_chunks.upsert(all_chunks_data)
+            if self.vdb_chunks is not None and all_chunks_data_for_vdb:
+                await self.vdb_chunks.upsert(all_chunks_data_for_vdb)
             if self.text_chunks is not None and all_chunks_data:
                 await self.text_chunks.upsert(all_chunks_data)
 

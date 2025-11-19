@@ -422,9 +422,39 @@ class BiGRAG:
             # Phase 3.1: Index chunks to vector DB for Path C retrieval (Three-Path Retrieval)
             # This enables direct semantic search on chunks (in addition to entity/edge-based retrieval)
             if self.vdb_chunks is not None:
+                def _build_contextualized_chunk_content(chunk_data: dict) -> str:
+                    """Build chunk content with document context prefix for embedding.
+
+                    This enriches chunk embeddings with document metadata (title + tags) to make
+                    chunks from different documents distinguishable even if content is similar.
+
+                    Example:
+                        Input: {"content": "CSE has 180 seats", "doc_title": "RUET", "doc_metadata": {"tags": ["Engineering"]}}
+                        Output: "[RUET | Engineering] CSE has 180 seats"
+                    """
+                    content = chunk_data.get("content", "")
+                    doc_title = chunk_data.get("doc_title", "")
+                    doc_metadata = chunk_data.get("doc_metadata", {})
+
+                    context_parts = []
+                    if doc_title:
+                        context_parts.append(doc_title)
+                    if doc_metadata.get("tags"):
+                        tags = doc_metadata["tags"]
+                        if isinstance(tags, list):
+                            context_parts.extend(tags)
+                        else:
+                            context_parts.append(str(tags))
+
+                    if context_parts:
+                        context_prefix = "[" + " | ".join(context_parts) + "] "
+                        return context_prefix + content
+                    else:
+                        return content
+
                 chunks_for_vdb = {
                     chunk_id: {
-                        "content": chunk_data["content"],
+                        "content": _build_contextualized_chunk_content(chunk_data),
                         "full_doc_id": chunk_data.get("full_doc_id", ""),
                     }
                     for chunk_id, chunk_data in inserting_chunks.items()

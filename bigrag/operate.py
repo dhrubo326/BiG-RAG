@@ -1176,7 +1176,7 @@ async def extract_entities(
         data_for_vdb = {
             dp["relation_name"]: {  # Already hash ID
                 "content": dp.get("relation_content", ""),  # Use actual content for embedding
-                "relation_name": dp["relation_name"],
+                "relation_name": dp.get("relation_content", ""),  # BUG FIX: Store actual content, not hash ID!
             }
             for dp in all_relations_data
         }

@@ -2,6 +2,7 @@
 LLM chat completion routes
 """
 
+import os
 import time
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
@@ -72,6 +73,10 @@ async def chat_completions(
         if user_prompt is None:
             raise HTTPException(status_code=400, detail="No user message found")
 
+        # Determine response language
+        # Priority: request.language > DEFAULT_LANGUAGE from env > "English"
+        response_language = request.language or os.getenv('DEFAULT_LANGUAGE', 'English')
+
         # RAG: Retrieve context from knowledge graph
         # IMPORTANT: Uses structured formatting with metadata display
         if request.use_rag:
@@ -102,9 +107,9 @@ async def chat_completions(
             # - ### Knowledge Graph - Relations (with relevance scores)
             # - ### Document Chunks (with metadata: category, title, tags)
             if context_str and context_str != "No relevant knowledge found.":
-                # Create RAG system prompt
+                # Create RAG system prompt with language instruction
                 if not system_prompt:
-                    system_prompt = """You are an expert AI assistant specializing in synthesizing information from a knowledge graph.
+                    system_prompt = f"""You are an expert AI assistant specializing in synthesizing information from a knowledge graph.
 
 Instructions:
 - Analyze the provided context which contains three types of information:
@@ -114,9 +119,10 @@ Instructions:
 - Pay attention to metadata fields (Category, Title, Tags) which provide context about the source
 - Synthesize a comprehensive, well-structured answer using information from all three sources
 - Be accurate and cite relevant information when appropriate
-- If the context doesn't fully answer the question, acknowledge what you know and what's uncertain"""
+- If the context doesn't fully answer the question, acknowledge what you know and what's uncertain
+- **IMPORTANT: You MUST respond in {response_language} language.** Match the language of the user's question."""
 
-                # Prepend context to user prompt
+                # Prepend context to user prompt with language instruction
                 original_question = user_prompt
                 user_prompt = f"""Based on the following context from the knowledge graph:
 
@@ -126,7 +132,11 @@ Instructions:
 
 Question: {original_question}
 
-Please provide a comprehensive answer by synthesizing information from the entities, relations, and document chunks above."""
+Please provide a comprehensive answer in **{response_language}** by synthesizing information from the entities, relations, and document chunks above."""
+        else:
+            # Non-RAG mode: Add language instruction to system prompt if non-English
+            if not system_prompt and response_language != "English":
+                system_prompt = f"You are a helpful AI assistant. Always respond in {response_language} language."
 
         # Call LLM to synthesize answer
         response_text = await llm_manager.complete(

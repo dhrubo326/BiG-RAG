@@ -129,7 +129,7 @@ export function Chat() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex relative">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Chat Section */}
         <div className={`flex-1 flex flex-col ${showRetrieval ? 'mr-96' : ''}`}>
           {/* Messages */}
@@ -159,9 +159,9 @@ export function Chat() {
           />
         </div>
 
-        {/* Retrieval Panel */}
+        {/* Retrieval Panel - Fixed position within parent, stays visible when scrolling */}
         {showRetrieval && (
-          <div className="absolute top-0 right-0 w-96 h-full border-l border-gray-200 dark:border-gray-700">
+          <div className="absolute top-0 right-0 w-96 h-full border-l border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 overflow-hidden flex flex-col">
             <RetrievalViz
               contexts={retrievedContexts}
               thinking={currentThinking}

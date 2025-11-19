@@ -40,7 +40,7 @@
   - **Path B (Relation)**: Query → "directed_by" relation → connected entities → "Christopher Nolan"
   - **Path C (Chunk)**: Query → Direct vector search on chunks + Indirect chunks from Paths A & B
   - **Result**: Finds "Christopher Nolan" through multiple paths + raw chunk context with semantic reranking
-  - **Output**: 5 structured knowledge items + 5 chunks = 10 total context items
+  - **Output**: 15 KG relations + 5 chunks = 20 total context items (default, configurable)
 
 ### Why This Approach vs. Alternatives?
 
@@ -61,10 +61,10 @@
 1. **✨ Three-Path Coverage**: Entity-based + Relation-based + Chunk-based retrieval capture different aspects
 2. **Fast Multi-Hop**: NanoVectorDB (FAISS-based) vector search O(log V) instead of graph traversal O(V × E)
 3. **Reciprocal Rank Fusion**: No hyperparameter tuning for score combination (Paths A + B)
-4. **✨ Semantic Reranking**: Cross-encoder reranks chunk candidates for +10-20% precision
+4. **✨ Semantic Reranking**: Cross-encoder reranks chunk candidates for +10-20% precision (optional, disabled by default)
 5. **Scalable**: Index-based retrieval scales to millions of entities
 6. **Interpretable**: Results show entity/relation/chunk provenance
-7. **✨ Flexible Output**: 10 total items (5 structured + 5 chunks) vs. original 5 items
+7. **✨ Flexible Output**: Configurable via num_kg_in_context (default 15) + num_chunks_in_context (default 5) = 20 total items
 
 ### High-Level Architecture
 
@@ -176,7 +176,7 @@ Input: User Query
 │    • Top-ranked items get more weight (1/1=1.0 vs 1/100=0.01) │
 │    • Handles different score scales automatically              │
 │                                                                  │
-│  Output: Top-5 structured knowledge items                       │
+│  Output: Top-15 structured knowledge items (default, configurable) │
 └─────────────────────────────────────────────────────────────────┘
 
    ↓
@@ -200,18 +200,18 @@ Input: User Query
 │    • Create query-chunk pairs from top candidates              │
 │    • Cross-encoder scores each pair (replaces RRF scores)      │
 │    • Sort by cross-encoder scores                              │
-│    • Return top-5 chunks                                       │
+│    • Return top-N chunks (default 5, configurable)             │
 │                                                                  │
 │  If enable_reranking=False (default):                           │
 │    • Use weighted RRF scores (no neural reranking)             │
-│    • Return top-5 chunks sorted by weighted RRF                │
+│    • Return top-N chunks sorted by weighted RRF (default 5)    │
 │                                                                  │
 │  Performance:                                                    │
 │    • Latency: +50-100ms                                        │
 │    • Precision: +10-20%                                        │
 │    • Graceful fallback if model unavailable                    │
 │                                                                  │
-│  Output: Top-5 (or top-10) chunks                              │
+│  Output: Top-5 chunks (default, configurable via num_chunks_in_context) │
 └─────────────────────────────────────────────────────────────────┘
 
    ↓
@@ -222,9 +222,9 @@ Input: User Query
 │  Function: format_context()                                     │
 │                                                                  │
 │  ✨ Combine Results:                                            │
-│    • 5 structured knowledge items (from Stage 3)               │
-│    • 5 chunks (from Stage 3.5)                                 │
-│    • Total: 10 context items                                   │
+│    • 15 KG knowledge items (from Stage 3) - default            │
+│    • 5 chunks (from Stage 3.5) - default                       │
+│    • Total: 20 context items (configurable via QueryParam)     │
 │                                                                  │
 │                                                                  │
 │  • Concatenate top-k results                                    │
@@ -327,8 +327,9 @@ async def _build_query_context(...):
             "type": chunk["source"]
         })
 
-    # Top-5 structured (A+B) + Top-5 chunks (C) = 10 total
-    return structured_knowledge[:5] + chunk_knowledge[:5]
+    # Top-15 structured (A+B) + Top-5 chunks (C) = 20 total (default)
+    # Configurable via num_kg_in_context and num_chunks_in_context
+    return structured_knowledge[:num_kg_in_context] + chunk_knowledge[:num_chunks_in_context]
 ```
 
 ---
@@ -916,25 +917,45 @@ class QueryParam:
     """Configuration for query execution"""
 
     mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
-    # Retrieval mode
-    # "local": Entity-based only
-    # "global": Relation-based only
-    # "hybrid": Three-path with RRF (recommended)
-    # "naive": Direct chunk search (baseline)
+    # Retrieval mode:
+    # "local": Entity-based only (Path A)
+    # "global": Relation-based only (Path B)
+    # "hybrid": Three-path with RRF (Paths A + B + C, recommended)
+    # "naive": Direct chunk search (Path C only, baseline)
 
     top_k: int = 60
-    # Number of results to retrieve per path
-    # Hybrid mode retrieves top_k from each path, then merges
+    # Number of candidates to retrieve from vector DBs per path
+    # These are then filtered down to num_kg_in_context + num_chunks_in_context
+    # Higher top_k = better recall, more processing time
 
+    num_kg_in_context: int = 15
+    # Number of KG knowledge items (entities/relations) in final context
+    # Default: 15 items from Paths A + B after RRF fusion
+    # Range: 1-30 (validated at runtime)
+
+    num_chunks_in_context: int = 5
+    # Number of text chunks in final context
+    # Default: 5 chunks from Path C (with optional reranking)
+    # Range: 0-20 (0 = no chunks, KG-only retrieval)
+
+    enable_reranking: bool = False
+    # Enable semantic reranking of chunks using cross-encoder
+    # Default: False (requires sentence-transformers package)
+    # When True: +10-20% precision, +50-100ms latency
+    # Model: cross-encoder/ms-marco-MiniLM-L-6-v2
+
+    language: Union[str, None] = None
+    # Query language override (optional, auto-detect if None)
+    # Examples: "English", "Bangla", "Hindi", "Arabic", "Chinese"
+    # Used for multilingual retrieval and response generation
+
+    # Legacy parameters (still supported for backward compatibility):
     max_token_for_text_unit: int = 4000
-    # Maximum tokens in formatted context
-    # Truncates results to fit within this limit
-
+    # Maximum tokens in formatted context (truncates if exceeded)
     max_token_for_local_context: int = 4000
-    # Maximum tokens for entity-based results
-
+    # Maximum tokens for entity-based results (Path A)
     max_token_for_global_context: int = 4000
-    # Maximum tokens for relation-based results
+    # Maximum tokens for relation-based results (Path B)
 ```
 
 #### Retrieval Result Structure
@@ -1067,10 +1088,10 @@ param = QueryParam(mode="global", top_k=60)
 # Characteristics: Relation-focused, captures interactions
 
 # Hybrid mode (three-path, default)
-param = QueryParam(mode="hybrid", top_k=60)
+param = QueryParam(mode="hybrid", top_k=60, num_kg_in_context=15, num_chunks_in_context=5)
 # Best for: General queries, multi-hop reasoning
-# Characteristics: Most robust, combines both signals
-# Note: Retrieves top_k from each path, total up to 2*top_k before fusion
+# Characteristics: Most robust, combines all three paths (A + B + C)
+# Note: Retrieves top_k candidates, then filters to num_kg_in_context + num_chunks_in_context
 
 # Naive mode (baseline)
 param = QueryParam(mode="naive", top_k=60)
@@ -1078,23 +1099,35 @@ param = QueryParam(mode="naive", top_k=60)
 # Characteristics: No graph traversal, pure vector search
 ```
 
-**Top-K Configuration:**
+**Context Size Configuration:**
 
 ```python
-# Small k (faster, less context)
-param = QueryParam(top_k=10)
-# Retrieves: 10 results total
-# Use case: Simple queries, fast responses
+# Small context (faster, less information)
+param = QueryParam(
+    top_k=30,
+    num_kg_in_context=5,
+    num_chunks_in_context=2
+)
+# Final output: 7 items (5 KG + 2 chunks)
+# Use case: Simple queries, fast responses, API cost optimization
 
-# Medium k (default, balanced)
-param = QueryParam(top_k=60)
-# Retrieves: Up to 120 results before fusion (hybrid mode)
-# Use case: General purpose
+# Medium context (default, balanced)
+param = QueryParam(
+    top_k=60,
+    num_kg_in_context=15,
+    num_chunks_in_context=5
+)
+# Final output: 20 items (15 KG + 5 chunks)
+# Use case: General purpose, most queries
 
-# Large k (comprehensive, slower)
-param = QueryParam(top_k=200)
-# Retrieves: Up to 400 results before fusion
-# Use case: Complex queries, ensure coverage
+# Large context (comprehensive, slower)
+param = QueryParam(
+    top_k=100,
+    num_kg_in_context=25,
+    num_chunks_in_context=10
+)
+# Final output: 35 items (25 KG + 10 chunks)
+# Use case: Complex multi-hop queries, ensure comprehensive coverage
 ```
 
 **Performance Impact:**
@@ -1102,38 +1135,37 @@ param = QueryParam(top_k=200)
 - `top_k=60`: ~20-30ms query latency
 - `top_k=200`: ~50-80ms query latency
 
-**Token Limits:**
+**Reranking Configuration:**
 
 ```python
-# Tight token budget (for shorter prompts)
+# Without reranking (default, faster)
 param = QueryParam(
-    top_k=60,
-    max_token_for_text_unit=1000  # Total context
+    num_chunks_in_context=5,
+    enable_reranking=False  # Use weighted RRF scoring
 )
+# Latency: ~30ms, Precision: baseline
 
-# Default (balanced)
+# With semantic reranking (requires sentence-transformers)
 param = QueryParam(
-    top_k=60,
-    max_token_for_text_unit=4000  # Default
+    num_chunks_in_context=5,
+    enable_reranking=True  # Use cross-encoder reranking
 )
+# Latency: ~80-130ms (+50-100ms), Precision: +10-20%
 
-# Large context (for long-form generation)
+# KG-only retrieval (no chunks)
 param = QueryParam(
-    top_k=100,
-    max_token_for_text_unit=8000  # Requires long-context LLM
+    num_kg_in_context=20,
+    num_chunks_in_context=0  # Disable chunk retrieval
 )
-```
+# Use case: Structured knowledge only, no raw text
 
-**Mode-Specific Tokens:**
-
-```python
-# Different limits for each path
+# Token budget control (legacy parameters, still supported)
 param = QueryParam(
-    mode="hybrid",
-    max_token_for_local_context=2000,   # Entity results
-    max_token_for_global_context=2000   # Relation results
+    num_kg_in_context=15,
+    num_chunks_in_context=5,
+    max_token_for_text_unit=4000  # Truncates if total exceeds 4000 tokens
 )
-# Total max: 4000 tokens (2000 + 2000)
+# Use case: Backward compatibility or when token limit is critical
 ```
 
 ### Vector Search Configuration
@@ -1736,29 +1768,55 @@ class QueryParam:
     mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
     """
     Retrieval mode:
-    - local: Entity-based retrieval
-    - global: Relation-based retrieval
-    - hybrid: Three-path with reciprocal rank fusion (recommended)
-    - naive: Direct chunk similarity (baseline)
+    - local: Entity-based retrieval (Path A only)
+    - global: Relation-based retrieval (Path B only)
+    - hybrid: Three-path with RRF fusion (Paths A + B + C, recommended)
+    - naive: Direct chunk similarity (Path C only, baseline)
     """
 
     top_k: int = 60
     """
-    Number of results to retrieve per path
-    Hybrid mode retrieves top_k from each path before fusion
+    Number of candidates to retrieve from vector DBs per path
+    These are filtered down to num_kg_in_context + num_chunks_in_context
+    Higher top_k = better recall, more processing time
     """
 
+    num_kg_in_context: int = 15
+    """
+    Number of KG knowledge items (entities/relations) in final context
+    Default: 15 items from Paths A + B after RRF fusion
+    Range: 1-30 (validated at runtime)
+    """
+
+    num_chunks_in_context: int = 5
+    """
+    Number of text chunks in final context
+    Default: 5 chunks from Path C (with optional reranking)
+    Range: 0-20 (0 = no chunks, KG-only retrieval)
+    """
+
+    enable_reranking: bool = False
+    """
+    Enable semantic reranking using cross-encoder
+    Default: False (requires sentence-transformers)
+    When True: +10-20% precision, +50-100ms latency
+    """
+
+    language: Union[str, None] = None
+    """
+    Query language override (optional, auto-detect if None)
+    Examples: "English", "Bangla", "Hindi", "Arabic"
+    """
+
+    # Legacy parameters (still supported for backward compatibility):
     max_token_for_text_unit: int = 4000
-    """
-    Maximum tokens in final formatted context
-    Results truncated to fit within this limit
-    """
+    """Maximum tokens in formatted context (truncates if exceeded)"""
 
     max_token_for_local_context: int = 4000
-    """Maximum tokens for entity-based results"""
+    """Maximum tokens for entity-based results (Path A)"""
 
     max_token_for_global_context: int = 4000
-    """Maximum tokens for relation-based results"""
+    """Maximum tokens for relation-based results (Path B)"""
 ```
 
 ### Retrieval Functions

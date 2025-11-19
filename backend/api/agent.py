@@ -10,6 +10,7 @@ import os
 
 from api.agent_models import AgentRequest, AgentResponse
 from agent.executor import AgentExecutor
+from agent.executor_simplified import SimplifiedAgentExecutor
 
 
 # Create router
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/agent", tags=["agent"])
 
 # Global executor instance (will be initialized on startup)
 _executor: Optional[AgentExecutor] = None
+_use_simplified: bool = True  # Default to simplified agent (2-call-per-iteration)
 
 
 def get_executor() -> AgentExecutor:
@@ -29,7 +31,12 @@ def get_executor() -> AgentExecutor:
     return _executor
 
 
-def initialize_agent(bigrag_instance, model: str = "gpt-4o", api_key: Optional[str] = None):
+def initialize_agent(
+    bigrag_instance,
+    model: str = "gpt-4o",
+    api_key: Optional[str] = None,
+    use_simplified: bool = True
+):
     """
     Initialize the agent executor.
 
@@ -39,21 +46,34 @@ def initialize_agent(bigrag_instance, model: str = "gpt-4o", api_key: Optional[s
         bigrag_instance: BiGRAG instance
         model: LLM model to use
         api_key: OpenAI API key (defaults to env var)
+        use_simplified: If True, use SimplifiedAgentExecutor (2-call-per-iteration design)
+                       If False, use complex AgentExecutor (19+ calls)
     """
-    global _executor
+    global _executor, _use_simplified
 
     api_key = api_key or os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("[AGENT] WARNING: OPENAI_API_KEY not found. Agent endpoint will not work.")
         return
 
-    _executor = AgentExecutor(
-        bigrag_instance=bigrag_instance,
-        model=model,
-        api_key=api_key
-    )
+    _use_simplified = use_simplified
 
-    print(f"[AGENT] Initialized with model: {model}")
+    if use_simplified:
+        _executor = SimplifiedAgentExecutor(
+            bigrag_instance=bigrag_instance,
+            model=model,
+            api_key=api_key
+        )
+        print(f"[AGENT] Initialized SIMPLIFIED agent with model: {model}")
+        print(f"[AGENT] Target: 2 API calls per iteration (vs 19 in complex)")
+    else:
+        _executor = AgentExecutor(
+            bigrag_instance=bigrag_instance,
+            model=model,
+            api_key=api_key
+        )
+        print(f"[AGENT] Initialized COMPLEX agent with model: {model}")
+        print(f"[AGENT] Note: Complex agent uses 19+ API calls per execution")
 
 
 @router.post("/query", response_model=AgentResponse)
@@ -169,15 +189,30 @@ async def agent_info():
     """
     return {
         "name": "BiG-RAG Multi-Hop Reasoning Agent",
-        "version": "1.0.0",
-        "description": "Iterative query planning and execution for complex questions",
+        "version": "2.0.0",
+        "description": "Simplified 2-call-per-iteration agent for efficient multi-hop reasoning",
+        "executor_type": "simplified" if _use_simplified else "complex",
+        "calls_per_iteration": "~2 (plan + extract)" if _use_simplified else "~7-9 (plan + score + prune + extract + summarize + assess)",
         "capabilities": [
             "Multi-hop reasoning",
             "Dynamic query generation",
-            "Parallel query execution",
+            "Variable_X knowledge accumulation" if _use_simplified else "Variable extraction",
             "Multilingual support",
-            "Intermediate result storage",
+            "No context pruning" if _use_simplified else "Intelligent context pruning",
             "Confidence-based early stopping"
+        ],
+        "optimizations": [
+            "Disabled query preprocessing (saves 1 API call)",
+            "No context scoring/pruning (saves 1 API call)",
+            "Combined extraction + assessment (saves 2 API calls)",
+            "Sequential query planning (1 at a time)",
+            "Uses all 20 contexts (no data loss)"
+        ] if _use_simplified else [
+            "LLM-based context scoring",
+            "Intelligent pruning (2-3 best contexts)",
+            "Parallel query execution",
+            "Iteration summaries",
+            "Metadata fact extraction"
         ],
         "supported_languages": [
             "English", "Bangla", "Hindi", "Arabic", "Chinese",

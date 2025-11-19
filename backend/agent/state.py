@@ -14,10 +14,10 @@ from api.agent_models import ReasoningStep, PlannedQuery, ExecutedAction, Observ
 @dataclass
 class AgentState:
     """
-    Tracks the state of agent execution across iterations.
+    Simplified agent state for efficient multi-hop reasoning.
 
-    This includes the reasoning trace, intermediate results,
-    and metadata about execution.
+    Uses variable_X to accumulate important knowledge across iterations,
+    avoiding lossy extraction and pruning.
     """
 
     # Core execution parameters
@@ -25,30 +25,29 @@ class AgentState:
     current_iteration: int = 0
     max_iterations: int = 3
 
-    # Reasoning trace
+    # ═══════════════════════════════════════════════════════════
+    # VARIABLE X: Accumulated knowledge (the core state)
+    # ═══════════════════════════════════════════════════════════
+    variable_X: Dict[str, Any] = field(default_factory=dict)
+    # Structure: {"facts": {...}, "sources": [...], "confidence": float}
+
+    # Reasoning trace (for debugging and response)
+    reasoning_steps: List[ReasoningStep] = field(default_factory=list)
     thoughts: List[str] = field(default_factory=list)
     actions: List[ExecutedAction] = field(default_factory=list)
-    observations: List[Observation] = field(default_factory=list)
-    reasoning_steps: List[ReasoningStep] = field(default_factory=list)
 
-    # Intermediate results storage
-    variables: Dict[str, Any] = field(default_factory=dict)
-    all_contexts: List[ContextItem] = field(default_factory=list)
-    pruned_contexts: List[ContextItem] = field(default_factory=list)  # Only keep 2-3 best per iteration
-
-    # Iteration summaries (concise, not raw contexts)
+    # Iteration summaries (for debugging - shown to user)
     iteration_summaries: List[str] = field(default_factory=list)
 
-    # Metadata facts extracted from chunks
-    metadata_facts: List[Dict[str, Any]] = field(default_factory=list)
+    # All contexts seen (kept for final response, not used in reasoning)
+    all_contexts: List[ContextItem] = field(default_factory=list)
 
     # Execution metadata
     total_tokens: int = 0
+    total_cost_usd: float = 0.0
     start_time: Optional[datetime] = None
     model_used: str = "gpt-4o"
-
-    # Query deduplication
-    executed_queries: List[str] = field(default_factory=list)
+    queries_executed: int = 0
 
     # Confidence tracking
     step_confidences: List[float] = field(default_factory=list)
@@ -58,17 +57,16 @@ class AgentState:
         self.reasoning_steps.append(step)
         self.thoughts.append(step.thought)
         self.actions.extend(step.executed_actions)
-        self.observations.extend(step.observations)
         self.step_confidences.append(step.confidence)
 
-        # Track executed queries for deduplication
+        # Track executed queries (for stats)
         for action in step.executed_actions:
-            self.executed_queries.append(action.query.lower().strip())
+            self.queries_executed += 1
 
-        # Store variables
-        self.variables.update(step.variables_stored)
+        # Note: variable_X is updated separately in extract_and_assess()
+        # step.variables_stored contains the facts extracted in this step
 
-        # Accumulate contexts
+        # Accumulate contexts from observations
         for obs in step.observations:
             self.all_contexts.extend(obs.contexts)
 
@@ -76,32 +74,20 @@ class AgentState:
         """
         Check if a similar query has been executed.
 
-        For now, uses simple string matching.
-        TODO: Use embedding similarity for better detection.
+        Note: Simplified agent allows duplicate queries for sequential multi-hop.
+        This method is kept for compatibility but returns False.
         """
-        query_normalized = query.lower().strip()
-
-        # Exact match check
-        if query_normalized in self.executed_queries:
-            return True
-
-        # Simple substring check (can be improved with embeddings)
-        for executed in self.executed_queries:
-            if query_normalized in executed or executed in query_normalized:
-                # Check length similarity to avoid false positives
-                len_ratio = len(query_normalized) / len(executed)
-                if 0.8 <= len_ratio <= 1.2:
-                    return True
-
+        # In simplified agent, we allow duplicate queries since each iteration
+        # uses results from previous iteration to refine the query
         return False
 
     def get_variable(self, key: str) -> Optional[Any]:
-        """Retrieve a stored variable."""
-        return self.variables.get(key)
+        """Retrieve a stored variable from variable_X."""
+        return self.variable_X.get(key)
 
     def store_variable(self, key: str, value: Any):
-        """Store an intermediate result."""
-        self.variables[key] = value
+        """Store an intermediate result in variable_X."""
+        self.variable_X[key] = value
 
     def get_execution_time_ms(self) -> float:
         """Calculate total execution time in milliseconds."""
@@ -166,15 +152,17 @@ class AgentState:
 
     def get_current_knowledge(self) -> str:
         """
-        Format current variables as a knowledge summary.
+        Format current variable_X as a knowledge summary.
 
-        Returns a human-readable summary of stored variables.
+        Returns a human-readable summary of stored knowledge.
         """
-        if not self.variables:
+        if not self.variable_X:
             return "No knowledge gathered yet."
 
         knowledge = []
-        for key, value in self.variables.items():
+        for key, value in self.variable_X.items():
+            if key == "metadata":
+                continue  # Skip metadata for brevity
             knowledge.append(f"- {key}: {value}")
 
         return "\n".join(knowledge)
@@ -184,10 +172,19 @@ class AgentState:
         self.iteration_summaries.append(summary)
 
     def add_metadata_facts(self, facts: Dict[str, Any]):
-        """Add extracted metadata facts."""
-        if facts:
-            self.metadata_facts.append(facts)
+        """
+        Add extracted metadata facts (legacy method, not used in simplified agent).
+
+        Simplified agent stores all facts in variable_X instead.
+        """
+        # No-op: simplified agent uses variable_X for all knowledge
+        pass
 
     def add_pruned_contexts(self, contexts: List[ContextItem]):
-        """Add pruned contexts (only the best 2-3 per iteration)."""
-        self.pruned_contexts.extend(contexts)
+        """
+        Add pruned contexts (legacy method, not used in simplified agent).
+
+        Simplified agent keeps ALL contexts without pruning.
+        """
+        # No-op: simplified agent doesn't prune contexts
+        pass

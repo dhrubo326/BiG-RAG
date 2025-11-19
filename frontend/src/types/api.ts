@@ -248,6 +248,7 @@ export interface AgentResponse {
   metadata: AgentMetadata;
   confidence: number;  // 0.0-1.0
   limitations?: string;
+  variable_X?: Record<string, any>;  // NEW: Accumulated knowledge (simplified agent only, for debugging)
 }
 
 export interface ReasoningStep {

@@ -95,3 +95,9 @@ class AgentResponse(BaseModel):
     # Optional fields
     limitations: Optional[str] = Field(None, description="Any limitations or caveats")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Overall confidence in answer")
+
+    # Debugging field (simplified agent only)
+    variable_X: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Accumulated knowledge dictionary (simplified agent only, for debugging)"
+    )

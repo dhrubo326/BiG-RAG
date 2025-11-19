@@ -8,7 +8,7 @@
  * - Full context inspection
  */
 
-import { Brain, AlertCircle } from 'lucide-react';
+import { Brain, AlertCircle, Info } from 'lucide-react';
 import { useAgent } from '../hooks/useAgent';
 import { AgentInput } from '../components/agent/AgentInput';
 import { AgentAnswer } from '../components/agent/AgentAnswer';
@@ -114,7 +114,7 @@ export function Agent() {
                         The agent is iteratively planning queries, retrieving contexts, and reasoning.
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500">
-                        This typically takes 3-5 minutes. Please wait...
+                        Simplified agent: This typically takes 20-30 seconds. Please wait...
                       </p>
                       <div className="mt-4 flex items-center gap-2 justify-center">
                         <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
@@ -137,6 +137,11 @@ export function Agent() {
                         <TabsTrigger value="contexts">
                           Contexts ({agent.response.contexts_used.length})
                         </TabsTrigger>
+                        {agent.response.variable_X && (
+                          <TabsTrigger value="variable_x">
+                            Variable X ({Object.keys(agent.response.variable_X).length} keys)
+                          </TabsTrigger>
+                        )}
                       </TabsList>
                     </div>
 
@@ -152,6 +157,30 @@ export function Agent() {
                       <TabsContent value="contexts" className="mt-0">
                         <ContextsList contexts={agent.response.contexts_used} />
                       </TabsContent>
+
+                      {agent.response.variable_X && (
+                        <TabsContent value="variable_x" className="mt-0">
+                          <div className="space-y-4">
+                            <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                              <div className="text-sm">
+                                <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                                  What is Variable X?
+                                </p>
+                                <p className="text-blue-800 dark:text-blue-200">
+                                  Variable X is the simplified agent's knowledge accumulator. It stores all important facts extracted from contexts across iterations, preserving source information and confidence scores. This replaces the old lossy extraction system.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4 overflow-x-auto">
+                              <pre className="text-xs font-mono whitespace-pre-wrap">
+                                {JSON.stringify(agent.response.variable_X, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      )}
                     </div>
                   </Tabs>
                 </div>

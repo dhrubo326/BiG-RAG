@@ -28,6 +28,112 @@ class AgentTools:
         """
         self.bigrag = bigrag_instance
 
+    async def search_bigrag_with_params(
+        self,
+        query: str,
+        language: str,
+        query_param,  # QueryParam object with custom settings
+        num_kg_in_context: int = 15,
+        num_chunks_in_context: int = 5,
+        state: Optional[AgentState] = None
+    ) -> tuple[List[ContextItem], ExecutedAction]:
+        """
+        Query BiG-RAG with custom QueryParam object.
+
+        This method allows full control over QueryParam, including:
+        - enable_query_preprocessing (can be disabled to save API calls)
+        - Custom mode, top_k, reranking settings
+
+        Args:
+            query: Search query
+            language: Language for query preprocessing
+            query_param: Custom QueryParam object with desired settings
+            num_kg_in_context: KG relations in final context (default: 15)
+            num_chunks_in_context: Text chunks in final context (default: 5)
+            state: Agent state
+
+        Returns:
+            Tuple of (contexts, executed_action)
+        """
+        start_time = time.time()
+
+        try:
+            # Override language and context limits in param
+            query_param.language = language
+            query_param.num_kg_in_context = num_kg_in_context
+            query_param.num_chunks_in_context = num_chunks_in_context
+            query_param.only_need_context = True
+
+            # Execute query
+            results = await self.bigrag.aquery(query, param=query_param)
+
+            print(f"[AGENT] BiG-RAG returned {len(results)} results (enable_query_preprocessing={query_param.enable_query_preprocessing})")
+
+            # Convert results to ContextItem format
+            contexts = []
+            for idx, result in enumerate(results):
+                if isinstance(result, dict):
+                    text = result.get("<knowledge>", result.get('content', result.get('text', str(result))))
+                    source_ids = result.get("<source_ids>", [])
+                    source = ", ".join(source_ids) if isinstance(source_ids, list) else str(source_ids) if source_ids else f"result_{idx}"
+
+                    metadata = result.get("<metadata>", {})
+                    if not metadata:
+                        metadata = {
+                            k: v for k, v in result.items()
+                            if k not in ['<knowledge>', '<coherence>', '<type>', '<source_ids>', '<metadata>',
+                                       'content', 'text', 'source_id', 'id']
+                        }
+
+                    if result.get("<type>"):
+                        metadata["type"] = result["<type>"]
+
+                    score = result.get("<coherence>") or result.get('score') or result.get('relevance_score')
+                else:
+                    text = str(result)
+                    source = f"result_{idx}"
+                    metadata = {}
+                    score = None
+
+                contexts.append(ContextItem(
+                    text=text,
+                    source=source,
+                    metadata=metadata,
+                    relevance_score=score
+                ))
+
+            # Limit to top_k from param
+            contexts = contexts[:query_param.top_k]
+
+            execution_time = (time.time() - start_time) * 1000
+
+            action = ExecutedAction(
+                action_type="search_bigrag",
+                query=query,
+                language=language,
+                num_results=len(contexts),
+                execution_time_ms=execution_time
+            )
+
+            return contexts, action
+
+        except Exception as e:
+            print(f"[AGENT] Error in search_bigrag_with_params: {e}")
+            import traceback
+            traceback.print_exc()
+
+            execution_time = (time.time() - start_time) * 1000
+
+            action = ExecutedAction(
+                action_type="search_bigrag_error",
+                query=query,
+                language=language,
+                num_results=0,
+                execution_time_ms=execution_time
+            )
+
+            return [], action
+
     async def search_bigrag(
         self,
         query: str,

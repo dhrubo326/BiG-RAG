@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router'
-import { Home, MessageSquare, Network, FileText, BarChart3, Settings } from 'lucide-react'
+import { Home, MessageSquare, Brain, Network, FileText, BarChart3, Settings } from 'lucide-react'
 
 /**
  * Navigation Component
@@ -19,6 +19,7 @@ export function Navigation() {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/chat', label: 'Chat', icon: MessageSquare },
+    { path: '/agent', label: 'Agent', icon: Brain },
     { path: '/graph', label: 'Graph', icon: Network },
     { path: '/documents', label: 'Documents', icon: FileText },
     { path: '/evaluation', label: 'Evaluation', icon: BarChart3 },

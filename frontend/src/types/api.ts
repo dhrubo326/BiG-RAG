@@ -219,3 +219,97 @@ export interface Dataset {
   size?: string;
   last_modified?: string;
 }
+
+// Agent types (Multi-hop Reasoning)
+export interface AgentRequest {
+  question: string;
+  language?: string;  // Default: "auto"
+  max_iterations?: number;  // Default: 3, range: 1-5
+  agent_model?: string;  // Default: "gpt-4o"
+  enable_parallel?: boolean;  // Default: true
+
+  // BiG-RAG retrieval parameters
+  top_k_per_query?: number;  // Default: 60, range: 10-100
+  num_kg_in_context?: number;  // Default: 15, range: 1-30
+  num_chunks_in_context?: number;  // Default: 5, range: 0-20
+  enable_reranking?: boolean;  // Default: false
+
+  // Advanced options
+  enable_variable_storage?: boolean;  // Default: true
+  confidence_threshold?: number;  // Default: 0.8, range: 0.0-1.0
+  data_source?: string;  // Optional dataset override
+}
+
+export interface AgentResponse {
+  answer: string;
+  reasoning_trace: ReasoningStep[];
+  total_iterations: number;
+  contexts_used: AgentContextItem[];
+  metadata: AgentMetadata;
+  confidence: number;  // 0.0-1.0
+  limitations?: string;
+}
+
+export interface ReasoningStep {
+  step: number;  // 1-indexed
+  thought: string;
+  planned_queries: PlannedQuery[];
+  executed_actions: ExecutedAction[];
+  observations: AgentObservation[];
+  variables_stored: Record<string, any>;
+  confidence: number;  // 0.0-1.0
+  execution_time_ms: number;
+}
+
+export interface PlannedQuery {
+  query: string;
+  language: string;
+  reason: string;
+}
+
+export interface ExecutedAction {
+  action_type: string;  // "search_bigrag" | "search_bigrag_skipped" | "search_bigrag_error"
+  query: string;
+  language: string;
+  num_results: number;
+  execution_time_ms: number;
+}
+
+export interface AgentObservation {
+  query: string;
+  contexts: AgentContextItem[];
+  summary?: string;
+}
+
+export interface AgentContextItem {
+  text: string;
+  source?: string;
+  metadata: Record<string, any>;
+  relevance_score?: number;
+}
+
+export interface AgentMetadata {
+  model_used: string;
+  total_tokens: number;
+  total_cost_usd: number;
+  execution_time_ms: number;
+  queries_executed: number;
+  stopped_reason: 'max_iterations' | 'high_confidence' | 'complete';
+}
+
+export interface AgentHealthResponse {
+  status: 'ready' | 'not_ready';
+  message: string;
+  ready: boolean;
+  model?: string;
+}
+
+export interface AgentInfo {
+  name: string;
+  version: string;
+  description: string;
+  capabilities: string[];
+  supported_languages: string[];
+  max_iterations: number;
+  default_model: string;
+}

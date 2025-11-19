@@ -54,6 +54,14 @@ Failure to follow this rule creates ORPHAN RELATIONS that become unreachable dur
    * Assign a completeness score (0-10) based on how complete the information is
    * Format: ("relation"{tuple_delimiter}<knowledge_segment>{tuple_delimiter}<completeness_score>)
 
+   **SPECIAL INSTRUCTION FOR STRUCTURED TABLES:**
+   * When you encounter markdown tables (rows with `|` delimiters), extract EACH ROW as a SEPARATE relation
+   * Preserve ALL numerical data exactly as written (seat counts, dates, amounts, percentages, etc.)
+   * Each table row contains distinct factual information that must be individually indexed for retrieval
+   * Example: If a table has 10 department rows, create 10 separate relation records - one per row
+   * DO NOT aggregate multiple table rows into a single generic statement
+   * Table headers and section titles should also be extracted as separate relations when they provide context
+
 2. **Entity Extraction (MUST FOLLOW EACH RELATION):**
    * **IMMEDIATELY after each ("relation"...), extract ALL entities mentioned in that relation**
    * **DO NOT output another ("relation"...) until all entities from previous relation are extracted**
@@ -213,7 +221,38 @@ Output:
 ("entity"{tuple_delimiter}"encrypted dialogue"{tuple_delimiter}"object"{tuple_delimiter}"The encrypted dialogue continued to unfold."{tuple_delimiter}85){record_delimiter}
 ("entity"{tuple_delimiter}"patterns"{tuple_delimiter}"concept"{tuple_delimiter}"The encrypted dialogue showed intricate patterns."{tuple_delimiter}85){record_delimiter}
 #############################""",
-    """Example 4 (Bangla - Newton's Law of Gravitation):
+    """Example 4 (Table Extraction - University Departments):
+
+Text:
+The following table shows department information for the Faculty of Engineering:
+
+| No. | Department Name | Code | Seats |
+| :--- | :--- | :--- | :--- |
+| 1 | Civil Engineering | CE | 120 |
+| 2 | Computer Science and Engineering | CSE | 180 |
+| 3 | Electrical and Electronic Engineering | EEE | 150 |
+
+The total number of seats across all departments is 450.
+################
+Output:
+("relation"{tuple_delimiter}"The Faculty of Engineering has three departments with specific seat allocations."{tuple_delimiter}8){record_delimiter}
+("entity"{tuple_delimiter}"FACULTY OF ENGINEERING"{tuple_delimiter}"organization"{tuple_delimiter}"The Faculty of Engineering is an academic unit that offers engineering programs."{tuple_delimiter}90){record_delimiter}
+("relation"{tuple_delimiter}"Civil Engineering department has code CE and 120 seats."{tuple_delimiter}10){record_delimiter}
+("entity"{tuple_delimiter}"CIVIL ENGINEERING"{tuple_delimiter}"organization"{tuple_delimiter}"Civil Engineering is a department in the Faculty of Engineering with code CE."{tuple_delimiter}85){record_delimiter}
+("entity"{tuple_delimiter}"CE"{tuple_delimiter}"concept"{tuple_delimiter}"CE is the department code for Civil Engineering."{tuple_delimiter}75){record_delimiter}
+("entity"{tuple_delimiter}"120"{tuple_delimiter}"number"{tuple_delimiter}"120 is the number of seats in Civil Engineering department."{tuple_delimiter}80){record_delimiter}
+("relation"{tuple_delimiter}"Computer Science and Engineering department has code CSE and 180 seats."{tuple_delimiter}10){record_delimiter}
+("entity"{tuple_delimiter}"COMPUTER SCIENCE AND ENGINEERING"{tuple_delimiter}"organization"{tuple_delimiter}"Computer Science and Engineering is a department in the Faculty of Engineering with code CSE."{tuple_delimiter}90){record_delimiter}
+("entity"{tuple_delimiter}"CSE"{tuple_delimiter}"concept"{tuple_delimiter}"CSE is the department code for Computer Science and Engineering."{tuple_delimiter}75){record_delimiter}
+("entity"{tuple_delimiter}"180"{tuple_delimiter}"number"{tuple_delimiter}"180 is the number of seats in Computer Science and Engineering department."{tuple_delimiter}85){record_delimiter}
+("relation"{tuple_delimiter}"Electrical and Electronic Engineering department has code EEE and 150 seats."{tuple_delimiter}10){record_delimiter}
+("entity"{tuple_delimiter}"ELECTRICAL AND ELECTRONIC ENGINEERING"{tuple_delimiter}"organization"{tuple_delimiter}"Electrical and Electronic Engineering is a department in the Faculty of Engineering with code EEE."{tuple_delimiter}85){record_delimiter}
+("entity"{tuple_delimiter}"EEE"{tuple_delimiter}"concept"{tuple_delimiter}"EEE is the department code for Electrical and Electronic Engineering."{tuple_delimiter}75){record_delimiter}
+("entity"{tuple_delimiter}"150"{tuple_delimiter}"number"{tuple_delimiter}"150 is the number of seats in Electrical and Electronic Engineering department."{tuple_delimiter}80){record_delimiter}
+("relation"{tuple_delimiter}"The total number of seats across all engineering departments is 450."{tuple_delimiter}9){record_delimiter}
+("entity"{tuple_delimiter}"450"{tuple_delimiter}"number"{tuple_delimiter}"450 is the total number of seats across all engineering departments."{tuple_delimiter}85){record_delimiter}
+#############################""",
+    """Example 5 (Multilingual - Bangla - Newton's Law of Gravitation):
 
 Text:
 নিউটনের মহাকর্ষ সূত্র অনুযায়ী, মহাবিশ্বের প্রতিটি বস্তু একে অপরকে আকর্ষণ করে। এই আকর্ষণ বলের মান বস্তুদ্বয়ের ভরের গুণফল ও তাদের মধ্যবর্তী দূরত্বের বর্গের ব্যস্তানুপাতিক। আইজাক নিউটন ১৬৮৭ সালে তার বিখ্যাত গ্রন্থ "ফিলসফিয়া ন্যাচারালিস প্রিন্সিপিয়া ম্যাথামেটিকা"-তে এই সূত্র প্রকাশ করেন। মহাকর্ষ বল মহাবিশ্বের সকল বস্তুর মধ্যে ক্রিয়াশীল একটি মৌলিক বল। নিউটনের এই আবিষ্কার পদার্থবিজ্ঞানে একটি যুগান্তকারী মাইলফলক হিসেবে বিবেচিত হয়।

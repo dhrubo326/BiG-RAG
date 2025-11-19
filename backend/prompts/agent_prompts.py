@@ -343,26 +343,49 @@ YOUR TASKS:
 3. Assess if we now have sufficient information to answer the question
 
 EXTRACTION GUIDELINES:
-- Extract SPECIFIC facts: names, numbers, dates, relationships
-- Do NOT extract full paragraphs or generic background
-- Focus on facts that help answer the question
-- Include source information for each fact
-- Keep facts concise (1-2 sentences max per fact)
+- Extract ALL relevant facts from contexts (not just 1!)
+- For each fact, include SUPPORTING TEXT from the original context
+- Extract MULTIPLE sources for the same fact when available (cross-validation)
+- Include contradictory information if found (helps catch errors)
+- Store both structured values AND unstructured context snippets
 
-VARIABLE_X STRUCTURE:
+VARIABLE_X STRUCTURE (IMPROVED):
 {{
-  "fact_key_1": {{"value": "...", "source": "context index", "confidence": 0.0-1.0}},
-  "fact_key_2": {{"value": "...", "source": "context index", "confidence": 0.0-1.0}},
-  ...
+  "fact_key_1": {{
+    "value": "extracted specific value (number, name, date)",
+    "sources": [
+      {{
+        "context_index": 0,
+        "supporting_text": "Original text snippet that mentions this fact (50-100 chars)",
+        "confidence": 0.0-1.0
+      }},
+      {{
+        "context_index": 3,
+        "supporting_text": "Another mention from different context",
+        "confidence": 0.0-1.0
+      }}
+    ],
+    "overall_confidence": 0.0-1.0,
+    "cross_validated": true or false
+  }},
   "metadata": {{
     "entities_found": ["list of key entities"],
-    "last_query": "what was just searched"
+    "last_query": "what was just searched",
+    "contexts_processed": 20,
+    "facts_extracted_count": 3
   }}
 }}
 
-SUFFICIENCY ASSESSMENT:
-- is_sufficient: true if variable_X contains all facts needed to answer
-- missing_info: list of what's still unknown
+IMPORTANT: Extract AT LEAST 3-5 facts if contexts contain them! Don't be too selective.
+
+SUFFICIENCY ASSESSMENT (BE CONSERVATIVE):
+- is_sufficient: true ONLY if:
+  * You have the DIRECT answer to the question
+  * The fact is cross-validated (multiple sources confirm it)
+  * Confidence is high (>0.85)
+  * No contradictory information found
+- PREFER marking as insufficient and doing another iteration if ANY doubt exists
+- missing_info: list of what's still unknown or uncertain
 - next_query_suggestion: if not sufficient, suggest what to search next
 
 OUTPUT FORMAT (must be valid JSON):
@@ -381,29 +404,65 @@ Question: "Who is the captain of the 2022 World Cup winner?"
 Query: "2022 FIFA World Cup winner country"
 Current variable_X: {{}}
 Contexts: [
-  [0] "Argentina won the 2022 FIFA World Cup...",
+  [0] "Argentina won the 2022 FIFA World Cup defeating France...",
   [1] "The tournament was held in Qatar from November to December 2022...",
-  [2] "Lionel Messi led Argentina to victory..."
+  [2] "Lionel Messi led Argentina to World Cup glory in Qatar...",
+  [3] "Argentina national team secured the 2022 title...",
+  [4] "Messi captained Argentina during the 2022 World Cup campaign..."
 ]
 
-Output:
+Output (IMPROVED STRUCTURE):
 {{
   "updated_variable_X": {{
-    "world_cup_winner": {{"value": "Argentina", "source": 0, "confidence": 0.95}},
-    "tournament_year": {{"value": "2022", "source": 1, "confidence": 0.95}},
-    "tournament_location": {{"value": "Qatar", "source": 1, "confidence": 0.9}},
-    "partial_captain_info": {{"value": "Messi mentioned as leader", "source": 2, "confidence": 0.7}},
+    "world_cup_winner": {{
+      "value": "Argentina",
+      "sources": [
+        {{"context_index": 0, "supporting_text": "Argentina won the 2022 FIFA World Cup defeating France", "confidence": 0.95}},
+        {{"context_index": 3, "supporting_text": "Argentina national team secured the 2022 title", "confidence": 0.9}}
+      ],
+      "overall_confidence": 0.95,
+      "cross_validated": true
+    }},
+    "tournament_year": {{
+      "value": "2022",
+      "sources": [
+        {{"context_index": 1, "supporting_text": "tournament was held in Qatar from November to December 2022", "confidence": 0.95}},
+        {{"context_index": 0, "supporting_text": "Argentina won the 2022 FIFA World Cup", "confidence": 0.95}}
+      ],
+      "overall_confidence": 0.95,
+      "cross_validated": true
+    }},
+    "tournament_location": {{
+      "value": "Qatar",
+      "sources": [
+        {{"context_index": 1, "supporting_text": "tournament was held in Qatar from November to December 2022", "confidence": 0.95}},
+        {{"context_index": 2, "supporting_text": "Messi led Argentina to World Cup glory in Qatar", "confidence": 0.9}}
+      ],
+      "overall_confidence": 0.95,
+      "cross_validated": true
+    }},
+    "captain_info": {{
+      "value": "Lionel Messi (partial confirmation)",
+      "sources": [
+        {{"context_index": 2, "supporting_text": "Lionel Messi led Argentina to World Cup glory", "confidence": 0.7}},
+        {{"context_index": 4, "supporting_text": "Messi captained Argentina during the 2022 World Cup campaign", "confidence": 0.85}}
+      ],
+      "overall_confidence": 0.8,
+      "cross_validated": true
+    }},
     "metadata": {{
-      "entities_found": ["Argentina", "Lionel Messi", "Qatar"],
-      "last_query": "2022 FIFA World Cup winner country"
+      "entities_found": ["Argentina", "Lionel Messi", "Qatar", "France"],
+      "last_query": "2022 FIFA World Cup winner country",
+      "contexts_processed": 5,
+      "facts_extracted_count": 4
     }}
   }},
-  "facts_extracted": ["world_cup_winner", "tournament_year", "tournament_location", "partial_captain_info"],
-  "is_sufficient": false,
-  "missing_info": ["Need explicit confirmation that Messi was the captain"],
-  "next_query_suggestion": "Argentina national team captain 2022 World Cup Messi",
-  "confidence": 0.6,
-  "reasoning": "Found the winning country (Argentina) with high confidence. Messi is mentioned as a leader but need explicit confirmation he was the captain."
+  "facts_extracted": ["world_cup_winner", "tournament_year", "tournament_location", "captain_info"],
+  "is_sufficient": true,
+  "missing_info": [],
+  "next_query_suggestion": null,
+  "confidence": 0.85,
+  "reasoning": "Found winner (Argentina), year (2022), location (Qatar), and captain (Messi). Captain info is cross-validated from multiple sources. All facts confirmed by multiple contexts. Ready to answer."
 }}
 
 Now extract and assess:

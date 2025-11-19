@@ -1240,7 +1240,8 @@ from bigrag.base import QueryParam
 # Initialize (assumes graph already built)
 rag = BiGRAG(working_dir="./expr/my_dataset")
 
-# Query with defaults (hybrid mode)
+# Query with defaults (hybrid mode, 20 items total)
+# Returns: 15 KG items + 5 chunks by default
 context = rag.query("What is Paris?")
 print(context)
 ```
@@ -1299,16 +1300,19 @@ print(hybrid_context[:200])
 # Query requiring two hops: Film → Director → University
 query = "What university did the director of Inception attend?"
 
-# Hybrid mode handles multi-hop naturally
+# Hybrid mode handles multi-hop naturally with larger context
 param = QueryParam(
     mode="hybrid",
-    top_k=100  # Higher k for better coverage
+    top_k=100,  # Higher candidates for better coverage
+    num_kg_in_context=20,  # More KG items for multi-hop
+    num_chunks_in_context=10  # More chunks for context
 )
 
 context = rag.query(query, param)
 
 # Expected: Finds "Christopher Nolan" via Inception,
 #           then retrieves education information
+# Output: 30 total items (20 KG + 10 chunks)
 ```
 
 **Scenario 2: Batch Queries**
@@ -1336,16 +1340,19 @@ async def batch_query(queries):
 contexts = asyncio.run(batch_query(queries))
 ```
 
-**Scenario 3: Token Budget Management**
+**Scenario 3: Context Size Management**
 
 ```python
-# Strict token limit for API cost control
+# Small context for API cost control and faster processing
 param = QueryParam(
-    top_k=30,  # Fewer results
-    max_token_for_text_unit=1000  # Tight limit
+    top_k=30,  # Fewer candidates
+    num_kg_in_context=5,  # Fewer KG items
+    num_chunks_in_context=2,  # Fewer chunks
+    enable_reranking=False  # Disable reranking for speed
 )
 
 context = rag.query("Explain quantum entanglement", param)
+# Output: 7 total items (5 KG + 2 chunks)
 
 # Verify token count
 from bigrag.utils import count_tokens

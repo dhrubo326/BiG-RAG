@@ -56,6 +56,11 @@ class QueryParam:
     # Useful for mixed-language corpora or per-query language switching
     # Examples: "Bangla", "English", "Hindi", "Arabic", "Chinese"
     language: Union[str, None] = None
+    # Query preprocessing control (per-query override)
+    # If None, uses global default from ENABLE_QUERY_PREPROCESSING environment variable
+    # Set to True to force preprocessing for this query, False to skip preprocessing
+    # Useful for pre-processed queries or when you want to bypass preprocessing for specific queries
+    enable_query_preprocessing: Union[bool, None] = None
 
     def __post_init__(self):
         """Validate QueryParam parameters at runtime"""

@@ -132,6 +132,10 @@ class BiGRAGConfig:
     top_k: int = field(default_factory=lambda: int(os.getenv('TOP_K', '5')))
     retrieval_mode: str = field(default_factory=lambda: os.getenv('RETRIEVAL_MODE', 'hybrid'))
     enable_reranking: bool = field(default_factory=lambda: parse_bool(os.getenv('ENABLE_RERANKING', 'false')))
+    # Query Preprocessing
+    # Enable automatic query preprocessing (typo correction, grammar fixing, language translation)
+    # Set to 'false' to disable preprocessing globally (can still be overridden per-query)
+    enable_query_preprocessing: bool = field(default_factory=lambda: parse_bool(os.getenv('ENABLE_QUERY_PREPROCESSING', 'true')))
 
     # Reranking Configuration
     rerank_provider: str = field(default_factory=lambda: os.getenv('RERANK_PROVIDER', 'local'))

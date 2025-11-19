@@ -296,6 +296,12 @@ Example: Who is the captain of the team that won the 2022 FIFA World Cup?"
           Agent is not ready. Make sure OpenAI API key is configured in settings.
         </p>
       )}
+
+      {props.agentReady && !props.isLoading && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+          Note: Agent queries take 3-5 minutes to complete due to multiple LLM iterations.
+        </p>
+      )}
     </form>
   );
 }

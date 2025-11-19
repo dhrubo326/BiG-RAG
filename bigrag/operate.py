@@ -1375,9 +1375,18 @@ async def kg_query(
 ) -> Union[str, list]:
 
     # Feature flag for easy rollback
-    ENABLE_PREPROCESSING = os.getenv("ENABLE_QUERY_PREPROCESSING", "true").lower() == "true"
+    # Determine whether to enable preprocessing
+    # Priority 1: Per-query override (query_param.enable_query_preprocessing)
+    # Priority 2: Global config (ENABLE_QUERY_PREPROCESSING environment variable)
+    if query_param.enable_query_preprocessing is not None:
+        # Per-query override takes precedence
+        enable_preprocessing = query_param.enable_query_preprocessing
+        logger.info(f"[Query Preprocess] Using per-query override: enable_query_preprocessing={enable_preprocessing}")
+    else:
+        # Use global default from environment variable
+        enable_preprocessing = os.getenv("ENABLE_QUERY_PREPROCESSING", "true").lower() == "true"
 
-    if ENABLE_PREPROCESSING:
+    if enable_preprocessing:
         # Preprocess query
         # Cascading language priority:
         # Priority 1: query_param.language (per-query override)
@@ -1398,7 +1407,8 @@ async def kg_query(
             hashing_kv=hashing_kv,
         )
     else:
-        # Fallback: use raw query for both paths
+        # Preprocessing disabled: use raw query for both paths
+        logger.info("[Query Preprocess] Preprocessing disabled, using raw query")
         normalized_query = query
         statement_query = query
 

@@ -23,7 +23,11 @@ export async function queryAgent(request: AgentRequest): Promise<AgentResponse> 
   console.log('[AgentService] Sending request to /agent/query:');
   console.log(JSON.stringify(request, null, 2));
 
-  const response = await api.post<AgentResponse>('/agent/query', request);
+  // Agent queries can take 3-5 minutes with multiple LLM calls and iterations
+  // Set timeout to 10 minutes (600 seconds) to prevent premature timeout
+  const response = await api.post<AgentResponse>('/agent/query', request, {
+    timeout: 600000, // 10 minutes (600,000 milliseconds)
+  });
   return response.data;
 }
 

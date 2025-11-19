@@ -19,6 +19,8 @@ interface ChatState {
   model: string;
   temperature: number;
   topK: number;
+  numKgInContext: number;
+  numChunksInContext: number;
   enableReranking: boolean;
   queryMode: QueryParams['mode'];
 
@@ -35,6 +37,8 @@ interface ChatState {
   setModel: (model: string) => void;
   setTemperature: (temperature: number) => void;
   setTopK: (topK: number) => void;
+  setNumKgInContext: (count: number) => void;
+  setNumChunksInContext: (count: number) => void;
   setEnableReranking: (enable: boolean) => void;
   setQueryMode: (mode: QueryParams['mode']) => void;
   resetSettings: () => void;
@@ -54,6 +58,8 @@ const useChatStore = create<ChatState>()(
         model: DEFAULT_CONFIG.MODEL,
         temperature: DEFAULT_CONFIG.TEMPERATURE,
         topK: DEFAULT_CONFIG.TOP_K,
+        numKgInContext: DEFAULT_CONFIG.NUM_KG_IN_CONTEXT,
+        numChunksInContext: DEFAULT_CONFIG.NUM_CHUNKS_IN_CONTEXT,
         enableReranking: DEFAULT_CONFIG.ENABLE_RERANKING,
         queryMode: DEFAULT_CONFIG.QUERY_MODE,
 
@@ -104,9 +110,13 @@ const useChatStore = create<ChatState>()(
         setModel: (model) => set({ model }),
 
         setTemperature: (temperature) =>
-          set({ temperature: Math.max(0, Math.min(2, temperature)) }),
+          set({ temperature: Math.max(0, Math.min(1, temperature)) }),
 
-        setTopK: (topK) => set({ topK: Math.max(1, Math.min(20, topK)) }),
+        setTopK: (topK) => set({ topK: Math.max(1, Math.min(100, topK)) }),
+
+        setNumKgInContext: (count) => set({ numKgInContext: Math.max(1, Math.min(30, count)) }),
+
+        setNumChunksInContext: (count) => set({ numChunksInContext: Math.max(0, Math.min(20, count)) }),
 
         setEnableReranking: (enable) => set({ enableReranking: enable }),
 
@@ -117,6 +127,8 @@ const useChatStore = create<ChatState>()(
             model: DEFAULT_CONFIG.MODEL,
             temperature: DEFAULT_CONFIG.TEMPERATURE,
             topK: DEFAULT_CONFIG.TOP_K,
+            numKgInContext: DEFAULT_CONFIG.NUM_KG_IN_CONTEXT,
+            numChunksInContext: DEFAULT_CONFIG.NUM_CHUNKS_IN_CONTEXT,
             enableReranking: DEFAULT_CONFIG.ENABLE_RERANKING,
             queryMode: DEFAULT_CONFIG.QUERY_MODE,
           }),
@@ -129,6 +141,8 @@ const useChatStore = create<ChatState>()(
           model: state.model,
           temperature: state.temperature,
           topK: state.topK,
+          numKgInContext: state.numKgInContext,
+          numChunksInContext: state.numChunksInContext,
           enableReranking: state.enableReranking,
           queryMode: state.queryMode,
         }),

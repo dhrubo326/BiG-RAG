@@ -42,13 +42,15 @@ export const GRAPH_COLORS = {
 
 // Default configuration
 export const DEFAULT_CONFIG = {
-  TOP_K: 5,
+  TOP_K: 60, // Number of items to retrieve from vector DBs
+  NUM_KG_IN_CONTEXT: 15, // Number of KG items (relations) in final context
+  NUM_CHUNKS_IN_CONTEXT: 5, // Number of chunks in final context
   MAX_RESPONSE_LENGTH: 4096,
   MAX_PROMPT_LENGTH: 4096,
   TEMPERATURE: 0.7,
   MODEL: 'gpt-4o-mini',
   QUERY_MODE: 'hybrid' as const,
-  ENABLE_RERANKING: true,
+  ENABLE_RERANKING: false, // Default: false (requires sentence-transformers package)
   GRAPH_LAYOUT: 'cose-bilkent' as const,
   GRAPH_MIN_WEIGHT: 0.0, // ✅ Changed from 0.1 to 0.0 to show ALL nodes including low-weight orphans
 } as const;

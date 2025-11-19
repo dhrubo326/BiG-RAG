@@ -5,11 +5,15 @@ interface ChatSettingsProps {
   model: string;
   temperature: number;
   topK: number;
+  numKgInContext: number;
+  numChunksInContext: number;
   enableReranking: boolean;
   queryMode: string;
   onModelChange: (model: string) => void;
   onTemperatureChange: (temp: number) => void;
   onTopKChange: (topK: number) => void;
+  onNumKgInContextChange: (count: number) => void;
+  onNumChunksInContextChange: (count: number) => void;
   onRerankingChange: (enable: boolean) => void;
   onQueryModeChange: (mode: any) => void;
   onReset: () => void;
@@ -20,11 +24,15 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({
   model,
   temperature,
   topK,
+  numKgInContext,
+  numChunksInContext,
   enableReranking,
   queryMode,
   onModelChange,
   onTemperatureChange,
   onTopKChange,
+  onNumKgInContextChange,
+  onNumChunksInContextChange,
   onRerankingChange,
   onQueryModeChange,
   onReset,
@@ -71,38 +79,89 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({
           <input
             type="range"
             min="0"
-            max="2"
+            max="1"
             step="0.1"
             value={temperature}
             onChange={(e) => onTemperatureChange(parseFloat(e.target.value))}
             className="w-full"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>Precise</span>
-            <span>Balanced</span>
-            <span>Creative</span>
+            <span>Precise (0.0)</span>
+            <span>Balanced (0.5)</span>
+            <span>Creative (1.0)</span>
           </div>
         </div>
 
-        {/* Top-K */}
+        {/* Top-K Retrieval (from vector DBs) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Top-K Retrieval: {topK}
           </label>
           <input
             type="range"
-            min="1"
-            max="20"
-            step="1"
+            min="10"
+            max="100"
+            step="10"
             value={topK}
             onChange={(e) => onTopKChange(parseInt(e.target.value))}
             className="w-full"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>1</span>
+            <span>10</span>
+            <span>50</span>
+            <span>100</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Items to retrieve from vector databases
+          </p>
+        </div>
+
+        {/* KG Context Count */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            KG Context: {numKgInContext}
+          </label>
+          <input
+            type="range"
+            min="5"
+            max="30"
+            step="5"
+            value={numKgInContext}
+            onChange={(e) => onNumKgInContextChange(parseInt(e.target.value))}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>5</span>
+            <span>15</span>
+            <span>30</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Knowledge graph relations in final context
+          </p>
+        </div>
+
+        {/* Chunk Context Count */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Chunk Context: {numChunksInContext}
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="20"
+            step="5"
+            value={numChunksInContext}
+            onChange={(e) => onNumChunksInContextChange(parseInt(e.target.value))}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>0</span>
             <span>10</span>
             <span>20</span>
           </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Text chunks in final context
+          </p>
         </div>
 
         {/* Query Mode */}

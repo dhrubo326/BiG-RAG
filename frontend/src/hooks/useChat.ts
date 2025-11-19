@@ -15,6 +15,8 @@ export const useChat = () => {
     model,
     temperature,
     topK,
+    numKgInContext,
+    numChunksInContext,
     enableReranking,
     queryMode,
     addMessage,
@@ -29,6 +31,8 @@ export const useChat = () => {
     setModel,
     setTemperature,
     setTopK,
+    setNumKgInContext,
+    setNumChunksInContext,
     setEnableReranking,
     setQueryMode,
     resetSettings,
@@ -60,6 +64,8 @@ export const useChat = () => {
       const params: QueryParams = {
         query: content,
         top_k: topK,
+        num_kg_in_context: numKgInContext,
+        num_chunks_in_context: numChunksInContext,
         mode: queryMode,
         enable_reranking: enableReranking,
         model,
@@ -114,6 +120,8 @@ export const useChat = () => {
       model,
       temperature,
       topK,
+      numKgInContext,
+      numChunksInContext,
       enableReranking,
       queryMode,
       addMessage,
@@ -162,6 +170,8 @@ export const useChat = () => {
           {
             query: content,
             top_k: topK,
+            num_kg_in_context: numKgInContext,
+            num_chunks_in_context: numChunksInContext,
             mode: queryMode,
             enable_reranking: enableReranking,
             model,
@@ -195,6 +205,8 @@ export const useChat = () => {
       model,
       temperature,
       topK,
+      numKgInContext,
+      numChunksInContext,
       enableReranking,
       queryMode,
       addMessage,
@@ -250,6 +262,8 @@ export const useChat = () => {
         model,
         temperature,
         topK,
+        numKgInContext,
+        numChunksInContext,
         enableReranking,
         queryMode,
       },
@@ -267,7 +281,7 @@ export const useChat = () => {
 
     URL.revokeObjectURL(url);
     toast.success('Chat history exported');
-  }, [messages, model, temperature, topK, enableReranking, queryMode]);
+  }, [messages, model, temperature, topK, numKgInContext, numChunksInContext, enableReranking, queryMode]);
 
   // Import chat history
   const importChatHistory = useCallback(
@@ -290,6 +304,8 @@ export const useChat = () => {
                 setTemperature(data.settings.temperature);
               }
               if (data.settings.topK !== undefined) setTopK(data.settings.topK);
+              if (data.settings.numKgInContext !== undefined) setNumKgInContext(data.settings.numKgInContext);
+              if (data.settings.numChunksInContext !== undefined) setNumChunksInContext(data.settings.numChunksInContext);
               if (data.settings.enableReranking !== undefined) {
                 setEnableReranking(data.settings.enableReranking);
               }
@@ -313,6 +329,8 @@ export const useChat = () => {
       setModel,
       setTemperature,
       setTopK,
+      setNumKgInContext,
+      setNumChunksInContext,
       setEnableReranking,
       setQueryMode,
     ]
@@ -341,6 +359,8 @@ export const useChat = () => {
     model,
     temperature,
     topK,
+    numKgInContext,
+    numChunksInContext,
     enableReranking,
     queryMode,
 
@@ -359,6 +379,8 @@ export const useChat = () => {
     setModel,
     setTemperature,
     setTopK,
+    setNumKgInContext,
+    setNumChunksInContext,
     setEnableReranking,
     setQueryMode,
     resetSettings,

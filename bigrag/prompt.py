@@ -460,49 +460,55 @@ PROMPTS["query_preprocessing"] = """\
 You are a query preprocessor for a multilingual knowledge graph retrieval system.
 
 ---Goal---
-Given a user query, produce two forms:
-1. **normalized_query**: Clean question form (fix typos, grammar, translate to {language})
-2. **statement_query**: Declarative statement with expanded context
+Given a user query (in ANY language), produce:
+1. **normalized_query**: Clean question form (fix typos, grammar, use same language as input)
+2. **statement_query**: Neutral topic reformulation WITHOUT assumptions or invented facts
+
+---Critical Rules---
+- Do NOT invent specific facts (numbers, dates, amounts not in original query)
+- statement_query should describe the TOPIC being asked about, not answer the question
+- Preserve the input language for both outputs
+- Only expand obvious abbreviations or fix clear typos
 
 ---Output Format---
 Return ONLY valid JSON (no markdown):
 {{
-  "normalized_query": "cleaned question",
-  "statement_query": "declarative statement with context"
+  "normalized_query": "cleaned question in original language",
+  "statement_query": "neutral topic description in original language"
 }}
 
 ---Examples---
 
-Example 1 (English):
+Example 1 (Factual - NO assumptions):
+Input: "who won 2022 world cup"
+Output:
+{{
+  "normalized_query": "Who won the 2022 FIFA World Cup?",
+  "statement_query": "2022 FIFA World Cup winner and championship results"
+}}
+
+Example 2 (Specific amount - NO hallucination):
+Input: "how much does MIT tuition cost"
+Output:
+{{
+  "normalized_query": "How much does MIT tuition cost?",
+  "statement_query": "MIT tuition fees and cost information"
+}}
+
+Example 3 (General - expand abbreviation):
 Input: "who is messi"
 Output:
 {{
   "normalized_query": "Who is Lionel Messi?",
-  "statement_query": "Lionel Messi is an Argentine professional footballer who plays as a forward and captains Inter Miami and Argentina."
+  "statement_query": "Lionel Messi career and biographical information"
 }}
 
-Example 2 (Technical):
+Example 4 (Typo correction):
 Input: "newtons 2nd law"
 Output:
 {{
   "normalized_query": "What is Newton's second law of motion?",
-  "statement_query": "Newton's second law states that force equals mass times acceleration (F=ma), describing the relationship between force, mass, and acceleration."
-}}
-
-Example 3 (Bangla):
-Input: "নিউটনের সূত্র কি"
-Output:
-{{
-  "normalized_query": "নিউটনের গতির সূত্র কী?",
-  "statement_query": "নিউটনের গতির সূত্র পদার্থবিজ্ঞানের তিনটি মৌলিক সূত্র যা বস্তুর গতি এবং বলের সম্পর্ক বর্ণনা করে।"
-}}
-
-Example 4 (Typo):
-Input: "whn was einstien born"
-Output:
-{{
-  "normalized_query": "When was Albert Einstein born?",
-  "statement_query": "Albert Einstein was born on March 14, 1879, in Ulm, Germany."
+  "statement_query": "Newton's second law of motion definition and principles"
 }}
 
 ---User Query---
@@ -510,6 +516,6 @@ Output:
 
 ---Important---
 - Output ONLY JSON (no ``` markers)
-- Both queries in {language}
+- Both outputs in the SAME language as input query
 - Preserve technical terms and proper nouns
 """

@@ -20,6 +20,11 @@ export const askQuestion = async (params: QueryParams): Promise<QueryResponse> =
     llm_provider: params.llm_provider,
     use_rag: true, // Enable RAG for knowledge retrieval
     enable_reranking: params.enable_reranking,
+    top_k: params.top_k || 60,  // Retrieval count (default: 60)
+    num_kg_in_context: params.num_kg_in_context || 15,  // KG output count (default: 15)
+    num_chunks_in_context: params.num_chunks_in_context || 5,  // Chunk output count (default: 5)
+    mode: params.mode || 'hybrid',  // Query mode (default: hybrid)
+    language: params.language,  // Language override (optional)
   });
 
   // Transform OpenAI-compatible response to our QueryResponse type
@@ -34,9 +39,12 @@ export const askQuestion = async (params: QueryParams): Promise<QueryResponse> =
   try {
     const contextResponse = await api.post(API_ENDPOINTS.ASK, {
       question: params.query,
-      top_k: params.top_k || 5,
+      top_k: params.top_k || 60,  // Match chat/completions defaults
+      num_kg_in_context: params.num_kg_in_context || 15,
+      num_chunks_in_context: params.num_chunks_in_context || 5,
       mode: params.mode || 'hybrid',
       enable_reranking: params.enable_reranking,
+      language: params.language,  // Pass language parameter
     });
 
     // Map retrieved_contexts from backend to our RetrievedContext type
@@ -45,7 +53,7 @@ export const askQuestion = async (params: QueryParams): Promise<QueryResponse> =
       content: ctx.context || '',
       score: ctx.coherence_score || 0,
       source: `Source ${ctx.rank || index + 1}`,
-      type: 'chunk' as const, // Default type
+      type: ctx.type || 'chunk',  // Use actual type from backend (entity/relation/chunk)
       metadata: {
         rank: ctx.rank || index + 1,
         ...ctx.metadata,

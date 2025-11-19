@@ -82,7 +82,9 @@ export interface ChatMessage {
 
 export interface QueryParams {
   query: string;
-  top_k?: number;
+  top_k?: number;  // Number of items to retrieve from vector DBs (default: 60)
+  num_kg_in_context?: number;  // Number of KG items (relations) in final output (default: 15)
+  num_chunks_in_context?: number;  // Number of chunks in final output (default: 5)
   mode?: 'local' | 'global' | 'hybrid' | 'naive';
   enable_reranking?: boolean;
   dataset?: string;
@@ -90,6 +92,7 @@ export interface QueryParams {
   temperature?: number;
   max_tokens?: number;
   llm_provider?: string;
+  language?: string;  // Language override (e.g., "Bangla", "English", "Hindi")
 }
 
 export interface QueryResponse {

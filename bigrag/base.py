@@ -30,6 +30,9 @@ class QueryParam:
     stream: bool = False
     # Number of top-k items to retrieve; corresponds to entities in "local" mode and relationships in "global" mode.
     top_k: int = 60
+    # Final output counts (applied after RRF scoring)
+    num_kg_in_context: int = 15  # Number of KG items (relations) to include in final context
+    num_chunks_in_context: int = 5  # Number of chunks to include in final context
     # Phase 2: Maximum number of hops for multi-hop graph traversal
     # 1-hop: Entity → Relation (single-hop reasoning)
     # 2-hop: Entity → Relation → Entity → Relation (multi-hop reasoning)
@@ -46,7 +49,8 @@ class QueryParam:
     # Phase 3.4: Enable semantic reranking for chunk retrieval
     # Uses cross-encoder to rerank top-10 chunks → top-5 by relevance
     # Improves precision at cost of ~50-100ms latency
-    enable_reranking: bool = True
+    # Default: False (requires sentence-transformers package and cross-encoder model)
+    enable_reranking: bool = False
     # Query language override (optional)
     # If None, uses default from global_config["addon_params"]["language"]
     # Useful for mixed-language corpora or per-query language switching
@@ -62,6 +66,10 @@ class QueryParam:
             )
         if self.top_k < 1:
             raise ValueError(f"top_k must be >= 1, got {self.top_k}")
+        if self.num_kg_in_context < 1:
+            raise ValueError(f"num_kg_in_context must be >= 1, got {self.num_kg_in_context}")
+        if self.num_chunks_in_context < 0:
+            raise ValueError(f"num_chunks_in_context must be >= 0, got {self.num_chunks_in_context}")
         if not 1 <= self.max_hops <= 3:
             raise ValueError(f"max_hops must be between 1 and 3, got {self.max_hops}")
         if self.max_token_for_text_unit < 1:

@@ -1584,13 +1584,13 @@ async def _build_query_context(
             logger.warning(f"[Reranking] Failed, using original ranking: {e}")
             # Keep original chunk_knowledge
 
-    # Take top-5 structured knowledge (from Path A + B)
-    structured_knowledge = sorted(know_score.items(), key=lambda x: x[1], reverse=True)[:5]
+    # Take top-N structured knowledge (from Path A + B) - configurable via num_kg_in_context
+    structured_knowledge = sorted(know_score.items(), key=lambda x: x[1], reverse=True)[:query_param.num_kg_in_context]
 
-    # Combine: 5 structured + 5 chunks = 10 total
+    # Combine: N KG items + M chunks (default: 15 + 5 = 20 total)
     knowledge = []
 
-    # Add structured knowledge (entities + relations)
+    # Add structured knowledge (relations only - entities disabled)
     for k, score in structured_knowledge:
         sources = list(know_sources.get(k, []))
         knowledge.append({
@@ -1600,8 +1600,8 @@ async def _build_query_context(
             "<type>": know_type.get(k, "unknown")  # Add type for debugging
         })
 
-    # Add chunk knowledge (already top-5 after reranking)
-    for chunk in chunk_knowledge[:5]:  # Top-5 chunks
+    # Add chunk knowledge - configurable via num_chunks_in_context
+    for chunk in chunk_knowledge[:query_param.num_chunks_in_context]:
         chunk_item = {
             "<knowledge>": chunk["content"],
             "<coherence>": round(chunk["score"], 3),
@@ -1616,7 +1616,7 @@ async def _build_query_context(
         knowledge.append(chunk_item)
 
     logger.info(f"[Three-Path Retrieval] Returning {len(knowledge)} items: "
-                f"{len(structured_knowledge)} structured + {len(chunk_knowledge[:5])} chunks")
+                f"{len(structured_knowledge)} relations (entities disabled) + {min(len(chunk_knowledge), query_param.num_chunks_in_context)} chunks")
 
     return knowledge
 
@@ -1652,27 +1652,31 @@ async def _get_node_data(
         if n is not None
     ]
 
-    # Phase 1: Extract top-10 entity descriptions to preserve entity-level context
-    entity_knowledge_list = []
-    for i, entity in enumerate(node_datas[:10]):  # Top-10 most relevant entities
-        if entity and "description" in entity:
-            # Format: "ENTITY: {name} ({type}) - {description}"
-            entity_desc = (
-                f"ENTITY: {entity['entity_name']} "
-                f"({entity.get('entity_type', 'unknown')}) - "
-                f"{entity['description']}"
-            )
-            # Extract source_ids from entity (chunks where this entity appears)
-            source_ids = []
-            if "source_id" in entity and entity["source_id"]:
-                source_ids = (
-                    entity["source_id"].split(GRAPH_FIELD_SEP)
-                    if isinstance(entity["source_id"], str)
-                    else [entity["source_id"]]
-                )
-            entity_knowledge_list.append((entity_desc, source_ids))
+    # Phase 1: DISABLED - Using only relation descriptions (like GraphR1)
+    # Following GraphR1's approach: focus on knowledge fragments (relations) instead of entity descriptions
+    # entity_knowledge_list = []
+    # for i, entity in enumerate(node_datas[:10]):  # Top-10 most relevant entities
+    #     if entity and "description" in entity:
+    #         # Format: "ENTITY: {name} ({type}) - {description}"
+    #         entity_desc = (
+    #             f"ENTITY: {entity['entity_name']} "
+    #             f"({entity.get('entity_type', 'unknown')}) - "
+    #             f"{entity['description']}"
+    #         )
+    #         # Extract source_ids from entity (chunks where this entity appears)
+    #         source_ids = []
+    #         if "source_id" in entity and entity["source_id"]:
+    #             source_ids = (
+    #                 entity["source_id"].split(GRAPH_FIELD_SEP)
+    #                 if isinstance(entity["source_id"], str)
+    #                 else [entity["source_id"]]
+    #             )
+    #         entity_knowledge_list.append((entity_desc, source_ids))
 
-    # Get relations connected to all 60 entities (unchanged)
+    # Empty list - only use relations from Path A
+    entity_knowledge_list = []
+
+    # Get relations connected to all entities (unchanged)
     use_relations = await _find_most_related_edges_from_entities(
         node_datas, query_param, knowledge_graph_inst
     )
@@ -1693,7 +1697,7 @@ async def _get_node_data(
     # This provides balanced entity-level and relation-level context for RRF
     knowledge_list = entity_knowledge_list + relation_knowledge_list
 
-    logger.info(f"[Path A] Returning {len(entity_knowledge_list)} entity descriptions + {len(relation_knowledge_list)} relations")
+    logger.info(f"[Path A] Returning 0 entity descriptions (disabled) + {len(relation_knowledge_list)} relations")
     return knowledge_list
 
 
@@ -2023,11 +2027,12 @@ async def _get_chunk_data(
     except Exception as e:
         logger.warning(f"[Path C] Direct vector search failed: {e}")
 
-    # Part 2: Indirect extraction from Path A + Path B source_ids (top-5)
+    # Part 2: Indirect extraction from Path A + Path B source_ids (top-15)
+    # Increased from 5 to 15 to match increased KG context (15 relations)
     indirect_source_ids = list(entity_source_ids.union(edge_source_ids))
     if indirect_source_ids:
-        # Take top 5 from combined source IDs
-        for chunk_id in indirect_source_ids[:5]:
+        # Take top 15 from combined source IDs (increased candidate pool)
+        for chunk_id in indirect_source_ids[:15]:
             # Skip if already in direct results
             if any(c["source_id"] == chunk_id for c in chunk_candidates):
                 continue

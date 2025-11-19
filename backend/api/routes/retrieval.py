@@ -37,7 +37,34 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
     """
     Ask a single question with knowledge graph retrieval
 
-    Supports multiple retrieval modes and LLM providers.
+    Returns structured context items (entities, relations, chunks) without LLM synthesis.
+    For LLM-generated answers, use /chat/completions endpoint instead.
+
+    Example request:
+    ```json
+    {
+        "question": "What is Artificial Intelligence?",
+        "top_k": 60,
+        "num_kg_in_context": 15,
+        "num_chunks_in_context": 5,
+        "mode": "hybrid",
+        "enable_reranking": false,
+        "language": "English"
+    }
+    ```
+
+    **Parameters:**
+    - `question`: The question to ask
+    - `top_k`: Items to retrieve from vector DBs (default: 60)
+    - `num_kg_in_context`: KG relations in final output (default: 15)
+    - `num_chunks_in_context`: Text chunks in final output (default: 5)
+    - `mode`: Retrieval mode - hybrid/local/global/naive (default: hybrid)
+    - `enable_reranking`: Use semantic reranking (default: false, requires sentence-transformers)
+    - `language`: Query language override (optional)
+
+    **Returns:**
+    - `retrieved_contexts`: Array of context items with type, score, content
+    - Types: "entity" (concepts), "relation" (facts), "chunk" (text excerpts)
     """
     try:
         # For FlagEmbedding mode, pre-compute entity/relation matches
@@ -55,6 +82,8 @@ async def ask_question(request: AskRequest, rag: RAGDep, embedding_manager: Embe
                 mode=request.mode,
                 only_need_context=True,
                 top_k=request.top_k,
+                num_kg_in_context=request.num_kg_in_context,
+                num_chunks_in_context=request.num_chunks_in_context,
                 enable_reranking=request.enable_reranking,  # Phase 3.4: semantic reranking
                 language=request.language  # Pass language from request (optional override)
             ),

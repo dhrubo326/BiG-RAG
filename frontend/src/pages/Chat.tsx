@@ -28,6 +28,8 @@ export function Chat() {
     model,
     temperature,
     topK,
+    numKgInContext,
+    numChunksInContext,
     enableReranking,
     queryMode,
     sendMessage,
@@ -42,6 +44,8 @@ export function Chat() {
     setModel,
     setTemperature,
     setTopK,
+    setNumKgInContext,
+    setNumChunksInContext,
     setEnableReranking,
     setQueryMode,
     resetSettings,
@@ -176,11 +180,15 @@ export function Chat() {
             model={model}
             temperature={temperature}
             topK={topK}
+            numKgInContext={numKgInContext}
+            numChunksInContext={numChunksInContext}
             enableReranking={enableReranking}
             queryMode={queryMode || 'hybrid'}
             onModelChange={setModel}
             onTemperatureChange={setTemperature}
             onTopKChange={setTopK}
+            onNumKgInContextChange={setNumKgInContext}
+            onNumChunksInContextChange={setNumChunksInContext}
             onRerankingChange={setEnableReranking}
             onQueryModeChange={setQueryMode}
             onReset={resetSettings}

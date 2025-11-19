@@ -49,10 +49,30 @@ async def chat_completions(
     Example request:
     ```json
     {
+        "model": "gpt-4o-mini",
         "messages": [{"role": "user", "content": "What is Artificial Intelligence?"}],
-        "use_rag": true
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "use_rag": true,
+        "top_k": 60,
+        "num_kg_in_context": 15,
+        "num_chunks_in_context": 5,
+        "mode": "hybrid",
+        "enable_reranking": false,
+        "language": "English"
     }
     ```
+
+    **Parameters:**
+    - `model`: LLM model to use (default: gpt-4o-mini)
+    - `temperature`: 0.0-1.0, controls randomness (default: 0.7)
+    - `use_rag`: Enable knowledge graph retrieval (default: true)
+    - `top_k`: Items to retrieve from vector DBs (default: 60)
+    - `num_kg_in_context`: KG relations in final context (default: 15)
+    - `num_chunks_in_context`: Text chunks in final context (default: 5)
+    - `mode`: Retrieval mode - hybrid/local/global/naive (default: hybrid)
+    - `enable_reranking`: Use semantic reranking (default: false, requires sentence-transformers)
+    - `language`: Response language override (optional)
 
     Click "Try it out" and hit "Execute" to test!
     """
@@ -95,6 +115,8 @@ async def chat_completions(
                     mode=request.mode,
                     only_need_context=False,  # Returns formatted string with sections
                     top_k=request.top_k,
+                    num_kg_in_context=request.num_kg_in_context,
+                    num_chunks_in_context=request.num_chunks_in_context,
                     enable_reranking=request.enable_reranking,
                     language=request.language  # Pass language from request (optional override)
                 ),

@@ -549,7 +549,9 @@ class ErrorResponse(BaseModel):
 class AskRequest(BaseModel):
     """Request model for /ask endpoint"""
     question: str = Field(..., min_length=1, description="Question text (required, non-empty)")
-    top_k: Optional[int] = 10  # Increased default to 10 for better context
+    top_k: Optional[int] = 60  # Number of items to retrieve from vector DBs (default: 60)
+    num_kg_in_context: Optional[int] = 15  # Number of KG items (relations) in final output (default: 15)
+    num_chunks_in_context: Optional[int] = 5  # Number of chunks in final output (default: 5)
     mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"
     llm_provider: Optional[str] = None
     enable_reranking: Optional[bool] = False  # Default False for speed
@@ -559,7 +561,9 @@ class AskRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "question": "What is Artificial Intelligence?",
-                "top_k": 10,
+                "top_k": 60,
+                "num_kg_in_context": 15,
+                "num_chunks_in_context": 5,
                 "mode": "hybrid",
                 "llm_provider": "openai",
                 "enable_reranking": False,
@@ -599,7 +603,9 @@ class ChatCompletionRequest(BaseModel):
     llm_provider: Optional[str] = None
     use_rag: Optional[bool] = True
     enable_reranking: Optional[bool] = False
-    top_k: Optional[int] = 10  # Match /ask default for consistent retrieval
+    top_k: Optional[int] = 60  # Number of items to retrieve from vector DBs (default: 60)
+    num_kg_in_context: Optional[int] = 15  # Number of KG items (relations) in final output (default: 15)
+    num_chunks_in_context: Optional[int] = 5  # Number of chunks in final output (default: 5)
     mode: Literal["local", "global", "hybrid", "naive"] = "hybrid"  # Match /ask default
     language: Optional[str] = None  # Query language override (e.g., "Bangla", "English", "Hindi")
 
@@ -617,7 +623,9 @@ class ChatCompletionRequest(BaseModel):
                 "max_tokens": 500,
                 "use_rag": True,
                 "enable_reranking": False,
-                "top_k": 10,
+                "top_k": 60,
+                "num_kg_in_context": 15,
+                "num_chunks_in_context": 5,
                 "mode": "hybrid",
                 "language": None  # Optional: "Bangla", "English", etc.
             }

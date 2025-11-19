@@ -81,14 +81,44 @@ async def agent_query(
         Agent response with answer and reasoning trace
 
     Example:
-        ```
+        ```json
         POST /agent/query
         {
             "question": "Who is the captain of the 2022 World Cup winner?",
+            "language": "auto",
             "max_iterations": 3,
-            "agent_model": "gpt-4o"
+            "agent_model": "gpt-4o",
+            "enable_parallel": true,
+            "top_k_per_query": 60,
+            "num_kg_in_context": 15,
+            "num_chunks_in_context": 5,
+            "enable_reranking": false,
+            "enable_variable_storage": true,
+            "confidence_threshold": 0.8
         }
         ```
+
+    **Parameters:**
+    - `question`: The question to answer (required)
+    - `language`: Language preference - "auto" (detect) or specify (default: "auto")
+    - `max_iterations`: Maximum reasoning iterations (default: 3, range: 1-5)
+    - `agent_model`: LLM model for reasoning (default: "gpt-4o")
+    - `enable_parallel`: Enable parallel query execution (default: true)
+    - `top_k_per_query`: Items to retrieve from vector DBs per query (default: 60)
+    - `num_kg_in_context`: KG relations in final context per query (default: 15)
+    - `num_chunks_in_context`: Text chunks in final context per query (default: 5)
+    - `enable_reranking`: Use semantic reranking (default: false, requires sentence-transformers)
+    - `enable_variable_storage`: Store intermediate results (default: true)
+    - `confidence_threshold`: Early stopping threshold (default: 0.8)
+    - `data_source`: Override default dataset (optional)
+
+    **Returns:**
+    - `answer`: Final synthesized answer
+    - `reasoning_trace`: Full execution trace with all steps
+    - `total_iterations`: Number of iterations executed
+    - `contexts_used`: All contexts retrieved
+    - `metadata`: Execution metadata (tokens, cost, time, etc.)
+    - `confidence`: Overall confidence in answer (0.0-1.0)
     """
     try:
         # Execute agent

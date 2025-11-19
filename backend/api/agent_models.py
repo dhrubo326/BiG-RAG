@@ -71,7 +71,12 @@ class AgentRequest(BaseModel):
     max_iterations: int = Field(default=3, ge=1, le=5, description="Maximum reasoning iterations")
     agent_model: str = Field(default="gpt-4o", description="LLM model for reasoning")
     enable_parallel: bool = Field(default=True, description="Enable parallel query execution")
-    top_k_per_query: int = Field(default=10, ge=1, le=20, description="Contexts per retrieval (BiG-RAG default: 10)")
+
+    # BiG-RAG retrieval parameters (aligned with /ask and /chat/completions)
+    top_k_per_query: int = Field(default=60, ge=10, le=100, description="Items to retrieve from vector DBs per query")
+    num_kg_in_context: int = Field(default=15, ge=1, le=30, description="KG relations in final context per query")
+    num_chunks_in_context: int = Field(default=5, ge=0, le=20, description="Text chunks in final context per query")
+    enable_reranking: bool = Field(default=False, description="Enable semantic reranking (requires sentence-transformers)")
 
     # Advanced options
     enable_variable_storage: bool = Field(default=True, description="Enable intermediate result storage")

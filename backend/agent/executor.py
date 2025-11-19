@@ -122,6 +122,9 @@ class AgentExecutor:
                         query=planned_query.query,
                         languages=languages_to_search,
                         top_k=request.top_k_per_query,
+                        num_kg_in_context=request.num_kg_in_context,
+                        num_chunks_in_context=request.num_chunks_in_context,
+                        enable_reranking=request.enable_reranking,
                         state=state
                     )
                     all_actions.extend(actions)
@@ -130,6 +133,9 @@ class AgentExecutor:
                         query=planned_query.query,
                         language=planned_query.language,
                         top_k=request.top_k_per_query,
+                        num_kg_in_context=request.num_kg_in_context,
+                        num_chunks_in_context=request.num_chunks_in_context,
+                        enable_reranking=request.enable_reranking,
                         state=state
                     )
                     all_actions.append(action)

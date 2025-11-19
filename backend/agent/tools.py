@@ -32,7 +32,10 @@ class AgentTools:
         self,
         query: str,
         language: str = "English",
-        top_k: int = 5,
+        top_k: int = 60,
+        num_kg_in_context: int = 15,
+        num_chunks_in_context: int = 5,
+        enable_reranking: bool = False,
         state: Optional[AgentState] = None
     ) -> tuple[List[ContextItem], ExecutedAction]:
         """
@@ -41,7 +44,10 @@ class AgentTools:
         Args:
             query: Search query
             language: Language for query preprocessing
-            top_k: Number of contexts to retrieve
+            top_k: Items to retrieve from vector DBs (default: 60)
+            num_kg_in_context: KG relations in final context (default: 15)
+            num_chunks_in_context: Text chunks in final context (default: 5)
+            enable_reranking: Enable semantic reranking (default: False)
             state: Agent state (for deduplication)
 
         Returns:
@@ -69,8 +75,10 @@ class AgentTools:
                 mode="hybrid",
                 only_need_context=True,  # Return only contexts, not full graph objects
                 top_k=top_k,
+                num_kg_in_context=num_kg_in_context,
+                num_chunks_in_context=num_chunks_in_context,
                 language=language,
-                enable_reranking=True
+                enable_reranking=enable_reranking
             )
 
             # Execute query
@@ -214,7 +222,10 @@ class AgentTools:
         self,
         query: str,
         languages: List[str],
-        top_k: int = 10,
+        top_k: int = 60,
+        num_kg_in_context: int = 15,
+        num_chunks_in_context: int = 5,
+        enable_reranking: bool = False,
         state: Optional[AgentState] = None
     ) -> tuple[List[ContextItem], List[ExecutedAction]]:
         """
@@ -226,7 +237,10 @@ class AgentTools:
         Args:
             query: Search query
             languages: List of languages to search (e.g., ["Bangla", "English"])
-            top_k: Total contexts to return (divided among languages)
+            top_k: Items to retrieve from vector DBs per language (default: 60)
+            num_kg_in_context: KG relations in final context per language (default: 15)
+            num_chunks_in_context: Text chunks in final context per language (default: 5)
+            enable_reranking: Enable semantic reranking (default: False)
             state: Agent state
 
         Returns:
@@ -237,7 +251,7 @@ class AgentTools:
         # Execute searches in parallel for all languages
         tasks = []
         for lang in languages:
-            tasks.append(self.search_bigrag(query, lang, top_k, state))
+            tasks.append(self.search_bigrag(query, lang, top_k, num_kg_in_context, num_chunks_in_context, enable_reranking, state))
 
         results = await asyncio.gather(*tasks)
 

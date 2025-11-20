@@ -103,6 +103,7 @@ class TableFactExtractor:
             relation = {
                 'role': 'relation',
                 'content': relation_content,
+                'description': relation_content,  # Required for BiG-RAG retrieval
                 'completeness_score': 10,  # 100% complete (from structured table)
                 'source_id': chunk_id,
                 'metadata': {
@@ -110,10 +111,10 @@ class TableFactExtractor:
                     'table_id': table_data.get('table_id', 'unknown'),
                     'table_type': table_type,
                     'row_index': row_idx,
-                    'structured_fact': row  # Preserve original row data
+                    'structured_fact': row,  # Preserve original row data
+                    'linked_entities': []  # Track entities from this row (for bipartite edges)
                 }
             }
-            relations.append(relation)
 
             # Extract entities from each cell
             for col_name, cell_value in row.items():
@@ -126,6 +127,11 @@ class TableFactExtractor:
                 )
                 if entity:
                     entities.append(entity)
+                    # Link entity to relation (same row = bipartite edge)
+                    relation['metadata']['linked_entities'].append(entity['entity_name'])
+
+            # Add relation after populating linked_entities
+            relations.append(relation)
 
         return {
             'relations': relations,

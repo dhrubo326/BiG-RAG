@@ -188,20 +188,28 @@ IMPORTANT: Output ONLY valid JSON (no commentary, no markdown).
         tables: List[Dict]
     ) -> List[Dict]:
         """
-        Validate that ALL numbers in source are captured in tables.
+        Validate that ALL numbers in markdown tables are captured correctly.
 
         Critical for academic data (seat counts, GPAs, dates).
 
         Validation checks:
-        1. Numeric coverage: 99%+ of source numbers must be in tables
-        2. No hallucinations: Tables should not contain numbers not in source
+        1. Numeric coverage: 99%+ of table numbers must be in extracted tables
+        2. No hallucinations: Tables should not contain numbers not in source tables
         3. Exact match: Numbers must be character-for-character identical
         """
 
-        # Extract all numbers from source (Bangla + English)
-        source_numbers = set(re.findall(r'[০-৯0-9]+(?:\.[০-৯0-9]+)?', source_text))
+        # Extract numbers ONLY from markdown table syntax (not entire document)
+        # Find all markdown tables in source
+        table_pattern = r'\|[^\n]+\|(?:\n\|[^\n]+\|)+'
+        markdown_tables = re.findall(table_pattern, source_text)
 
-        # Extract numbers from tables
+        # Extract numbers from markdown tables
+        source_numbers = set()
+        for md_table in markdown_tables:
+            nums = re.findall(r'[০-৯0-9]+(?:\.[০-৯0-9]+)?', md_table)
+            source_numbers.update(nums)
+
+        # Extract numbers from extracted tables
         table_numbers = set()
         for table in tables:
             for row in table.get('rows', []):
@@ -231,11 +239,15 @@ IMPORTANT: Output ONLY valid JSON (no commentary, no markdown).
                 table['metadata']['missing_numbers'] = list(missing_numbers)
                 table['metadata']['hallucinated_numbers'] = list(hallucinated_numbers)
 
-                # Log warning
-                print(f"[WARN] Table validation failed:")
-                print(f"  Coverage: {coverage:.2%}")
-                print(f"  Missing: {missing_numbers}")
-                print(f"  Hallucinated: {hallucinated_numbers}")
+                # Log warning (avoid Unicode errors on Windows)
+                import sys
+                try:
+                    print(f"[WARN] Table validation failed:")
+                    print(f"  Coverage: {coverage:.2%}")
+                    print(f"  Missing: {missing_numbers}")
+                    print(f"  Hallucinated: {hallucinated_numbers}")
+                except UnicodeEncodeError:
+                    print(f"[WARN] Table validation failed (coverage: {coverage:.2%})")
 
         return tables
 

@@ -8,7 +8,33 @@ Ensures tables are never split across chunk boundaries.
 import re
 from typing import List, Dict, Optional, Tuple
 from bigrag.preprocessors.table_extractor import GPT4TableExtractor, BilingualDetector
-from bigrag.utils import split_text_by_token_size
+
+# Simple text chunking function (since split_text_by_token_size doesn't exist in utils)
+def split_text_by_token_size(text: str, chunk_size: int, overlap: int) -> List[str]:
+    """
+    Simple character-based chunking (approximation of token chunking).
+    For production, replace with proper tiktoken-based chunking.
+    """
+    # Approximate: 1 token ≈ 4 characters
+    char_chunk_size = chunk_size * 4
+    char_overlap = overlap * 4
+
+    chunks = []
+    start = 0
+
+    while start < len(text):
+        end = start + char_chunk_size
+        chunk = text[start:end]
+
+        if chunk.strip():
+            chunks.append(chunk)
+
+        start = end - char_overlap
+
+        if start >= len(text):
+            break
+
+    return chunks
 
 
 class TableAwareChunker:

@@ -20,7 +20,7 @@ def test_bangla_number_normalization():
     validator = NumericValidator()
 
     # Test Case 1: English source, Bangla extraction
-    print("\nTest Case 1: English Source → Bangla Extraction")
+    print("\nTest Case 1: English Source -> Bangla Extraction")
     print("-" * 80)
 
     source_doc = "CSE বিভাগে 120টি আসন রয়েছে।"  # English "120"
@@ -68,7 +68,7 @@ def test_bangla_number_normalization():
     print("\n[OK] Bangla number correctly matched to English '120'")
 
     # Test Case 2: Bangla source, English extraction
-    print("\nTest Case 2: Bangla Source → English Extraction")
+    print("\nTest Case 2: Bangla Source -> English Extraction")
     print("-" * 80)
 
     source_doc = "CSE বিভাগে ১২০টি আসন রয়েছে।"  # Bangla "১২০"
@@ -107,7 +107,7 @@ def test_bangla_number_normalization():
     assert result['status'] == 'PASS', \
         f"Expected PASS, got {result['status']}"
 
-    print("\n[OK] English number '120' correctly matched to Bangla '১২০'")
+    print("\n[OK] English number '120' correctly matched to Bangla equivalent")
 
     # Test Case 3: Mixed numbers (multiple)
     print("\nTest Case 3: Mixed Numbers (Multiple)")
@@ -203,8 +203,8 @@ def main():
         print("="*80)
         print("\nCRITICAL BUG FIXED:")
         print("  [OK] Bangla numerals normalized to English in extraction methods")
-        print("  [OK] English source '120' matches Bangla extraction '১২০'")
-        print("  [OK] Bangla source '১২০' matches English extraction '120'")
+        print("  [OK] English source '120' matches Bangla extraction")
+        print("  [OK] Bangla source matches English extraction '120'")
         print("  [OK] Mixed Bangla/English numbers handled correctly")
         print("  [OK] Hallucination detection still works")
         print("\nValidation system now works correctly for bilingual content!")

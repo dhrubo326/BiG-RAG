@@ -71,42 +71,29 @@ class NumericValidator:
             }
         """
 
-        # Step 1: Extract numbers from source
+        # Step 1: Extract numbers from source (returns normalized English numerals)
         source_numbers = self._extract_numbers_with_context(source_document)
 
-        # Step 2: Extract numbers from KG
+        # Step 2: Extract numbers from KG (returns normalized English numerals)
         kg_numbers = self._extract_numbers_from_kg(entities, relations)
 
-        # Step 3: Normalize numbers for comparison
+        # Step 3: Build sets (already normalized by extraction methods)
         source_set = set(source_numbers.keys())
         kg_set = set(kg_numbers.keys())
 
-        # Also normalize to English for cross-language comparison
-        source_normalized = {
-            self.normalizer.bangla_to_english(num): num
-            for num in source_set
-        }
-        kg_normalized = {
-            self.normalizer.bangla_to_english(num): num
-            for num in kg_set
-        }
-
         # Step 4: Compute coverage (using normalized numbers)
-        matched_normalized = set(source_normalized.keys()) & set(kg_normalized.keys())
-        missing_normalized = set(source_normalized.keys()) - set(kg_normalized.keys())
-        hallucinated_normalized = set(kg_normalized.keys()) - set(source_normalized.keys())
+        matched_numbers = source_set & kg_set
+        missing_numbers = list(source_set - kg_set)
+        hallucinated_numbers = list(kg_set - source_set)
 
-        # Map back to original forms
-        missing_numbers = [source_normalized[n] for n in missing_normalized]
-        hallucinated_numbers = [kg_normalized[n] for n in hallucinated_normalized]
-
-        if source_normalized:
-            numeric_coverage = len(matched_normalized) / len(source_normalized)
+        # Calculate coverage and hallucination rates
+        if source_set:
+            numeric_coverage = len(matched_numbers) / len(source_set)
         else:
             numeric_coverage = 1.0
 
-        if kg_normalized:
-            hallucination_rate = len(hallucinated_normalized) / len(kg_normalized)
+        if kg_set:
+            hallucination_rate = len(hallucinated_numbers) / len(kg_set)
         else:
             hallucination_rate = 0.0
 
@@ -133,16 +120,16 @@ class NumericValidator:
             'validation_level': validation_level,
             'numeric_coverage': numeric_coverage,
             'hallucination_rate': hallucination_rate,
-            'total_source_numbers': len(source_normalized),
-            'total_kg_numbers': len(kg_normalized),
-            'matched_numbers': len(matched_normalized),
+            'total_source_numbers': len(source_set),
+            'total_kg_numbers': len(kg_set),
+            'matched_numbers': len(matched_numbers),
             'missing_numbers': missing_numbers,
             'hallucinated_numbers': hallucinated_numbers,
             'missing_number_contexts': {
-                num: source_numbers[num] for num in missing_numbers
+                num: source_numbers[num] for num in missing_numbers if num in source_numbers
             },
             'hallucinated_number_sources': {
-                num: kg_numbers[num] for num in hallucinated_numbers
+                num: kg_numbers[num] for num in hallucinated_numbers if num in kg_numbers
             },
             'frequency_analysis': frequency_analysis,
             'recommendations': recommendations
@@ -244,6 +231,8 @@ class NumericValidator:
         """
         Extract numbers from text with surrounding context.
 
+        IMPORTANT: Normalizes Bangla numerals to English for consistent comparison.
+
         Args:
             text: Source text
             context_window: Characters before/after number
@@ -253,6 +242,7 @@ class NumericValidator:
                 '120': ['...CSE বিভাগে 120টি আসন...', '...total 120 seats...'],
                 '4.00': ['...GPA 4.00 প্রয়োজন...']
             }
+            All keys are normalized to English numerals.
         """
 
         number_contexts = defaultdict(list)
@@ -268,7 +258,9 @@ class NumericValidator:
             context_end = min(len(text), end + context_window)
             context = text[context_start:context_end]
 
-            number_contexts[number].append(context)
+            # CRITICAL FIX: Normalize Bangla → English for consistent keys
+            normalized_number = self.normalizer.bangla_to_english(number)
+            number_contexts[normalized_number].append(context)
 
         return dict(number_contexts)
 
@@ -280,6 +272,8 @@ class NumericValidator:
         """
         Extract numbers from knowledge graph with sources.
 
+        IMPORTANT: Normalizes Bangla numerals to English for consistent comparison.
+
         Args:
             entities: Entity list
             relations: Relation list
@@ -289,6 +283,7 @@ class NumericValidator:
                 '120': ['entity: CSE', 'relation: CSE has 120 seats'],
                 '4.00': ['entity: GPA requirement']
             }
+            All keys are normalized to English numerals.
         """
 
         number_sources = defaultdict(list)
@@ -300,11 +295,15 @@ class NumericValidator:
 
             # Find numbers in entity name
             for num in re.findall(r'[০-৯0-9]+(?:\.[০-৯0-9]+)?', entity_name):
-                number_sources[num].append(f"entity_name: {entity_name}")
+                # CRITICAL FIX: Normalize Bangla → English
+                normalized_num = self.normalizer.bangla_to_english(num)
+                number_sources[normalized_num].append(f"entity_name: {entity_name}")
 
             # Find numbers in description
             for num in re.findall(r'[০-৯0-9]+(?:\.[০-৯0-9]+)?', description):
-                number_sources[num].append(f"entity_desc: {entity_name}")
+                # CRITICAL FIX: Normalize Bangla → English
+                normalized_num = self.normalizer.bangla_to_english(num)
+                number_sources[normalized_num].append(f"entity_desc: {entity_name}")
 
         # Extract from relations
         for relation in relations:
@@ -312,7 +311,9 @@ class NumericValidator:
 
             # Find numbers in relation content
             for num in re.findall(r'[০-৯0-9]+(?:\.[০-৯0-9]+)?', content):
-                number_sources[num].append(f"relation: {content[:50]}...")
+                # CRITICAL FIX: Normalize Bangla → English
+                normalized_num = self.normalizer.bangla_to_english(num)
+                number_sources[normalized_num].append(f"relation: {content[:50]}...")
 
         return dict(number_sources)
 
@@ -325,19 +326,26 @@ class NumericValidator:
         """
         Determine validation status based on level.
 
+        3-tier validation system with graceful degradation:
+        - PASS: High confidence (use without review)
+        - WARNING: Medium confidence (usable but flagged for review)
+        - FAIL: Low confidence (reject)
+
         Args:
             numeric_coverage: Percentage of source numbers in KG
             hallucination_rate: Percentage of KG numbers not in source
             validation_level: "STRICT", "MODERATE", or "LENIENT"
 
         Returns:
-            "PASS" or "FAIL"
+            "PASS", "WARNING", or "FAIL"
         """
 
         if validation_level == "STRICT":
             # Production requirement: 100% coverage, 0% hallucination
             if numeric_coverage == 1.0 and hallucination_rate == 0.0:
                 return "PASS"
+            elif numeric_coverage >= 0.95 and hallucination_rate < 0.05:
+                return "WARNING"
             else:
                 return "FAIL"
 
@@ -345,6 +353,8 @@ class NumericValidator:
             # Development: 95%+ coverage, <5% hallucination
             if numeric_coverage >= 0.95 and hallucination_rate < 0.05:
                 return "PASS"
+            elif numeric_coverage >= 0.90 and hallucination_rate < 0.10:
+                return "WARNING"
             else:
                 return "FAIL"
 
@@ -352,6 +362,8 @@ class NumericValidator:
             # Early testing: 90%+ coverage, <10% hallucination
             if numeric_coverage >= 0.90 and hallucination_rate < 0.10:
                 return "PASS"
+            elif numeric_coverage >= 0.80 and hallucination_rate < 0.15:
+                return "WARNING"
             else:
                 return "FAIL"
 

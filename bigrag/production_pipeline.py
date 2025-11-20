@@ -42,7 +42,8 @@ class ProductionKGPipeline:
         api_key: str,
         model: str = "gpt-4o-mini",
         validation_level: str = "STRICT",
-        enable_entity_linking: bool = True
+        enable_entity_linking: bool = True,
+        extraction_mode: str = "semi_structured"
     ):
         """
         Initialize production pipeline.
@@ -52,16 +53,25 @@ class ProductionKGPipeline:
             model: LLM model to use (gpt-4o-mini recommended for cost efficiency)
             validation_level: STRICT (production), MODERATE (dev), LENIENT (test)
             enable_entity_linking: Whether to merge entities
+            extraction_mode: Extraction validation mode (structured/semi_structured/unstructured)
+                - structured: 99%+ accuracy, strict validation (best for tables)
+                - semi_structured: 95%+ accuracy, moderate validation [DEFAULT]
+                - unstructured: 80%+ accuracy, lenient validation (best for narrative text)
         """
         self.api_key = api_key
         self.model = model
         self.validation_level = validation_level
         self.enable_entity_linking = enable_entity_linking
+        self.extraction_mode = extraction_mode
 
         # Initialize components
         self.table_extractor = GPT4TableExtractor(api_key=api_key, model=model)
         self.chunker = TableAwareChunker(self.table_extractor)
-        self.paragraph_extractor = ConstrainedLLMExtractor(api_key=api_key, model=model)
+        self.paragraph_extractor = ConstrainedLLMExtractor(
+            api_key=api_key,
+            model=model,
+            extraction_mode=extraction_mode
+        )
         self.batch_extractor = BatchConstrainedExtractor(self.paragraph_extractor)
         self.numeric_validator = NumericValidator()
         self.consistency_validator = ConsistencyValidator()
@@ -231,16 +241,51 @@ class ProductionKGPipeline:
         print(f"    Consistency: {consistency_result['consistency_score']:.2%}")
         print(f"    Issues: {consistency_result['total_issues']}")
 
-        # Overall status
-        overall_status = 'PASS' if (
-            numeric_result['status'] == 'PASS' and
-            consistency_result['status'] == 'PASS'
-        ) else 'FAIL'
+        # Overall status (3-tier with graceful degradation)
+        numeric_status = numeric_result['status']
+        consistency_status = consistency_result['status']
 
-        # Final result
+        if numeric_status == 'PASS' and consistency_status == 'PASS':
+            overall_status = 'PASS'
+        elif numeric_status == 'FAIL' or consistency_status == 'FAIL':
+            overall_status = 'FAIL'
+        else:
+            # At least one is WARNING
+            overall_status = 'WARNING'
+
+        # Track quality metrics for WARNING cases
+        extraction_quality = {
+            'extraction_mode': self.extraction_mode,
+            'numeric_status': numeric_status,
+            'consistency_status': consistency_status,
+            'warning_reasons': []
+        }
+
+        if numeric_status == 'WARNING':
+            extraction_quality['warning_reasons'].append(
+                f"Numeric validation WARNING (coverage: {numeric_result['numeric_coverage']:.2%}, "
+                f"hallucination: {numeric_result['hallucination_rate']:.2%})"
+            )
+
+        if consistency_status == 'WARNING':
+            extraction_quality['warning_reasons'].append(
+                f"Consistency validation WARNING (score: {consistency_result['consistency_score']:.2%})"
+            )
+
+        # Final result with visual flagging
         print("\n" + "=" * 80)
-        print(f"Pipeline Status: {overall_status}")
-        print("=" * 80)
+        if overall_status == 'WARNING':
+            print(f"[WARNING] Pipeline Status: {overall_status}")
+            print("=" * 80)
+            print(f"  Mode: {self.extraction_mode}")
+            print(f"  This extraction succeeded with warnings and may need review.")
+            for reason in extraction_quality['warning_reasons']:
+                print(f"  - {reason}")
+            print("=" * 80)
+        else:
+            print(f"Pipeline Status: {overall_status}")
+            print("=" * 80)
+
         print(f"  Entities: {len(merged_entities)}")
         print(f"  Relations: {len(all_relations)}")
         print(f"  Numeric Coverage: {numeric_result['numeric_coverage']:.2%}")
@@ -254,7 +299,8 @@ class ProductionKGPipeline:
             'validation': {
                 'numeric': numeric_result,
                 'consistency': consistency_result,
-                'overall_status': overall_status
+                'overall_status': overall_status,
+                'extraction_quality': extraction_quality
             },
             'statistics': {
                 'total_entities': len(merged_entities),

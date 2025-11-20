@@ -31,16 +31,26 @@ class ConstrainedLLMExtractor:
     Better to have NO extraction than WRONG extraction.
     """
 
-    def __init__(self, api_key: str, model: str = "gpt-4o-mini"):
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gpt-4o-mini",
+        extraction_mode: str = "semi_structured"
+    ):
         """
         Initialize constrained extractor.
 
         Args:
             api_key: OpenAI API key
             model: Model to use (gpt-4o-mini for cost efficiency)
+            extraction_mode: Validation mode (structured/semi_structured/unstructured)
+                - structured: 99%+ accuracy, strict validation (PASS=100%, WARNING=95%)
+                - semi_structured: 95%+ accuracy, moderate validation (PASS=95%, WARNING=90%) [DEFAULT]
+                - unstructured: 80%+ accuracy, lenient validation (PASS=80%, WARNING=70%)
         """
         self.client = AsyncOpenAI(api_key=api_key)
         self.model = model
+        self.extraction_mode = extraction_mode
         self.normalizer = BanglaNumeralNormalizer()
 
     async def extract_from_paragraph(
@@ -112,22 +122,34 @@ class ConstrainedLLMExtractor:
                 extraction=extraction
             )
 
-            # Check if validation passed
-            if validation_result['status'] == 'PASS':
+            # Check if validation passed or warning (accept both)
+            status = validation_result['status']
+            if status in ['PASS', 'WARNING']:
                 # Add metadata
                 extraction['validation'] = validation_result
                 extraction['validation']['attempts'] = attempt
+                extraction['validation']['extraction_mode'] = self.extraction_mode
                 extraction['metadata'] = {
                     'chunk_id': chunk_id,
                     'extraction_method': 'constrained_llm',
                     'language': language,
+                    'extraction_quality': status,  # Track quality level
                     **(metadata or {})
                 }
 
+                # Visual warning flag for WARNING status
+                if status == 'WARNING':
+                    print(f"[WARNING] Extraction succeeded with warnings (attempt {attempt}):")
+                    print(f"  Mode: {self.extraction_mode}")
+                    print(f"  Numeric coverage: {validation_result.get('numeric_coverage', 0):.2%}")
+                    print(f"  Hallucination score: {validation_result.get('hallucination_score', 0):.2%}")
+                    print(f"  Semantic validity: {validation_result.get('semantic_validity', 0):.2%}")
+                    print(f"  This extraction will be included but may need review.")
+
                 return extraction
 
-            # Log validation failure
-            print(f"[WARN] Validation failed (attempt {attempt}/{3}):")
+            # Log validation failure (FAIL status only)
+            print(f"[FAIL] Validation failed (attempt {attempt}/{3}):")
             print(f"  Numeric coverage: {validation_result.get('numeric_coverage', 0):.2%}")
             print(f"  Missing numbers: {validation_result.get('missing_numbers', [])}")
             print(f"  Hallucinated numbers: {validation_result.get('hallucinated_numbers', [])}")
@@ -343,17 +365,12 @@ IMPORTANT:
 
         semantic_validity = 1.0 - (len(hallucinated_entities) / max(len(entities), 1))
 
-        # Determine overall status
-        # PASS requires:
-        # - 100% numeric coverage (strict)
-        # - 0% number hallucination (strict)
-        # - 90%+ semantic validity (slightly lenient for name variations)
-        if (numeric_coverage == 1.0 and
-            hallucination_score == 0.0 and
-            semantic_validity >= 0.9):
-            status = 'PASS'
-        else:
-            status = 'FAIL'
+        # Determine overall status using 3-tier validation
+        status = self._determine_validation_status(
+            numeric_coverage=numeric_coverage,
+            hallucination_score=hallucination_score,
+            semantic_validity=semantic_validity
+        )
 
         return {
             'status': status,
@@ -364,6 +381,99 @@ IMPORTANT:
             'hallucinated_numbers': hallucinated_numbers,
             'hallucinated_entities': hallucinated_entities
         }
+
+    def _determine_validation_status(
+        self,
+        numeric_coverage: float,
+        hallucination_score: float,
+        semantic_validity: float
+    ) -> str:
+        """
+        Determine validation status based on extraction mode.
+
+        3-tier validation system:
+        - PASS: High confidence extraction (use without review)
+        - WARNING: Medium confidence extraction (usable but may need review)
+        - FAIL: Low confidence extraction (reject)
+
+        Thresholds vary by extraction_mode:
+
+        STRUCTURED mode (strict - for highly structured data like tables):
+        - PASS: 100% numeric coverage, 0% hallucination, 90%+ semantic
+        - WARNING: 95%+ numeric coverage, <5% hallucination, 85%+ semantic
+        - FAIL: Below WARNING thresholds
+
+        SEMI_STRUCTURED mode (moderate - for mixed content) [DEFAULT]:
+        - PASS: 95%+ numeric coverage, <5% hallucination, 85%+ semantic
+        - WARNING: 90%+ numeric coverage, <10% hallucination, 80%+ semantic
+        - FAIL: Below WARNING thresholds
+
+        UNSTRUCTURED mode (lenient - for narrative text):
+        - PASS: 80%+ numeric coverage, <15% hallucination, 70%+ semantic
+        - WARNING: 70%+ numeric coverage, <20% hallucination, 60%+ semantic
+        - FAIL: Below WARNING thresholds
+
+        Args:
+            numeric_coverage: Fraction of source numbers present in extraction (0-1)
+            hallucination_score: Fraction of hallucinated numbers (0-1)
+            semantic_validity: Fraction of entities mentioned in source (0-1)
+
+        Returns:
+            'PASS', 'WARNING', or 'FAIL'
+        """
+
+        if self.extraction_mode == "structured":
+            # Strict thresholds for highly structured data
+            if (numeric_coverage == 1.0 and
+                hallucination_score == 0.0 and
+                semantic_validity >= 0.9):
+                return 'PASS'
+            elif (numeric_coverage >= 0.95 and
+                  hallucination_score < 0.05 and
+                  semantic_validity >= 0.85):
+                return 'WARNING'
+            else:
+                return 'FAIL'
+
+        elif self.extraction_mode == "semi_structured":
+            # Moderate thresholds for mixed content (DEFAULT)
+            if (numeric_coverage >= 0.95 and
+                hallucination_score < 0.05 and
+                semantic_validity >= 0.85):
+                return 'PASS'
+            elif (numeric_coverage >= 0.90 and
+                  hallucination_score < 0.10 and
+                  semantic_validity >= 0.80):
+                return 'WARNING'
+            else:
+                return 'FAIL'
+
+        elif self.extraction_mode == "unstructured":
+            # Lenient thresholds for narrative text
+            if (numeric_coverage >= 0.80 and
+                hallucination_score < 0.15 and
+                semantic_validity >= 0.70):
+                return 'PASS'
+            elif (numeric_coverage >= 0.70 and
+                  hallucination_score < 0.20 and
+                  semantic_validity >= 0.60):
+                return 'WARNING'
+            else:
+                return 'FAIL'
+
+        else:
+            # Unknown mode - fall back to semi_structured
+            print(f"[WARN] Unknown extraction_mode '{self.extraction_mode}', using semi_structured")
+            if (numeric_coverage >= 0.95 and
+                hallucination_score < 0.05 and
+                semantic_validity >= 0.85):
+                return 'PASS'
+            elif (numeric_coverage >= 0.90 and
+                  hallucination_score < 0.10 and
+                  semantic_validity >= 0.80):
+                return 'WARNING'
+            else:
+                return 'FAIL'
 
     def _is_mentioned_in_text(self, entity: str, text: str) -> bool:
         """

@@ -143,6 +143,7 @@ class BipartiteGraphBuilder:
                 'description': relation.get('description', relation['content']),  # Fallback to content
                 'weight': relation.get('completeness_score', 10),
                 'source_id': relation['source_id'],
+                'extraction_quality': relation.get('metadata', {}).get('extraction_quality', 'PASS'),  # Track quality level
             }
 
             # Upsert to graph storage
@@ -190,6 +191,7 @@ class BipartiteGraphBuilder:
                 'description': entity['description'],
                 'weight': entity.get('weight', 0.0),
                 'source_id': entity['source_id'],
+                'extraction_quality': entity.get('metadata', {}).get('extraction_quality', 'PASS'),  # Track quality level
             }
 
             # Upsert to graph storage

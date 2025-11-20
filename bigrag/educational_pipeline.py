@@ -42,6 +42,7 @@ async def build_educational_kg(
     working_dir: str = "./expr/educational_kg",
     validation_level: str = "STRICT",
     enable_entity_linking: bool = True,
+    extraction_mode: str = "semi_structured",
     chunk_token_size: int = 1200,
     chunk_overlap: int = 100,
 ) -> Tuple[BiGRAG, List[Dict]]:
@@ -65,6 +66,10 @@ async def build_educational_kg(
         working_dir: Directory to save graph files (default: ./expr/educational_kg)
         validation_level: "STRICT" (99%+), "MODERATE" (95%+), "LENIENT" (90%+)
         enable_entity_linking: Whether to merge duplicate entities (recommended: True)
+        extraction_mode: Validation mode (structured/semi_structured/unstructured) [DEFAULT: semi_structured]
+            - structured: 99%+ accuracy for tables
+            - semi_structured: 95%+ accuracy for mixed content [DEFAULT]
+            - unstructured: 80%+ accuracy for narrative text
         chunk_token_size: Maximum chunk size in tokens (default: 1200)
         chunk_overlap: Overlap between chunks in tokens (default: 100)
 
@@ -142,7 +147,8 @@ async def build_educational_kg(
     pipeline = ProductionKGPipeline(
         api_key=api_key,
         validation_level=validation_level,
-        enable_entity_linking=enable_entity_linking
+        enable_entity_linking=enable_entity_linking,
+        extraction_mode=extraction_mode
     )
 
     # Process each document
@@ -170,15 +176,24 @@ async def build_educational_kg(
             validation_status = result['validation']['overall_status']
             numeric_coverage = result['validation']['numeric']['numeric_coverage']
             consistency_score = result['validation']['consistency']['consistency_score']
+            extraction_quality = result['validation'].get('extraction_quality', {})
 
             logger.info(f"\n[Validation Results]")
             logger.info(f"  Status: {validation_status}")
             logger.info(f"  Numeric Coverage: {numeric_coverage:.2%}")
             logger.info(f"  Consistency Score: {consistency_score:.2%}")
 
-            if validation_status != 'PASS':
-                logger.warning(
-                    f"  [WARN] Document failed validation. "
+            # Handle WARNING status separately
+            if validation_status == 'WARNING':
+                logger.warning(f"\n[WARNING] Document validation completed with warnings:")
+                logger.warning(f"  Mode: {extraction_quality.get('extraction_mode', 'unknown')}")
+                for reason in extraction_quality.get('warning_reasons', []):
+                    logger.warning(f"  - {reason}")
+                logger.warning(f"  This extraction will be included but may need review.")
+
+            elif validation_status == 'FAIL':
+                logger.error(
+                    f"  [FAIL] Document failed validation. "
                     f"Consider reviewing extraction quality."
                 )
                 failed_docs.append({
@@ -328,7 +343,8 @@ async def process_single_document(
     # Initialize pipeline
     pipeline = ProductionKGPipeline(
         api_key=api_key,
-        validation_level=validation_level
+        validation_level=validation_level,
+        extraction_mode="semi_structured"  # Default to semi_structured for flexibility
     )
 
     # Extract

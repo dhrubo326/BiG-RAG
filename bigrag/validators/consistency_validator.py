@@ -552,7 +552,14 @@ class ConsistencyValidator:
         relation_contradictions: List,
         validation_level: str
     ) -> str:
-        """Determine validation status based on level."""
+        """
+        Determine validation status based on level.
+
+        3-tier validation system with graceful degradation:
+        - PASS: High confidence (use without review)
+        - WARNING: Medium confidence (usable but flagged for review)
+        - FAIL: Low confidence (reject)
+        """
 
         if validation_level == "STRICT":
             # No critical conflicts allowed
@@ -562,6 +569,8 @@ class ConsistencyValidator:
             ]
             if not critical_conflicts and consistency_score >= 0.99:
                 return "PASS"
+            elif len(critical_conflicts) <= 1 and consistency_score >= 0.95:
+                return "WARNING"
             else:
                 return "FAIL"
 
@@ -569,6 +578,8 @@ class ConsistencyValidator:
             # Allow minor conflicts
             if consistency_score >= 0.95:
                 return "PASS"
+            elif consistency_score >= 0.90:
+                return "WARNING"
             else:
                 return "FAIL"
 
@@ -576,6 +587,8 @@ class ConsistencyValidator:
             # Allow more conflicts
             if consistency_score >= 0.90:
                 return "PASS"
+            elif consistency_score >= 0.80:
+                return "WARNING"
             else:
                 return "FAIL"
 

@@ -32,7 +32,7 @@ class QueryParam:
     top_k: int = 60
     # Final output counts (applied after RRF scoring)
     num_kg_in_context: int = 15  # Number of KG items (relations) to include in final context
-    num_chunks_in_context: int = 5  # Number of chunks to include in final context
+    num_chunks_in_context: int = 10  # Number of chunks to include in final context
     # Phase 2: Maximum number of hops for multi-hop graph traversal
     # 1-hop: Entity → Relation (single-hop reasoning)
     # 2-hop: Entity → Relation → Entity → Relation (multi-hop reasoning)

@@ -1626,7 +1626,8 @@ async def _build_query_context(
         knowledge.append(chunk_item)
 
     logger.info(f"[Three-Path Retrieval] Returning {len(knowledge)} items: "
-                f"{len(structured_knowledge)} relations (entities disabled) + {min(len(chunk_knowledge), query_param.num_chunks_in_context)} chunks")
+                f"{len(structured_knowledge)} relations (Path A + Path B combined via RRF) + "
+                f"{min(len(chunk_knowledge), query_param.num_chunks_in_context)} chunks (Path C)")
 
     return knowledge
 
@@ -1959,6 +1960,8 @@ async def _get_edge_data(
             # source_id may contain multiple IDs separated by GRAPH_FIELD_SEP
             source_ids = s["source_id"].split(GRAPH_FIELD_SEP) if isinstance(s["source_id"], str) else [s["source_id"]]
         knowledge_list.append((relation_content, source_ids))
+
+    logger.info(f"[Path B] Found {len(knowledge_list)} relations via direct vector search")
     return knowledge_list
 
 

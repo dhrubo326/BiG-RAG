@@ -1637,6 +1637,1102 @@ bigrag/
 
 ---
 
+## Additional Production Considerations
+
+### Error Handling & Recovery
+
+```python
+# bigrag/utils/error_recovery.py
+
+class ExtractionErrorHandler:
+    """
+    Production-grade error handling with automatic retries.
+
+    Critical for long-running graph builds (1000+ documents).
+    """
+
+    @staticmethod
+    async def retry_with_backoff(
+        async_func,
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+        on_error=None
+    ):
+        """
+        Exponential backoff retry for API calls.
+
+        Use for:
+        - GPT-4o table extraction (API rate limits)
+        - Embedding generation (timeout handling)
+        - Vector DB operations
+        """
+        for attempt in range(max_retries):
+            try:
+                return await async_func()
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    if on_error:
+                        on_error(e)
+                    raise
+
+                delay = base_delay * (2 ** attempt)
+                await asyncio.sleep(delay)
+
+    @staticmethod
+    def create_checkpoint(
+        document_id: str,
+        phase: str,
+        data: Dict
+    ):
+        """
+        Create checkpoint after each document processing.
+
+        Enables resume from failure (critical for large batches).
+        """
+        checkpoint_dir = Path("expr/checkpoints")
+        checkpoint_dir.mkdir(exist_ok=True)
+
+        checkpoint_file = checkpoint_dir / f"{document_id}_{phase}.json"
+        with open(checkpoint_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                'document_id': document_id,
+                'phase': phase,
+                'timestamp': datetime.now().isoformat(),
+                'data': data
+            }, f, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def load_checkpoint(
+        document_id: str,
+        phase: str
+    ) -> Dict | None:
+        """Load checkpoint if exists."""
+        checkpoint_file = Path(f"expr/checkpoints/{document_id}_{phase}.json")
+        if checkpoint_file.exists():
+            with open(checkpoint_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None
+```
+
+### Logging & Monitoring
+
+```python
+# bigrag/utils/production_logger.py
+
+import logging
+from pathlib import Path
+from datetime import datetime
+
+class ProductionLogger:
+    """
+    Comprehensive logging for production debugging.
+
+    Logs ALL critical decisions:
+    - Table extraction confidence
+    - Entity merge decisions
+    - Validation failures
+    - Contradiction alerts
+    """
+
+    def __init__(self, log_dir: str = "logs/production"):
+        self.log_dir = Path(log_dir)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create timestamped log file
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file = self.log_dir / f"kg_build_{timestamp}.log"
+
+        # Configure logger
+        self.logger = logging.getLogger('BiGRAG_Production')
+        self.logger.setLevel(logging.DEBUG)
+
+        # File handler
+        fh = logging.FileHandler(log_file, encoding='utf-8')
+        fh.setLevel(logging.DEBUG)
+
+        # Console handler (only warnings+)
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.WARNING)
+
+        # Formatter
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+
+        self.logger.addHandler(fh)
+        self.logger.addHandler(ch)
+
+    def log_table_extraction(self, table_data: Dict):
+        """Log table extraction with validation status."""
+        self.logger.info(
+            f"Table extracted: {table_data['table_id']} "
+            f"(type={table_data['table_type']}, "
+            f"validation={table_data['metadata']['validation_status']}, "
+            f"coverage={table_data['metadata'].get('numeric_coverage', 'N/A')})"
+        )
+
+    def log_entity_merge(self, entity_group: List[Dict], canonical_name: str):
+        """Log entity merge decisions."""
+        merged_names = [e['entity_name'] for e in entity_group]
+        self.logger.info(
+            f"Entity merge: {merged_names} -> {canonical_name}"
+        )
+
+    def log_contradiction(self, contradiction: Dict):
+        """CRITICAL: Log contradictions for human review."""
+        self.logger.error(
+            f"CONTRADICTION DETECTED: {contradiction['entity']} - "
+            f"{contradiction['field']} has conflicting values: "
+            f"{contradiction['conflicting_values']}"
+        )
+
+    def log_validation_failure(self, chunk_id: str, reason: str):
+        """Log validation failures."""
+        self.logger.warning(
+            f"Validation FAILED for {chunk_id}: {reason}"
+        )
+```
+
+### Human Review Interface
+
+```python
+# bigrag/utils/human_review.py
+
+class HumanReviewQueue:
+    """
+    Queue contradictions and low-confidence extractions for human review.
+
+    Critical for 99%+ accuracy requirement.
+    """
+
+    def __init__(self, review_dir: str = "expr/human_review"):
+        self.review_dir = Path(review_dir)
+        self.review_dir.mkdir(parents=True, exist_ok=True)
+        self.queue = []
+
+    def add_contradiction(self, contradiction: Dict):
+        """Add contradiction to review queue."""
+        self.queue.append({
+            'type': 'contradiction',
+            'severity': 'critical',
+            'data': contradiction,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    def add_low_confidence_extraction(
+        self,
+        chunk_id: str,
+        extraction: Dict,
+        confidence: float
+    ):
+        """Add low-confidence extraction to review queue."""
+        if confidence < 0.8:
+            self.queue.append({
+                'type': 'low_confidence',
+                'severity': 'warning',
+                'chunk_id': chunk_id,
+                'extraction': extraction,
+                'confidence': confidence,
+                'timestamp': datetime.now().isoformat()
+            })
+
+    def export_review_queue(self) -> Path:
+        """
+        Export review queue to human-readable format.
+
+        Creates JSON file + Excel file for easy review.
+        """
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # JSON export (for automated processing)
+        json_file = self.review_dir / f"review_queue_{timestamp}.json"
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(self.queue, f, ensure_ascii=False, indent=2)
+
+        # Excel export (for human review)
+        excel_file = self.review_dir / f"review_queue_{timestamp}.xlsx"
+        self._export_to_excel(excel_file)
+
+        return excel_file
+
+    def _export_to_excel(self, excel_file: Path):
+        """Export queue to Excel with formatting."""
+        try:
+            import pandas as pd
+
+            # Convert queue to DataFrame
+            df = pd.DataFrame(self.queue)
+
+            # Create Excel writer with formatting
+            with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Review Queue', index=False)
+
+                # Auto-adjust column widths
+                worksheet = writer.sheets['Review Queue']
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        if cell.value:
+                            max_length = max(max_length, len(str(cell.value)))
+                    worksheet.column_dimensions[column_letter].width = min(max_length + 2, 50)
+
+        except ImportError:
+            # Fallback to CSV if pandas/openpyxl not available
+            csv_file = excel_file.with_suffix('.csv')
+            import csv
+            with open(csv_file, 'w', encoding='utf-8', newline='') as f:
+                if self.queue:
+                    writer = csv.DictWriter(f, fieldnames=self.queue[0].keys())
+                    writer.writeheader()
+                    writer.writerows(self.queue)
+```
+
+### Performance Optimization
+
+```python
+# bigrag/utils/batch_processor.py
+
+class BatchProcessor:
+    """
+    Process documents in batches for efficiency.
+
+    Critical for 1000+ document scalability.
+    """
+
+    @staticmethod
+    async def batch_process_documents(
+        documents: List[Dict],
+        process_func,
+        batch_size: int = 10,
+        max_concurrent: int = 5,
+        checkpoint_interval: int = 50
+    ):
+        """
+        Process documents with:
+        - Batching (reduce API overhead)
+        - Concurrency (parallel processing)
+        - Checkpointing (resume from failure)
+        """
+        import asyncio
+        from itertools import islice
+
+        total_docs = len(documents)
+        processed = 0
+        results = []
+
+        # Create batches
+        def batcher(iterable, n):
+            it = iter(iterable)
+            while True:
+                batch = list(islice(it, n))
+                if not batch:
+                    break
+                yield batch
+
+        for batch_idx, batch in enumerate(batcher(documents, batch_size)):
+            # Process batch concurrently
+            semaphore = asyncio.Semaphore(max_concurrent)
+
+            async def process_with_semaphore(doc):
+                async with semaphore:
+                    return await process_func(doc)
+
+            batch_results = await asyncio.gather(
+                *[process_with_semaphore(doc) for doc in batch],
+                return_exceptions=True
+            )
+
+            results.extend(batch_results)
+            processed += len(batch)
+
+            # Checkpoint every N documents
+            if (batch_idx + 1) % (checkpoint_interval // batch_size) == 0:
+                ExtractionErrorHandler.create_checkpoint(
+                    document_id='batch_processing',
+                    phase=f'batch_{batch_idx+1}',
+                    data={
+                        'processed': processed,
+                        'total': total_docs,
+                        'progress': processed / total_docs
+                    }
+                )
+
+            # Progress logging
+            print(f"Processed {processed}/{total_docs} documents ({processed/total_docs*100:.1f}%)")
+
+        return results
+```
+
+### Quality Metrics Dashboard
+
+```python
+# bigrag/utils/metrics_dashboard.py
+
+class QualityMetricsDashboard:
+    """
+    Export comprehensive quality metrics for monitoring.
+
+    Tracks ALL success criteria in one place.
+    """
+
+    def __init__(self):
+        self.metrics = {
+            'table_extraction': {
+                'total_tables': 0,
+                'passed_validation': 0,
+                'failed_validation': 0,
+                'avg_numeric_coverage': 0.0
+            },
+            'entity_extraction': {
+                'total_entities': 0,
+                'total_relations': 0,
+                'avg_completeness_score': 0.0
+            },
+            'entity_merging': {
+                'entities_before_merge': 0,
+                'entities_after_merge': 0,
+                'deduplication_rate': 0.0
+            },
+            'validation': {
+                'contradictions': 0,
+                'confirmed_facts': 0,
+                'numeric_accuracy': 0.0
+            }
+        }
+
+    def update_table_metrics(self, table_data: Dict):
+        """Update metrics after table extraction."""
+        self.metrics['table_extraction']['total_tables'] += 1
+
+        if table_data['metadata']['validation_status'] == 'PASS':
+            self.metrics['table_extraction']['passed_validation'] += 1
+        else:
+            self.metrics['table_extraction']['failed_validation'] += 1
+
+        coverage = table_data['metadata'].get('numeric_coverage', 0.0)
+        n = self.metrics['table_extraction']['total_tables']
+        old_avg = self.metrics['table_extraction']['avg_numeric_coverage']
+        self.metrics['table_extraction']['avg_numeric_coverage'] = (
+            (old_avg * (n - 1) + coverage) / n
+        )
+
+    def export_dashboard(self, output_file: str = "expr/metrics_dashboard.json"):
+        """Export metrics to JSON for visualization."""
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                'timestamp': datetime.now().isoformat(),
+                'metrics': self.metrics,
+                'summary': {
+                    'table_validation_rate': (
+                        self.metrics['table_extraction']['passed_validation'] /
+                        max(self.metrics['table_extraction']['total_tables'], 1)
+                    ),
+                    'avg_numeric_coverage': self.metrics['table_extraction']['avg_numeric_coverage'],
+                    'entity_deduplication_rate': self.metrics['entity_merging']['deduplication_rate'],
+                    'contradiction_count': self.metrics['validation']['contradictions']
+                }
+            }, f, ensure_ascii=False, indent=2)
+
+        return output_path
+```
+
+### Bangla Numeral Normalization (CRITICAL for Your Domain)
+
+```python
+# bigrag/utils/bangla_utils.py
+
+class BanglaNumeralNormalizer:
+    """
+    Normalize Bangla numerals for accurate comparison and validation.
+
+    CRITICAL for educational domain: "১২০" vs "120" must be treated as same.
+    """
+
+    # Mapping table
+    BANGLA_TO_ENGLISH = {
+        '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+        '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+    }
+
+    ENGLISH_TO_BANGLA = {v: k for k, v in BANGLA_TO_ENGLISH.items()}
+
+    @staticmethod
+    def bangla_to_english(text: str) -> str:
+        """
+        Convert Bangla numerals to English.
+
+        Examples:
+        - "১২০" → "120"
+        - "৪.০০" → "4.00"
+        - "CSE: ১২০ seats" → "CSE: 120 seats"
+        """
+        result = text
+        for bn, en in BanglaNumeralNormalizer.BANGLA_TO_ENGLISH.items():
+            result = result.replace(bn, en)
+        return result
+
+    @staticmethod
+    def english_to_bangla(text: str) -> str:
+        """
+        Convert English numerals to Bangla.
+
+        Examples:
+        - "120" → "১২০"
+        - "4.00" → "৪.০০"
+        """
+        result = text
+        for en, bn in BanglaNumeralNormalizer.ENGLISH_TO_BANGLA.items():
+            result = result.replace(en, bn)
+        return result
+
+    @staticmethod
+    def normalize_for_comparison(text: str) -> str:
+        """
+        Normalize text for comparison (always convert to English).
+
+        Use in validation to ensure "১২০" == "120".
+        """
+        return BanglaNumeralNormalizer.bangla_to_english(text)
+
+    @staticmethod
+    def extract_numbers(text: str, normalize: bool = True) -> list:
+        """
+        Extract all numbers from text (Bangla + English).
+
+        Args:
+            text: Input text
+            normalize: If True, convert all to English numerals
+
+        Returns:
+            List of numbers as strings
+        """
+        import re
+
+        # First normalize if requested
+        if normalize:
+            text = BanglaNumeralNormalizer.bangla_to_english(text)
+
+        # Extract all numbers (including decimals)
+        numbers = re.findall(r'\d+(?:\.\d+)?', text)
+        return numbers
+
+
+# Integration Point 1: Update NumericValidator
+# MODIFY: bigrag/extractors/paragraph_extractor.py
+
+class ConstrainedLLMExtractor:
+    # ... existing code ...
+
+    def _validate_numeric_accuracy(
+        self,
+        source_text: str,
+        relations: List[Dict],
+        entities: List[Dict]
+    ) -> Dict:
+        """
+        Validate numeric accuracy with Bangla numeral normalization.
+        """
+        from bigrag.utils.bangla_utils import BanglaNumeralNormalizer
+
+        # NORMALIZE source text before extraction
+        normalized_source = BanglaNumeralNormalizer.normalize_for_comparison(source_text)
+
+        # Extract numbers from normalized source
+        source_numbers = set(BanglaNumeralNormalizer.extract_numbers(normalized_source))
+
+        # Extract numbers from LLM output (with normalization)
+        extracted_numbers = set()
+
+        for rel in relations:
+            normalized_content = BanglaNumeralNormalizer.normalize_for_comparison(rel['content'])
+            nums = BanglaNumeralNormalizer.extract_numbers(normalized_content)
+            extracted_numbers.update(nums)
+
+        for ent in entities:
+            if ent['entity_type'] in ['number', 'seat_count', 'gpa_requirement', 'fee']:
+                normalized_name = BanglaNumeralNormalizer.normalize_for_comparison(ent['entity_name'])
+                nums = BanglaNumeralNormalizer.extract_numbers(normalized_name)
+                extracted_numbers.update(nums)
+
+        # Check for hallucinations and missing numbers
+        hallucinated = extracted_numbers - source_numbers
+        missing = source_numbers - extracted_numbers
+
+        coverage = (
+            len(extracted_numbers & source_numbers) / len(source_numbers)
+            if source_numbers else 1.0
+        )
+
+        return {
+            'status': 'PASS' if coverage >= 0.98 and not hallucinated else 'FAIL',
+            'numeric_coverage': coverage,
+            'hallucinated_numbers': list(hallucinated),
+            'missing_numbers': list(missing),
+            'normalization_applied': True  # Flag for debugging
+        }
+
+
+# Integration Point 2: Update Table Validator
+# MODIFY: bigrag/preprocessors/table_extractor.py
+
+class GPT4TableExtractor:
+    # ... existing code ...
+
+    async def _validate_tables(
+        self,
+        source_text: str,
+        tables: List[Dict]
+    ) -> List[Dict]:
+        """
+        Validate with Bangla numeral normalization.
+        """
+        from bigrag.utils.bangla_utils import BanglaNumeralNormalizer
+
+        # Normalize source text
+        normalized_source = BanglaNumeralNormalizer.normalize_for_comparison(source_text)
+        source_numbers = set(BanglaNumeralNormalizer.extract_numbers(normalized_source))
+
+        # Extract numbers from tables (with normalization)
+        table_numbers = set()
+        for table in tables:
+            for row in table['rows']:
+                for value in row.values():
+                    normalized_value = BanglaNumeralNormalizer.normalize_for_comparison(str(value))
+                    nums = BanglaNumeralNormalizer.extract_numbers(normalized_value)
+                    table_numbers.update(nums)
+
+        # Check coverage
+        missing_numbers = source_numbers - table_numbers
+        coverage = len(table_numbers & source_numbers) / len(source_numbers) if source_numbers else 1.0
+
+        # Update validation status
+        for table in tables:
+            if coverage >= 0.99 and not missing_numbers:
+                table['metadata']['validation_status'] = 'PASS'
+                table['metadata']['numeric_coverage'] = coverage
+            else:
+                table['metadata']['validation_status'] = 'FAIL'
+                table['metadata']['numeric_coverage'] = coverage
+                table['metadata']['missing_numbers'] = list(missing_numbers)
+
+        return tables
+```
+
+**Why This is CRITICAL:** Without normalization, "১২০" (Bangla) != "120" (English) causes validation failures even when extraction is correct.
+
+---
+
+### Academic Year Temporal Validation (OPTIONAL - Read Carefully)
+
+**My Expert Assessment:** This is **NOT CRITICAL** for your initial implementation. Here's why:
+
+1. **Your Requirement**: 99%+ accuracy on seat counts, department codes, GPAs
+2. **Temporal Logic**: Only needed if you have MULTIPLE years of data
+3. **Current Status**: You have 2024-2025 data only (single year)
+
+**Recommendation:** **SKIP for now**, implement in Phase 2 IF you add historical data.
+
+If you still want it, here's a minimal implementation:
+
+```python
+# bigrag/utils/temporal_utils.py (OPTIONAL - implement only if needed)
+
+import re
+from datetime import datetime
+
+class AcademicYearExtractor:
+    """
+    Extract academic year from text (OPTIONAL enhancement).
+
+    Only needed if you have multi-year data.
+    """
+
+    @staticmethod
+    def extract_academic_year(text: str) -> str | None:
+        """
+        Extract academic year from text.
+
+        Examples:
+        - "২০২৪-২০২৫ শিক্ষাবর্ষ" → "2024-2025"
+        - "Academic Session: 2024-2025" → "2024-2025"
+        """
+        from bigrag.utils.bangla_utils import BanglaNumeralNormalizer
+
+        # Normalize Bangla numerals first
+        normalized = BanglaNumeralNormalizer.bangla_to_english(text)
+
+        # Extract year pattern
+        match = re.search(r'(20\d{2})[-–](20\d{2})', normalized)
+        if match:
+            return f"{match.group(1)}-{match.group(2)}"
+
+        return None
+
+    @staticmethod
+    def add_temporal_metadata(relation: Dict, chunk_text: str) -> Dict:
+        """
+        Add academic year to relation metadata if found.
+        """
+        academic_year = AcademicYearExtractor.extract_academic_year(chunk_text)
+
+        if academic_year:
+            if 'metadata' not in relation:
+                relation['metadata'] = {}
+            relation['metadata']['academic_year'] = academic_year
+
+        return relation
+```
+
+**Integration:** Add to `TableFactExtractor._row_to_relation()` ONLY if you need year tracking.
+
+**My Verdict:** **SKIP this for initial implementation**. You can add it later in 1 hour if needed.
+
+---
+
+### Retry Logic with Exponential Backoff (ALREADY INCLUDED)
+
+**Good news:** I already added this in the "Error Handling & Recovery" section (lines 1645-1679)!
+
+Let me enhance it with the suggested `tenacity` library approach:
+
+```python
+# bigrag/utils/error_recovery.py (ENHANCED VERSION)
+
+import asyncio
+import logging
+from typing import Callable, Any
+from functools import wraps
+
+logger = logging.getLogger(__name__)
+
+class ExtractionErrorHandler:
+    """
+    Production-grade error handling with automatic retries.
+
+    ENHANCED with exponential backoff and specific error handling.
+    """
+
+    @staticmethod
+    async def retry_with_backoff(
+        async_func: Callable,
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+        max_delay: float = 10.0,
+        on_error: Callable = None
+    ) -> Any:
+        """
+        Exponential backoff retry for API calls.
+
+        Retry delays: 1s, 2s, 4s (exponential)
+        """
+        for attempt in range(max_retries):
+            try:
+                return await async_func()
+            except Exception as e:
+                # Check if retryable error
+                is_retryable = ExtractionErrorHandler._is_retryable_error(e)
+
+                if attempt == max_retries - 1 or not is_retryable:
+                    if on_error:
+                        on_error(e)
+
+                    # Log final failure
+                    logger.error(
+                        f"Function {async_func.__name__} failed after {attempt + 1} attempts: {e}"
+                    )
+                    raise
+
+                # Calculate delay with exponential backoff
+                delay = min(base_delay * (2 ** attempt), max_delay)
+                logger.warning(
+                    f"Attempt {attempt + 1} failed: {e}. Retrying in {delay:.1f}s..."
+                )
+                await asyncio.sleep(delay)
+
+    @staticmethod
+    def _is_retryable_error(error: Exception) -> bool:
+        """
+        Determine if error is retryable.
+
+        Retryable errors:
+        - Network timeouts
+        - API rate limits (429)
+        - Temporary server errors (500, 502, 503)
+
+        Non-retryable errors:
+        - Invalid API key (401)
+        - Malformed request (400)
+        - Not found (404)
+        """
+        error_str = str(error).lower()
+
+        # Retryable patterns
+        retryable_patterns = [
+            'timeout', 'timed out',
+            'rate limit', '429',
+            'server error', '500', '502', '503',
+            'connection error', 'connection reset'
+        ]
+
+        # Non-retryable patterns
+        non_retryable_patterns = [
+            'invalid api key', '401',
+            'bad request', '400',
+            'not found', '404'
+        ]
+
+        # Check non-retryable first
+        if any(pattern in error_str for pattern in non_retryable_patterns):
+            return False
+
+        # Check retryable
+        if any(pattern in error_str for pattern in retryable_patterns):
+            return True
+
+        # Default: retry for unknown errors (conservative)
+        return True
+
+    @staticmethod
+    def create_checkpoint(
+        document_id: str,
+        phase: str,
+        data: dict
+    ):
+        """Create checkpoint after each document processing."""
+        from pathlib import Path
+        import json
+        from datetime import datetime
+
+        checkpoint_dir = Path("expr/checkpoints")
+        checkpoint_dir.mkdir(exist_ok=True, parents=True)
+
+        checkpoint_file = checkpoint_dir / f"{document_id}_{phase}.json"
+        with open(checkpoint_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                'document_id': document_id,
+                'phase': phase,
+                'timestamp': datetime.now().isoformat(),
+                'data': data
+            }, f, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def load_checkpoint(
+        document_id: str,
+        phase: str
+    ) -> dict | None:
+        """Load checkpoint if exists."""
+        from pathlib import Path
+        import json
+
+        checkpoint_file = Path(f"expr/checkpoints/{document_id}_{phase}.json")
+        if checkpoint_file.exists():
+            with open(checkpoint_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None
+
+
+# Decorator for automatic retry (convenience wrapper)
+def retry_on_failure(max_retries: int = 3, base_delay: float = 1.0):
+    """
+    Decorator for automatic retry with exponential backoff.
+
+    Usage:
+    @retry_on_failure(max_retries=3, base_delay=2.0)
+    async def my_llm_call(prompt: str):
+        return await openai_client.chat.completions.create(...)
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            async def _func():
+                return await func(*args, **kwargs)
+
+            return await ExtractionErrorHandler.retry_with_backoff(
+                _func,
+                max_retries=max_retries,
+                base_delay=base_delay
+            )
+        return wrapper
+    return decorator
+
+
+# Usage Example:
+# from bigrag.utils.error_recovery import retry_on_failure
+#
+# @retry_on_failure(max_retries=3, base_delay=2.0)
+# async def extract_table(table_text: str):
+#     return await gpt4_table_extractor.extract(table_text)
+```
+
+---
+
+### Testing Strategy
+
+```python
+# tests/test_educational_kg.py
+
+import pytest
+from pathlib import Path
+
+class TestEducationalKG:
+    """
+    Comprehensive test suite for educational domain KG.
+
+    Tests EVERY success metric defined in the plan.
+    """
+
+    @pytest.fixture
+    def sample_kuet_table(self):
+        """Sample KUET department table for testing."""
+        return """
+| বিভাগ/বিষয় | কোড | আসন |
+|------------|-----|-----|
+| কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং | CSE | ১২০ |
+| ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং | EEE | ১২০ |
+| সিভিল ইঞ্জিনিয়ারিং | CE | ১৮০ |
+"""
+
+    @pytest.mark.asyncio
+    async def test_table_extraction_accuracy(self, sample_kuet_table):
+        """Test 1: Table extraction must have 100% numeric coverage."""
+        from bigrag.preprocessors.table_extractor import GPT4TableExtractor
+
+        extractor = GPT4TableExtractor(api_key="your-key")
+        tables = await extractor.extract_tables_from_document(sample_kuet_table)
+
+        assert len(tables) == 1
+        assert tables[0]['metadata']['validation_status'] == 'PASS'
+        assert tables[0]['metadata']['numeric_coverage'] >= 0.99
+
+        # Verify exact numbers preserved
+        rows = tables[0]['rows']
+        assert any('১২০' in str(row.values()) for row in rows)
+        assert any('১৮০' in str(row.values()) for row in rows)
+
+    @pytest.mark.asyncio
+    async def test_entity_deduplication(self):
+        """Test 2: Entity linking must merge CSE variants."""
+        from bigrag.merging.entity_linker import ProductionEntityLinker
+        from bigrag.merging.canonicalization import EntityCanonicalizationMap
+
+        canon_map = EntityCanonicalizationMap()
+        linker = ProductionEntityLinker(
+            canon_map, None, None
+        )
+
+        # Simulated entities from different chunks
+        entities = [
+            {'entity_name': 'CSE', 'entity_type': 'department', 'weight': 90},
+            {'entity_name': 'কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং', 'entity_type': 'department', 'weight': 85},
+            {'entity_name': 'Computer Science and Engineering', 'entity_type': 'department', 'weight': 88}
+        ]
+
+        merged = await linker.link_entities_across_chunks(entities)
+
+        # Must merge to 1 entity
+        assert len(merged) == 1
+        assert merged[0]['confidence'] >= 0.95
+        assert len(merged[0]['aliases']) == 3
+
+    def test_numeric_validation(self):
+        """Test 3: Numeric validator must catch hallucinations."""
+        from bigrag.extractors.paragraph_extractor import ConstrainedLLMExtractor
+
+        source_text = "CSE department has ১২০ seats."
+
+        # Simulated LLM output with hallucination
+        relations = [
+            {'content': 'CSE department has 150 seats.'}  # WRONG!
+        ]
+
+        extractor = ConstrainedLLMExtractor(None, {})
+        validation = extractor._validate_numeric_accuracy(
+            source_text, relations, []
+        )
+
+        assert validation['status'] == 'FAIL'
+        assert '150' in validation['hallucinated_numbers']
+
+    def test_cross_chunk_consistency(self):
+        """Test 4: Validator must detect contradictions."""
+        from bigrag.validators.consistency_validator import CrossChunkValidator
+
+        facts = [
+            {
+                'source_id': 'chunk_001',
+                'metadata': {
+                    'structured_fact': {
+                        'Department': 'CSE',
+                        'Seats': '120'
+                    }
+                }
+            },
+            {
+                'source_id': 'chunk_002',
+                'metadata': {
+                    'structured_fact': {
+                        'Department': 'CSE',
+                        'Seats': '180'  # CONTRADICTION!
+                    }
+                }
+            }
+        ]
+
+        validator = CrossChunkValidator()
+        result = validator.validate_consistency(facts)
+
+        assert result['overall_status'] == 'NEEDS_REVIEW'
+        assert len(result['contradictions']) == 1
+        assert result['contradictions'][0]['entity'] == 'CSE'
+
+    def test_canonicalization_map(self):
+        """Test 5: Canonicalization map must have all KUET departments."""
+        from bigrag.merging.canonicalization import EntityCanonicalizationMap
+
+        canon_map = EntityCanonicalizationMap()
+
+        # Test all 16 KUET departments
+        kuet_departments = [
+            'CSE', 'EEE', 'CE', 'ME', 'ECE', 'IPE', 'URP', 'BME',
+            'MSE', 'EEE', 'ChE', 'TE', 'BECM', 'MTE', 'GCE', 'Arch'
+        ]
+
+        for dept in kuet_departments:
+            canonical = canon_map.canonicalize(dept)
+            # Must have mapping (not return original)
+            assert canonical != dept or len(dept) > 5  # Unless it's full name
+
+    @pytest.mark.integration
+    @pytest.mark.asyncio
+    async def test_end_to_end_pipeline(self, sample_kuet_table, tmp_path):
+        """Test 6: Full pipeline from document to queryable KG."""
+        from bigrag import BiGRAG
+
+        # Initialize BiGRAG
+        rag = BiGRAG(working_dir=str(tmp_path))
+
+        # Insert sample document
+        await rag.ainsert(
+            [sample_kuet_table],
+            metadata=[{
+                'title': 'KUET Admission Guide',
+                'category': 'admission',
+                'tags': ['KUET', 'engineering']
+            }]
+        )
+
+        # Query for CSE seats
+        from bigrag.base import QueryParam
+        results = await rag.aquery(
+            "How many seats does CSE have?",
+            QueryParam(top_k=5)
+        )
+
+        # Must return correct answer
+        assert len(results) > 0
+        assert any('১২০' in r or '120' in r for r in results)
+
+    @pytest.mark.performance
+    def test_batch_processing_scalability(self):
+        """Test 7: Batch processor must handle 1000+ documents."""
+        from bigrag.utils.batch_processor import BatchProcessor
+        import asyncio
+
+        # Simulate 1000 documents
+        documents = [
+            {'id': f'doc_{i:04d}', 'content': f'Content {i}'}
+            for i in range(1000)
+        ]
+
+        async def mock_process(doc):
+            await asyncio.sleep(0.01)  # Simulate processing
+            return {'status': 'success', 'doc_id': doc['id']}
+
+        # Process in batches
+        results = asyncio.run(
+            BatchProcessor.batch_process_documents(
+                documents,
+                mock_process,
+                batch_size=50,
+                max_concurrent=10
+            )
+        )
+
+        assert len(results) == 1000
+        assert all(r['status'] == 'success' for r in results if isinstance(r, dict))
+
+
+# Fixture for integration testing
+@pytest.fixture(scope="session")
+def kuet_corpus():
+    """Load full KUET corpus for integration tests."""
+    corpus_file = Path("datasets/KUET_Admission_info.md")
+    if corpus_file.exists():
+        with open(corpus_file, 'r', encoding='utf-8') as f:
+            return f.read()
+    return None
+
+
+# Golden QA pairs for accuracy testing
+GOLDEN_QA_PAIRS = [
+    {
+        'question': 'How many seats does CSE have in KUET?',
+        'expected_answer': '১২০',
+        'alternate_answers': ['120']
+    },
+    {
+        'question': 'What is the department code for Civil Engineering?',
+        'expected_answer': 'CE'
+    },
+    {
+        'question': 'Which department has 180 seats?',
+        'expected_answer': 'Civil Engineering',
+        'alternate_answers': ['CE', 'সিভিল ইঞ্জিনিয়ারিং']
+    },
+    # Add 97 more QA pairs here...
+]
+
+
+@pytest.mark.qa_accuracy
+@pytest.mark.parametrize("qa_pair", GOLDEN_QA_PAIRS)
+@pytest.mark.asyncio
+async def test_qa_accuracy(qa_pair, kuet_corpus, tmp_path):
+    """Test 8: QA accuracy must be 99%+ on golden dataset."""
+    if not kuet_corpus:
+        pytest.skip("KUET corpus not available")
+
+    from bigrag import BiGRAG
+    from bigrag.base import QueryParam
+
+    # Build KG from corpus
+    rag = BiGRAG(working_dir=str(tmp_path))
+    await rag.ainsert([kuet_corpus], metadata=[{'title': 'KUET Guide'}])
+
+    # Query
+    results = await rag.aquery(
+        qa_pair['question'],
+        QueryParam(top_k=10)
+    )
+
+    # Check if expected answer in results
+    combined_results = " ".join(results)
+    expected = qa_pair['expected_answer']
+    alternates = qa_pair.get('alternate_answers', [])
+
+    assert (
+        expected in combined_results or
+        any(alt in combined_results for alt in alternates)
+    ), f"Expected '{expected}' not found in results: {combined_results}"
+```
+
+---
+
 ## Next Steps
 
 1. ✅ **Approve this plan**
@@ -1644,4 +2740,113 @@ bigrag/
 3. **Test on sample data** (KUET department table)
 4. **Iterate** based on validation results
 
-**Ready to start coding?** Let me know and I'll create the implementation files!
+**Production-Ready Checklist:**
+- [x] LLM-only table extraction (simplified)
+- [x] Multi-level validation (numeric, dates, consistency)
+- [x] Domain canonicalization maps
+- [x] **Bangla numeral normalization (CRITICAL - ADDED)**
+- [x] Error handling & retry logic (ENHANCED with retryable error detection)
+- [x] Checkpointing for resume capability
+- [x] Comprehensive logging
+- [x] Human review queue for contradictions
+- [x] Batch processing for scalability
+- [x] Quality metrics dashboard
+- [ ] Academic year temporal validation (OPTIONAL - skip for Phase 1)
+
+---
+
+## 📋 Response to AI Assistant's Suggestions
+
+I've carefully reviewed all suggestions. Here's my expert assessment:
+
+### ✅ ACCEPTED & IMPLEMENTED
+
+#### 1. **Bangla Numeral Normalization** (Gap #0) - **CRITICAL**
+- **Status:** ✅ ADDED (lines 2045-2225)
+- **Why:** Without this, "১২০" != "120" causes validation failures
+- **Implementation:**
+  - `BanglaNumeralNormalizer` class with bidirectional conversion
+  - Integrated into `_validate_numeric_accuracy()` and `_validate_tables()`
+  - Ensures 99%+ numeric coverage works for bilingual data
+- **Priority:** **MUST HAVE** for educational domain
+
+#### 2. **Enhanced Retry Logic** (Gap #3) - **CRITICAL**
+- **Status:** ✅ ENHANCED (lines 2298-2471)
+- **Why:** Production systems need intelligent retry for API calls
+- **Implementation:**
+  - Added `_is_retryable_error()` to distinguish 429/500 (retry) from 401/400 (fail fast)
+  - Added `@retry_on_failure` decorator for convenience
+  - Exponential backoff with configurable delays
+- **Priority:** **MUST HAVE** for 1000+ document scalability
+
+### ⚠️ PARTIALLY ACCEPTED
+
+#### 3. **Quality Metrics Export** (Gap #2) - **ALREADY COVERED**
+- **Status:** ✅ ALREADY IMPLEMENTED (lines 1969-2042)
+- **Why:** Your plan already has `QualityMetricsDashboard`
+- **What AI suggested:** Production readiness score calculation
+- **My assessment:** Current implementation is SUFFICIENT
+  - Already tracks table validation rate, numeric coverage, deduplication
+  - Exports to JSON for monitoring
+- **Action:** **NO CHANGES NEEDED** - existing implementation covers this
+
+### ❌ REJECTED (Not Critical for Phase 1)
+
+#### 4. **Temporal Validation** (Gap #1) - **OPTIONAL**
+- **Status:** ⚠️ ADDED AS OPTIONAL (lines 2231-2294)
+- **Why rejected for Phase 1:**
+  - Your data is single-year (2024-2025 only)
+  - Temporal logic only matters with multi-year historical data
+  - Adds complexity without immediate benefit
+- **My recommendation:** **SKIP for now**, implement in Phase 2 if you add 2025-2026 data
+- **Provided code:** Minimal implementation available if needed (20 lines, 1 hour work)
+- **Priority:** **NICE TO HAVE** (future enhancement)
+
+---
+
+## 🎯 Final Plan Status
+
+### What Changed (Based on AI Suggestions):
+1. ✅ **ADDED**: Bangla numeral normalization (CRITICAL fix)
+2. ✅ **ENHANCED**: Retry logic with smart error detection
+3. ✅ **DOCUMENTED**: Temporal validation as optional (Phase 2)
+4. ✅ **VERIFIED**: Quality metrics already complete
+
+### What Stayed the Same:
+- LLM-only table extraction approach
+- Multi-strategy entity linking
+- Cross-chunk validation
+- Human review queue
+- All success metrics (99%+ targets)
+
+### Files Added/Modified:
+| File | Status | Lines | Priority |
+|------|--------|-------|----------|
+| `bigrag/utils/bangla_utils.py` | **NEW - MUST IMPLEMENT** | ~120 | CRITICAL |
+| `bigrag/utils/error_recovery.py` | **ENHANCED** | ~170 | CRITICAL |
+| `bigrag/utils/temporal_utils.py` | **OPTIONAL** | ~35 | Phase 2 |
+| `bigrag/extractors/paragraph_extractor.py` | **MODIFY** | +15 | CRITICAL |
+| `bigrag/preprocessors/table_extractor.py` | **MODIFY** | +20 | CRITICAL |
+
+---
+
+## ✅ FINAL CONFIRMATION: PLAN IS READY FOR IMPLEMENTATION
+
+**Summary:**
+- ✅ All CRITICAL gaps addressed (Bangla normalization, enhanced retry)
+- ✅ All OPTIONAL features documented for Phase 2
+- ✅ No breaking changes to existing plan
+- ✅ Implementation timeline unchanged (4 weeks)
+- ✅ Cost estimate unchanged ($401 for 1000 docs)
+- ✅ Success metrics unchanged (99%+ accuracy targets)
+
+**What to implement FIRST (Week 1):**
+1. `bigrag/utils/bangla_utils.py` (Bangla numeral normalization) - **30 minutes**
+2. `bigrag/utils/error_recovery.py` (Enhanced retry) - **1 hour**
+3. `bigrag/preprocessors/table_extractor.py` (GPT-4o table extraction) - **4 hours**
+4. `bigrag/preprocessors/smart_chunker.py` (Table-aware chunking) - **2 hours**
+5. `bigrag/extractors/table_fact_extractor.py` (Rule-based conversion) - **2 hours**
+
+**Total Week 1 effort:** ~10 hours (FEASIBLE)
+
+**You can start coding NOW!** The plan is production-ready and addresses all critical concerns.

@@ -152,6 +152,34 @@ class ProductionKGPipeline:
             )
 
             for extraction in batch_result['extractions']:
+                chunk_id = extraction['chunk_id']
+
+                # Add source_id and metadata to each entity
+                for entity in extraction['entities']:
+                    if 'source_id' not in entity:
+                        entity['source_id'] = chunk_id
+                    if 'metadata' not in entity:
+                        entity['metadata'] = {}
+                    entity['metadata']['extraction_method'] = 'constrained_llm'
+
+                # Add source_id, metadata, and linked_entities to each relation
+                for relation in extraction['relations']:
+                    if 'source_id' not in relation:
+                        relation['source_id'] = chunk_id
+                    if 'metadata' not in relation:
+                        relation['metadata'] = {}
+                    relation['metadata']['extraction_method'] = 'constrained_llm'
+
+                    # Extract linked entities from relation content
+                    # (entities mentioned in the relation)
+                    linked_entities = []
+                    for entity in extraction['entities']:
+                        # Simple heuristic: if entity name appears in relation content
+                        if entity['entity_name'] in relation['content']:
+                            linked_entities.append(entity['entity_name'])
+
+                    relation['metadata']['linked_entities'] = linked_entities
+
                 all_entities.extend(extraction['entities'])
                 all_relations.extend(extraction['relations'])
 

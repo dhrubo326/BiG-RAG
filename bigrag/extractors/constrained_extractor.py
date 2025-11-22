@@ -151,8 +151,10 @@ class ConstrainedLLMExtractor:
             # Log validation failure (FAIL status only)
             print(f"[FAIL] Validation failed (attempt {attempt}/{3}):")
             print(f"  Numeric coverage: {validation_result.get('numeric_coverage', 0):.2%}")
-            print(f"  Missing numbers: {validation_result.get('missing_numbers', [])}")
-            print(f"  Hallucinated numbers: {validation_result.get('hallucinated_numbers', [])}")
+            missing_count = len(validation_result.get('missing_numbers', []))
+            hallucinated_count = len(validation_result.get('hallucinated_numbers', []))
+            print(f"  Missing numbers: {missing_count}")
+            print(f"  Hallucinated numbers: {hallucinated_count}")
 
             # If last attempt, return None
             if attempt == 3:

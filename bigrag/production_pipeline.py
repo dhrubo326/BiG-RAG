@@ -209,7 +209,7 @@ class ProductionKGPipeline:
             original_count = len(all_entities)
             merged_entities = await self.entity_linker.link_entities_across_chunks(all_entities)
             merge_reduction = original_count - len(merged_entities)
-            print(f"    Merged {original_count} → {len(merged_entities)} entities (reduced by {merge_reduction})")
+            print(f"    Merged {original_count} -> {len(merged_entities)} entities (reduced by {merge_reduction})")
         else:
             print("  [3.1] Entity linking disabled - using raw entities")
             merged_entities = all_entities

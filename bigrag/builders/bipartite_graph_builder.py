@@ -185,12 +185,17 @@ class BipartiteGraphBuilder:
             entity_name = f'"{entity["entity_name"].upper()}"'
 
             # Create node data (compatible with BiG-RAG storage format)
+            # Note: After entity merging, source_id may be a list or missing
+            source_id = entity.get('source_id', entity.get('source_ids', ['unknown']))
+            if isinstance(source_id, list):
+                source_id = source_id[0] if source_id else 'unknown'
+
             node_data = {
                 'role': 'entity',
                 'entity_type': entity['entity_type'],
                 'description': entity['description'],
                 'weight': entity.get('weight', 0.0),
-                'source_id': entity['source_id'],
+                'source_id': source_id,
                 'extraction_quality': entity.get('metadata', {}).get('extraction_quality', 'PASS'),  # Track quality level
             }
 

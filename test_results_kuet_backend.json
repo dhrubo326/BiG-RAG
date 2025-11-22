@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-11-22T12:47:06.003509",
+  "test_type": "backend_workflow_replication",
+  "document": "KUET_Admission_info.md",
+  "data_source": "demo_test",
+  "workflow_steps": [
+    "1. add_document_to_corpus() - Save to datasets/demo_test/raw/corpus.jsonl",
+    "2. BiGRAG.ainsert() - Process with OLD chunking-first approach",
+    "3. Output to expr/demo_test/",
+    "4. Inspect generated files"
+  ],
+  "statistics": {
+    "total_entities": 127,
+    "total_relations": 73,
+    "total_chunks": 3,
+    "processing_time": 0.000121,
+    "working_dir": "expr/demo_test"
+  },
+  "corpus_location": "datasets/demo_test/raw/corpus.jsonl",
+  "graph_location": "expr/demo_test/"
+}

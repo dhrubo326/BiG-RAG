@@ -13,6 +13,8 @@ Designed for 99%+ accuracy on bilingual educational documents.
 import asyncio
 from typing import List, Dict, Optional
 import json
+from pathlib import Path
+from datetime import datetime
 
 from bigrag.preprocessors.table_extractor import GPT4TableExtractor, BilingualDetector
 from bigrag.preprocessors.smart_chunker import TableAwareChunker
@@ -43,7 +45,8 @@ class ProductionKGPipeline:
         model: str = "gpt-4o-mini",
         validation_level: str = "STRICT",
         enable_entity_linking: bool = True,
-        extraction_mode: str = "semi_structured"
+        extraction_mode: str = "semi_structured",
+        review_queue_path: str = "expr/human_review_queue.json"
     ):
         """
         Initialize production pipeline.
@@ -57,12 +60,14 @@ class ProductionKGPipeline:
                 - structured: 99%+ accuracy, strict validation (best for tables)
                 - semi_structured: 95%+ accuracy, moderate validation [DEFAULT]
                 - unstructured: 80%+ accuracy, lenient validation (best for narrative text)
+            review_queue_path: Path to human review queue JSON file
         """
         self.api_key = api_key
         self.model = model
         self.validation_level = validation_level
         self.enable_entity_linking = enable_entity_linking
         self.extraction_mode = extraction_mode
+        self.review_queue_path = Path(review_queue_path)
 
         # Initialize components
         self.table_extractor = GPT4TableExtractor(api_key=api_key, model=model)
@@ -142,16 +147,58 @@ class ProductionKGPipeline:
         all_entities = []
         all_relations = []
 
-        # Step 2.1: Table fact extraction (deterministic)
-        print("  [2.1] Table fact extraction (rule-based)...")
+        # Step 2.1: Table fact extraction with graceful degradation
+        print("  [2.1] Table fact extraction (rule-based with graceful degradation)...")
+
+        failed_tables = []
+        successful_tables = 0
+
         for chunk in table_chunks:
-            facts = TableFactExtractor.extract_facts_from_table(
-                chunk['structured_data'],
-                chunk['chunk_id']
-            )
-            all_entities.extend(facts['entities'])
-            all_relations.extend(facts['relations'])
+            # Get validation status from table extraction
+            validation_status = chunk.get('structured_data', {}).get('metadata', {}).get('validation_status', 'UNKNOWN')
+
+            if validation_status == 'FAIL':
+                # Skip failed tables and add to review queue
+                failed_tables.append({
+                    'chunk_id': chunk['chunk_id'],
+                    'table_id': chunk.get('structured_data', {}).get('table_id', 'unknown'),
+                    'reason': 'LLM validation failed',
+                    'validation_feedback': chunk.get('structured_data', {}).get('metadata', {}).get('validation_feedback', ''),
+                    'missing_numbers': chunk.get('structured_data', {}).get('metadata', {}).get('missing_numbers', []),
+                    'hallucinated_numbers': chunk.get('structured_data', {}).get('metadata', {}).get('hallucinated_numbers', []),
+                    'numeric_coverage': chunk.get('structured_data', {}).get('metadata', {}).get('numeric_coverage', 0.0),
+                    'source_markdown': chunk.get('content', ''),
+                    'extracted_data': chunk.get('structured_data', {})
+                })
+                print(f"    [SKIP] Table {chunk['chunk_id']} failed validation - added to review queue")
+                continue
+
+            # Process validated table
+            try:
+                facts = TableFactExtractor.extract_facts_from_table(
+                    chunk['structured_data'],
+                    chunk['chunk_id']
+                )
+                all_entities.extend(facts['entities'])
+                all_relations.extend(facts['relations'])
+                successful_tables += 1
+            except Exception as e:
+                # If fact extraction fails, skip and add to review queue
+                failed_tables.append({
+                    'chunk_id': chunk['chunk_id'],
+                    'table_id': chunk.get('structured_data', {}).get('table_id', 'unknown'),
+                    'reason': f'Fact extraction error: {str(e)}',
+                    'source_markdown': chunk.get('content', ''),
+                    'extracted_data': chunk.get('structured_data', {})
+                })
+                print(f"    [SKIP] Table {chunk['chunk_id']} fact extraction failed - added to review queue")
+
+        success_rate = successful_tables / len(table_chunks) if table_chunks else 1.0
         print(f"    Extracted {len([e for e in all_entities])} entities, {len([r for r in all_relations])} relations from tables")
+        print(f"    Table success rate: {success_rate:.2%} ({successful_tables}/{len(table_chunks)} tables)")
+
+        if failed_tables:
+            print(f"    [WARN] {len(failed_tables)} tables failed - flagged for human review")
 
         # Step 2.2: Paragraph extraction (LLM with validation)
         print("  [2.2] Paragraph extraction (constrained LLM)...")
@@ -292,6 +339,10 @@ class ProductionKGPipeline:
         print(f"  Consistency: {consistency_result['consistency_score']:.2%}")
         print("=" * 80)
 
+        # Save failed tables to human review queue
+        if failed_tables:
+            await self._save_to_review_queue(failed_tables, metadata)
+
         return {
             'entities': merged_entities,
             'relations': all_relations,
@@ -308,11 +359,76 @@ class ProductionKGPipeline:
                 'total_chunks': len(chunks),
                 'table_chunks': len(table_chunks),
                 'paragraph_chunks': len(paragraph_chunks),
+                'successful_tables': successful_tables,
+                'failed_tables': len(failed_tables),
+                'table_success_rate': success_rate,
                 'entity_merge_reduction': len(all_entities) - len(merged_entities) if self.enable_entity_linking else 0,
                 'numeric_coverage': numeric_result['numeric_coverage'],
                 'consistency_score': consistency_result['consistency_score']
-            }
+            },
+            'failed_tables': failed_tables  # For inspection/debugging
         }
+
+    async def _save_to_review_queue(self, failed_items: List[Dict], document_metadata: Optional[Dict] = None):
+        """
+        Save failed validations to human review queue (JSON file).
+
+        Args:
+            failed_items: List of failed tables/chunks
+            document_metadata: Document metadata for context
+        """
+        # Load existing queue
+        if self.review_queue_path.exists():
+            with open(self.review_queue_path, 'r', encoding='utf-8') as f:
+                queue = json.load(f)
+        else:
+            queue = {
+                'version': '1.0',
+                'created_at': datetime.now().isoformat(),
+                'description': 'Human review queue for failed validation items',
+                'items': []
+            }
+
+        # Add new items with timestamp
+        for item in failed_items:
+            review_item = {
+                'id': f"review_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{item.get('chunk_id', 'unknown')}",
+                'timestamp': datetime.now().isoformat(),
+                'status': 'pending',  # pending, reviewed, fixed, rejected
+                'severity': self._calculate_severity(item),
+                'item_type': 'table',
+                'document_metadata': document_metadata or {},
+                **item
+            }
+            queue['items'].append(review_item)
+
+        # Create directory if it doesn't exist
+        self.review_queue_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Save updated queue
+        with open(self.review_queue_path, 'w', encoding='utf-8') as f:
+            json.dump(queue, f, ensure_ascii=False, indent=2)
+
+        print(f"[OK] Saved {len(failed_items)} items to review queue: {self.review_queue_path}")
+
+    def _calculate_severity(self, item: Dict) -> str:
+        """
+        Calculate severity of validation failure.
+
+        Returns: 'critical', 'high', 'medium', 'low'
+        """
+        numeric_coverage = item.get('numeric_coverage', 0.0)
+        missing_count = len(item.get('missing_numbers', []))
+        hallucinated_count = len(item.get('hallucinated_numbers', []))
+
+        if numeric_coverage < 0.7 or hallucinated_count > 5:
+            return 'critical'
+        elif numeric_coverage < 0.85 or missing_count > 3:
+            return 'high'
+        elif numeric_coverage < 0.95 or missing_count > 1:
+            return 'medium'
+        else:
+            return 'low'
 
     def save_result(self, result: Dict, output_path: str):
         """

@@ -23,6 +23,8 @@ class NumericValidator:
     """
     Comprehensive numeric validation for extracted knowledge graph.
 
+    NEW (January 2025): LLM-based validation replaces regex for better accuracy.
+
     Three validation levels:
     - STRICT: 100% coverage, 0% hallucination (required for production)
     - MODERATE: 95%+ coverage, <5% hallucination
@@ -36,9 +38,27 @@ class NumericValidator:
     - Location mapping (which chunk contains which number)
     """
 
-    def __init__(self):
-        """Initialize numeric validator."""
+    def __init__(self, api_key: Optional[str] = None, use_llm_validation: bool = True):
+        """
+        Initialize numeric validator.
+
+        Args:
+            api_key: OpenAI API key (required if use_llm_validation=True)
+            use_llm_validation: Whether to use LLM-based validation (default: True)
+        """
         self.normalizer = BanglaNumeralNormalizer()
+        self.use_llm_validation = use_llm_validation
+
+        if use_llm_validation:
+            from openai import AsyncOpenAI
+            import os
+
+            self.api_key = api_key or os.getenv('OPENAI_API_KEY')
+            if not self.api_key:
+                print("[WARN] OPENAI_API_KEY not found - falling back to regex validation")
+                self.use_llm_validation = False
+            else:
+                self.client = AsyncOpenAI(api_key=self.api_key)
 
     def validate_extraction(
         self,

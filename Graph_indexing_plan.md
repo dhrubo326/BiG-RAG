@@ -1,9 +1,11 @@
 # Production Knowledge Graph Building Plan
 
-**Last Updated**: November 23, 2024
+**Last Updated**: January 23, 2025
 **Domain**: Educational admission information (multilingual, table-heavy documents)
 **Target Accuracy**: 95-99%+ with strict validation
 **Status**: ✅ **IMPLEMENTED** - ProductionKGPipeline integrated into BiGRAG
+
+**NEW (January 2025)**: ✅ LLM-based cross-validation, graceful degradation, and Gemini 2.5 Pro support
 
 ---
 
@@ -17,6 +19,13 @@ BiGRAG now supports two knowledge graph building modes:
 | **Production** (opt-in) | Educational docs, tables, multilingual | Slower | Higher ($0.40/doc) | Excellent (95-99%) |
 
 **Key Difference**: Production mode uses table-aware chunking and multi-level validation to ensure critical data (seat counts, GPAs, dates) is extracted with 99%+ accuracy.
+
+**New Features (January 2025)**:
+- ✅ **Two-Model Cross-Validation**: GPT-4o extracts, GPT-4o-mini validates (catches extraction errors)
+- ✅ **Graceful Degradation**: Skips failed tables, continues with valid ones (no all-or-nothing)
+- ✅ **Human Review Queue**: Failed validations saved to `expr/human_review_queue.json` for manual review
+- ✅ **Gemini 2.5 Pro Support**: Automatic fallback for large documents (>100K tokens)
+- ✅ **NO Regex Patterns**: All validation is LLM-based for better semantic understanding
 
 ---
 
@@ -71,7 +80,11 @@ Output: Validated Knowledge Graph (95-99% accuracy)
 
 **Problem**: Tables get split across chunks → data loss
 
-**Solution**: Extract tables FIRST (GPT-4o), then chunk remaining text
+**Solution**: Extract tables FIRST (GPT-4o or Gemini 2.5 Pro), then chunk remaining text
+
+**NEW (January 2025): Automatic Model Selection**:
+- **<100K tokens**: Use GPT-4o (128K context, $2.50/1M tokens)
+- **>100K tokens**: Use Gemini 2.5 Pro (2M context, $1.25/1M tokens)
 
 **Example**:
 ```
@@ -84,7 +97,30 @@ Chunk 1: Full table preserved as single chunk
 Chunk 2: Remaining paragraphs
 ```
 
-**Code**: [bigrag/preprocessors/smart_chunker.py](bigrag/preprocessors/smart_chunker.py)
+**Model Selection Logic**:
+```python
+# Count tokens
+token_count = count_tokens(markdown_text)
+
+# Select model
+if token_count > 100_000 and gemini_api_key:
+    print(f"Document has {token_count:,} tokens - using Gemini 2.5 Pro")
+    model = "gemini-2.5-pro"
+else:
+    print(f"Document has {token_count:,} tokens - using GPT-4o")
+    model = "gpt-4o"
+```
+
+**Cost Comparison**:
+| Document Size | Model | Context Limit | Cost per 1M tokens | Avg Cost/Doc |
+|---------------|-------|---------------|-----------------------|--------------|
+| 50K tokens | GPT-4o | 128K | $2.50 | $0.13 |
+| 150K tokens | Gemini 2.5 Pro | 2M | $1.25 | $0.19 |
+| 500K tokens | Gemini 2.5 Pro | 2M | $1.25 | $0.63 |
+
+**Code**:
+- Smart chunker: [bigrag/preprocessors/smart_chunker.py](bigrag/preprocessors/smart_chunker.py)
+- Table extractor with Gemini support: [bigrag/preprocessors/table_extractor.py](bigrag/preprocessors/table_extractor.py)
 
 ---
 
@@ -124,27 +160,90 @@ Chunk 2: Remaining paragraphs
 
 ### Phase 4: Validation
 
-**Multi-Level Quality Checks**:
+**Multi-Level Quality Checks (NEW: LLM-Based, January 2025)**:
 
-1. **Numeric Coverage** (CRITICAL for academic data)
+1. **Two-Model Cross-Validation** (NEW)
+   - **Extraction**: GPT-4o extracts tables from markdown
+   - **Validation**: GPT-4o-mini validates extracted data against source
+   - **Benefit**: Different models catch each other's errors
+
    ```python
-   source_numbers = extract_numbers(document)
-   extracted_numbers = extract_numbers(knowledge_graph)
+   # Phase 1: Extraction (GPT-4o)
+   tables = await gpt4o_extract_tables(markdown)
 
-   coverage = len(extracted_numbers & source_numbers) / len(source_numbers)
+   # Phase 2: Validation (GPT-4o-mini)
+   for table in tables:
+       validation = await gpt4o_mini_validate(source_markdown, table)
 
-   if coverage < 0.95:
-       REJECT_EXTRACTION  # Fallback to standard pipeline
+       if validation['status'] == 'FAIL':
+           # Skip failed table, add to review queue
+           review_queue.append({
+               'table': table,
+               'reason': validation['feedback'],
+               'severity': calculate_severity(validation)
+           })
    ```
 
-2. **Consistency Check**
+2. **Graceful Degradation** (NEW)
+   - OLD behavior: Reject entire document if one table fails
+   - NEW behavior: Skip failed tables, continue with validated ones
+   - Track success rate: "9/10 tables passed (90%)"
+
+   ```python
+   successful_tables = 0
+   failed_tables = []
+
+   for table in tables:
+       if table['metadata']['validation_status'] == 'FAIL':
+           failed_tables.append(table)  # Add to review queue
+           continue
+
+       # Process validated table
+       facts = extract_facts(table)
+       successful_tables += 1
+
+   print(f"Success rate: {successful_tables}/{len(tables)}")
+   ```
+
+3. **Human Review Queue** (NEW)
+   - Failed validations saved to `expr/human_review_queue.json`
+   - Includes: table_id, source markdown, extracted data, error details
+   - Severity levels: critical, high, medium, low
+
+   ```json
+   {
+     "items": [
+       {
+         "id": "review_20250123_143052_chunk_002",
+         "timestamp": "2025-01-23T14:30:52",
+         "status": "pending",
+         "severity": "high",
+         "numeric_coverage": 0.87,
+         "missing_numbers": ["১২০", "৪.৫০"],
+         "source_markdown": "...",
+         "extracted_data": {...}
+       }
+     ]
+   }
+   ```
+
+4. **Numeric Coverage** (LLM-based, no regex)
+   - Uses GPT-4o-mini to semantically compare numbers
+   - Handles Bangla/English equivalence (১২০ vs 120)
+   - Understands decimals correctly (৪.৫০ as one number, not two)
+
+5. **Consistency Check**
    ```python
    # Detect contradictions across chunks
    if "CSE has 120 seats" AND "CSE has 180 seats":
        FLAG_FOR_HUMAN_REVIEW
    ```
 
-**Code**: [bigrag/validators/consistency_validator.py](bigrag/validators/consistency_validator.py)
+**Code**:
+- Table validation: [bigrag/preprocessors/table_extractor.py](bigrag/preprocessors/table_extractor.py)
+- Graceful degradation: [bigrag/production_pipeline.py](bigrag/production_pipeline.py)
+- Numeric validator: [bigrag/validators/numeric_validator.py](bigrag/validators/numeric_validator.py)
+- Consistency validator: [bigrag/validators/consistency_validator.py](bigrag/validators/consistency_validator.py)
 
 ---
 

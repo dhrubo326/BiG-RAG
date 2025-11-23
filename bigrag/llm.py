@@ -775,7 +775,11 @@ async def zhipu_embedding(
     return np.array(embeddings)
 
 
-@wrap_embedding_func_with_attrs(embedding_dim=1536, max_token_size=8192)
+# Read embedding dimension from .env for consistency across all operations
+_EMBEDDING_DIM = int(os.getenv('EMBEDDING_DIM', '1536'))
+_EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'text-embedding-3-small')
+
+@wrap_embedding_func_with_attrs(embedding_dim=_EMBEDDING_DIM, max_token_size=8192)
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=4, max=60),
@@ -783,10 +787,13 @@ async def zhipu_embedding(
 )
 async def openai_embedding(
     texts: list[str],
-    model: str = "text-embedding-3-small",
+    model: str = None,
     base_url: str = None,
     api_key: str = None,
 ) -> np.ndarray:
+    # Use model from .env if not explicitly provided
+    if model is None:
+        model = _EMBEDDING_MODEL
     if api_key:
         os.environ["OPENAI_API_KEY"] = api_key
 
@@ -864,7 +871,7 @@ async def nvidia_openai_embedding(
     return np.array([dp.embedding for dp in response.data])
 
 
-@wrap_embedding_func_with_attrs(embedding_dim=1536, max_token_size=8191)
+@wrap_embedding_func_with_attrs(embedding_dim=_EMBEDDING_DIM, max_token_size=8191)
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=4, max=10),
@@ -872,11 +879,14 @@ async def nvidia_openai_embedding(
 )
 async def azure_openai_embedding(
     texts: list[str],
-    model: str = "text-embedding-3-small",
+    model: str = None,
     base_url: str = None,
     api_key: str = None,
     api_version: str = None,
 ) -> np.ndarray:
+    # Use model from .env if not explicitly provided
+    if model is None:
+        model = _EMBEDDING_MODEL
     if api_key:
         os.environ["AZURE_OPENAI_API_KEY"] = api_key
     if base_url:

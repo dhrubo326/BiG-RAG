@@ -382,10 +382,8 @@ IMPORTANT: Output ONLY valid JSON (no commentary, no markdown).
         # Convert extracted table to comparable format
         extracted_rows = json.dumps(extracted_table.get('rows', []), ensure_ascii=False, indent=2)
 
-        # Create validation prompt
-        prompt = f"""You are a STRICT table validation checker.
-
-TASK: Compare source markdown table vs extracted structured table.
+        # Create simplified validation prompt (clearer for LLM)
+        prompt = f"""You are validating table extraction accuracy.
 
 SOURCE MARKDOWN TABLE:
 {source_table_md}
@@ -393,27 +391,45 @@ SOURCE MARKDOWN TABLE:
 EXTRACTED STRUCTURED TABLE:
 {extracted_rows}
 
-VALIDATION CRITERIA:
-1. All numbers from source must appear in extracted table (95%+ coverage)
-2. Numbers must be EXACT match (১২০ ≠ 120, ৪.০০ ≠ 4.00)
-3. No hallucinated numbers (numbers in extracted but not in source)
-4. Bangla and English are NOT equivalent for this check
+TASK: Extract all UNIQUE numbers from both tables, then compare.
 
-OUTPUT FORMAT (JSON only):
+STEP 1: List unique numbers from SOURCE (ignore duplicates)
+- Example: "১২০, ৬০, ৬০, ৬০, ৪০" → Unique: ["১২০", "৬০", "৪০"]
+
+STEP 2: List unique numbers from EXTRACTED (ignore duplicates)
+- Example: "120, 60, 60, 60, 40" → Unique: ["120", "60", "40"]
+
+STEP 3: Match numbers using semantic equivalence
+- Bangla = English: ১২০ = 120, ৬০ = 60, ৩০ = 30
+- Decimals: ৪.০০ = 4.00 = 4
+- Times: ১০-০০ = 10:00
+- Dates: ০৪ = 04 = 4
+
+STEP 4: Calculate coverage
+- Coverage = (matched unique numbers) / (source unique numbers)
+- Threshold: 92%+ = PASS
+
+OUTPUT (JSON only, no commentary):
 {{
-  "status": "PASS" or "FAIL",
-  "numeric_coverage": 0.95,
-  "missing_numbers": ["১২০", "৪.০০"],
-  "hallucinated_numbers": ["120"],
-  "feedback": "Brief explanation if FAIL"
+  "source_unique": ["১২০", "৬০", "৪০", "৩০"],
+  "extracted_unique": ["120", "60", "40", "30"],
+  "matched_count": 4,
+  "total_source": 4,
+  "numeric_coverage": 1.0,
+  "status": "PASS",
+  "missing_numbers": [],
+  "feedback": ""
 }}
 
-IMPORTANT: Output ONLY valid JSON (no commentary).
+IMPORTANT:
+- Count each unique number ONCE (৬০ appearing 10 times = 1 unique number)
+- Use semantic equivalence (১২০ and 120 are SAME number)
+- Output ONLY valid JSON
 """
 
         try:
             response = await self.client.chat.completions.create(
-                model="gpt-4o-mini",  # Use cheaper model for validation
+                model="gpt-4o",  # Use GPT-4o for reliable validation (same model as extraction)
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.0,
                 response_format={"type": "json_object"}

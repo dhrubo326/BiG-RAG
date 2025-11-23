@@ -46,7 +46,7 @@ expr/
 ├── football/                                # Football subgraph
 │   └── ...
 │
-└── master_map.json                          # Registry of all subgraphs
+└── subgraph_registry.json                   # Registry of all subgraphs
 ```
 
 ---
@@ -90,7 +90,7 @@ python script_build.py \
 3. Applies entity canonicalization
 4. Builds VDB indices
 5. Saves all files to `expr/{subgraph_name}/`
-6. Updates `master_map.json`
+6. Updates `subgraph_registry.json`
 
 ### Step 3: Verify Subgraph Built Successfully
 
@@ -125,22 +125,22 @@ python server.py --data_source KUET
 
 ---
 
-### Option 2: Federated Mode (NEW - Multi-Subgraph)
+### Option 2: Unified Mode (NEW - Multi-Subgraph)
 
 Run server that can search ALL subgraphs:
 
 ```bash
-# Run federated server
+# Run unified server
 cd backend
-python server.py --federated --federated_root expr/
+python server.py --unified
 
-# Server loads master_map.json
+# Server loads subgraph_registry.json
 # Can query any subgraph: KUET, BUET, DU, football
 # API available at: http://localhost:8001
 ```
 
 **What happens:**
-1. Server reads `expr/master_map.json`
+1. Server reads `expr/subgraph_registry.json`
 2. Discovers all available subgraphs (KUET, BUET, DU, football)
 3. Lazy loads subgraphs (only when queried)
 4. Routes queries to relevant subgraphs using LLM agent
@@ -149,13 +149,13 @@ python server.py --federated --federated_root expr/
 
 ## Part 3: How LLM Agent Decides Which Subgraph to Search
 
-### Master Map (Subgraph Registry)
+### Subgraph Registry
 
-**Location:** `expr/master_map.json`
+**Location:** `expr/subgraph_registry.json`
 
 **Example:**
 ```json
-{
+{ 
   "version": "1.0",
   "subgraphs": {
     "KUET": {
@@ -191,7 +191,7 @@ python server.py --federated --federated_root expr/
 Query: "কুয়েটে CSE তে কতটি আসন আছে?"
 ```
 
-**Step 2: LLM Router receives query + master map**
+**Step 2: LLM Router receives query + subgraph registry**
 
 Router prompt:
 ```
@@ -290,13 +290,13 @@ curl -X POST http://localhost:8001/search \
 
 ---
 
-### API Endpoint 2: Federated Query (Automatic Routing)
+### API Endpoint 2: Unified Query (Automatic Routing)
 
 **NEW** - Let LLM router decide which subgraph(s):
 
 ```bash
 # Query with automatic routing
-curl -X POST http://localhost:8001/federated/query \
+curl -X POST http://localhost:8001/api/unified/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "কুয়েটে CSE তে কতটি আসন আছে?",
@@ -329,7 +329,7 @@ Override router, query specific subgraphs:
 
 ```bash
 # Force query KUET and BUET (ignore router)
-curl -X POST http://localhost:8001/federated/query \
+curl -X POST http://localhost:8001/api/unified/query \
   -H "Content-Type: application/json" \
   -d '{
     "query": "How many CSE seats?",
@@ -345,7 +345,7 @@ curl -X POST http://localhost:8001/federated/query \
 
 ```bash
 # Get all available subgraphs
-curl http://localhost:8001/federated/subgraphs
+curl http://localhost:8001/api/unified/subgraphs
 
 # Response
 {
@@ -382,7 +382,7 @@ python script_build.py \
 
 # Step 3: Restart server to reload subgraph
 # (Or use hot-reload API endpoint)
-curl -X POST http://localhost:8001/federated/reload?subgraph=KUET
+curl -X POST http://localhost:8001/api/unified/reload?subgraph=KUET
 ```
 
 **Note:** Full rebuild is safest approach. Incremental updates can be added later.
@@ -404,10 +404,10 @@ python script_build.py \
   --input datasets/CUET/raw \
   --output expr/CUET
 
-# Step 3: Master map auto-updated (expr/master_map.json)
+# Step 3: Subgraph registry auto-updated (expr/subgraph_registry.json)
 # Step 4: Restart server to discover new subgraph
 # (Or use discovery API)
-curl -X POST http://localhost:8001/federated/discover
+curl -X POST http://localhost:8001/api/unified/discover
 ```
 
 **Result:** Router now routes queries mentioning CUET to CUET subgraph.
@@ -450,14 +450,14 @@ python server.py --data_source KUET
 
 ---
 
-### Mode 2: Federated (Multi-Subgraph with Routing)
+### Mode 2: Unified (Multi-Subgraph with Routing)
 
 ```bash
-# Start federated server
+# Start unified server
 cd backend
-python server.py --federated --federated_root expr/
+python server.py --unified
 
-# Loads: master_map.json
+# Loads: subgraph_registry.json
 # Discovers: All subgraphs (KUET, BUET, DU, football)
 # API: http://localhost:8001
 # Queries: Router selects relevant subgraphs
@@ -470,12 +470,12 @@ python server.py --federated --federated_root expr/
 
 ---
 
-### Mode 3: Federated with Specific Subgraphs
+### Mode 3: Unified with Specific Subgraphs
 
 ```bash
 # Start server with only selected subgraphs
 cd backend
-python server.py --federated --subgraphs KUET BUET DU
+python server.py --unified --subgraphs KUET BUET DU
 
 # Loads: Only KUET, BUET, DU (ignores football)
 # Router only considers these 3 subgraphs
@@ -505,11 +505,11 @@ python manage_subgraphs.py --list
 
 ```bash
 # Check which subgraphs are loaded
-curl http://localhost:8001/federated/status
+curl http://localhost:8001/api/unified/status
 
 # Response:
 {
-  "mode": "federated",
+  "mode": "unified",
   "loaded_subgraphs": ["KUET", "BUET", "DU"],
   "total_subgraphs": 4,
   "master_map_version": "1.0"
@@ -520,7 +520,7 @@ curl http://localhost:8001/federated/status
 
 ```bash
 # Test routing without executing query
-curl -X POST http://localhost:8001/federated/route \
+curl -X POST http://localhost:8001/api/unified/route \
   -H "Content-Type: application/json" \
   -d '{
     "query": "কুয়েটে CSE তে কতটি আসন আছে?"
@@ -567,10 +567,10 @@ python server.py --data_source KUET
 python script_build.py --data_source BUET ...
 python script_build.py --data_source DU ...
 
-# Create master_map.json (manual or script)
-# Switch to federated mode
+# Create subgraph_registry.json (manual or script)
+# Switch to unified mode
 cd backend
-python server.py --federated --federated_root expr/
+python server.py --unified
 ```
 
 ---
@@ -590,13 +590,13 @@ Search KUET graph
 Return results
 ```
 
-### Federated Mode
+### Unified Mode
 ```
 User Query: "Compare KUET and BUET CSE seats"
     ↓
-Server (--federated)
+Server (--unified)
     ↓
-LLM Router analyzes query + master_map
+LLM Router analyzes query + subgraph_registry
     ↓
 Router decision: ["KUET", "BUET"]
     ↓
@@ -620,14 +620,14 @@ python script_build.py --data_source KUET --input datasets/KUET/raw --output exp
 # RUN server (single subgraph)
 cd backend && python server.py --data_source KUET
 
-# RUN server (federated)
-cd backend && python server.py --federated --federated_root expr/
+# RUN server (unified)
+cd backend && python server.py --unified
 
 # QUERY single subgraph (API)
 curl -X POST http://localhost:8001/search -d '{"queries": ["..."], "subgraph": "KUET"}'
 
-# QUERY federated (API)
-curl -X POST http://localhost:8001/federated/query -d '{"query": "..."}'
+# QUERY unified (API)
+curl -X POST http://localhost:8001/api/unified/query -d '{"query": "..."}'
 
 # LIST subgraphs
 python manage_subgraphs.py --list
@@ -639,7 +639,7 @@ python script_build.py --data_source KUET --force
 rm -rf expr/OLD_SUBGRAPH/ && python manage_subgraphs.py --remove OLD_SUBGRAPH
 
 # RELOAD subgraph (hot reload)
-curl -X POST http://localhost:8001/federated/reload?subgraph=KUET
+curl -X POST http://localhost:8001/api/unified/reload?subgraph=KUET
 ```
 
 ---
@@ -649,18 +649,18 @@ curl -X POST http://localhost:8001/federated/reload?subgraph=KUET
 **Key Points:**
 1. **One subgraph = One directory** (KUET, BUET, football)
 2. **Each subgraph has complete files** (GraphML, VDB, KV storage)
-3. **Master map registers all subgraphs** (for routing)
-4. **LLM router decides which subgraphs to search** (based on query + master map)
+3. **Subgraph registry lists all subgraphs** (for routing)
+4. **LLM router decides which subgraphs to search** (based on query + registry)
 5. **Two server modes:**
    - Single: `python server.py --data_source KUET`
-   - Federated: `python server.py --federated`
-6. **Queries routed automatically** in federated mode
+   - Unified: `python server.py --unified`
+6. **Queries routed automatically** in unified mode
 7. **Complete isolation** - No cross-subgraph contamination
 
 **Next Steps:**
 1. Build your first subgraph (KUET)
 2. Test single subgraph mode
 3. Build second subgraph (BUET)
-4. Create master_map.json
-5. Switch to federated mode
+4. Create subgraph_registry.json
+5. Switch to unified mode
 6. Test routing with different queries

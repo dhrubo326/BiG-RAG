@@ -26,7 +26,7 @@ expr/
 │   ├── graph_chunk_entity_relation.graphml  ← Another separate GraphML
 │   └── ...
 │
-└── master_map.json          # Registry of all subgraphs
+└── subgraph_registry.json   # Registry of all subgraphs
 ```
 
 **Key Points:**
@@ -56,7 +56,7 @@ expr/
 ├── demo_test/               # Subgraph 1 (rename to KUET or keep as demo)
 ├── football/                # Subgraph 2 (new)
 ├── BUET/                    # Subgraph 3 (new)
-└── master_map.json          # NEW: Registry
+└── subgraph_registry.json   # NEW: Registry
 ```
 
 **Migration Options:**
@@ -157,8 +157,8 @@ expr/demo_test/              # Built knowledge graph
 rag = BiGRAG(working_dir="expr/demo_test")
 results = await rag.aquery("...")
 
-# New way (federated)
-executor = FederatedQueryExecutor(federated_root="expr", ...)
+# New way (unified)
+executor = UnifiedQueryExecutor(registry_path="expr/subgraph_registry.json", ...)
 results = await executor.query("...")  # Router picks demo_test
 ```
 
@@ -196,7 +196,7 @@ expr/
 │   ├── vdb_entities.json                     ← Separate VDB
 │   └── ...
 │
-└── master_map.json          # NEW: Contains both subgraphs
+└── subgraph_registry.json   # NEW: Contains both subgraphs
 ```
 
 **4. Master Map Content:**
@@ -279,7 +279,7 @@ python manage_subgraphs.py --delete OldSubgraph
 ### **Before (Single Graph):**
 ```
 User Query: "KUET CSE seats"
-    ↓
+    ↓ 
 BiGRAG(working_dir="expr/demo_test")
     ↓
 Searches entire graph
@@ -287,15 +287,15 @@ Searches entire graph
 May return mixed results (KUET + BUET + other data)
 ```
 
-### **After (Federated Subgraphs):**
+### **After (Unified Subgraphs):**
 ```
 User Query: "KUET CSE seats"
     ↓
-AgenticRouter analyzes master_map.json
+AgenticRouter analyzes subgraph_registry.json
     ↓
 Selects relevant subgraph: ["KUET"]
     ↓
-FederatedExecutor loads only KUET subgraph
+UnifiedExecutor loads only KUET subgraph
     ↓
 Searches ONLY KUET graph
     ↓
@@ -317,8 +317,8 @@ Returns KUET-specific results (no BUET/RUET contamination)
    - Built separately in expr/football/
    - Own GraphML, completely isolated from demo_test
 
-4. **Master map is the registry**
-   - Lists all subgraphs
+4. **Subgraph registry is the index**
+   - Lists all subgraphs (subgraph_registry.json)
    - Used by router to select relevant subgraphs
 
 5. **No shared data between subgraphs**

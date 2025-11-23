@@ -37,9 +37,71 @@ class RoutingRequest(BaseModel):
     query: str = Field(..., description="User query string")
 
 
+class AskRequest(BaseModel):
+    """Simple ask request."""
+    question: str = Field(..., description="User question")
+    top_k: int = Field(5, ge=1, le=50, description="Number of results")
+
+
 # ============================================================================
 # Endpoints
 # ============================================================================
+
+@router.post("/ask", summary="Simple unified ask (auto-routes to subgraph)")
+async def unified_ask(request: AskRequest) -> Dict:
+    """
+    Simple search endpoint - automatically routes query to relevant subgraph.
+
+    This is the easiest way to use unified mode:
+    - Automatically routes your question to the right subgraph
+    - Returns knowledge graph results (entities, relations, chunks)
+    - No need to manually specify which subgraph to search
+
+    Example:
+        POST /api/unified/ask
+        {
+            "question": "Who won the 2022 World Cup?",
+            "top_k": 5
+        }
+    """
+    executor = dependencies.get_unified_executor()
+
+    if not executor:
+        raise HTTPException(
+            status_code=503,
+            detail="Unified mode not enabled. Start server with --unified flag."
+        )
+
+    try:
+        from bigrag.base import QueryParam
+
+        query_param = QueryParam(
+            only_need_context=True,
+            top_k=request.top_k
+        )
+
+        result = await executor.query(
+            query=request.question,
+            query_param=query_param,
+            include_metadata=True
+        )
+
+        # Format response
+        return {
+            "question": request.question,
+            "routed_to": result['routing']['subgraphs'],
+            "confidence": result['routing']['confidence'],
+            "results": result['results'],
+            "num_results": len(result['results']),
+            "execution_time": result['execution_time']
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Search failed: {str(e)}"
+        )
+
 
 @router.post("/query", summary="Unified query across subgraphs")
 async def unified_query(request: UnifiedQueryRequest) -> Dict:

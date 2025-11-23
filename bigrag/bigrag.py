@@ -165,6 +165,14 @@ class BiGRAG:
 
     enable_llm_cache: bool = True
 
+    # Production KG Pipeline (NEW - opt-in for higher accuracy)
+    use_production_pipeline: bool = False  # Default: False (backward compatible)
+    production_pipeline_config: dict = field(default_factory=lambda: {
+        "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
+        "enable_entity_linking": True,
+        "extraction_mode": "semi_structured"  # structured | semi_structured | unstructured
+    })
+
     # extension
     addon_params: dict = field(default_factory=dict)
     convert_response_to_json_func: callable = convert_response_to_json
@@ -373,97 +381,109 @@ class BiGRAG:
             update_storage = True
             logger.info(f"[New Docs] inserting {len(new_docs)} docs")
 
-            inserting_chunks = {}
-            for doc_key, doc in tqdm_async(
-                new_docs.items(), desc="Chunking documents", unit="doc"
-            ):
-                chunks = {
-                    compute_mdhash_id(dp["content"], prefix="chunk-"): {
-                        **dp,
-                        "full_doc_id": doc_key,
-                    }
-                    for dp in chunking_by_token_size(
+            # NEW: Production pipeline vs standard pipeline
+            if self.use_production_pipeline:
+                logger.info("[Production Pipeline] Using enhanced extraction (table-aware, 95%+ validation)")
+                # Process each document with production pipeline
+                for doc_key, doc in new_docs.items():
+                    await self._process_document_with_production_pipeline(
+                        doc_key,
                         doc["content"],
-                        overlap_token_size=self.chunk_overlap_token_size,
-                        max_token_size=self.chunk_token_size,
-                        tiktoken_model=self.tiktoken_model_name,
-                        doc_title=doc.get("title", ""),
-                        doc_metadata=doc.get("metadata", {}),
+                        doc.get("metadata", {})
                     )
-                }
-                inserting_chunks.update(chunks)
-            _add_chunk_keys = await self.text_chunks.filter_keys(
-                list(inserting_chunks.keys())
-            )
-            inserting_chunks = {
-                k: v for k, v in inserting_chunks.items() if k in _add_chunk_keys
-            }
-            if not len(inserting_chunks):
-                logger.warning("All chunks are already in the storage")
-                return
-            logger.info(f"[New Chunks] inserting {len(inserting_chunks)} chunks")
-
-            logger.info("[Entity Extraction]...")
-            maybe_new_kg = await extract_entities(
-                inserting_chunks,
-                knowledge_graph_inst=self.chunk_entity_relation_graph,
-                vdb_entities=self.vdb_entities,
-                vdb_relations=self.vdb_relations,
-                global_config=asdict(self),
-            )
-            if maybe_new_kg is None:
-                logger.warning("No new relations and entities found")
-                return
-            self.chunk_entity_relation_graph = maybe_new_kg
-
-            await self.full_docs.upsert(new_docs)
-            await self.text_chunks.upsert(inserting_chunks)
-
-            # Phase 3.1: Index chunks to vector DB for Path C retrieval (Three-Path Retrieval)
-            # This enables direct semantic search on chunks (in addition to entity/edge-based retrieval)
-            if self.vdb_chunks is not None:
-                def _build_contextualized_chunk_content(chunk_data: dict) -> str:
-                    """Build chunk content with document context prefix for embedding.
-
-                    This enriches chunk embeddings with document metadata (title + category + tags) to make
-                    chunks from different documents distinguishable even if content is similar.
-
-                    Example:
-                        Input: {"content": "CSE has 180 seats", "doc_title": "RUET", "doc_metadata": {"category": "university", "tags": ["Engineering"]}}
-                        Output: "[RUET | university | Engineering] CSE has 180 seats"
-                    """
-                    content = chunk_data.get("content", "")
-                    doc_title = chunk_data.get("doc_title", "")
-                    doc_metadata = chunk_data.get("doc_metadata", {})
-
-                    context_parts = []
-                    if doc_title:
-                        context_parts.append(doc_title)
-                    # Add category for better document type distinction
-                    if doc_metadata.get("category"):
-                        context_parts.append(doc_metadata["category"])
-                    if doc_metadata.get("tags"):
-                        tags = doc_metadata["tags"]
-                        if isinstance(tags, list):
-                            context_parts.extend(tags)
-                        else:
-                            context_parts.append(str(tags))
-
-                    if context_parts:
-                        context_prefix = "[" + " | ".join(context_parts) + "] "
-                        return context_prefix + content
-                    else:
-                        return content
-
-                chunks_for_vdb = {
-                    chunk_id: {
-                        "content": _build_contextualized_chunk_content(chunk_data),
-                        "full_doc_id": chunk_data.get("full_doc_id", ""),
+            else:
+                # EXISTING: Standard pipeline (unchanged)
+                inserting_chunks = {}
+                for doc_key, doc in tqdm_async(
+                    new_docs.items(), desc="Chunking documents", unit="doc"
+                ):
+                    chunks = {
+                        compute_mdhash_id(dp["content"], prefix="chunk-"): {
+                            **dp,
+                            "full_doc_id": doc_key,
+                        }
+                        for dp in chunking_by_token_size(
+                            doc["content"],
+                            overlap_token_size=self.chunk_overlap_token_size,
+                            max_token_size=self.chunk_token_size,
+                            tiktoken_model=self.tiktoken_model_name,
+                            doc_title=doc.get("title", ""),
+                            doc_metadata=doc.get("metadata", {}),
+                        )
                     }
-                    for chunk_id, chunk_data in inserting_chunks.items()
+                    inserting_chunks.update(chunks)
+                _add_chunk_keys = await self.text_chunks.filter_keys(
+                    list(inserting_chunks.keys())
+                )
+                inserting_chunks = {
+                    k: v for k, v in inserting_chunks.items() if k in _add_chunk_keys
                 }
-                await self.vdb_chunks.upsert(chunks_for_vdb)
-                logger.info(f"[Chunks VDB] Indexed {len(chunks_for_vdb)} chunks for vector search (Path C)")
+                if not len(inserting_chunks):
+                    logger.warning("All chunks are already in the storage")
+                    return
+                logger.info(f"[New Chunks] inserting {len(inserting_chunks)} chunks")
+
+                logger.info("[Entity Extraction]...")
+                maybe_new_kg = await extract_entities(
+                    inserting_chunks,
+                    knowledge_graph_inst=self.chunk_entity_relation_graph,
+                    vdb_entities=self.vdb_entities,
+                    vdb_relations=self.vdb_relations,
+                    global_config=asdict(self),
+                )
+                if maybe_new_kg is None:
+                    logger.warning("No new relations and entities found")
+                    return
+                self.chunk_entity_relation_graph = maybe_new_kg
+
+                await self.full_docs.upsert(new_docs)
+                await self.text_chunks.upsert(inserting_chunks)
+
+                # Phase 3.1: Index chunks to vector DB for Path C retrieval (Three-Path Retrieval)
+                # This enables direct semantic search on chunks (in addition to entity/edge-based retrieval)
+                if self.vdb_chunks is not None:
+                    def _build_contextualized_chunk_content(chunk_data: dict) -> str:
+                        """Build chunk content with document context prefix for embedding.
+
+                        This enriches chunk embeddings with document metadata (title + category + tags) to make
+                        chunks from different documents distinguishable even if content is similar.
+
+                        Example:
+                            Input: {"content": "CSE has 180 seats", "doc_title": "RUET", "doc_metadata": {"category": "university", "tags": ["Engineering"]}}
+                            Output: "[RUET | university | Engineering] CSE has 180 seats"
+                        """
+                        content = chunk_data.get("content", "")
+                        doc_title = chunk_data.get("doc_title", "")
+                        doc_metadata = chunk_data.get("doc_metadata", {})
+
+                        context_parts = []
+                        if doc_title:
+                            context_parts.append(doc_title)
+                        # Add category for better document type distinction
+                        if doc_metadata.get("category"):
+                            context_parts.append(doc_metadata["category"])
+                        if doc_metadata.get("tags"):
+                            tags = doc_metadata["tags"]
+                            if isinstance(tags, list):
+                                context_parts.extend(tags)
+                            else:
+                                context_parts.append(str(tags))
+
+                        if context_parts:
+                            context_prefix = "[" + " | ".join(context_parts) + "] "
+                            return context_prefix + content
+                        else:
+                            return content
+
+                    chunks_for_vdb = {
+                        chunk_id: {
+                            "content": _build_contextualized_chunk_content(chunk_data),
+                            "full_doc_id": chunk_data.get("full_doc_id", ""),
+                        }
+                        for chunk_id, chunk_data in inserting_chunks.items()
+                    }
+                    await self.vdb_chunks.upsert(chunks_for_vdb)
+                    logger.info(f"[Chunks VDB] Indexed {len(chunks_for_vdb)} chunks for vector search (Path C)")
         finally:
             if update_storage:
                 await self._insert_done()

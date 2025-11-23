@@ -184,9 +184,9 @@ async def test_kuet_indexing():
 
     # Step 10: Initialize BiGRAG and build graph
     print("\n[Step 8] Building BiG-RAG knowledge graph...")
-    print("  Working directory: ./expr/demo_test")
+    print("  Working directory: ./expr/kuet_test")
 
-    working_dir = "./expr/demo_test"
+    working_dir = "./expr/kuet_test"
     os.makedirs(working_dir, exist_ok=True)
 
     # Initialize BiGRAG
@@ -209,6 +209,62 @@ async def test_kuet_indexing():
         )
 
         print("\n  [OK] Graph construction complete!")
+
+        # MISSING STEP 1: Store chunks to KV storage
+        print("  Storing chunks to KV storage...")
+        from bigrag.utils import compute_mdhash_id
+
+        bigrag_chunks = {}
+        production_chunk_to_bigrag_id = {}
+
+        for prod_chunk in chunks:
+            # Create BiGRAG chunk ID (hash of content)
+            chunk_id = compute_mdhash_id(prod_chunk['content'], prefix='chunk-')
+
+            bigrag_chunks[chunk_id] = {
+                "content": prod_chunk['content'],
+                "tokens": prod_chunk.get('tokens', []),
+                "chunk_order_index": prod_chunk.get('chunk_order_index', 0),
+                "full_doc_id": "doc-kuet-admission",
+                "doc_title": metadata.get("title", ""),
+                "doc_metadata": metadata,
+            }
+
+            # Map ProductionPipeline chunk ID → BiGRAG chunk ID
+            prod_chunk_id = prod_chunk.get('chunk_id') or prod_chunk.get('source_id')
+            if prod_chunk_id:
+                production_chunk_to_bigrag_id[prod_chunk_id] = chunk_id
+
+        await rag.text_chunks.upsert(bigrag_chunks)
+        print(f"    [OK] Stored {len(bigrag_chunks)} chunks to KV storage")
+
+        # MISSING STEP 2: Store full document
+        print("  Storing full document...")
+        doc_id = "doc-kuet-admission"
+        await rag.full_docs.upsert({
+            doc_id: {
+                "content": kuet_doc,
+                "title": metadata.get("title", ""),
+                "metadata": metadata
+            }
+        })
+        print(f"    [OK] Stored full document")
+
+        # MISSING STEP 3: Index chunks to vdb_chunks (Path C retrieval)
+        print("  Indexing chunks to vector DB...")
+        chunks_for_vdb = {
+            chunk_id: {
+                "content": f"[{metadata['title']}] {chunk_data['content']}",
+                "full_doc_id": doc_id
+            }
+            for chunk_id, chunk_data in bigrag_chunks.items()
+        }
+        await rag.vdb_chunks.upsert(chunks_for_vdb)
+        print(f"    [OK] Indexed {len(chunks_for_vdb)} chunks to vector DB")
+
+        # Update graph stats with chunk count
+        graph_stats['chunk_nodes'] = len(bigrag_chunks)
+
         print(f"\n  Graph Statistics:")
         print(f"    Entity nodes created: {graph_stats.get('entity_nodes', 0)}")
         print(f"    Relation nodes created: {graph_stats.get('relation_nodes', 0)}")

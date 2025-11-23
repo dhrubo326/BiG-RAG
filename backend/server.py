@@ -47,7 +47,7 @@ from api.core.managers import LLMProviderManager, EmbeddingManager
 from api.core import dependencies
 
 # Import route modules
-from api.routes import health, documents, graph, evaluation, retrieval, jobs, llm, unified
+from api.routes import health, documents, graph, evaluation, retrieval, jobs, llm, unified, datasets
 from api import agent
 
 
@@ -264,6 +264,8 @@ app.include_router(agent.router)
 # Unified subgraph routes (only if in unified mode)
 if unified_mode:
     app.include_router(unified.router)
+    # Production dataset management (only in unified mode)
+    app.include_router(datasets.router)
 
 
 # ============================================================================

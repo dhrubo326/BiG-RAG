@@ -1,7 +1,6 @@
 # BiG-RAG Context Formatting Improvement Plan
 
 **Version:** 1.3
-**Date:** January 2025
 **Status:** Ready for Implementation
 **Priority:** High
 **Estimated Time:** 2-3 hours

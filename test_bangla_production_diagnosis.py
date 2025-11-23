@@ -24,6 +24,16 @@ from datetime import datetime
 import json
 import traceback
 
+# Fix Windows console encoding for Bangla characters
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'replace')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'replace')
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 # Setup logging to file and console
 log_file = "bangla_production_diagnosis.log"
 log_handle = None
@@ -220,8 +230,8 @@ async def test_bangla_production_pipeline():
 
     log("")
 
-    # Step 7: Analyze graph statistics
-    log("Step 7: Graph Statistics", "ANALYSIS")
+    # Step 7: Analyze graph statistics and content
+    log("Step 7: Detailed Graph Analysis", "ANALYSIS")
     log("-"*80)
 
     try:
@@ -238,24 +248,84 @@ async def test_bangla_production_pipeline():
             log(f"Total edges: {graph.number_of_edges()}", "STAT")
             log(f"Entity nodes: {len(entity_nodes)}", "STAT")
             log(f"Relation nodes: {len(relation_nodes)}", "STAT")
+            log("")
 
-            # Sample entities
-            log("Sample entities:", "INFO")
-            for i, entity_id in enumerate(entity_nodes[:5]):
+            # Sample entities with MORE details for investigation
+            log("Sample Entities (first 10 for investigation):", "INFO")
+            for i, entity_id in enumerate(entity_nodes[:10]):
                 entity_data = graph.nodes[entity_id]
-                log(f"  {i+1}. {entity_data.get('name', 'N/A')} (type: {entity_data.get('entity_type', 'N/A')})", "DATA")
+                name = entity_data.get('name', 'N/A')
+                entity_type = entity_data.get('entity_type', 'N/A')
+                weight = entity_data.get('weight', 'N/A')
+                log(f"  {i+1}. {name} (type: {entity_type}, weight: {weight})", "DATA")
+            log("")
 
-        # Load chunk stats
+            # Sample relations with MORE details for investigation
+            log("Sample Relations (first 10 for investigation):", "INFO")
+            for i, rel_id in enumerate(relation_nodes[:10]):
+                rel_data = graph.nodes[rel_id]
+                name = rel_data.get('name', 'N/A')
+                desc = rel_data.get('description', 'N/A')
+                weight = rel_data.get('weight', 'N/A')
+                # Truncate description if too long
+                if len(desc) > 80:
+                    desc = desc[:77] + "..."
+                log(f"  {i+1}. {name}", "DATA")
+                log(f"      Description: {desc}", "DATA")
+                log(f"      Weight: {weight}", "DATA")
+            log("")
+
+        # Load chunk stats with sample content
         chunks_path = Path(working_dir) / "kv_store_text_chunks.json"
         if chunks_path.exists():
             with open(chunks_path, 'r', encoding='utf-8') as f:
                 chunks = json.load(f)
-            log(f"Text chunks: {len(chunks)}", "STAT")
+            log(f"Text chunks created: {len(chunks)}", "STAT")
+            log("")
 
+            # Show first chunk for investigation
+            if chunks:
+                log("Sample Chunk (first chunk for investigation):", "INFO")
+                first_chunk_id = list(chunks.keys())[0]
+                first_chunk = chunks[first_chunk_id]
+                content = first_chunk.get('content', 'N/A')
+                if len(content) > 200:
+                    content = content[:197] + "..."
+                log(f"  Chunk ID: {first_chunk_id}", "DATA")
+                log(f"  Content preview: {content}", "DATA")
+                log(f"  Title: {first_chunk.get('title', 'N/A')}", "DATA")
+                log("")
+
+        # Load vector DB stats
+        vdb_entities_path = Path(working_dir) / "vdb_entities.json"
+        if vdb_entities_path.exists():
+            with open(vdb_entities_path, 'r', encoding='utf-8') as f:
+                vdb_data = json.load(f)
+            vectors_count = len(vdb_data.get('vectors', []))
+            log(f"Entity vectors indexed: {vectors_count}", "STAT")
+
+        vdb_relations_path = Path(working_dir) / "vdb_relations.json"
+        if vdb_relations_path.exists():
+            with open(vdb_relations_path, 'r', encoding='utf-8') as f:
+                vdb_data = json.load(f)
+            vectors_count = len(vdb_data.get('vectors', []))
+            log(f"Relation vectors indexed: {vectors_count}", "STAT")
+
+        vdb_chunks_path = Path(working_dir) / "vdb_chunks.json"
+        if vdb_chunks_path.exists():
+            with open(vdb_chunks_path, 'r', encoding='utf-8') as f:
+                vdb_data = json.load(f)
+            vectors_count = len(vdb_data.get('vectors', []))
+            log(f"Chunk vectors indexed: {vectors_count}", "STAT")
+
+        log("")
+        log("Files location for manual investigation:", "INFO")
+        log(f"  {working_dir}/", "FILE")
         log("")
 
     except Exception as e:
         log(f"Failed to analyze graph: {e}", "ERROR")
+        log(traceback.format_exc(), "ERROR")
         log("")
 
     # Step 8: Detect validation issues from logs
@@ -332,73 +402,134 @@ async def test_bangla_production_pipeline():
             log(f"  Description: {issue['description']}", "INFO")
             log("")
 
-        # Provide root cause analysis
-        log("ROOT CAUSE ANALYSIS:", "ANALYSIS")
+        # Provide DYNAMIC root cause analysis based on detected issues
+        log("ROOT CAUSE ANALYSIS (based on detected issues):", "ANALYSIS")
         log("-"*80)
         log("")
 
-        log("1. BANGLA NUMERAL DETECTION", "ROOT_CAUSE")
-        log("   Problem: Production pipeline expects English numerals (0-9)", "INFO")
-        log("   Reality: KUET document contains Bangla numerals (০-৯)", "INFO")
-        log("   Impact: Numeric validation fails (64% coverage instead of 95%+)", "INFO")
-        log("   Example: '১২০ seats' contains '১২০' (Bangla) not '120' (English)", "INFO")
-        log("")
+        # Extract actual data from issues
+        numeric_coverage = None
+        consistency_score = None
+        orphan_count = None
 
-        log("2. TABLE EXTRACTION WITH BANGLA CONTENT", "ROOT_CAUSE")
-        log("   Problem: GPT-4o table extraction returns Bangla numerals as-is", "INFO")
-        log("   Reality: Validation compares against source using ASCII digit detection", "INFO")
-        log("   Impact: Tables fail validation even when correctly extracted", "INFO")
-        log("   Example: Table cell '১২০' not matched with source '১২০'", "INFO")
-        log("")
+        for issue in issues_found:
+            if "coverage" in issue['issue'].lower():
+                import re
+                match = re.search(r"(\d+\.?\d*)%", issue['issue'])
+                if match:
+                    numeric_coverage = float(match.group(1))
 
-        log("3. CROSS-CHUNK CONSISTENCY FOR MULTILINGUAL", "ROOT_CAUSE")
-        log("   Problem: Consistency validator uses exact string matching", "INFO")
-        log("   Reality: Same entity appears in Bengali and English (কম্পিউটার vs Computer)", "INFO")
-        log("   Impact: False conflicts detected, negative consistency score", "INFO")
-        log("   Example: 'CSE' vs 'কম্পিউটার সায়েন্স' treated as conflict", "INFO")
-        log("")
+            if "consistency" in issue['issue'].lower():
+                consistency_score = "negative"
 
-        log("4. ENTITY LINKING WITH BANGLA SCRIPT", "ROOT_CAUSE")
-        log("   Problem: Fuzzy matching optimized for Latin script", "INFO")
-        log("   Reality: Bangla script has different edit distance characteristics", "INFO")
-        log("   Impact: Entities not linked, causing orphan relations", "INFO")
-        log("   Example: 'গণিত' and 'গণিতের' not recognized as same entity", "INFO")
-        log("")
+            if "orphan" in issue['issue'].lower():
+                match = re.search(r"(\d+) warnings", issue['issue'])
+                if match:
+                    orphan_count = int(match.group(1))
 
-    # Step 10: Recommendations
-    log("Step 10: Recommended Fixes", "SOLUTION")
+        # Dynamic root cause analysis
+        root_cause_num = 1
+
+        if numeric_coverage is not None and numeric_coverage < 95:
+            log(f"{root_cause_num}. BANGLA NUMERAL DETECTION", "ROOT_CAUSE")
+            log(f"   Detected Issue: Numeric coverage is {numeric_coverage}% (expected 95%+)", "INFO")
+            log("   Likely Cause: Production pipeline uses ASCII digit regex (0-9)", "INFO")
+            log("   Hypothesis: Document contains Bangla numerals (০-৯) not recognized", "INFO")
+            log("   Impact: Validation fails even when extraction is correct", "INFO")
+            log("")
+            root_cause_num += 1
+
+        if "Table validation failed" in [i['issue'] for i in issues_found]:
+            log(f"{root_cause_num}. TABLE EXTRACTION VALIDATION MISMATCH", "ROOT_CAUSE")
+            log("   Detected Issue: Table validation failed", "INFO")
+            log("   Likely Cause: GPT-4o extracts tables correctly but validator can't verify", "INFO")
+            log("   Hypothesis: Validator compares Bangla numerals in tables against source", "INFO")
+            log("   Impact: Correct tables rejected due to numeral format mismatch", "INFO")
+            log("")
+            root_cause_num += 1
+
+        if consistency_score:
+            log(f"{root_cause_num}. CROSS-CHUNK CONSISTENCY FOR MULTILINGUAL CONTENT", "ROOT_CAUSE")
+            log("   Detected Issue: Negative consistency score", "INFO")
+            log("   Likely Cause: Validator uses exact string matching for entity names", "INFO")
+            log("   Hypothesis: Same entity appears in multiple languages (Bengali + English)", "INFO")
+            log("   Impact: False conflicts detected between language variants", "INFO")
+            log("")
+            root_cause_num += 1
+
+        if orphan_count:
+            log(f"{root_cause_num}. ENTITY LINKING WITH BANGLA SCRIPT", "ROOT_CAUSE")
+            log(f"   Detected Issue: {orphan_count} orphan relation warnings", "INFO")
+            log("   Likely Cause: Fuzzy matching optimized for Latin script", "INFO")
+            log("   Hypothesis: Bangla script has different edit distance characteristics", "INFO")
+            log("   Impact: Similar entities not linked (e.g., stem variations)", "INFO")
+            log("")
+            root_cause_num += 1
+
+        if root_cause_num == 1:
+            log("Unable to extract specific metrics from detected issues.", "WARN")
+            log("Manual log review recommended for detailed root cause analysis.", "INFO")
+            log("")
+
+    # Step 10: Recommended Fixes (Dynamic based on detected issues)
+    log("Step 10: Recommended Fixes (based on detected issues)", "SOLUTION")
     log("="*80)
     log("")
 
-    log("Priority 1: Add Bangla Numeral Normalization", "FIX")
-    log("  Location: bigrag/validators/numeric_validator.py", "INFO")
-    log("  Action: Convert Bangla numerals (০-৯) to ASCII (0-9) before validation", "INFO")
-    log("  Code: '০১২৩৪৫৬৭৮৯' -> '0123456789'", "INFO")
-    log("")
+    if not issues_found:
+        log("No fixes needed - production pipeline worked perfectly!", "SUCCESS")
+        log("")
+    else:
+        log("The following fixes are recommended based on detected issues:", "INFO")
+        log("")
 
-    log("Priority 2: Language-Aware Table Validation", "FIX")
-    log("  Location: bigrag/preprocessors/table_extractor.py", "INFO")
-    log("  Action: Normalize numerals before coverage check", "INFO")
-    log("  Impact: Table validation will pass for Bangla tables", "INFO")
-    log("")
+        fix_priority = 1
 
-    log("Priority 3: Multilingual Entity Canonicalization", "FIX")
-    log("  Location: bigrag/mergers/entity_linker.py", "INFO")
-    log("  Action: Use transliteration for Bangla→English before fuzzy matching", "INFO")
-    log("  Impact: Better entity linking, fewer orphan relations", "INFO")
-    log("")
+        # Fix recommendations based on actual detected issues
+        if numeric_coverage is not None and numeric_coverage < 95:
+            log(f"Priority {fix_priority}: Fix Numeric Validation for Bangla Numerals", "FIX")
+            log(f"  Reason: Detected numeric coverage {numeric_coverage}% (target: 95%+)", "INFO")
+            log("  Files to Check:", "INFO")
+            log("    - bigrag/production_pipeline.py (validation logic)", "FILE")
+            log("    - bigrag/preprocessors/*.py (check for \\d regex patterns)", "FILE")
+            log("  Suggestion: Add Bangla numeral detection or normalize before validation", "INFO")
+            log("")
+            fix_priority += 1
 
-    log("Priority 4: Language Parameter in Pipeline", "FIX")
-    log("  Location: bigrag/production_pipeline.py", "INFO")
-    log("  Action: Accept 'language' parameter to choose validation strategy", "INFO")
-    log("  Impact: Skip numeric validation for Bangla or use appropriate normalizer", "INFO")
-    log("")
+        if "Table validation failed" in [i['issue'] for i in issues_found]:
+            log(f"Priority {fix_priority}: Fix Table Validation Logic", "FIX")
+            log("  Reason: Table validation failed during production pipeline", "INFO")
+            log("  Files to Check:", "INFO")
+            log("    - bigrag/preprocessors/table_extractor.py (if exists)", "FILE")
+            log("    - bigrag/production_pipeline.py (table validation phase)", "FILE")
+            log("  Suggestion: Review how table coverage is calculated", "INFO")
+            log("")
+            fix_priority += 1
 
-    log("Priority 5: Consistency Validator Enhancement", "FIX")
-    log("  Location: bigrag/validators/consistency_validator.py", "INFO")
-    log("  Action: Use semantic similarity instead of exact match for multilingual", "INFO")
-    log("  Impact: Reduce false conflicts for Bengali/English entity pairs", "INFO")
-    log("")
+        if consistency_score:
+            log(f"Priority {fix_priority}: Fix Consistency Validation for Multilingual", "FIX")
+            log("  Reason: Negative consistency score detected", "INFO")
+            log("  Files to Check:", "INFO")
+            log("    - bigrag/production_pipeline.py (consistency check logic)", "FILE")
+            log("    - bigrag/validators/*.py (check for exact string matching)", "FILE")
+            log("  Suggestion: Consider semantic similarity for entity matching", "INFO")
+            log("")
+            fix_priority += 1
+
+        if orphan_count:
+            log(f"Priority {fix_priority}: Improve Entity Linking", "FIX")
+            log(f"  Reason: {orphan_count} orphan relation warnings detected", "INFO")
+            log("  Files to Check:", "INFO")
+            log("    - bigrag/operate.py (_merge_nodes_then_upsert function)", "FILE")
+            log("    - Entity linking/fuzzy matching logic", "FILE")
+            log("  Suggestion: Review fuzzy matching for Bangla script compatibility", "INFO")
+            log("")
+            fix_priority += 1
+
+        if fix_priority == 1:
+            log("Issues detected but unable to map to specific fixes.", "WARN")
+            log("Manual code review recommended.", "INFO")
+            log("")
 
     # Step 11: Summary
     log("="*80)

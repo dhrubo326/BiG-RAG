@@ -544,10 +544,9 @@ class BiGRAG:
             logger.info(f"[Production Pipeline] Initialized with validation={pipeline_config.get('validation_level')}")
 
         except Exception as e:
-            logger.error(f"[Production Pipeline] Failed to initialize pipeline: {e}")
-            logger.warning("[Production Pipeline] Falling back to standard extraction")
-            await self._process_document_standard(doc_id, content, metadata)
-            return
+            error_msg = f"[Production Pipeline] Failed to initialize pipeline: {e}\nNO FALLBACK: Fix initialization error."
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
 
         # Step 3: Process document through production pipeline
         try:
@@ -559,24 +558,67 @@ class BiGRAG:
             logger.info(f"[Production Pipeline] Extraction complete: {len(result['entities'])} entities, {len(result['relations'])} relations")
 
         except Exception as e:
-            logger.error(f"[Production Pipeline] Processing failed: {e}")
-            logger.warning("[Production Pipeline] Falling back to standard extraction")
-            await self._process_document_standard(doc_id, content, metadata)
-            return
+            error_msg = f"[Production Pipeline] Processing failed: {e}\nNO FALLBACK: Fix processing error."
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
 
         # Step 4: Check validation status
         validation = result['validation']
         overall_status = validation['overall_status']
 
         if overall_status == 'FAIL':
-            logger.warning(
-                f"[Production Pipeline] Validation FAILED - "
-                f"Numeric: {validation['numeric']['numeric_coverage']:.2%}, "
-                f"Consistency: {validation['consistency']['consistency_score']:.2%}"
+            numeric_validation = validation['numeric']
+            consistency_validation = validation['consistency']
+
+            error_details = {
+                'overall_status': 'FAIL',
+                'numeric_coverage': numeric_validation['numeric_coverage'],
+                'numeric_status': numeric_validation['status'],
+                'consistency_score': consistency_validation['consistency_score'],
+                'consistency_status': consistency_validation['status'],
+                'missing_numbers': numeric_validation.get('missing_numbers', []),
+                'hallucinated_numbers': numeric_validation.get('hallucinated_numbers', []),
+                'consistency_issues': consistency_validation.get('total_issues', 0),
+                'validation_level': validation.get('validation_level', 'MODERATE'),
+                'recommendations': numeric_validation.get('recommendations', [])
+            }
+
+            error_message = (
+                f"[Production Pipeline] Validation FAILED\n"
+                f"  Validation Level: {error_details['validation_level']}\n"
+                f"  Overall Status: FAIL\n"
+                f"  \n"
+                f"  Numeric Validation:\n"
+                f"    Status: {error_details['numeric_status']}\n"
+                f"    Coverage: {error_details['numeric_coverage']:.2%} (need 95%+ for MODERATE)\n"
+                f"    Missing numbers: {len(error_details['missing_numbers'])}\n"
+                f"    Hallucinated numbers: {len(error_details['hallucinated_numbers'])}\n"
+                f"  \n"
+                f"  Consistency Validation:\n"
+                f"    Status: {error_details['consistency_status']}\n"
+                f"    Score: {error_details['consistency_score']:.2%}\n"
+                f"    Issues: {error_details['consistency_issues']}\n"
+                f"  \n"
+                f"  Recommendations:\n"
             )
-            logger.warning("[Production Pipeline] Falling back to standard extraction due to validation failure")
-            await self._process_document_standard(doc_id, content, metadata)
-            return
+
+            for rec in error_details['recommendations']:
+                error_message += f"    - {rec}\n"
+
+            error_message += (
+                f"  \n"
+                f"  ERROR: Production pipeline validation failed. Processing stopped.\n"
+                f"  NO FALLBACK: Fix the validation issues instead of using standard pipeline.\n"
+                f"  \n"
+                f"  To fix:\n"
+                f"  1. Check missing numbers (Bangla numerals not detected?)\n"
+                f"  2. Review consistency issues (multilingual entity conflicts?)\n"
+                f"  3. Use LENIENT validation level for testing (90%+ threshold)\n"
+                f"  4. Or fix the root causes in production pipeline validators\n"
+            )
+
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         elif overall_status == 'WARNING':
             logger.warning(
@@ -607,10 +649,9 @@ class BiGRAG:
             )
 
         except Exception as e:
-            logger.error(f"[Production Pipeline] Graph building failed: {e}")
-            logger.warning("[Production Pipeline] Falling back to standard extraction")
-            await self._process_document_standard(doc_id, content, metadata)
-            return
+            error_msg = f"[Production Pipeline] Graph building failed: {e}\nNO FALLBACK: Fix graph building error."
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
 
         # Step 6: Store chunks to KV storage (CRITICAL - was missing in original test)
         chunks = result['chunks']

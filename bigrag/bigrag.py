@@ -488,6 +488,274 @@ class BiGRAG:
             if update_storage:
                 await self._insert_done()
 
+    async def _process_document_with_production_pipeline(
+        self,
+        doc_id: str,
+        content: str,
+        metadata: dict,
+    ):
+        """
+        Process a single document through ProductionKGPipeline and insert into BiGRAG storage.
+
+        This method:
+        1. Initializes ProductionKGPipeline with API key and config
+        2. Processes document through all 5 pipeline phases (chunking, extraction, merging, validation)
+        3. Checks validation status (PASS/WARNING/FAIL)
+        4. Maps ProductionPipeline chunks to BiGRAG chunk IDs
+        5. Stores entities, relations, chunks, and full document
+        6. Indexes to all 3 vector DBs (entities, relations, chunks)
+        7. Falls back to standard extraction if validation fails or no API key
+
+        Args:
+            doc_id: Document ID
+            content: Document content (full text, not chunks)
+            metadata: Document metadata dict
+        """
+        from bigrag.production_pipeline import ProductionKGPipeline
+        from bigrag.builders.bipartite_graph_builder import build_bipartite_graph_from_pipeline
+        from bigrag.utils import compute_mdhash_id
+
+        logger.info(f"[Production Pipeline] Processing document: {doc_id}")
+
+        # Step 1: Check for OpenAI API key (required for production pipeline)
+        api_key = None
+        api_key_file = "openai_api_key.txt"
+
+        if os.path.exists(api_key_file):
+            try:
+                with open(api_key_file, 'r', encoding='utf-8') as f:
+                    api_key = f.read().strip()
+                logger.info(f"[Production Pipeline] API key loaded from {api_key_file}")
+            except Exception as e:
+                logger.warning(f"[Production Pipeline] Failed to read API key: {e}")
+
+        if not api_key:
+            logger.warning("[Production Pipeline] No OpenAI API key found - falling back to standard extraction")
+            await self._process_document_standard(doc_id, content, metadata)
+            return
+
+        # Step 2: Initialize ProductionKGPipeline with config
+        try:
+            pipeline_config = self.production_pipeline_config
+            pipeline = ProductionKGPipeline(
+                api_key=api_key,
+                model="gpt-4o-mini",  # Default model (can be overridden in config)
+                validation_level=pipeline_config.get("validation_level", "MODERATE"),
+                extraction_mode=pipeline_config.get("extraction_mode", "semi_structured"),
+                enable_entity_linking=pipeline_config.get("enable_entity_linking", True),
+            )
+            logger.info(f"[Production Pipeline] Initialized with validation={pipeline_config.get('validation_level')}")
+
+        except Exception as e:
+            logger.error(f"[Production Pipeline] Failed to initialize pipeline: {e}")
+            logger.warning("[Production Pipeline] Falling back to standard extraction")
+            await self._process_document_standard(doc_id, content, metadata)
+            return
+
+        # Step 3: Process document through production pipeline
+        try:
+            result = await pipeline.process_document(
+                markdown_text=content,
+                metadata=metadata,
+                language="English"  # TODO: Make configurable
+            )
+            logger.info(f"[Production Pipeline] Extraction complete: {len(result['entities'])} entities, {len(result['relations'])} relations")
+
+        except Exception as e:
+            logger.error(f"[Production Pipeline] Processing failed: {e}")
+            logger.warning("[Production Pipeline] Falling back to standard extraction")
+            await self._process_document_standard(doc_id, content, metadata)
+            return
+
+        # Step 4: Check validation status
+        validation = result['validation']
+        overall_status = validation['overall_status']
+
+        if overall_status == 'FAIL':
+            logger.warning(
+                f"[Production Pipeline] Validation FAILED - "
+                f"Numeric: {validation['numeric']['numeric_coverage']:.2%}, "
+                f"Consistency: {validation['consistency']['consistency_score']:.2%}"
+            )
+            logger.warning("[Production Pipeline] Falling back to standard extraction due to validation failure")
+            await self._process_document_standard(doc_id, content, metadata)
+            return
+
+        elif overall_status == 'WARNING':
+            logger.warning(
+                f"[Production Pipeline] Validation completed with WARNINGS - "
+                f"Numeric: {validation['numeric']['numeric_coverage']:.2%}, "
+                f"Consistency: {validation['consistency']['consistency_score']:.2%}"
+            )
+        else:  # PASS
+            logger.info(
+                f"[Production Pipeline] Validation PASSED - "
+                f"Numeric: {validation['numeric']['numeric_coverage']:.2%}, "
+                f"Consistency: {validation['consistency']['consistency_score']:.2%}"
+            )
+
+        # Step 5: Build bipartite graph from pipeline results
+        try:
+            graph_stats = await build_bipartite_graph_from_pipeline(
+                pipeline_result=result,
+                knowledge_graph_inst=self.chunk_entity_relation_graph,
+                vdb_entities=self.vdb_entities,
+                vdb_relations=self.vdb_relations,
+            )
+            logger.info(
+                f"[Production Pipeline] Graph built: "
+                f"{graph_stats.get('entity_nodes', 0)} entities, "
+                f"{graph_stats.get('relation_nodes', 0)} relations, "
+                f"{graph_stats.get('bipartite_edges', 0)} edges"
+            )
+
+        except Exception as e:
+            logger.error(f"[Production Pipeline] Graph building failed: {e}")
+            logger.warning("[Production Pipeline] Falling back to standard extraction")
+            await self._process_document_standard(doc_id, content, metadata)
+            return
+
+        # Step 6: Store chunks to KV storage (CRITICAL - was missing in original test)
+        chunks = result['chunks']
+        bigrag_chunks = {}
+        production_chunk_to_bigrag_id = {}
+
+        for prod_chunk in chunks:
+            # Create BiGRAG chunk ID (hash of content)
+            chunk_id = compute_mdhash_id(prod_chunk['content'], prefix='chunk-')
+
+            bigrag_chunks[chunk_id] = {
+                "content": prod_chunk['content'],
+                "tokens": prod_chunk.get('tokens', []),
+                "chunk_order_index": prod_chunk.get('chunk_order_index', 0),
+                "full_doc_id": doc_id,
+                "doc_title": metadata.get("title", ""),
+                "doc_metadata": metadata,
+            }
+
+            # Map ProductionPipeline chunk ID -> BiGRAG chunk ID
+            prod_chunk_id = prod_chunk.get('chunk_id') or prod_chunk.get('source_id')
+            if prod_chunk_id:
+                production_chunk_to_bigrag_id[prod_chunk_id] = chunk_id
+
+        await self.text_chunks.upsert(bigrag_chunks)
+        logger.info(f"[Production Pipeline] Stored {len(bigrag_chunks)} chunks to KV storage")
+
+        # Step 7: Store full document (CRITICAL - was missing in original test)
+        await self.full_docs.upsert({
+            doc_id: {
+                "content": content,
+                "title": metadata.get("title", ""),
+                "metadata": metadata
+            }
+        })
+        logger.info(f"[Production Pipeline] Stored full document: {doc_id}")
+
+        # Step 8: Index chunks to vdb_chunks for Path C retrieval (CRITICAL - was missing)
+        if self.vdb_chunks is not None:
+            doc_title = metadata.get("title", "")
+            chunks_for_vdb = {
+                chunk_id: {
+                    "content": f"[{doc_title}] {chunk_data['content']}" if doc_title else chunk_data['content'],
+                    "full_doc_id": doc_id
+                }
+                for chunk_id, chunk_data in bigrag_chunks.items()
+            }
+            await self.vdb_chunks.upsert(chunks_for_vdb)
+            logger.info(f"[Production Pipeline] Indexed {len(chunks_for_vdb)} chunks to vector DB (Path C)")
+
+        logger.info(f"[Production Pipeline] Document processing complete: {doc_id}")
+
+    async def _process_document_standard(
+        self,
+        doc_id: str,
+        content: str,
+        metadata: dict,
+    ):
+        """
+        Fallback to standard extraction pipeline when production pipeline fails or is unavailable.
+
+        This extracts the existing chunking + extract_entities code path to avoid duplication.
+        """
+        from bigrag.operate import chunking_by_token_size, extract_entities
+        from bigrag.utils import compute_mdhash_id
+
+        logger.info(f"[Standard Pipeline] Processing document: {doc_id}")
+
+        # Chunk document using standard token-based chunking
+        chunks = {
+            compute_mdhash_id(dp["content"], prefix="chunk-"): {
+                **dp,
+                "full_doc_id": doc_id,
+            }
+            for dp in chunking_by_token_size(
+                content,
+                overlap_token_size=self.chunk_overlap_token_size,
+                max_token_size=self.chunk_token_size,
+                tiktoken_model=self.tiktoken_model_name,
+                doc_title=metadata.get("title", ""),
+                doc_metadata=metadata,
+            )
+        }
+
+        logger.info(f"[Standard Pipeline] Created {len(chunks)} chunks")
+
+        # Extract entities and relations
+        maybe_new_kg = await extract_entities(
+            chunks,
+            knowledge_graph_inst=self.chunk_entity_relation_graph,
+            vdb_entities=self.vdb_entities,
+            vdb_relations=self.vdb_relations,
+            global_config=asdict(self),
+        )
+
+        if maybe_new_kg is None:
+            logger.warning("[Standard Pipeline] No new relations and entities found")
+            return
+
+        self.chunk_entity_relation_graph = maybe_new_kg
+
+        # Store full document and chunks
+        await self.full_docs.upsert({doc_id: {"content": content, "title": metadata.get("title", ""), "metadata": metadata}})
+        await self.text_chunks.upsert(chunks)
+
+        # Index chunks to vector DB (Path C)
+        if self.vdb_chunks is not None:
+            def _build_contextualized_chunk_content(chunk_data: dict) -> str:
+                content = chunk_data.get("content", "")
+                doc_title = chunk_data.get("doc_title", "")
+                doc_metadata = chunk_data.get("doc_metadata", {})
+
+                context_parts = []
+                if doc_title:
+                    context_parts.append(doc_title)
+                if doc_metadata.get("category"):
+                    context_parts.append(doc_metadata["category"])
+                if doc_metadata.get("tags"):
+                    tags = doc_metadata["tags"]
+                    if isinstance(tags, list):
+                        context_parts.extend(tags)
+                    else:
+                        context_parts.append(str(tags))
+
+                if context_parts:
+                    context_prefix = "[" + " | ".join(context_parts) + "] "
+                    return context_prefix + content
+                else:
+                    return content
+
+            chunks_for_vdb = {
+                chunk_id: {
+                    "content": _build_contextualized_chunk_content(chunk_data),
+                    "full_doc_id": chunk_data.get("full_doc_id", ""),
+                }
+                for chunk_id, chunk_data in chunks.items()
+            }
+            await self.vdb_chunks.upsert(chunks_for_vdb)
+            logger.info(f"[Standard Pipeline] Indexed {len(chunks_for_vdb)} chunks for vector search (Path C)")
+
+        logger.info(f"[Standard Pipeline] Document processing complete: {doc_id}")
+
     async def _insert_done(self):
         tasks = []
         for storage_inst in [

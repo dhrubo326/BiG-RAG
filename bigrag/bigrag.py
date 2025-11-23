@@ -517,22 +517,19 @@ class BiGRAG:
 
         logger.info(f"[Production Pipeline] Processing document: {doc_id}")
 
-        # Step 1: Check for OpenAI API key (required for production pipeline)
-        api_key = None
-        api_key_file = "openai_api_key.txt"
-
-        if os.path.exists(api_key_file):
-            try:
-                with open(api_key_file, 'r', encoding='utf-8') as f:
-                    api_key = f.read().strip()
-                logger.info(f"[Production Pipeline] API key loaded from {api_key_file}")
-            except Exception as e:
-                logger.warning(f"[Production Pipeline] Failed to read API key: {e}")
+        # Step 1: Get OpenAI API key from .env (REQUIRED for production pipeline)
+        api_key = os.getenv('OPENAI_API_KEY')
 
         if not api_key:
-            logger.warning("[Production Pipeline] No OpenAI API key found - falling back to standard extraction")
-            await self._process_document_standard(doc_id, content, metadata)
-            return
+            error_msg = (
+                "[Production Pipeline] OPENAI_API_KEY not found in environment variables. "
+                "Production pipeline requires OpenAI API key. "
+                "Please set OPENAI_API_KEY in your .env file or environment."
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        logger.info("[Production Pipeline] API key loaded from OPENAI_API_KEY environment variable")
 
         # Step 2: Initialize ProductionKGPipeline with config
         try:

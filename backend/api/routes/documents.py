@@ -43,12 +43,12 @@ router = APIRouter(prefix="/documents", tags=["Document Management"])
 @router.post("/upload", response_model=EnhancedUploadResponse)
 async def upload_document(
     background_tasks: BackgroundTasks,
-    rag: RAGDep,
     file: UploadFile = File(..., description="Text or Markdown file to upload (.txt or .md)"),
     title: str = Form(None, description="Optional document title (defaults to filename)"),
     data_source: str = Form(None, description="Dataset name (defaults to current dataset)"),
     process_async: bool = Form(True, description="Process in background (recommended for large files)"),
-    metadata: str = Form(None, description="Optional JSON metadata: {\"category\": \"research\", \"tags\": [...]}")
+    metadata: str = Form(None, description="Optional JSON metadata: {\"category\": \"research\", \"tags\": [...]}"),
+    use_production_pipeline: bool = Form(False, description="Use ProductionKGPipeline (table-aware, higher accuracy for educational content)")
 ):
     """
     Upload a document (.txt or .md) and add it to the knowledge graph.
@@ -58,26 +58,76 @@ async def upload_document(
     - Background processing with job tracking
     - Document registry for metadata management
     - Optional metadata (category, tags, custom fields)
+    - **NEW:** Production Pipeline support (table-aware, higher accuracy)
     - Progress tracking via /status/{job_id}
 
     **Example usage:**
     ```bash
-    # Basic upload
+    # Basic upload (standard pipeline)
     curl -X POST "http://localhost:8001/documents/upload" \\
       -F "file=@document.md" \\
       -F "title=My Research Paper"
 
-    # With metadata
+    # With metadata (standard pipeline)
     curl -X POST "http://localhost:8001/documents/upload" \\
       -F "file=@document.md" \\
       -F "title=BiG-RAG Paper" \\
       -F 'metadata={"category":"research","tags":["RAG","NLP"]}'
+
+    # With production pipeline (table-aware, higher accuracy for educational content)
+    curl -X POST "http://localhost:8001/documents/upload" \\
+      -F "file=@kuet_admission.md" \\
+      -F "title=KUET Admission Guide" \\
+      -F 'metadata={"category":"education","tags":["KUET","admission"]}' \\
+      -F "use_production_pipeline=true"
     ```
+
+    **Pipeline Modes:**
+    - **Standard (default):** Fast, token-based chunking, ~$0.01/doc
+    - **Production:** Table-aware chunking, 95+ validation, ~$0.16-0.40/doc, +2-3 F1 improvement
 
     **Returns:** job_id for tracking processing status via /status/{job_id}
     """
     try:
-        current_data_source = get_data_source()
+        # Check if we're in unified mode
+        from ..core.dependencies import get_unified_executor
+        unified_executor = get_unified_executor()
+
+        # Get or create RAG instance based on mode
+        if unified_executor:
+            # UNIFIED MODE: data_source is required, create RAG instance on-demand
+            if not data_source or data_source == "string":
+                raise HTTPException(
+                    status_code=400,
+                    detail="data_source parameter is required in unified mode (e.g., 'kuet_test', 'football')"
+                )
+            target_dataset = data_source
+            current_data_source = data_source
+
+            # Create temporary RAG instance for this dataset
+            from bigrag import BiGRAG
+            from bigrag.llm import gpt_4o_mini_complete
+            from bigrag.config import config
+            from pathlib import Path
+
+            # Path from backend/api/routes/documents.py -> D:\BiG-RAG
+            PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+            working_dir = str(PROJECT_ROOT / "expr" / target_dataset)
+
+            logger.info(f"[Unified Mode] Creating RAG instance for dataset: {target_dataset}")
+            rag = BiGRAG(
+                working_dir=working_dir,
+                llm_model_func=gpt_4o_mini_complete,
+                chunk_token_size=config.chunk_size,
+                chunk_overlap_token_size=config.chunk_overlap_size,
+                enable_llm_cache=config.enable_llm_cache,
+                addon_params={"language": config.default_language}
+            )
+        else:
+            # SINGLE MODE: use injected RAG instance
+            from ..core.dependencies import get_rag_instance
+            rag = get_rag_instance()
+            current_data_source = get_data_source()
 
         # Validate file extension
         if not file.filename.endswith(('.txt', '.md')):
@@ -174,9 +224,10 @@ async def upload_document(
                 dataset=target_dataset,
                 rag_instance=rag,
                 registry_instance=registry,
-                metadata=doc_metadata
+                metadata=doc_metadata,
+                use_production_pipeline=use_production_pipeline
             )
-            message = "Document queued for processing"
+            message = f"Document queued for processing ({'production' if use_production_pipeline else 'standard'} pipeline)"
         else:
             # Synchronous processing
             await process_document_background(
@@ -186,9 +237,10 @@ async def upload_document(
                 dataset=target_dataset,
                 rag_instance=rag,
                 registry_instance=registry,
-                metadata=doc_metadata
+                metadata=doc_metadata,
+                use_production_pipeline=use_production_pipeline
             )
-            message = "Document processed successfully"
+            message = f"Document processed successfully ({'production' if use_production_pipeline else 'standard'} pipeline)"
 
         # Return response
         return EnhancedUploadResponse(

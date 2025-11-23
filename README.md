@@ -151,17 +151,44 @@ echo "your-api-key-here" > openai_api_key.txt
 ```
 
 Build the bipartite graph:
+
+**Standard Pipeline (Fast, General-Purpose):**
 ```bash
 python script_build.py --data_source your_dataset
 ```
 
-This will:
+**Production Pipeline (Higher Accuracy for Educational Content):**
+```bash
+python script_build.py --data_source your_dataset --production
+```
+
+**Pipeline Comparison:**
+
+| Feature | Standard Pipeline | Production Pipeline |
+|---------|-------------------|---------------------|
+| **Chunking** | Token-based (1200 tokens) | Table-aware (extracts tables intact) |
+| **Table Handling** | May split across chunks | Preserved as structured data |
+| **Entity Extraction** | Single LLM pass | Dual mode (tables + paragraphs) |
+| **Validation** | Basic orphan detection | Numeric targets (95-99% validation rate) |
+| **Best For** | General documents, speed | Educational content with tables/lists |
+| **Cost** | ~$0.01/doc | ~$0.16-0.40/doc |
+| **Speed** | ~60s/doc | ~120-180s/doc |
+| **F1 Improvement** | Baseline | +2-3 points |
+
+**When to Use Production Pipeline:**
+- Documents with tables, lists, or structured content (KUET admission info, course catalogs, etc.)
+- Educational datasets where accuracy > speed
+- When validation quality is critical
+
+See [Graph_indexing_plan.md](Graph_indexing_plan.md) for detailed technical explanation.
+
+Both pipelines will:
 - Extract entities and relations from your documents using GPT-4o-mini
 - Create bipartite graph structure
 - Generate embeddings with FlagEmbedding
 - Save to `expr/your_dataset/`
 
-**Time estimate:** 2-4 hours for ~10K documents (depends on corpus size and OpenAI API rate limits)
+**Time estimate:** 2-4 hours for ~10K documents with standard pipeline, 4-8 hours with production pipeline (depends on corpus size and OpenAI API rate limits)
 
 ### Step 5: Start Server with Your Dataset
 

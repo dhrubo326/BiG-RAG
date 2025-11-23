@@ -222,6 +222,8 @@ def main():
                         help="Chunk token size (default: 1200)")
     parser.add_argument("--chunk_overlap", type=int, default=100,
                         help="Chunk overlap token size (default: 100)")
+    parser.add_argument("--production", action="store_true",
+                        help="Use ProductionKGPipeline (table-aware chunking, 95+ validation, higher accuracy for educational content)")
 
     args = parser.parse_args()
 
@@ -229,6 +231,7 @@ def main():
     print("BiG-RAG Knowledge Graph Builder (OpenAI Models)")
     print("="*80)
     print(f"Dataset: {args.data_source}")
+    print(f"Pipeline Mode: {'PRODUCTION (table-aware, 95+ validation)' if args.production else 'STANDARD (token-based chunking)'}")
     print(f"LLM: gpt-4o-mini (entity extraction)")
     print(f"Embedding: text-embedding-3-large (3072 dimensions)")
     print(f"Chunk size: {args.chunk_size} tokens")
@@ -251,11 +254,19 @@ def main():
     # Step 3: Initialize BiGRAG with OpenAI models
     logger.info("Step 3: Initializing BiG-RAG...")
     logger.info(f"  Working directory: {working_dir}")
+    logger.info(f"  Pipeline mode: {'PRODUCTION' if args.production else 'STANDARD'}")
     logger.info(f"  Chunk size: {config.chunk_size} tokens")
     logger.info(f"  Chunk overlap: {config.chunk_overlap_size} tokens")
     logger.info(f"  Extraction language: {config.default_language}")
     logger.info(f"  LLM cache: {config.enable_llm_cache}")
     print("")
+
+    # Production pipeline configuration
+    production_config = {
+        "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
+        "enable_entity_linking": True,
+        "extraction_mode": "semi_structured"  # structured | semi_structured | unstructured
+    } if args.production else {}
 
     rag = BiGRAG(
         working_dir=working_dir,
@@ -272,6 +283,9 @@ def main():
         enable_llm_cache=config.enable_llm_cache,
         # Language configuration for entity extraction
         addon_params={"language": config.default_language},
+        # Production pipeline (NEW - opt-in for higher accuracy)
+        use_production_pipeline=args.production,
+        production_pipeline_config=production_config,
     )
 
     logger.info("BiG-RAG initialized successfully")

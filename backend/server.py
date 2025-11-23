@@ -47,7 +47,7 @@ from api.core.managers import LLMProviderManager, EmbeddingManager
 from api.core import dependencies
 
 # Import route modules
-from api.routes import health, documents, graph, evaluation, retrieval, jobs, llm
+from api.routes import health, documents, graph, evaluation, retrieval, jobs, llm, unified
 from api import agent
 
 
@@ -65,6 +65,14 @@ parser.add_argument('--host', default=config.host,
 parser.add_argument('--llm_provider', default=config.llm_provider,
                     choices=['openai', 'anthropic', 'google', 'grok'],
                     help=f'Default LLM provider (default: {config.llm_provider})')
+parser.add_argument('--unified', action='store_true',
+                    help='Enable unified multi-subgraph mode')
+parser.add_argument('--registry_path', default='expr/subgraph_registry.json',
+                    help='Path to subgraph registry (unified mode only)')
+parser.add_argument('--max_cached', type=int, default=5,
+                    help='Max cached subgraphs in unified mode (default: 5)')
+parser.add_argument('--prewarm', nargs='*',
+                    help='Subgraphs to preload at startup (unified mode)')
 args = parser.parse_args()
 
 # Setup API logger (separate from BiGRAG core logger)
@@ -80,76 +88,127 @@ api_logger = setup_logger(
     error_separate=True
 )
 
-# Initialize managers
+# Determine server mode
 working_dir_base = os.getenv('WORKING_DIR', './expr').lstrip('./')
-working_dir = str(PROJECT_ROOT / working_dir_base / args.data_source)
+unified_mode = args.unified
 
 api_logger.info("="*60)
 api_logger.info(f"Initializing BiG-RAG API Server")
-api_logger.info(f"Dataset: {args.data_source}")
-api_logger.info(f"Working directory: {working_dir}")
+api_logger.info(f"Mode: {'UNIFIED (multi-subgraph)' if unified_mode else 'SINGLE (single dataset)'}")
+
+if unified_mode:
+    api_logger.info(f"Registry: {args.registry_path}")
+    api_logger.info(f"Max cached subgraphs: {args.max_cached}")
+    if args.prewarm:
+        api_logger.info(f"Prewarm subgraphs: {args.prewarm}")
+else:
+    working_dir = str(PROJECT_ROOT / working_dir_base / args.data_source)
+    api_logger.info(f"Dataset: {args.data_source}")
+    api_logger.info(f"Working directory: {working_dir}")
+
 api_logger.info("="*60)
 
-embedding_manager = EmbeddingManager(working_dir)
 llm_manager = LLMProviderManager(default_provider=args.llm_provider)
 server_start_time = time.time()
 
-# Initialize BiGRAG
-rag = BiGRAG(
-    working_dir=working_dir,
-    llm_model_func=gpt_4o_mini_complete,  # Fallback for entity extraction
-    embedding_func=embedding_manager.get_embedding_func(),
-    chunk_token_size=config.chunk_size,
-    chunk_overlap_token_size=config.chunk_overlap_size,
-    enable_llm_cache=config.enable_llm_cache,
-    addon_params={"language": config.default_language},  # Language config for entity extraction and query preprocessing
-)
+# Initialize based on mode
+if unified_mode:
+    # ========== UNIFIED MODE ==========
+    from bigrag.unified import UnifiedQueryExecutor
 
-# Set global instances for dependency injection
-dependencies.set_rag_instance(rag)
+    # Get LLM function for routing (use gpt_4o_mini_complete for routing)
+    llm_func = gpt_4o_mini_complete
+
+    # Initialize unified executor
+    unified_executor = UnifiedQueryExecutor(
+        registry_path=str(PROJECT_ROOT / args.registry_path),
+        llm_func=llm_func,
+        max_cached_subgraphs=args.max_cached,
+        prewarm_subgraphs=args.prewarm,
+        enable_parallel=True,
+        bigrag_kwargs={
+            "llm_model_func": gpt_4o_mini_complete,
+            "chunk_token_size": config.chunk_size,
+            "chunk_overlap_token_size": config.chunk_overlap_size,
+            "enable_llm_cache": config.enable_llm_cache,
+            "addon_params": {"language": config.default_language}
+        }
+    )
+
+    # Set unified executor for dependency injection
+    dependencies.set_unified_executor(unified_executor)
+
+    # Set dummy instances for single-mode routes (not used in unified mode)
+    rag = None
+    embedding_manager = None
+    working_dir = None
+
+    api_logger.info("Unified query executor initialized")
+    api_logger.info(f"Available subgraphs: {unified_executor.get_available_subgraphs()}")
+
+else:
+    # ========== SINGLE MODE ==========
+    embedding_manager = EmbeddingManager(working_dir)
+
+    # Initialize BiGRAG
+    rag = BiGRAG(
+        working_dir=working_dir,
+        llm_model_func=gpt_4o_mini_complete,
+        embedding_func=embedding_manager.get_embedding_func(),
+        chunk_token_size=config.chunk_size,
+        chunk_overlap_token_size=config.chunk_overlap_size,
+        enable_llm_cache=config.enable_llm_cache,
+        addon_params={"language": config.default_language},
+    )
+
+    # Set global instances for dependency injection
+    dependencies.set_rag_instance(rag)
+    dependencies.set_embedding_manager(embedding_manager)
+    dependencies.set_server_metadata(server_start_time, args.data_source, working_dir)
+
+# Set LLM manager for both modes
 dependencies.set_llm_manager(llm_manager)
-dependencies.set_embedding_manager(embedding_manager)
-dependencies.set_server_metadata(server_start_time, args.data_source, working_dir)
 
-api_logger.info(f"BiG-RAG core initialized")
 api_logger.info(f"Language configuration: {config.default_language}")
-api_logger.info(f"Embedding mode: {embedding_manager.mode}")
 api_logger.info(f"Available LLM providers: {', '.join(llm_manager.get_available_providers())}")
 api_logger.info(f"Default LLM provider: {args.llm_provider}")
 
-# Load statistics
-stats = {"entities": 0, "edges": 0, "chunks": 0}
-try:
-    chunks_file = f"{working_dir}/kv_store_text_chunks.json"
-    if os.path.exists(chunks_file):
-        with open(chunks_file, 'r', encoding='utf-8') as f:
-            chunks = json.load(f)
-        stats["chunks"] = len(chunks)
+# Load statistics (single mode only)
+if not unified_mode:
+    api_logger.info(f"Embedding mode: {embedding_manager.mode}")
 
-    if embedding_manager.mode == "openai":
-        entities_file = f"{working_dir}/vdb_entities.json"
-        if os.path.exists(entities_file):
-            with open(entities_file, 'r', encoding='utf-8') as f:
-                vdb_entities = json.load(f)
-            stats["entities"] = len(vdb_entities.get('data', []))
+    stats = {"entities": 0, "edges": 0, "chunks": 0}
+    try:
+        chunks_file = f"{working_dir}/kv_store_text_chunks.json"
+        if os.path.exists(chunks_file):
+            with open(chunks_file, 'r', encoding='utf-8') as f:
+                chunks = json.load(f)
+            stats["chunks"] = len(chunks)
 
-        edges_file = f"{working_dir}/vdb_relations.json"
-        if os.path.exists(edges_file):
-            with open(edges_file, 'r', encoding='utf-8') as f:
-                vdb_relations = json.load(f)
-            stats["edges"] = len(vdb_relations.get('data', []))
+        if embedding_manager.mode == "openai":
+            entities_file = f"{working_dir}/vdb_entities.json"
+            if os.path.exists(entities_file):
+                with open(entities_file, 'r', encoding='utf-8') as f:
+                    vdb_entities = json.load(f)
+                stats["entities"] = len(vdb_entities.get('data', []))
 
-    elif embedding_manager.mode == "flagembedding":
-        stats["entities"] = len(embedding_manager.corpus_entity)
-        stats["edges"] = len(embedding_manager.corpus_relation)
+            edges_file = f"{working_dir}/vdb_relations.json"
+            if os.path.exists(edges_file):
+                with open(edges_file, 'r', encoding='utf-8') as f:
+                    vdb_relations = json.load(f)
+                stats["edges"] = len(vdb_relations.get('data', []))
 
-    api_logger.info(f"Graph statistics:")
-    api_logger.info(f"  - Entities: {stats['entities']}")
-    api_logger.info(f"  - Relations: {stats['edges']}")
-    api_logger.info(f"  - Text Chunks: {stats['chunks']}")
+        elif embedding_manager.mode == "flagembedding":
+            stats["entities"] = len(embedding_manager.corpus_entity)
+            stats["edges"] = len(embedding_manager.corpus_relation)
 
-except Exception as e:
-    api_logger.warning(f"Could not load statistics: {e}")
+        api_logger.info(f"Graph statistics:")
+        api_logger.info(f"  - Entities: {stats['entities']}")
+        api_logger.info(f"  - Relations: {stats['edges']}")
+        api_logger.info(f"  - Text Chunks: {stats['chunks']}")
+
+    except Exception as e:
+        api_logger.warning(f"Could not load statistics: {e}")
 
 
 # ============================================================================
@@ -202,6 +261,10 @@ app.include_router(llm.router)
 # Agent routes (multi-hop reasoning)
 app.include_router(agent.router)
 
+# Unified subgraph routes (only if in unified mode)
+if unified_mode:
+    app.include_router(unified.router)
+
 
 # ============================================================================
 # Startup/Shutdown Events
@@ -209,14 +272,29 @@ app.include_router(agent.router)
 
 @app.on_event("startup")
 async def startup_event():
-    # Initialize agent
-    agent_model = os.getenv("AGENT_DEFAULT_MODEL", "gpt-4o")
-    agent.initialize_agent(rag, model=agent_model)
+    # Initialize agent (single mode only)
+    if not unified_mode and rag:
+        agent_model = os.getenv("AGENT_DEFAULT_MODEL", "gpt-4o")
+        agent.initialize_agent(rag, model=agent_model)
+
+    # Prewarm cache in unified mode
+    if unified_mode:
+        unified_exec = dependencies.get_unified_executor()
+        if unified_exec and unified_exec.cache.prewarm_list:
+            api_logger.info(f"Prewarming cache with: {unified_exec.cache.prewarm_list}")
+            await unified_exec.cache.preload(unified_exec.cache.prewarm_list)
+            api_logger.info("Cache prewarming completed")
 
     api_logger.info("=" * 60)
     api_logger.info("BiG-RAG API Server started")
     api_logger.info(f"Documentation: http://{args.host}:{args.port}/docs")
-    api_logger.info(f"Agent endpoint: http://{args.host}:{args.port}/agent/query")
+
+    if unified_mode:
+        api_logger.info(f"Unified query endpoint: http://{args.host}:{args.port}/api/unified/query")
+        api_logger.info(f"Subgraphs endpoint: http://{args.host}:{args.port}/api/unified/subgraphs")
+    else:
+        api_logger.info(f"Agent endpoint: http://{args.host}:{args.port}/agent/query")
+
     api_logger.info("=" * 60)
 
 

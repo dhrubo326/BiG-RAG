@@ -16,6 +16,7 @@ from .managers import LLMProviderManager, EmbeddingManager
 _rag_instance: BiGRAG = None
 _llm_manager: LLMProviderManager = None
 _embedding_manager: EmbeddingManager = None
+_unified_executor = None  # NEW: Unified subgraph executor
 _server_start_time: float = None
 _data_source: str = None
 _working_dir: str = None
@@ -81,6 +82,17 @@ def get_data_source() -> str:
 def get_working_dir() -> str:
     """Get working directory"""
     return _working_dir
+
+
+def set_unified_executor(executor):
+    """Set the global unified executor (called during startup if --unified mode)"""
+    global _unified_executor
+    _unified_executor = executor
+
+
+def get_unified_executor():
+    """Get the global unified executor (None if not in unified mode)"""
+    return _unified_executor
 
 
 # Type aliases for dependency injection

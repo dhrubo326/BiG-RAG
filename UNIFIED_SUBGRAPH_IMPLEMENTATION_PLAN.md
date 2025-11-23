@@ -18,11 +18,11 @@ Query → LLM Router → Select Subgraph(s) → Existing Retrieval → Synthesiz
 - ❌ Entity extraction (bigrag/operate.py stays same)
 
 **What We're Building:**
-- ✅ Subgraph registry (master map)
-- ✅ LLM-based router
-- ✅ Unified query executor
-- ✅ Lazy loading with cache
-- ✅ New API endpoints
+- ✅ Subgraph registry (subgraph_registry.json)
+- ✅ LLM-based router (bigrag/unified/router.py)
+- ✅ Lazy loading cache (bigrag/unified/cache.py)
+- ✅ Unified query executor (bigrag/unified/executor.py)
+- ✅ New API endpoints (backend/server.py)
 - ✅ Update server.py to support unified mode
 
 ---
@@ -114,21 +114,36 @@ expr/
 ## Implementation Plan (3 Steps)
 
 ### Step 1: Create Subgraph Registry (Manual)
-**Effort:** 30 minutes
-**Files:** `expr/subgraph_registry.json` (new)
+**Effort:** 15 minutes
+**Files:** `expr/subgraph_registry.json` (new - manual creation)
+**Actions:**
+- Copy-paste JSON template to `expr/subgraph_registry.json`
+- Update aliases/topics for your specific subgraphs
 
 ### Step 2: Build Unified Query System
 **Effort:** 4-6 hours
-**Files:**
-- `bigrag/unified/router.py` (new)
-- `bigrag/unified/cache.py` (new)
-- `bigrag/unified/executor.py` (new)
+**Files:** (All NEW in `bigrag/unified/` directory)
+- `bigrag/unified/__init__.py` - Package exports
+- `bigrag/unified/router.py` - LLM-based routing logic
+- `bigrag/unified/cache.py` - Lazy loading with LRU eviction
+- `bigrag/unified/executor.py` - Multi-subgraph query execution
+
+**Actions:**
+- Create `bigrag/unified/` directory
+- Copy-paste 4 files from this plan
+- No changes to existing `bigrag/` files
 
 ### Step 3: Update Backend Server
 **Effort:** 2-3 hours
 **Files:**
-- `backend/server.py` (modify)
-- Add new endpoints
+- `backend/server.py` (modify - add unified mode)
+
+**Actions:**
+- Add imports: `from bigrag.unified import ...`
+- Add new endpoints: `/api/unified/query`, `/api/unified/subgraphs`, `/api/unified/route`
+- Add `initialize_unified_mode()` function
+- Add `--unified` CLI flag
+- Keep existing `/search` endpoint unchanged (backward compatible)
 
 ---
 
@@ -1058,33 +1073,58 @@ BiG-RAG/
 
 ## Implementation Checklist
 
-### Phase 1: Setup (30 min)
-- [ ] Create `expr/subgraph_registry.json` manually
-- [ ] Verify all 3 subgraphs exist: demo_test, football, kuet_test
+### Phase 1: Setup (15 min)
+- [ ] Create `expr/subgraph_registry.json` (copy-paste from plan)
+- [ ] Update aliases/topics for demo_test, football, kuet_test
+- [ ] Verify all 3 subgraphs exist in `expr/` directory
 
 ### Phase 2: Build Unified System (4-6 hours)
-- [ ] Create `bigrag/unified/__init__.py`
-- [ ] Create `bigrag/unified/router.py`
-- [ ] Create `bigrag/unified/cache.py`
-- [ ] Create `bigrag/unified/executor.py`
+- [ ] Create directory: `mkdir bigrag/unified`
+- [ ] Create `bigrag/unified/__init__.py` (copy-paste from plan)
+- [ ] Create `bigrag/unified/router.py` (copy-paste from plan)
+- [ ] Create `bigrag/unified/cache.py` (copy-paste from plan)
+- [ ] Create `bigrag/unified/executor.py` (copy-paste from plan)
+- [ ] Test imports: `python -c "from bigrag.unified import UnifiedQueryExecutor"`
 
 ### Phase 3: Update Server (2-3 hours)
-- [ ] Modify `backend/server.py`
+- [ ] Backup current `backend/server.py` (copy to `server.py.backup`)
+- [ ] Modify `backend/server.py` (add unified mode code from plan)
 - [ ] Add new endpoints: `/api/unified/query`, `/api/unified/subgraphs`, `/api/unified/route`
-- [ ] Add startup logic for unified mode
+- [ ] Add startup logic: `initialize_unified_mode()` function
+- [ ] Test imports: `python backend/server.py --help`
 
 ### Phase 4: Testing (2 hours)
-- [ ] Test single mode (ensure no regression)
-- [ ] Test unified mode basic query
-- [ ] Test multi-subgraph query
-- [ ] Test routing decisions
-- [ ] Test lazy loading and cache
+- [ ] **Test 1**: Single mode (no regression)
+  - Run: `python server.py --data_source demo_test`
+  - Query: `curl -X POST http://localhost:8001/search -d '{"queries": ["test"]}'`
+  - Expected: Works same as before
 
-### Phase 5: Documentation (1 hour)
+- [ ] **Test 2**: Unified mode startup
+  - Run: `python server.py --unified`
+  - Check console: Should list 3 subgraphs (demo_test, football, kuet_test)
+  - Expected: No errors, server starts
+
+- [ ] **Test 3**: List subgraphs
+  - Query: `curl http://localhost:8001/api/unified/subgraphs`
+  - Expected: Returns list of 3 subgraphs
+
+- [ ] **Test 4**: Test routing
+  - Query: `curl -X POST http://localhost:8001/api/unified/route -d 'query=KUET CSE seats'`
+  - Expected: Routes to `["kuet_test"]`
+
+- [ ] **Test 5**: Unified query
+  - Query: `curl -X POST http://localhost:8001/api/unified/query -d '{"query": "KUET CSE seats"}'`
+  - Expected: Returns results from kuet_test subgraph
+
+- [ ] **Test 6**: Multi-subgraph query
+  - Query: `curl -X POST http://localhost:8001/api/unified/query -d '{"query": "Compare demo_test and football"}'`
+  - Expected: Routes to both subgraphs, returns combined results
+
+### Phase 5: Documentation (Optional - 1 hour)
 - [ ] Update README with unified mode usage
-- [ ] Document API endpoints
+- [ ] Document API endpoints in API docs
 
-**Total Estimated Time:** 8-12 hours
+**Total Estimated Time:** 8-12 hours (without documentation: 6-11 hours)
 
 ---
 

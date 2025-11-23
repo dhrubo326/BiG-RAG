@@ -55,12 +55,101 @@ class NumericValidator:
 
             self.api_key = api_key or os.getenv('OPENAI_API_KEY')
             if not self.api_key:
-                print("[WARN] OPENAI_API_KEY not found - falling back to regex validation")
-                self.use_llm_validation = False
+                # NO fallback - fail with clear error
+                raise ValueError(
+                    "[ERROR] OPENAI_API_KEY not found in environment variables. "
+                    "LLM-based numeric validation requires OpenAI API key. "
+                    "Please set OPENAI_API_KEY in your .env file or environment."
+                )
             else:
                 self.client = AsyncOpenAI(api_key=self.api_key)
 
-    def validate_extraction(
+    async def _extract_numbers_with_llm(self, text: str) -> Dict[str, List[str]]:
+        """
+        Extract all unique numbers from text using LLM (multilingual support).
+
+        This replaces regex-based extraction to handle:
+        - Multilingual numerals (১২০ = 120)
+        - Complex formats (৯-৩০ = "9:30", not "9" and "30")
+        - Time ranges, dates, decimals, percentages
+        - Context-aware extraction (avoids splitting compound numbers)
+
+        Args:
+            text: Source text (can contain Bangla/English mixed content)
+
+        Returns:
+            Dict mapping normalized number → list of contexts where it appears
+            Example: {"120": ["আসন সংখ্যা ১২০", "total seats 120"], "4.50": ["GPA ৪.৫০"]}
+        """
+        import json
+
+        prompt = f"""Extract ALL unique numbers from the text below.
+
+TEXT:
+{text}
+
+INSTRUCTIONS:
+1. Find all numbers (Bangla numerals, English numerals, decimals, times, dates, ranges)
+2. Keep compound numbers intact:
+   - Time ranges: "৯-৩০মি." = "9:30" (ONE number, not two)
+   - Date ranges: "২০২৪-২৫" = "2024-25" (ONE number)
+   - Decimals: "৪.৫০" = "4.50" (ONE number)
+   - Phone numbers: "০১৭১১-১২৩৪৫৬" = "01711-123456" (ONE number)
+
+3. Normalize to English numerals:
+   - Bangla → English: ১২০ → "120"
+   - Keep original format: ৪.৫০ → "4.50"
+   - Times: ৯-৩০ → "9-30" or "09:30"
+
+4. For each unique number, provide:
+   - Normalized value (English numerals)
+   - Original form (as it appears in text)
+   - Context (surrounding 30 characters)
+
+OUTPUT (JSON only, no commentary):
+{{
+  "numbers": [
+    {{"normalized": "120", "original": "১২০", "context": "আসন সংখ্যা ১২০ জন"}},
+    {{"normalized": "90", "original": "৯০", "context": "ইলেকট্রিক্যাল ৯০ আসন"}},
+    {{"normalized": "4.50", "original": "৪.৫০", "context": "জিপিএ ৪.৫০ প্রয়োজন"}},
+    {{"normalized": "9-30", "original": "৯-৩০মি.", "context": "সময় ৯-৩০মি. পর্যন্ত"}}
+  ]
+}}
+
+IMPORTANT:
+- Output ONLY valid JSON
+- Keep compound numbers together (times, dates, ranges)
+- Normalize Bangla → English
+- Extract EVERY number you can find
+"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="gpt-4o",  # Use GPT-4o for reliable multilingual extraction
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.0,
+                response_format={"type": "json_object"}
+            )
+
+            result = json.loads(response.choices[0].message.content)
+            numbers = result.get('numbers', [])
+
+            # Convert to dict mapping normalized number → list of contexts
+            number_contexts = defaultdict(list)
+            for num in numbers:
+                normalized = num.get('normalized', '')
+                context = num.get('context', '')
+                if normalized:
+                    number_contexts[normalized].append(context)
+
+            return dict(number_contexts)
+
+        except Exception as e:
+            print(f"[ERROR] LLM number extraction failed: {e}")
+            print("[INFO] This may indicate an API issue or malformed response")
+            raise  # Re-raise to fail fast (no fallback to regex)
+
+    async def validate_extraction(
         self,
         source_document: str,
         entities: List[Dict],
@@ -91,11 +180,25 @@ class NumericValidator:
             }
         """
 
-        # Step 1: Extract numbers from source (returns normalized English numerals)
-        source_numbers = self._extract_numbers_with_context(source_document)
+        # Step 1: Extract numbers from source using LLM
+        if self.use_llm_validation:
+            # Use LLM-based extraction (multilingual, context-aware)
+            source_numbers = await self._extract_numbers_with_llm(source_document)
+        else:
+            # This should never happen as __init__ raises error if API key missing
+            raise ValueError(
+                "[ERROR] LLM validation is disabled but no fallback is allowed. "
+                "This should not happen - please check validator initialization."
+            )
 
-        # Step 2: Extract numbers from KG (returns normalized English numerals)
-        kg_numbers = self._extract_numbers_from_kg(entities, relations)
+        # Step 2: Extract numbers from KG using LLM
+        if self.use_llm_validation:
+            # Combine all KG text for LLM extraction
+            kg_text = self._build_kg_text(entities, relations)
+            kg_numbers = await self._extract_numbers_with_llm(kg_text)
+        else:
+            # This should never happen
+            raise ValueError("[ERROR] LLM validation is disabled but no fallback is allowed.")
 
         # Step 3: Build sets (already normalized by extraction methods)
         source_set = set(source_numbers.keys())
@@ -283,6 +386,40 @@ class NumericValidator:
             number_contexts[normalized_number].append(context)
 
         return dict(number_contexts)
+
+    def _build_kg_text(
+        self,
+        entities: List[Dict],
+        relations: List[Dict]
+    ) -> str:
+        """
+        Build combined text from KG entities and relations for LLM extraction.
+
+        Args:
+            entities: Entity list
+            relations: Relation list
+
+        Returns:
+            Combined text with all entity names, descriptions, and relation content
+        """
+        text_parts = []
+
+        # Add entity names and descriptions
+        for entity in entities:
+            entity_name = entity.get('entity_name', '')
+            description = entity.get('description', '')
+            if entity_name:
+                text_parts.append(f"Entity: {entity_name}")
+            if description:
+                text_parts.append(f"Description: {description}")
+
+        # Add relation content
+        for relation in relations:
+            content = relation.get('content', '')
+            if content:
+                text_parts.append(f"Relation: {content}")
+
+        return "\n".join(text_parts)
 
     def _extract_numbers_from_kg(
         self,

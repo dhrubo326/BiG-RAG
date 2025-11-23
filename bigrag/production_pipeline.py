@@ -78,7 +78,8 @@ class ProductionKGPipeline:
             extraction_mode=extraction_mode
         )
         self.batch_extractor = BatchConstrainedExtractor(self.paragraph_extractor)
-        self.numeric_validator = NumericValidator()
+        # Initialize numeric validator with API key for LLM-based validation (no regex fallback)
+        self.numeric_validator = NumericValidator(api_key=api_key, use_llm_validation=True)
         self.consistency_validator = ConsistencyValidator()
 
         if enable_entity_linking:
@@ -265,9 +266,9 @@ class ProductionKGPipeline:
         print("\n[PHASE 4] Validation")
         print("-" * 80)
 
-        # Step 4.1: Numeric validation
+        # Step 4.1: Numeric validation (async for LLM-based extraction)
         print("  [4.1] Numeric accuracy validation...")
-        numeric_result = self.numeric_validator.validate_extraction(
+        numeric_result = await self.numeric_validator.validate_extraction(
             source_document=markdown_text,
             entities=merged_entities,
             relations=all_relations,
@@ -276,6 +277,16 @@ class ProductionKGPipeline:
         print(f"    Status: {numeric_result['status']}")
         print(f"    Coverage: {numeric_result['numeric_coverage']:.2%}")
         print(f"    Hallucination: {numeric_result['hallucination_rate']:.2%}")
+
+        # Log missing numbers for debugging
+        if numeric_result.get('missing_numbers'):
+            missing_count = len(numeric_result['missing_numbers'])
+            print(f"    [DEBUG] Missing numbers ({missing_count}): {numeric_result['missing_numbers'][:20]}")  # Show first 20
+
+        # Log hallucinated numbers for debugging
+        if numeric_result.get('hallucinated_numbers'):
+            halluc_count = len(numeric_result['hallucinated_numbers'])
+            print(f"    [DEBUG] Hallucinated numbers ({halluc_count}): {numeric_result['hallucinated_numbers'][:20]}")
 
         # Step 4.2: Consistency validation
         print("  [4.2] Cross-chunk consistency validation...")

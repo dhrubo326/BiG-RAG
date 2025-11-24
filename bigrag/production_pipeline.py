@@ -296,6 +296,36 @@ class ProductionKGPipeline:
             print("  [3.1] Entity linking disabled - using raw entities")
             merged_entities = all_entities
 
+        # Phase 3.3: Add hyper_relation to entities (reverse mapping)
+        print("  [3.3] Adding hyper_relation to entities (bidirectional linking)...")
+
+        # Build entity lookup dict for fast access
+        entity_lookup = {e['entity_id']: e for e in merged_entities if e.get('entity_id')}
+
+        # For each relation, update its linked entities with hyper_relation
+        hyper_relation_added = 0
+        for relation in all_relations:
+            relation_id = relation.get('relation_id')
+            if not relation_id:
+                continue
+
+            linked_entities = relation.get('metadata', {}).get('linked_entities', [])
+
+            for entity_id in linked_entities:
+                if entity_id in entity_lookup:
+                    entity_lookup[entity_id]['hyper_relation'] = relation_id
+                    hyper_relation_added += 1
+
+        print(f"    Added hyper_relation to {hyper_relation_added} entities")
+
+        # Validate orphan entities (entities without relation context)
+        orphan_entities = [e for e in merged_entities if not e.get('hyper_relation')]
+        if orphan_entities:
+            print(f"    [WARN] Found {len(orphan_entities)} orphan entities (no relation link)")
+            print(f"           Orphan rate: {len(orphan_entities)/len(merged_entities)*100:.1f}%")
+        else:
+            print(f"    [OK] No orphan entities found")
+
         # Phase 4: Numeric Validation
         print("\n[PHASE 4] Numeric Validation")
         print("-" * 80)

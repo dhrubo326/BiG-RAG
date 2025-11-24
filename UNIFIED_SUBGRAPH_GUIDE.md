@@ -1,7 +1,6 @@
 # Unified Subgraph System Guide
 
 **Complete Guide to BiG-RAG's Multi-Subgraph Architecture**
-**Last Updated:** January 23, 2025
 **Status:** Production-Ready
 
 ---

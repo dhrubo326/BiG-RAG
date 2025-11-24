@@ -339,8 +339,25 @@ class ProductionEntityLinker:
         entity_types = [entity.get('entity_type', 'concept') for entity in group]
         most_common_type = max(set(entity_types), key=entity_types.count)
 
+        # Option B3: Collect all entity_ids from group for ID mapping
+        entity_ids = []
+        for entity in group:
+            if 'entity_id' in entity:
+                entity_ids.append(entity['entity_id'])
+
+        # Use primary entity_id (from first entity with ID, or generate new one)
+        if entity_ids:
+            primary_entity_id = entity_ids[0]
+        else:
+            # Fallback: generate ID from canonical name (for backward compatibility)
+            from bigrag.utils import compute_mdhash_id
+            from bigrag.constants import ENTITY_PREFIX
+            primary_entity_id = compute_mdhash_id(canonical_name, prefix=ENTITY_PREFIX)
+
         # Build merged node
         merged_node = {
+            'entity_id': primary_entity_id,  # Option B3: Primary stable ID
+            'entity_ids_merged': entity_ids,  # Option B3: Track all merged IDs for remapping
             'entity_name': canonical_name,
             'entity_type': most_common_type,
             'description': '; '.join(descriptions) if descriptions else canonical_name,

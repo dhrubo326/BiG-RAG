@@ -5,7 +5,7 @@ Integrates all Week 1-3 components into a unified pipeline:
 - Phase 1: Pre-processing (Table extraction, Bilingual detection, Smart chunking)
 - Phase 2: Extraction (Table facts, Paragraph facts with validation)
 - Phase 3: Entity Merging (Canonicalization, Multi-strategy linking)
-- Phase 4: Validation (Numeric accuracy, Cross-chunk consistency)
+- Phase 4: Numeric Validation (Quality control)
 
 Designed for 99%+ accuracy on bilingual educational documents.
 """
@@ -23,7 +23,6 @@ from bigrag.extractors.constrained_extractor import ConstrainedLLMExtractor, Bat
 from bigrag.merging.canonicalization import EntityCanonicalizationMap
 from bigrag.merging.entity_linker import ProductionEntityLinker, SimpleEntityLinker
 from bigrag.validators.numeric_validator import NumericValidator
-from bigrag.validators.consistency_validator import ConsistencyValidator
 
 
 class ProductionKGPipeline:
@@ -80,7 +79,6 @@ class ProductionKGPipeline:
         self.batch_extractor = BatchConstrainedExtractor(self.paragraph_extractor)
         # Initialize numeric validator - reads GEMINI_API_KEY from .env (not OpenAI key!)
         self.numeric_validator = NumericValidator(api_key=None, use_llm_validation=True)
-        self.consistency_validator = ConsistencyValidator()
 
         if enable_entity_linking:
             self.canon_map = EntityCanonicalizationMap()
@@ -212,13 +210,21 @@ class ProductionKGPipeline:
             for extraction in batch_result['extractions']:
                 chunk_id = extraction['chunk_id']
 
-                # Add source_id and metadata to each entity
+                # Add source_id, metadata, and entity_id to each entity
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import ENTITY_PREFIX
+
                 for entity in extraction['entities']:
                     if 'source_id' not in entity:
                         entity['source_id'] = chunk_id
                     if 'metadata' not in entity:
                         entity['metadata'] = {}
                     entity['metadata']['extraction_method'] = 'constrained_llm'
+
+                    # Generate stable entity ID if not present (Option B3)
+                    if 'entity_id' not in entity:
+                        entity_id = compute_mdhash_id(entity['description'], prefix=ENTITY_PREFIX)
+                        entity['entity_id'] = entity_id
 
                 # Add source_id, metadata, and linked_entities to each relation
                 for relation in extraction['relations']:
@@ -228,13 +234,14 @@ class ProductionKGPipeline:
                         relation['metadata'] = {}
                     relation['metadata']['extraction_method'] = 'constrained_llm'
 
-                    # Extract linked entities from relation content
+                    # Extract linked entities from relation content using entity_id (Option B3)
                     # (entities mentioned in the relation)
                     linked_entities = []
                     for entity in extraction['entities']:
                         # Simple heuristic: if entity name appears in relation content
                         if entity['entity_name'] in relation['content']:
-                            linked_entities.append(entity['entity_name'])
+                            # Store entity_id instead of entity_name (survives name changes)
+                            linked_entities.append(entity['entity_id'])
 
                     relation['metadata']['linked_entities'] = linked_entities
 
@@ -258,16 +265,42 @@ class ProductionKGPipeline:
             merged_entities = await self.entity_linker.link_entities_across_chunks(all_entities)
             merge_reduction = original_count - len(merged_entities)
             print(f"    Merged {original_count} -> {len(merged_entities)} entities (reduced by {merge_reduction})")
+
+            # Option B3: Build entity ID mapping (old_id -> primary_id)
+            print("  [3.2] Remapping entity IDs in relations...")
+            entity_id_mapping = {}
+            for merged in merged_entities:
+                primary_id = merged.get('entity_id')
+                if not primary_id:
+                    continue
+                # Map primary ID to itself
+                entity_id_mapping[primary_id] = primary_id
+                # Map all merged IDs to primary ID
+                for old_id in merged.get('entity_ids_merged', []):
+                    entity_id_mapping[old_id] = primary_id
+
+            # Update all relations' linked_entities with primary IDs
+            remapped_count = 0
+            for relation in all_relations:
+                old_links = relation['metadata'].get('linked_entities', [])
+                new_links = []
+                for old_id in old_links:
+                    primary_id = entity_id_mapping.get(old_id, old_id)
+                    new_links.append(primary_id)
+                    if primary_id != old_id:
+                        remapped_count += 1
+                relation['metadata']['linked_entities'] = new_links
+
+            print(f"    Remapped {remapped_count} entity ID references in {len(all_relations)} relations")
         else:
             print("  [3.1] Entity linking disabled - using raw entities")
             merged_entities = all_entities
 
-        # Phase 4: Validation
-        print("\n[PHASE 4] Validation")
+        # Phase 4: Numeric Validation
+        print("\n[PHASE 4] Numeric Validation")
         print("-" * 80)
 
-        # Step 4.1: Numeric validation (async for LLM-based extraction)
-        print("  [4.1] Numeric accuracy validation...")
+        print("  Validating numeric accuracy...")
         numeric_result = await self.numeric_validator.validate_extraction(
             source_document=markdown_text,
             entities=merged_entities,
@@ -288,44 +321,21 @@ class ProductionKGPipeline:
             halluc_count = len(numeric_result['hallucinated_numbers'])
             print(f"    [DEBUG] Hallucinated numbers ({halluc_count}): {numeric_result['hallucinated_numbers'][:20]}")
 
-        # Step 4.2: Consistency validation
-        print("  [4.2] Cross-chunk consistency validation...")
-        consistency_result = self.consistency_validator.validate_consistency(
-            entities=merged_entities,
-            relations=all_relations,
-            validation_level=self.validation_level
-        )
-        print(f"    Status: {consistency_result['status']}")
-        print(f"    Consistency: {consistency_result['consistency_score']:.2%}")
-        print(f"    Issues: {consistency_result['total_issues']}")
-
-        # Overall status (3-tier with graceful degradation)
-        # IMPORTANT: Only numeric validation blocks pipeline
-        # Consistency validation is informational only (not blocking for multilingual docs)
+        # Overall status - only numeric validation matters
         numeric_status = numeric_result['status']
-        consistency_status = consistency_result['status']
 
-        if numeric_status == 'PASS' and consistency_status == 'PASS':
+        if numeric_status == 'PASS':
             overall_status = 'PASS'
         elif numeric_status == 'FAIL':
-            # Only block on numeric validation failure
             overall_status = 'FAIL'
-        elif consistency_status == 'FAIL':
-            # Consistency failure -> WARNING (not blocking)
-            # Reason: Entity linking already handles multilingual variations
-            # Consistency validator generates false positives for Bangla/English mixed docs
-            overall_status = 'WARNING'
-            print(f"[WARNING] Consistency validation failed but not blocking pipeline")
-            print(f"[WARNING] Consistency issues are expected for multilingual documents")
         else:
-            # At least one is WARNING
+            # numeric_status == 'WARNING'
             overall_status = 'WARNING'
 
         # Track quality metrics for WARNING cases
         extraction_quality = {
             'extraction_mode': self.extraction_mode,
             'numeric_status': numeric_status,
-            'consistency_status': consistency_status,
             'warning_reasons': []
         }
 
@@ -333,11 +343,6 @@ class ProductionKGPipeline:
             extraction_quality['warning_reasons'].append(
                 f"Numeric validation WARNING (coverage: {numeric_result['numeric_coverage']:.2%}, "
                 f"hallucination: {numeric_result['hallucination_rate']:.2%})"
-            )
-
-        if consistency_status == 'WARNING':
-            extraction_quality['warning_reasons'].append(
-                f"Consistency validation WARNING (score: {consistency_result['consistency_score']:.2%})"
             )
 
         # Final result with visual flagging
@@ -357,7 +362,6 @@ class ProductionKGPipeline:
         print(f"  Entities: {len(merged_entities)}")
         print(f"  Relations: {len(all_relations)}")
         print(f"  Numeric Coverage: {numeric_result['numeric_coverage']:.2%}")
-        print(f"  Consistency: {consistency_result['consistency_score']:.2%}")
         print("=" * 80)
 
         # Save failed tables to human review queue
@@ -370,7 +374,6 @@ class ProductionKGPipeline:
             'chunks': chunks,
             'validation': {
                 'numeric': numeric_result,
-                'consistency': consistency_result,
                 'overall_status': overall_status,
                 'extraction_quality': extraction_quality
             },
@@ -384,8 +387,7 @@ class ProductionKGPipeline:
                 'failed_tables': len(failed_tables),
                 'table_success_rate': success_rate,
                 'entity_merge_reduction': len(all_entities) - len(merged_entities) if self.enable_entity_linking else 0,
-                'numeric_coverage': numeric_result['numeric_coverage'],
-                'consistency_score': consistency_result['consistency_score']
+                'numeric_coverage': numeric_result['numeric_coverage']
             },
             'failed_tables': failed_tables  # For inspection/debugging
         }

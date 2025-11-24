@@ -181,8 +181,13 @@ class BipartiteGraphBuilder:
 
         count = 0
         for entity in entities:
-            # Normalize entity name (uppercase with quotes - BiG-RAG convention)
-            entity_name = f'"{entity["entity_name"].upper()}"'
+            # Option B3: Use entity_id as node ID (stable across name changes)
+            entity_id = entity.get('entity_id')
+            entity_name = entity['entity_name']
+
+            # Fallback: Use normalized name if no entity_id (backward compatibility)
+            if not entity_id:
+                entity_id = f'"{entity_name.upper()}"'
 
             # Create node data (compatible with BiG-RAG storage format)
             # Note: After entity merging, source_id may be a list or missing
@@ -192,6 +197,7 @@ class BipartiteGraphBuilder:
 
             node_data = {
                 'role': 'entity',
+                'entity_name': entity_name,  # Store name for display
                 'entity_type': entity['entity_type'],
                 'description': entity['description'],
                 'weight': entity.get('weight', 0.0),
@@ -199,12 +205,17 @@ class BipartiteGraphBuilder:
                 'extraction_quality': entity.get('metadata', {}).get('extraction_quality', 'PASS'),  # Track quality level
             }
 
-            # Upsert to graph storage
-            await graph.upsert_node(entity_name, node_data=node_data)
+            # Upsert to graph storage using entity_id
+            await graph.upsert_node(entity_id, node_data=node_data)
 
             # Upsert to vector DB for semantic search (Path A)
+            # Store both entity_id and entity_name for retrieval
             await vdb.upsert({
-                entity_name: {'content': entity['description']}
+                entity_id: {
+                    'content': entity['description'],
+                    'entity_id': entity_id,
+                    'entity_name': entity_name
+                }
             })
 
             count += 1
@@ -236,10 +247,10 @@ class BipartiteGraphBuilder:
         for relation in relations:
             relation_id = compute_mdhash_id(relation['content'], prefix='relation-')
 
-            # Extract linked entities from metadata (added in Phase 2)
-            linked_entities = relation.get('metadata', {}).get('linked_entities', [])
+            # Option B3: Extract linked entity IDs from metadata (now stores IDs, not names)
+            linked_entity_ids = relation.get('metadata', {}).get('linked_entities', [])
 
-            if not linked_entities:
+            if not linked_entity_ids:
                 orphan_count += 1
                 logger.warning(
                     f"[GraphBuilder] Relation has no linked entities: "
@@ -248,9 +259,9 @@ class BipartiteGraphBuilder:
                 continue
 
             # Create edge from relation to each entity
-            for entity_name_raw in linked_entities:
-                # Normalize entity name to match entity nodes
-                entity_name = f'"{entity_name_raw.upper()}"'
+            for entity_id in linked_entity_ids:
+                # Option B3: Use entity_id directly (no transformation needed)
+                # Entity IDs are stable and already correct after remapping
 
                 # Create bipartite edge (relation → entity)
                 edge_data = {
@@ -260,7 +271,7 @@ class BipartiteGraphBuilder:
 
                 await graph.upsert_edge(
                     relation_id,  # Source: relation node (V_R)
-                    entity_name,  # Target: entity node (V_E)
+                    entity_id,  # Target: entity node (V_E) using stable ID
                     edge_data=edge_data
                 )
 

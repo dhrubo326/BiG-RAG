@@ -5,6 +5,5 @@ Post-extraction validation to ensure 99%+ accuracy.
 """
 
 from bigrag.validators.numeric_validator import NumericValidator
-from bigrag.validators.consistency_validator import ConsistencyValidator
 
-__all__ = ['NumericValidator', 'ConsistencyValidator']
+__all__ = ['NumericValidator']

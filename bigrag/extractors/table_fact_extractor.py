@@ -134,8 +134,8 @@ class TableFactExtractor:
                 )
                 if entity:
                     entities.append(entity)
-                    # Link entity to relation (same row = bipartite edge)
-                    relation['metadata']['linked_entities'].append(entity['entity_name'])
+                    # Link entity to relation using entity_id (Option B3: survives name changes)
+                    relation['metadata']['linked_entities'].append(entity['entity_id'])
 
             # Add relation after populating linked_entities
             relations.append(relation)
@@ -280,7 +280,13 @@ class TableFactExtractor:
             table_type
         )
 
+        # Generate stable entity ID based on description hash (Option B3)
+        from bigrag.utils import compute_mdhash_id
+        from bigrag.constants import ENTITY_PREFIX
+        entity_id = compute_mdhash_id(description, prefix=ENTITY_PREFIX)
+
         return {
+            'entity_id': entity_id,  # Stable ID (survives name changes during entity linking)
             'entity_name': str(cell_value).strip(),
             'entity_type': entity_type,
             'description': description,

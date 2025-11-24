@@ -1644,8 +1644,8 @@ async def _get_node_data(
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
     # Bug #4 Fix: Use defensive dict access to prevent KeyError
-    # Extract entity names from query results (Bug #5 fix: use entity_name, not hash ID)
-    results = [r.get("entity_name") for r in results if "entity_name" in r]
+    # Option B3: Use entity_id if available, fallback to entity_name for backward compatibility
+    results = [r.get("entity_id", r.get("entity_name")) for r in results if "entity_id" in r or "entity_name" in r]
     # get entity information
     node_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]
@@ -1658,7 +1658,7 @@ async def _get_node_data(
         *[knowledge_graph_inst.node_degree(r) for r in results]
     )
     node_datas = [
-        {**n, "entity_name": k, "rank": d}
+        {**n, "entity_id": k, "rank": d}  # Option B3: Store entity_id instead of overwriting entity_name
         for k, n, d in zip(results, node_datas, node_degrees)
         if n is not None
     ]

@@ -570,21 +570,16 @@ class BiGRAG:
         if overall_status == 'WARNING':
             logger.warning(f"[Production Pipeline] Validation WARNING - proceeding with caution")
             logger.warning(f"  Numeric status: {validation['numeric']['status']}")
-            logger.warning(f"  Consistency status: {validation['consistency']['status']}")
 
         if overall_status == 'FAIL':
             numeric_validation = validation['numeric']
-            consistency_validation = validation['consistency']
 
             error_details = {
                 'overall_status': 'FAIL',
                 'numeric_coverage': numeric_validation['numeric_coverage'],
                 'numeric_status': numeric_validation['status'],
-                'consistency_score': consistency_validation['consistency_score'],
-                'consistency_status': consistency_validation['status'],
                 'missing_numbers': numeric_validation.get('missing_numbers', []),
                 'hallucinated_numbers': numeric_validation.get('hallucinated_numbers', []),
-                'consistency_issues': consistency_validation.get('total_issues', 0),
                 'validation_level': validation.get('validation_level', 'MODERATE'),
                 'recommendations': numeric_validation.get('recommendations', [])
             }
@@ -604,11 +599,6 @@ class BiGRAG:
                 f"    Missing numbers: {len(error_details['missing_numbers'])}\n"
                 f"    Hallucinated numbers: {len(error_details['hallucinated_numbers'])}\n"
                 f"  \n"
-                f"  Consistency Validation:\n"
-                f"    Status: {error_details['consistency_status']}\n"
-                f"    Score: {error_details['consistency_score']:.2%}\n"
-                f"    Issues: {error_details['consistency_issues']}\n"
-                f"  \n"
                 f"  Recommendations:\n"
             )
 
@@ -622,9 +612,8 @@ class BiGRAG:
                 f"  \n"
                 f"  To fix:\n"
                 f"  1. Check missing numbers (Bangla numerals not detected?)\n"
-                f"  2. Review consistency issues (multilingual entity conflicts?)\n"
-                f"  3. Use LENIENT validation level for testing (90%+ threshold)\n"
-                f"  4. Or fix the root causes in production pipeline validators\n"
+                f"  2. Use LENIENT validation level for testing (80%+ threshold)\n"
+                f"  3. Or fix the root causes in production pipeline validators\n"
             )
 
             logger.error(error_message)
@@ -633,14 +622,12 @@ class BiGRAG:
         elif overall_status == 'WARNING':
             logger.warning(
                 f"[Production Pipeline] Validation completed with WARNINGS - "
-                f"Numeric: {validation['numeric']['numeric_coverage']:.2%}, "
-                f"Consistency: {validation['consistency']['consistency_score']:.2%}"
+                f"Numeric: {validation['numeric']['numeric_coverage']:.2%}"
             )
         else:  # PASS
             logger.info(
                 f"[Production Pipeline] Validation PASSED - "
-                f"Numeric: {validation['numeric']['numeric_coverage']:.2%}, "
-                f"Consistency: {validation['consistency']['consistency_score']:.2%}"
+                f"Numeric: {validation['numeric']['numeric_coverage']:.2%}"
             )
 
         # Step 5: Build bipartite graph from pipeline results

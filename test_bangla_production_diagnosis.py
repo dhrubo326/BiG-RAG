@@ -1,18 +1,33 @@
 """
 Bangla Production Pipeline Diagnostic Test
 
-This script tests the production pipeline with KUET_Admission_info.md (Bangla content)
-and logs everything to diagnose validation failures.
+This script tests the production pipeline with ANY document and logs everything
+to diagnose validation failures.
 
 It mimics the /datasets/create-and-index endpoint workflow to identify root causes
 of production pipeline failures with Bangla/multilingual content.
 
+Configuration:
+    Edit these variables at the top of the script to test different documents:
+    - TEST_DOCUMENT : Path to the document to test (default: KUET_Admission_info.md)
+    - SUBGRAPH_NAME : Name for the subgraph folder (default: bangla_diagnosis_test)
+
 Usage:
+    # 1. Edit TEST_DOCUMENT and SUBGRAPH_NAME variables in the script
+    # 2. Run the script
     python test_bangla_production_diagnosis.py
 
+Examples:
+    # To test example_kuet_mini.md:
+    # 1. Open this file in editor
+    # 2. Change: TEST_DOCUMENT = "example_kuet_mini.md"
+    # 3. Change: SUBGRAPH_NAME = "kuet_mini_test"
+    # 4. Run: python test_bangla_production_diagnosis.py
+
 Output:
-    - bangla_production_diagnosis.log (detailed log file)
+    - {SUBGRAPH_NAME}_diagnosis.log (detailed log file)
     - Console output with summary
+    - Subgraph stored in ./expr/{SUBGRAPH_NAME}/
 """
 
 import asyncio
@@ -34,12 +49,28 @@ if sys.platform == 'win32':
 from dotenv import load_dotenv
 load_dotenv()
 
-# Setup logging to file and console
-log_file = "bangla_production_diagnosis.log"
+# ============================================================================
+# CONFIGURATION - Change these variables to test different documents
+# ============================================================================
+TEST_DOCUMENT = "CUET_Admission.md"  # Path to document to test
+SUBGRAPH_NAME = "cuet_diagnosis_test"   # Name for subgraph folder
+# ============================================================================
+
+# Global variables for dynamic configuration
+log_file = None  # Will be set based on subgraph name
 log_handle = None
 
 def log(message, level="INFO"):
-    """Log to both file and console with timestamp."""
+    """
+    Log to both file and console with timestamp and color-coded level.
+
+    Level colors (terminal):
+    - ERROR/CRITICAL: Errors and critical failures
+    - WARN: Warnings
+    - OK/SUCCESS: Successful operations
+    - INFO: General information
+    - DATA/STAT: Data display
+    """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     formatted = f"[{timestamp}] [{level}] {message}"
 
@@ -51,24 +82,45 @@ def log(message, level="INFO"):
         log_handle.flush()
 
 
+def log_exception(context: str, exception: Exception):
+    """Log exception with full context for debugging."""
+    log(f"EXCEPTION in {context}: {type(exception).__name__}: {str(exception)}", "ERROR")
+    log("Exception traceback:", "ERROR")
+    tb_lines = traceback.format_exc().split('\n')
+    for line in tb_lines:
+        if line.strip():
+            log(f"  {line}", "ERROR")
+    log("", "INFO")
+
+
 async def test_bangla_production_pipeline():
     """
-    Complete diagnostic test of production pipeline with Bangla content.
+    Complete diagnostic test of production pipeline with any document.
 
     Tests the full workflow:
-    1. Load KUET document (Bangla)
+    1. Load document (configured via TEST_DOCUMENT variable)
     2. Initialize BiGRAG with production pipeline
     3. Process with ProductionKGPipeline
     4. Log all phases and validation results
-    5. Identify root causes of failures
+    5. Identify root causes of failures dynamically
     """
 
-    global log_handle
+    global log_handle, log_file
+
+    # Use configuration variables from top of script
+    test_document = TEST_DOCUMENT
+    subgraph_name = SUBGRAPH_NAME
+
+    # Set log file name dynamically based on subgraph name
+    log_file = f"{subgraph_name}_diagnosis.log"
     log_handle = open(log_file, 'w', encoding='utf-8')
 
     log("="*80)
     log("BANGLA PRODUCTION PIPELINE DIAGNOSTIC TEST")
     log("="*80)
+    log(f"Document: {test_document}")
+    log(f"Subgraph: {subgraph_name}")
+    log(f"Log file: {log_file}")
     log("")
 
     # Step 1: Check environment
@@ -78,61 +130,83 @@ async def test_bangla_production_pipeline():
     # Check API key
     api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
-        log("OPENAI_API_KEY not found in environment!", "ERROR")
+        log("ERROR: OPENAI_API_KEY not found in environment!", "ERROR")
         log("Please set OPENAI_API_KEY in your .env file", "ERROR")
+        log("", "INFO")
         return False
 
     log(f"API key found: {api_key[:20]}...", "OK")
 
-    # Check KUET file
-    kuet_file = "KUET_Admission_info.md"
-    if not os.path.exists(kuet_file):
-        log(f"{kuet_file} not found!", "ERROR")
+    # Check Gemini key (for numeric validation)
+    gemini_key = os.getenv('GEMINI_API_KEY')
+    if gemini_key:
+        log(f"Gemini API key found: {gemini_key[:20]}...", "OK")
+    else:
+        log("WARNING: GEMINI_API_KEY not found (numeric validation may fail)", "WARN")
+
+    # Check document file
+    if not os.path.exists(test_document):
+        log(f"ERROR: Document not found: {test_document}", "ERROR")
+        log("Please provide a valid document path", "ERROR")
+        log("", "INFO")
         return False
 
-    log(f"Test document found: {kuet_file}", "OK")
+    log(f"Test document found: {test_document}", "OK")
     log("")
 
     # Step 2: Load document
     log("Step 2: Load Document", "SETUP")
     log("-"*80)
 
-    with open(kuet_file, 'r', encoding='utf-8') as f:
-        kuet_doc = f.read()
+    try:
+        with open(test_document, 'r', encoding='utf-8') as f:
+            document_content = f.read()
 
-    log(f"Document loaded: {len(kuet_doc)} characters", "OK")
-    log(f"Document preview (first 200 chars):", "INFO")
-    log(kuet_doc[:200], "DATA")
-    log("")
+        log(f"Document loaded successfully: {len(document_content)} characters", "OK")
+        log(f"Document preview (first 200 chars):", "INFO")
+        preview = document_content[:200].replace('\n', ' ')
+        log(f"  {preview}", "DATA")
+        log("")
+    except Exception as e:
+        log_exception("Document Loading", e)
+        return False
 
-    # Detect language
+    # Detect language composition
     log("Detecting language composition...", "INFO")
-    bengali_chars = sum(1 for c in kuet_doc if '\u0980' <= c <= '\u09FF')
-    english_chars = sum(1 for c in kuet_doc if 'a' <= c.lower() <= 'z')
-    total_alpha = bengali_chars + english_chars
+    bengali_chars = sum(1 for c in document_content if '\u0980' <= c <= '\u09FF')
+    english_chars = sum(1 for c in document_content if 'a' <= c.lower() <= 'z')
+    arabic_chars = sum(1 for c in document_content if '\u0600' <= c <= '\u06FF')
+    total_alpha = bengali_chars + english_chars + arabic_chars
 
     if total_alpha > 0:
         bengali_pct = (bengali_chars / total_alpha) * 100
         english_pct = (english_chars / total_alpha) * 100
+        arabic_pct = (arabic_chars / total_alpha) * 100
     else:
         bengali_pct = 0
         english_pct = 0
+        arabic_pct = 0
 
-    log(f"Bengali characters: {bengali_chars} ({bengali_pct:.1f}%)", "DATA")
-    log(f"English characters: {english_chars} ({english_pct:.1f}%)", "DATA")
-    log(f"Primary language: {'BANGLA' if bengali_pct > english_pct else 'ENGLISH'}", "INFO")
+    log(f"  Bengali characters: {bengali_chars} ({bengali_pct:.1f}%)", "DATA")
+    log(f"  English characters: {english_chars} ({english_pct:.1f}%)", "DATA")
+    if arabic_pct > 0:
+        log(f"  Arabic characters: {arabic_chars} ({arabic_pct:.1f}%)", "DATA")
+
+    primary_lang = "BANGLA" if bengali_pct > max(english_pct, arabic_pct) else ("ENGLISH" if english_pct > arabic_pct else "ARABIC")
+    log(f"  Primary language: {primary_lang}", "INFO")
     log("")
 
     # Step 3: Setup test directory
     log("Step 3: Setup Test Environment", "SETUP")
     log("-"*80)
 
-    working_dir = "./expr/bangla_diagnosis_test"
+    working_dir = f"./expr/{subgraph_name}"
     if os.path.exists(working_dir):
+        log(f"Removing existing subgraph directory: {working_dir}", "INFO")
         shutil.rmtree(working_dir)
     os.makedirs(working_dir, exist_ok=True)
 
-    log(f"Working directory: {working_dir}", "OK")
+    log(f"Working directory created: {working_dir}", "OK")
     log("")
 
     # Step 4: Initialize BiGRAG with production pipeline
@@ -146,17 +220,16 @@ async def test_bangla_production_pipeline():
             working_dir=working_dir,
             use_production_pipeline=True,  # PRODUCTION MODE
             production_pipeline_config={
-                "validation_level": "MODERATE",  # 95%+ validation
+                "validation_level": "MODERATE",  # 90%+ validation
                 "enable_entity_linking": True,
                 "extraction_mode": "semi_structured"
             }
         )
         log("BiGRAG initialized with PRODUCTION pipeline", "OK")
-        log("Config: validation=MODERATE, entity_linking=True, mode=semi_structured", "INFO")
+        log("Config: validation=MODERATE (90%+), entity_linking=True, mode=semi_structured", "INFO")
         log("")
     except Exception as e:
-        log(f"Failed to initialize BiGRAG: {e}", "ERROR")
-        log(traceback.format_exc(), "ERROR")
+        log_exception("BiGRAG Initialization", e)
         return False
 
     # Step 5: Process document through production pipeline
@@ -164,24 +237,38 @@ async def test_bangla_production_pipeline():
     log("="*80)
     log("")
 
+    # Detect document title from first line or filename
+    first_line = document_content.split('\n')[0].strip()
+    if first_line.startswith('#'):
+        doc_title = first_line.lstrip('#').strip()
+    else:
+        doc_title = os.path.splitext(os.path.basename(test_document))[0]
+
     metadata = {
-        'title': 'KUET Admission 2024-25',
-        'category': 'university_admission',
-        'tags': ['engineering', 'admission', 'KUET', 'Bangladesh'],
-        'language': 'Bangla'
+        'title': doc_title,
+        'category': 'test_document',
+        'tags': ['test', 'production_pipeline', subgraph_name],
+        'language': primary_lang
     }
+
+    log(f"Document metadata: title='{doc_title}', language={primary_lang}", "INFO")
+    log("")
 
     try:
         # This will trigger _process_document_with_production_pipeline()
+        log("Calling rag.ainsert() - this may take a few minutes...", "INFO")
+        log("(Pipeline will run: chunking -> extraction -> entity linking -> validation -> graph building)", "INFO")
+        log("")
+
         await rag.ainsert(
-            [kuet_doc],
+            [document_content],
             metadata=[metadata]
         )
-        log("Document insertion completed", "OK")
+
+        log("Document insertion completed successfully", "OK")
         log("")
     except Exception as e:
-        log(f"Document insertion failed: {e}", "ERROR")
-        log(traceback.format_exc(), "ERROR")
+        log_exception("Document Insertion (rag.ainsert)", e)
 
         # Check if files were still created (fallback to standard pipeline)
         files_created = []
@@ -242,7 +329,7 @@ async def test_bangla_production_pipeline():
             graph = nx.read_graphml(str(graphml_path))
 
             entity_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'entity']
-            relation_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'bipartite_edge']
+            relation_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'relation']
 
             log(f"Total nodes: {graph.number_of_nodes()}", "STAT")
             log(f"Total edges: {graph.number_of_edges()}", "STAT")
@@ -304,21 +391,21 @@ async def test_bangla_production_pipeline():
         if vdb_entities_path.exists():
             with open(vdb_entities_path, 'r', encoding='utf-8') as f:
                 vdb_data = json.load(f)
-            vectors_count = len(vdb_data.get('vectors', []))
+            vectors_count = len(vdb_data.get('data', []))
             log(f"Entity vectors indexed: {vectors_count}", "STAT")
 
         vdb_relations_path = Path(working_dir) / "vdb_relations.json"
         if vdb_relations_path.exists():
             with open(vdb_relations_path, 'r', encoding='utf-8') as f:
                 vdb_data = json.load(f)
-            vectors_count = len(vdb_data.get('vectors', []))
+            vectors_count = len(vdb_data.get('data', []))
             log(f"Relation vectors indexed: {vectors_count}", "STAT")
 
         vdb_chunks_path = Path(working_dir) / "vdb_chunks.json"
         if vdb_chunks_path.exists():
             with open(vdb_chunks_path, 'r', encoding='utf-8') as f:
                 vdb_data = json.load(f)
-            vectors_count = len(vdb_data.get('vectors', []))
+            vectors_count = len(vdb_data.get('data', []))
             log(f"Chunk vectors indexed: {vectors_count}", "STAT")
 
         log("")
@@ -327,9 +414,7 @@ async def test_bangla_production_pipeline():
         log("")
 
     except Exception as e:
-        log(f"Failed to analyze graph: {e}", "ERROR")
-        log(traceback.format_exc(), "ERROR")
-        log("")
+        log_exception("Graph Analysis", e)
 
     # Step 8: Detect validation issues from logs
     log("Step 8: Issue Detection", "ANALYSIS")
@@ -540,48 +625,77 @@ async def test_bangla_production_pipeline():
     log("="*80)
     log("")
 
-    log(f"Document: {kuet_file} ({len(kuet_doc)} chars)", "INFO")
-    log(f"Language: Bangla ({bengali_pct:.1f}%) + English ({english_pct:.1f}%)", "INFO")
+    log(f"Document: {test_document} ({len(document_content)} chars)", "INFO")
+    lang_summary = f"{primary_lang} ({bengali_pct:.1f}% Bengali, {english_pct:.1f}% English"
+    if arabic_pct > 0:
+        lang_summary += f", {arabic_pct:.1f}% Arabic"
+    lang_summary += ")"
+    log(f"Language: {lang_summary}", "INFO")
+    log(f"Subgraph: {subgraph_name}", "INFO")
     log(f"Pipeline Mode: PRODUCTION", "INFO")
     log(f"Files Created: {sum(1 for f in files_status.values() if f['exists'])}/{len(expected_files)}", "INFO")
     log(f"Issues Found: {len(issues_found)}", "INFO")
     log("")
 
-    if all(f['exists'] for f in files_status.values()) and len(issues_found) == 0:
+    # Determine result status
+    all_files_exist = all(f['exists'] for f in files_status.values())
+
+    if all_files_exist and len(issues_found) == 0:
         log("Result: SUCCESS (production pipeline completed successfully)", "RESULT")
-    elif all(f['exists'] for f in files_status.values()):
+        result_status = "SUCCESS"
+    elif all_files_exist:
         log("Result: PARTIAL SUCCESS (files created but with warnings)", "RESULT")
+        result_status = "PARTIAL SUCCESS"
     else:
         log("Result: FAILURE (missing files)", "RESULT")
+        result_status = "FAILURE"
 
     log("")
     log(f"Detailed log saved to: {log_file}", "INFO")
+    log(f"Subgraph directory: {working_dir}", "INFO")
     log("")
 
     log_handle.close()
 
-    return True
+    return result_status == "SUCCESS"
 
 
 async def main():
     """Main entry point."""
+    print("\n" + "="*80)
+    print("STARTING DIAGNOSTIC TEST")
+    print("="*80)
+    print(f"Document: {TEST_DOCUMENT}")
+    print(f"Subgraph: {SUBGRAPH_NAME}")
+    print("="*80 + "\n")
+
     try:
         success = await test_bangla_production_pipeline()
 
         print("\n" + "="*80)
         print("DIAGNOSTIC TEST COMPLETE")
         print("="*80)
-        print(f"\nDetailed log saved to: {log_file}")
-        print("\nNext steps:")
-        print("1. Review the log file for detailed analysis")
-        print("2. Focus on the 5 recommended fixes")
-        print("3. Implement Bangla numeral normalization first (highest priority)")
+        print(f"\nResult: {'SUCCESS' if success else 'FAILURE'}")
+        print(f"Detailed log: {SUBGRAPH_NAME}_diagnosis.log")
+        print(f"Subgraph location: ./expr/{SUBGRAPH_NAME}/")
+
+        if success:
+            print("\nNext steps:")
+            print("1. Review the log file for detailed validation results")
+            print("2. Inspect the subgraph files in expr/{}/".format(SUBGRAPH_NAME))
+            print("3. Test retrieval with the new subgraph")
+        else:
+            print("\nNext steps:")
+            print("1. Review the log file for error details")
+            print("2. Focus on recommended fixes in the log")
+            print("3. Re-run after implementing fixes")
+
         print("")
 
         return 0 if success else 1
 
     except Exception as e:
-        print(f"\n[CRITICAL ERROR] Test failed: {e}")
+        print(f"\n[CRITICAL ERROR] Test failed with exception: {e}")
         traceback.print_exc()
         return 1
 

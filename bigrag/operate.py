@@ -601,6 +601,12 @@ async def _merge_nodes_then_upsert(
     """
     Merge and upsert entity nodes with weight aggregation.
 
+    UNIFIED ENTITY ID STRATEGY:
+    - Uses compute_mdhash_id() to generate stable entity_id from entity_name
+    - entity_id format: "entity-abc123" (hash-based, stable across pipelines)
+    - Replaces old name-based node IDs for consistency with production pipeline
+    - Both entity_id and entity_name stored in node data
+
     Weight Semantics (A3):
     - weight = sum of importance scores (key_score) across all occurrences
     - Range: 0 to N×100 (where N = number of chunks mentioning this entity)
@@ -621,14 +627,18 @@ async def _merge_nodes_then_upsert(
         global_config: Configuration dict
 
     Returns:
-        Node data dict with entity_name
+        Node data dict with entity_name and entity_id
     """
+    # UNIFIED: Generate stable entity_id (same strategy as production pipeline)
+    entity_id = compute_mdhash_id(entity_name, prefix="entity-")
+
     already_entity_types = []
     already_source_ids = []
     already_description = []
     already_weights = []
 
-    already_node = await knowledge_graph_inst.get_node(entity_name)
+    # UNIFIED: Use entity_id as node ID (not entity_name)
+    already_node = await knowledge_graph_inst.get_node(entity_id)
     if already_node is not None:
         already_entity_types.append(already_node["entity_type"])
         already_source_ids.extend(
@@ -660,16 +670,18 @@ async def _merge_nodes_then_upsert(
     )
     node_data = dict(
         role="entity",
+        entity_name=entity_name,  # UNIFIED: Store entity_name in node data
         entity_type=entity_type,
         description=description,
         source_id=source_id,
-        weight=weight,  # Bug fix: include weight in node data
+        weight=weight,
     )
+    # UNIFIED: Use entity_id as node ID (not entity_name)
     await knowledge_graph_inst.upsert_node(
-        entity_name,
+        entity_id,
         node_data=node_data,
     )
-    node_data["entity_name"] = entity_name
+    node_data["entity_id"] = entity_id  # UNIFIED: Return entity_id for indexing
     return node_data
 
 
@@ -679,18 +691,22 @@ async def _merge_edges_then_upsert(
     knowledge_graph_inst: BaseGraphStorage,
     global_config: dict,
 ):
+    # UNIFIED: Generate stable entity_id (same as _merge_nodes_then_upsert)
+    entity_id = compute_mdhash_id(entity_name, prefix="entity-")
+
     edge_data = []
-    
+
     for node in nodes_data:
         source_id = node["source_id"]
         hyper_relation = node["hyper_relation"]
         weight = node["weight"]
-        
+
         already_weights = []
         already_source_ids = []
-        
-        if await knowledge_graph_inst.has_edge(hyper_relation, entity_name):
-            already_edge = await knowledge_graph_inst.get_edge(hyper_relation, entity_name)
+
+        # UNIFIED: Use entity_id for edge connections (not entity_name)
+        if await knowledge_graph_inst.has_edge(hyper_relation, entity_id):
+            already_edge = await knowledge_graph_inst.get_edge(hyper_relation, entity_id)
             already_weights.append(already_edge["weight"])
             already_source_ids.extend(
                 split_string_by_multi_markers(already_edge["source_id"], [GRAPH_FIELD_SEP])
@@ -701,9 +717,10 @@ async def _merge_edges_then_upsert(
             set([source_id] + already_source_ids)
         )
 
+        # UNIFIED: Use entity_id for edge target (not entity_name)
         await knowledge_graph_inst.upsert_edge(
             hyper_relation,
-            entity_name,
+            entity_id,
             edge_data=dict(
                 weight=weight,
                 source_id=source_id,
@@ -1188,10 +1205,12 @@ async def extract_entities(
         )
 
     if vdb_entities is not None:
+        # UNIFIED: Use entity_id as VDB key (same format as production pipeline: "entity-abc123")
         data_for_vdb = {
-            compute_mdhash_id(dp["entity_name"], prefix="ent-"): {
+            dp["entity_id"]: {  # UNIFIED: Use entity_id returned from _merge_nodes_then_upsert
                 "content": dp["entity_name"] + dp["description"],
-                "entity_name": dp["entity_name"],
+                "entity_id": dp["entity_id"],  # UNIFIED: Store entity_id for retrieval
+                "entity_name": dp["entity_name"],  # Keep for backward compatibility
             }
             for dp in all_entities_data
         }

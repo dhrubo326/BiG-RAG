@@ -960,7 +960,7 @@ class BiGRAG:
             # Insert entities into vector storage if needed
             if self.vdb_entities is not None:
                 data_for_vdb = {
-                    compute_mdhash_id(dp["entity_name"], prefix="ent-"): {
+                    compute_mdhash_id(dp["entity_name"], prefix="entity-"): {  # UNIFIED: Use "entity-" prefix
                         "content": dp["entity_name"] + dp["description"],
                         "entity_name": dp["entity_name"],
                     }
@@ -1190,7 +1190,7 @@ class BiGRAG:
                 try:
                     await self.chunk_entity_relation_graph.delete_node(entity_name)
                     if self.vdb_entities is not None:
-                        entity_id = compute_mdhash_id(entity_name, prefix="ent-")
+                        entity_id = compute_mdhash_id(entity_name, prefix="entity-")  # UNIFIED: Use "entity-" prefix
                         await self.vdb_entities.delete([entity_id])
                 except Exception as e:
                     logger.warning(f"Failed to delete entity {entity_name}: {e}")

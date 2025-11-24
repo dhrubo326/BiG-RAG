@@ -280,14 +280,15 @@ class TableFactExtractor:
             table_type
         )
 
-        # Generate stable entity ID based on description hash (Option B3)
+        # UNIFIED: Generate stable entity ID based on entity_name hash (consistent with standard pipeline)
         from bigrag.utils import compute_mdhash_id
         from bigrag.constants import ENTITY_PREFIX
-        entity_id = compute_mdhash_id(description, prefix=ENTITY_PREFIX)
+        entity_name = str(cell_value).strip()
+        entity_id = compute_mdhash_id(entity_name, prefix=ENTITY_PREFIX)  # UNIFIED: Use name, not description
 
         return {
-            'entity_id': entity_id,  # Stable ID (survives name changes during entity linking)
-            'entity_name': str(cell_value).strip(),
+            'entity_id': entity_id,  # Stable ID (same entity name = same ID across pipelines)
+            'entity_name': entity_name,
             'entity_type': entity_type,
             'description': description,
             'weight': 95.0,  # High weight (from structured data)

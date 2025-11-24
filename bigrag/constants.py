@@ -111,9 +111,10 @@ RELATION_PREFIX = "rel-"
 """Prefix for relation node IDs
 Example: rel-8c80df8f1fc71f13c4ffbe19fa22bf8f"""
 
-ENTITY_PREFIX = "ent-"
-"""Prefix for entity node IDs in vector DB (legacy, not used for graph node IDs)
-Graph nodes use canonical names directly (e.g., "LIONEL MESSI")"""
+ENTITY_PREFIX = "entity-"
+"""Prefix for entity node IDs (UNIFIED across all pipelines)
+Example: entity-abc123 (hash-based, stable across name changes)
+Both graph nodes and vector DB use entity_id with this prefix"""
 
 CHUNK_PREFIX = "chunk-"
 """Prefix for text chunk IDs

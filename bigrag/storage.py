@@ -184,7 +184,7 @@ class NanoVectorDBStorage(BaseVectorStorage):
 
     async def delete_entity(self, entity_name: str):
         try:
-            entity_id = [compute_mdhash_id(entity_name, prefix="ent-")]
+            entity_id = [compute_mdhash_id(entity_name, prefix="entity-")]  # UNIFIED: Use "entity-" prefix
 
             if self._client.get(entity_id):
                 self._client.delete(entity_id)

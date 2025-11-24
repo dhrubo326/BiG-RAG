@@ -221,9 +221,9 @@ class ProductionKGPipeline:
                         entity['metadata'] = {}
                     entity['metadata']['extraction_method'] = 'constrained_llm'
 
-                    # Generate stable entity ID if not present (Option B3)
+                    # UNIFIED: Generate stable entity ID if not present (consistent with standard pipeline)
                     if 'entity_id' not in entity:
-                        entity_id = compute_mdhash_id(entity['description'], prefix=ENTITY_PREFIX)
+                        entity_id = compute_mdhash_id(entity['entity_name'], prefix=ENTITY_PREFIX)  # UNIFIED: Use name, not description
                         entity['entity_id'] = entity_id
 
                 # Add source_id, metadata, and linked_entities to each relation

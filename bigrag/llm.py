@@ -776,8 +776,8 @@ async def zhipu_embedding(
 
 
 # Read embedding dimension from .env for consistency across all operations
-_EMBEDDING_DIM = int(os.getenv('EMBEDDING_DIM', '1536'))
-_EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'text-embedding-3-small')
+_EMBEDDING_DIM = int(os.getenv('EMBEDDING_DIM', '3072'))
+_EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'text-embedding-3-large')
 
 @wrap_embedding_func_with_attrs(embedding_dim=_EMBEDDING_DIM, max_token_size=8192)
 @retry(

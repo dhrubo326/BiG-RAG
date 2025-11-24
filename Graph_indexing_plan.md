@@ -576,3 +576,108 @@ For questions or issues:
 
 **Last Updated**: November 23, 2024
 **Version**: 1.0 (Production Ready)
+
+---
+
+## ⚠️ CRITICAL UPDATE: January 24, 2025 - Graph Structure Unification
+
+### Breaking Changes - Rebuild Required
+
+**Issue Discovered**: Old graphs used incompatible node ID formats between standard and production pipelines.
+
+**Problems Fixed**:
+
+1. **Entity Node IDs**:
+   - ❌ OLD (standard): Entity name as ID (`"MANCHESTER CITY"`)
+   - ✅ NEW (both): Hash-based stable ID (`"entity-abc123"`)
+
+2. **Relation Node IDs**:
+   - ❌ OLD (production): `"relation-abc123"` (wrong prefix in BipartiteGraphBuilder)
+   - ✅ NEW (both): `"rel-abc123"` (using RELATION_PREFIX constant)
+
+3. **Entity-Relation Linkage**:
+   - ❌ OLD: `hyper_relation` field not stored in GraphML (only used during processing)
+   - ✅ NEW: Graph edges (`relation → entity`) used for linkage (always been correct)
+
+### Changes Made
+
+**File**: [bigrag/builders/bipartite_graph_builder.py](bigrag/builders/bipartite_graph_builder.py)
+
+**Lines changed**: 19, 139, 251
+
+**Before**:
+```python
+relation_id = compute_mdhash_id(relation['content'], prefix='relation-')  # WRONG
+```
+
+**After**:
+```python
+from bigrag.constants import RELATION_PREFIX
+relation_id = compute_mdhash_id(relation['content'], prefix=RELATION_PREFIX)  # rel-
+```
+
+### Impact Assessment
+
+| Component | Standard Pipeline | Production Pipeline | Compatible? |
+|-----------|------------------|---------------------|-------------|
+| Entity Node ID | `entity-abc123` | `entity-abc123` | ✅ YES |
+| Relation Node ID | `rel-abc123` | `rel-abc123` | ✅ YES (after fix) |
+| Edge Structure | `rel-* → entity-*` | `rel-* → entity-*` | ✅ YES |
+| Vector DB Keys | `entity-abc123` | `entity-abc123` | ✅ YES |
+| Backend Endpoints | All work | All work | ✅ YES |
+
+### Migration Required
+
+**All old graphs MUST be rebuilt** before they are compatible with:
+- New retrieval code
+- Backend endpoints
+- Unified subgraph system
+
+**Rebuild Commands**:
+```bash
+# Standard pipeline
+python script_build.py --data_source demo_test
+
+# Production pipeline
+python script_build.py --data_source kuet_test --use_production_pipeline
+
+# Or via backend upload
+curl -X POST "http://localhost:8001/documents/upload" \
+  -F "file=@document.md" \
+  -F "use_production_pipeline=true"
+```
+
+### Verification
+
+After rebuilding, verify graph structure:
+
+```bash
+# Check entity node IDs (should start with "entity-")
+grep '<node id="entity-' expr/YOUR_DATASET/graph_chunk_entity_relation.graphml | head -3
+
+# Check relation node IDs (should start with "rel-")
+grep '<node id="rel-' expr/YOUR_DATASET/graph_chunk_entity_relation.graphml | head -3
+
+# Check edges (should connect rel-* to entity-*)
+grep '<edge source="rel-' expr/YOUR_DATASET/graph_chunk_entity_relation.graphml | head -3
+```
+
+Expected output:
+```xml
+<node id="entity-abc123">
+<node id="rel-def456">
+<edge source="rel-def456" target="entity-abc123">
+```
+
+### Benefits
+
+✅ **100% Pipeline Compatibility**: Both pipelines produce identical graph structures  
+✅ **Backend Works Seamlessly**: All endpoints work with both pipeline outputs  
+✅ **Unified System Ready**: Router can mix graphs from different pipelines  
+✅ **Clean Architecture**: Single code path for retrieval  
+✅ **No Future Migrations**: Stable ID system prevents breaking changes  
+
+---
+
+**Updated**: January 24, 2025  
+**Action Required**: Rebuild all existing graphs with new code

@@ -16,6 +16,7 @@ import asyncio
 from typing import Dict, List, Optional
 from bigrag.utils import compute_mdhash_id, logger
 from bigrag.base import BaseGraphStorage, BaseVectorStorage
+from bigrag.constants import RELATION_PREFIX
 
 
 class BipartiteGraphBuilder:
@@ -134,7 +135,8 @@ class BipartiteGraphBuilder:
         count = 0
         for relation in relations:
             # Generate relation ID (hash of content for uniqueness)
-            relation_id = compute_mdhash_id(relation['content'], prefix='relation-')
+            # UNIFIED: Use RELATION_PREFIX constant (rel-) for compatibility with standard pipeline
+            relation_id = compute_mdhash_id(relation['content'], prefix=RELATION_PREFIX)
 
             # Create node data (compatible with BiG-RAG storage format)
             node_data = {
@@ -245,7 +247,8 @@ class BipartiteGraphBuilder:
         orphan_count = 0
 
         for relation in relations:
-            relation_id = compute_mdhash_id(relation['content'], prefix='relation-')
+            # UNIFIED: Use RELATION_PREFIX constant (rel-) for compatibility with standard pipeline
+            relation_id = compute_mdhash_id(relation['content'], prefix=RELATION_PREFIX)
 
             # Option B3: Extract linked entity IDs from metadata (now stores IDs, not names)
             linked_entity_ids = relation.get('metadata', {}).get('linked_entities', [])

@@ -10,7 +10,7 @@
 
 1. [Overview](#overview)
 2. [The Three Types in GraphML](#the-three-types-in-graphml)
-3. [Why "Bipartite Edge" Appears in Two Places](#why-bipartite-edge-appears-in-two-places)
+3. [Why "Relation" Appears in Two Places](#why-bipartite-edge-appears-in-two-places)
 4. [Visual Architecture](#visual-architecture)
 5. [Benefits of This Design](#benefits-of-this-design)
 6. [Node ID Naming Convention (Issue #1)](#node-id-naming-convention-issue-1)
@@ -34,11 +34,11 @@ BiG-RAG uses a **true bipartite graph** structure where:
 
 When examining a BiG-RAG GraphML file, you'll see three distinct types:
 
-### Type 1: Bipartite Edge Node (Knowledge Segment Node)
+### Type 1: Relation Node (Knowledge Segment Node)
 
 ```xml
 <node id="rel-a1b2c3d4e5f6g7h8i9j0">
-  <data key="d0">bipartite_edge</data>        <!-- role -->
+  <data key="d0">relation</data>        <!-- role -->
   <data key="content">The football world eagerly anticipates the 2024 European Championship and Copa America 2024.</data>  <!-- ✨ NEW: content as attribute -->
   <data key="d1">16.0</data>                   <!-- weight -->
   <data key="d2">chunk-600f9c648bc602202ec663361837e416</data>  <!-- source_id -->
@@ -58,7 +58,7 @@ When examining a BiG-RAG GraphML file, you'll see three distinct types:
 
 **Attributes:**
 - `id`: Hash-based identifier (e.g., `rel-a1b2c3d4...`) - **NEW**
-- `role="bipartite_edge"`: Identifies this as a relation node
+- `role="relation"`: Identifies this as a relation node
 - `content`: The actual knowledge segment text - **NEW**
 - `weight`: Cumulative importance score (aggregated if appears in multiple chunks)
 - `source_id`: Chunk ID(s) where this knowledge segment appears
@@ -103,18 +103,18 @@ When examining a BiG-RAG GraphML file, you'll see three distinct types:
 **Key insight:** This edge says: "The knowledge segment mentions this entity"
 
 **Constraints:**
-- ✅ Valid: `bipartite_edge → entity` or `entity → bipartite_edge`
-- ❌ Invalid: `entity → entity` or `bipartite_edge → bipartite_edge`
+- ✅ Valid: `relation → entity` or `entity → relation`
+- ❌ Invalid: `entity → entity` or `relation → relation`
 
 ---
 
-## Why "Bipartite Edge" Appears in Two Places
+## Why "Relation" Appears in Two Places
 
 **Confusing terminology alert!** 🚨
 
-The term "bipartite_edge" appears in two contexts:
+The term "relation" appears in two contexts:
 
-1. **`<node role="bipartite_edge">`** → This is a **NODE** that represents a relation
+1. **`<node role="relation">`** → This is a **NODE** that represents a relation
 2. **`<edge source="..." target="...">`** → This is a **graph EDGE** (connector)
 
 ### Why This Naming?
@@ -131,11 +131,11 @@ The term "bipartite edge" in the node name refers to its role in the bipartite s
 
 | Current Name | Better Alternative | Description |
 |--------------|-------------------|-------------|
-| `bipartite_edge` (node) | `relation_node` | Knowledge segment node |
+| `relation` (node) | `relation_node` | Knowledge segment node |
 | `entity` (node) | `entity_node` | Named entity node |
 | `<edge>` (graph) | `connector` | Graph edge connecting layers |
 
-**Why we keep "bipartite_edge":**
+**Why we keep "relation":**
 - Emphasizes the bipartite structure
 - Distinguishes from traditional KG "relations" (which are just edge labels)
 
@@ -154,26 +154,26 @@ The term "bipartite edge" in the node name refers to its role in the bipartite s
 │   (Type 2 - Blue)                 (Type 1 - Orange)         │
 │                                                              │
 │   ┌──────────────────┐           ┌──────────────────────┐   │
-│   │ "COPA AMERICA    │◄──────────│ <bipartite_edge>     │   │
+│   │ "COPA AMERICA    │◄──────────│ <relation>     │   │
 │   │  2024"           │   Type 3  │ "The football world  │   │
 │   │                  │    Edge   │  eagerly anticipates │   │
 │   │ role: entity     │           │  the 2024 European   │   │
 │   │ type: EVENT      │           │  Championship and    │   │
 │   │ weight: 170.0    │           │  Copa America 2024." │   │
 │   └──────────────────┘           │                      │   │
-│                                  │ role: bipartite_edge │   │
+│                                  │ role: relation │   │
 │   ┌──────────────────┐           │ weight: 16.0         │   │
 │   │ "EUROPEAN        │◄──────────│ source: chunk-600f.. │   │
 │   │  CHAMPIONSHIP    │           └──────────────────────┘   │
 │   │  2024"           │                                      │
 │   │                  │                                      │
 │   │ role: entity     │           ┌──────────────────────┐   │
-│   │ type: EVENT      │           │ <bipartite_edge>     │   │
+│   │ type: EVENT      │           │ <relation>     │   │
 │   │ weight: 180.0    │◄──────────│ "Messi scored 11     │   │
 │   └──────────────────┘           │  goals for Inter     │   │
 │                                  │  Miami in 2024."     │   │
 │   ┌──────────────────┐           │                      │   │
-│   │ "INTER MIAMI"    │◄──────────│ role: bipartite_edge │   │
+│   │ "INTER MIAMI"    │◄──────────│ role: relation │   │
 │   │                  │           │ weight: 22.0         │   │
 │   │ role: entity     │           └──────────────────────┘   │
 │   │ type: TEAM       │                    │                 │
@@ -188,7 +188,7 @@ The term "bipartite edge" in the node name refers to its role in the bipartite s
 │                                 └──────────────────┘        │
 │                                                              │
 │   Type 3 edges shown as arrows: ────►                       │
-│   These connect bipartite_edge nodes to entity nodes        │
+│   These connect relation nodes to entity nodes        │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -214,7 +214,7 @@ The term "bipartite edge" in the node name refers to its role in the bipartite s
 │  │    * Attributes: role, content, weight, source_id   │  │
 │  │                                                       │  │
 │  │  - Graph edges (Type 3)                              │  │
-│  │    * Connect: entity ↔ bipartite_edge                │  │
+│  │    * Connect: entity ↔ relation                │  │
 │  │    * Attributes: weight, source_id                   │  │
 │  └──────────────────────────────────────────────────────┘  │
 │                                                             │
@@ -224,8 +224,8 @@ The term "bipartite edge" in the node name refers to its role in the bipartite s
 │  │  - Hash ID → {entity_name, embedding, metadata}      │  │
 │  │  - Used for Path A (entity-based retrieval)          │  │
 │  │                                                       │  │
-│  │  vdb_bipartite_edges.json                            │  │
-│  │  - Hash ID → {bipartite_edge_name, embedding}        │  │
+│  │  vdb_relations.json                            │  │
+│  │  - Hash ID → {relation_name, embedding}        │  │
 │  │  - Used for Path B (relation-based retrieval)        │  │
 │  │                                                       │  │
 │  │  vdb_chunks.json                                     │  │
@@ -263,7 +263,7 @@ The term "bipartite edge" in the node name refers to its role in the bipartite s
 (Messi) <--edge--> [Messi plays for Inter Miami] <--edge--> (Inter Miami)
 ```
 - Relation is a node with full content
-- Can be embedded: `vdb_bipartite_edges.query("who plays for Miami?")`
+- Can be embedded: `vdb_relations.query("who plays for Miami?")`
 - Can be weighted, ranked, and searched independently
 
 ### 2. Three-Path Retrieval (Phase 3 Enhancement)
@@ -274,12 +274,12 @@ Query: "Copa America 2024 winner"
 Path A: Entity Search
 └─> vdb_entities.query("Copa America 2024")
     └─> Returns: "COPA AMERICA 2024" entity
-        └─> Graph traversal: Find connected bipartite_edge nodes
+        └─> Graph traversal: Find connected relation nodes
             └─> Extract source chunks
 
 Path B: Relation Search
-└─> vdb_bipartite_edges.query("Copa America 2024 winner")
-    └─> Returns: "<bipartite_edge>Argentina won Copa America 2024"
+└─> vdb_relations.query("Copa America 2024 winner")
+    └─> Returns: "<relation>Argentina won Copa America 2024"
         └─> Graph traversal: Find connected entities
             └─> Extract source chunks
 
@@ -305,9 +305,9 @@ Query → Retrieve chunks about Copa America
 **BiG-RAG bipartite traversal:**
 ```
 1. Find entity: "COPA AMERICA 2024"
-2. Find connected bipartite_edge: "Argentina won Copa America 2024"
+2. Find connected relation: "Argentina won Copa America 2024"
 3. Find connected entity: "ARGENTINA"
-4. Find bipartite_edges connected to "ARGENTINA"
+4. Find relations connected to "ARGENTINA"
 5. Filter for goal-related segments: "Messi scored 5 goals for Argentina"
 6. Find entity: "LIONEL MESSI"
 7. Answer: Messi
@@ -345,9 +345,9 @@ rag.delete_document("doc-abc123")
 **Smart cascade cleanup:**
 - ✅ Remove chunks belonging to document
 - ✅ Remove orphaned entities (only in this doc)
-- ✅ Remove orphaned bipartite_edges
+- ✅ Remove orphaned relations
 - ✅ Update shared entities (remove this doc's source_id)
-- ✅ Update shared bipartite_edges
+- ✅ Update shared relations
 - ❌ No full rebuild needed
 
 **Performance:** ~1-2 seconds for cascade deletion
@@ -363,7 +363,7 @@ rag.delete_document("doc-abc123")
 **Old Code:** (No longer used)
 ```python
 return dict(
-    hyper_relation="<bipartite_edge>"+knowledge_fragment,  # This becomes node ID
+    hyper_relation="<relation>"+knowledge_fragment,  # This becomes node ID
     weight=weight,
     source_id=edge_source_id,
 )
@@ -371,8 +371,8 @@ return dict(
 
 **Result in GraphML:**
 ```xml
-<node id="&lt;bipartite_edge&gt;&quot;The football world eagerly anticipates the 2024 European Championship and Copa America 2024.&quot;">
-  <data key="d0">bipartite_edge</data>
+<node id="&lt;relation&gt;&quot;The football world eagerly anticipates the 2024 European Championship and Copa America 2024.&quot;">
+  <data key="d0">relation</data>
   <data key="d1">16.0</data>
   <data key="d2">chunk-600f9c648bc602202ec663361837e416</data>
 </node>
@@ -416,7 +416,7 @@ return dict(
 
 ```xml
 <node id="rel-abc123xyz">
-  <data key="d0">bipartite_edge</data>
+  <data key="d0">relation</data>
   <data key="content">The football world eagerly anticipates the 2024 European Championship and Copa America 2024.</data>
   <data key="d1">16.0</data>
   <data key="d2">chunk-600f9c648bc602202ec663361837e416</data>
@@ -424,7 +424,7 @@ return dict(
 ```
 
 #### ✅ **PROS:**
-1. **Clean IDs:** `rel-abc123xyz` instead of `&lt;bipartite_edge&gt;&quot;...&quot;`
+1. **Clean IDs:** `rel-abc123xyz` instead of `&lt;relation&gt;&quot;...&quot;`
 2. **Fast lookups:** Hash-based comparison (O(1) instead of O(n))
 3. **Standards-compliant:** Matches GraphML, Neo4j, industry best practices
 4. **Consistent:** Vector DB already uses `compute_mdhash_id(..., prefix="rel-")`
@@ -460,7 +460,7 @@ return dict(
 
 **Changes Made:**
 1. ✅ Updated `_handle_single_hyperrelation_extraction()` to generate hash IDs
-2. ✅ Modified `_merge_bipartite_edges_then_upsert()` to store content as attribute
+2. ✅ Modified `_merge_relations_then_upsert()` to store content as attribute
 3. ✅ Fixed VDB upsertion to avoid double-hashing
 4. ✅ Updated `storage.py` to preserve hash ID case (lowercase)
 5. ✅ Comprehensive testing completed
@@ -469,10 +469,10 @@ return dict(
 
 ```python
 # NEW Implementation (operate.py):
-from .constants import BIPARTITE_EDGE_PREFIX
+from .constants import RELATION_PREFIX
 
 # Generate hash-based ID
-edge_id = compute_mdhash_id(knowledge_fragment, prefix=BIPARTITE_EDGE_PREFIX)
+edge_id = compute_mdhash_id(knowledge_fragment, prefix=RELATION_PREFIX)
 return dict(
     hyper_relation=edge_id,  # "rel-abc123xyz"
     hyper_relation_content=knowledge_fragment,  # Store content separately
@@ -480,10 +480,10 @@ return dict(
     source_id=edge_source_id,
 )
 
-# In _merge_bipartite_edges_then_upsert():
+# In _merge_relations_then_upsert():
 content = nodes_data[0].get("hyper_relation_content", "")
 node_data = dict(
-    role="bipartite_edge",
+    role="relation",
     content=content,  # Content as node attribute
     weight=weight,
     source_id=source_id,
@@ -525,7 +525,7 @@ node_data = dict(
 (Entity A) <--edge--> [relation_node] <--edge--> (Entity B)
 ```
 - Relation node has embedding
-- Can query: `vdb_bipartite_edges.query("find relations about X")`
+- Can query: `vdb_relations.query("find relations about X")`
 - Can rank by weight
 - source_id links back to chunks
 
@@ -638,9 +638,9 @@ entity_node = {
 
 relation_node = {
     "id": "rel-abc123",
-    "role": "bipartite_edge",
+    "role": "relation",
     "content": "Messi plays for Inter Miami",
-    "embedding": [0.3, 0.4, ..., 0.6]  # In vdb_bipartite_edges
+    "embedding": [0.3, 0.4, ..., 0.6]  # In vdb_relations
 }
 
 # Edges
@@ -654,7 +654,7 @@ edge = {
 **Querying:**
 ```python
 # Semantic search on relations
-results = vdb_bipartite_edges.query("who plays for Miami?")
+results = vdb_relations.query("who plays for Miami?")
 # Returns: ["Messi plays for Inter Miami", ...]
 
 # Graph traversal

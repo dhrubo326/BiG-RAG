@@ -795,12 +795,12 @@ BIPARTITE GRAPH:
 │ Node 5: "CSE has 120 seats"                         │
 │   description: Full relation text                   │
 │   weight: 10.0  (completeness score)               │
-│   role: "bipartite_edge"                           │
+│   role: "relation"                           │
 │                                                     │
 │ Node 6: "Computer Science requires GPA 4.50"       │
 │   description: GPA requirement relation             │
 │   weight: 10.0                                      │
-│   role: "bipartite_edge"                           │
+│   role: "relation"                           │
 ├─────────────────────────────────────────────────────┤
 │                   EDGES                             │
 ├─────────────────────────────────────────────────────┤

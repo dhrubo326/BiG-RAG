@@ -25,14 +25,14 @@
 
 **Changes Made**:
 - ✅ Updated `_handle_single_hyperrelation_extraction()` to generate hash IDs using `compute_mdhash_id()`
-  - Changed from: `hyper_relation = "<bipartite_edge>" + knowledge_fragment`
+  - Changed from: `hyper_relation = "<relation>" + knowledge_fragment`
   - Changed to: `hyper_relation = compute_mdhash_id(knowledge_fragment, prefix="rel-")`
 - ✅ Added `hyper_relation_content` field to store actual content separately
-- ✅ Updated `_merge_bipartite_edges_then_upsert()` to store content as node attribute
-  - Node data now includes: `{"role": "bipartite_edge", "content": content, "weight": weight, "source_id": source_id}`
+- ✅ Updated `_merge_relations_then_upsert()` to store content as node attribute
+  - Node data now includes: `{"role": "relation", "content": content, "weight": weight, "source_id": source_id}`
 - ✅ Fixed VDB upsertion logic to avoid double-hashing
-  - Uses `bipartite_edge_name` (already hash ID) as key
-  - Uses `bipartite_edge_content` (actual content) for vector embedding
+  - Uses `relation_name` (already hash ID) as key
+  - Uses `relation_content` (actual content) for vector embedding
 - ✅ Updated `storage.py` stabilize_graph() to preserve hash ID case
   - Added check: `if node.startswith(("rel-", "ent-", "chunk-"))` to skip uppercase transformation
   - Hash IDs remain lowercase to match vector DB keys
@@ -76,7 +76,7 @@
   - Link to full semantics in CLAUDE.md
 - ✅ Added comprehensive docstrings to merge functions in `operate.py`
   - `_merge_nodes_then_upsert()`: Entity weight semantics
-  - `_merge_bipartite_edges_then_upsert()`: Relation weight semantics
+  - `_merge_relations_then_upsert()`: Relation weight semantics
 
 **Expected Impact**:
 - Clear understanding of weight semantics for developers and users
@@ -111,7 +111,7 @@
 
 **Changes Made**:
 - ✅ Created `bigrag/constants.py` (110 lines)
-  - Defined: GRAPH_FIELD_SEP, DEFAULT_ENTITY_TYPES, prefixes (BIPARTITE_EDGE_PREFIX, ENTITY_PREFIX, CHUNK_PREFIX)
+  - Defined: GRAPH_FIELD_SEP, DEFAULT_ENTITY_TYPES, prefixes (RELATION_PREFIX, ENTITY_PREFIX, CHUNK_PREFIX)
   - Retry settings: DEFAULT_MAX_RETRIES, DEFAULT_RETRY_DELAY, RETRY_EXPONENTIAL_BASE
   - Logging settings: DEFAULT_LOG_MAX_BYTES, DEFAULT_LOG_BACKUP_COUNT
   - Chunking settings: DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP
@@ -119,7 +119,7 @@
 - ✅ Updated `bigrag/prompt.py` to import from constants
   - Replaced hardcoded values with constants
 - ✅ Updated `bigrag/operate.py` to import from constants
-  - Used BIPARTITE_EDGE_PREFIX, DEFAULT_MAX_RETRIES, etc.
+  - Used RELATION_PREFIX, DEFAULT_MAX_RETRIES, etc.
 
 **Expected Impact**:
 - Single source of truth for code-level defaults
@@ -135,7 +135,7 @@
   - Comprehensive error logging with context
   - Configurable max_retries and retry_delay
 - ✅ Applied retry wrapper to VDB operations in `bigrag/operate.py`
-  - Wrapped `vdb_bipartite_edges.upsert()` calls
+  - Wrapped `vdb_relations.upsert()` calls
   - Wrapped `vdb_entities.upsert()` calls
   - Uses configured retry attempts from global_config
 
@@ -209,7 +209,7 @@
    - Added `normalize_entity_type()` function
    - Updated `_handle_single_entity_extraction()` for type normalization
    - Refactored `_handle_single_hyperrelation_extraction()` for hash IDs
-   - Updated `_merge_bipartite_edges_then_upsert()` with content storage + docstring
+   - Updated `_merge_relations_then_upsert()` with content storage + docstring
    - Fixed VDB upsertion (removed double-hashing bug)
    - Wrapped VDB operations with retry wrapper
    - Added comprehensive weight semantics docstrings
@@ -237,7 +237,7 @@
 
 **Migration Required**:
 - Rebuild knowledge graphs using `script_build.py`
-- Old graphml files use content as node IDs: `<node id="<bipartite_edge>&quot;content&quot;">`
+- Old graphml files use content as node IDs: `<node id="<relation>&quot;content&quot;">`
 - New graphml files use hash IDs: `<node id="rel-abc123xyz">` with content as attribute
 
 **Migration Guide**: See separate migration document (to be created)
@@ -251,7 +251,7 @@
 **Comprehensive Code Review Completed**:
 - ✅ All implementations verified against actual code
 - ✅ Hash ID generation confirmed in `_handle_single_hyperrelation_extraction()` (operate.py:244-268)
-- ✅ Content storage confirmed in `_merge_bipartite_edges_then_upsert()` (operate.py:270-328)
+- ✅ Content storage confirmed in `_merge_relations_then_upsert()` (operate.py:270-328)
 - ✅ Type normalization map confirmed (operate.py:40-88, 91-129)
 - ✅ Retry wrapper confirmed (utils.py:552-601) with exponential backoff
 - ✅ Logging setup confirmed (utils.py:607-662) with rotating file handler
@@ -270,8 +270,8 @@ During comprehensive hash ID flow verification, found 2 critical bugs in retriev
 
 **Bug #1: `_get_edge_data()` returning hash IDs instead of content**
 - **Location**: [bigrag/operate.py:1119](../bigrag/operate.py#L1119)
-- **Problem**: Was using `s["bipartite_edge"]` (hash ID) as knowledge content
-- **Fix**: Now extracts `s.get("content", s["bipartite_edge"])` from node attribute
+- **Problem**: Was using `s["relation"]` (hash ID) as knowledge content
+- **Fix**: Now extracts `s.get("content", s["relation"])` from node attribute
 - **Impact**: Path B (relation-based retrieval) now returns actual knowledge fragments
 - **Status**: ✅ FIXED
 
@@ -393,8 +393,8 @@ Mark all sections as COMPLETED with implementation notes
 ### Bug Fixes During Implementation
 
 1. **Double-Hashing Bug**: VDB upsertion was hashing hash IDs again
-   - Fixed by using `bipartite_edge_name` directly (already hash ID)
-   - Uses `bipartite_edge_content` for vector embedding
+   - Fixed by using `relation_name` directly (already hash ID)
+   - Uses `relation_content` for vector embedding
 
 2. **Case Preservation Issue**: Hash IDs were being uppercased
    - Fixed with conditional check in `stabilize_graph()`

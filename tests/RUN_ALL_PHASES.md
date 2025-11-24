@@ -152,7 +152,7 @@ expr/demo_test/
 ├── kv_store_full_docs.json
 ├── kv_store_text_chunks.json
 ├── vdb_entities.json
-├── vdb_bipartite_edges.json
+├── vdb_relations.json
 ├── vdb_chunks.json
 └── graph_chunk_entity_relation.graphml
 ```

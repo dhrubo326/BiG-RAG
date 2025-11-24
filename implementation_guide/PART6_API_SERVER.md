@@ -42,7 +42,7 @@
 │    ↓                                                        │
 │  BiGRAG Instance (loaded graph)                             │
 │    ├─ vdb_entities (FAISS)                                │
-│    ├─ vdb_bipartite_edges (FAISS)                         │
+│    ├─ vdb_relations (FAISS)                         │
 │    └─ graph (NetworkX)                                    │
 │    ↓                                                        │
 │  Storage Backends                                           │

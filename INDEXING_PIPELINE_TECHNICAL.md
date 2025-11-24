@@ -605,7 +605,7 @@ Bipartite Graph:
 Node types:
 - role="chunk": Text chunk node
 - role="entity": Entity node
-- role="bipartite_edge": Relation node (yes, relations are nodes!)
+- role="relation": Relation node (yes, relations are nodes!)
 ```
 
 #### Implementation
@@ -644,7 +644,7 @@ class BipartiteGraphBuilder:
         relation_nodes_created = await self._create_relation_nodes(relations)
 
         # Step 3: Create bipartite edges
-        edges_created, orphan_count = await self._create_bipartite_edges(
+        edges_created, orphan_count = await self._create_relations(
             entities, relations, chunks
         )
 
@@ -697,7 +697,7 @@ async def _create_entity_nodes(self, entities: List[dict]) -> int:
 #### Edge Creation Logic
 
 ```python
-async def _create_bipartite_edges(
+async def _create_relations(
     self,
     entities: List[dict],
     relations: List[dict],
@@ -954,7 +954,7 @@ merged_entities = [
 
   <!-- Relation node -->
   <node id="&quot;CSE_has_seats_120&quot;">
-    <data key="d0">bipartite_edge</data>
+    <data key="d0">relation</data>
     <data key="d2">CSE has 120 seats</data>
     <data key="d3">10.0</data>
   </node>

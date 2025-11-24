@@ -1035,7 +1035,7 @@ The current implementation uses a three-layer storage architecture:
 
 **1. Vector Storage (NanoVectorDB)**
 - `vdb_entities.json`: Entity embeddings (Path A)
-- `vdb_bipartite_edges.json`: Relation embeddings (Path B)
+- `vdb_relations.json`: Relation embeddings (Path B)
 - `vdb_chunks.json`: Chunk embeddings (Path C)
 
 **2. Graph Storage (NetworkX)**
@@ -1556,7 +1556,7 @@ BiG-RAG uses a three-layer storage architecture with the following schemas:
 **Relation Node Attributes:**
 ```xml
 <node id="rel-8c80df8f1fc71f13c4ffbe19fa22bf8f">
-  <data key="role">bipartite_edge</data>                    <!-- Node type (fixed) -->
+  <data key="role">relation</data>                    <!-- Node type (fixed) -->
   <data key="content">Full natural language description</data> <!-- Complete semantic context -->
   <data key="weight">12.0</data>                             <!-- Aggregated completeness score -->
   <data key="source_id">chunk-600f9c...<SEP>chunk-abc...</data> <!-- Pipe-separated chunk IDs -->

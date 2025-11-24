@@ -3,7 +3,7 @@
 ## Current Issues Identified
 
 ###  1. **Terminology Confusion (CRITICAL)**
-- Old code uses "bipartite_edge" terminology
+- Old code uses "relation" terminology
 - Node IDs changed: `rel-{hash}` format for relation nodes
 - Need to use `d1` (content) field for relation descriptions, not `d5`
 

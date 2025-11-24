@@ -291,7 +291,7 @@ expr/MyDataset/
 ├── kv_store_text_chunks.json          # Text chunk metadata
 ├── kv_store_llm_response_cache.json   # LLM response cache (optional)
 ├── vdb_entities.json                  # Entity embeddings (NanoVectorDB)
-├── vdb_bipartite_edges.json           # Relation embeddings (NanoVectorDB)
+├── vdb_relations.json           # Relation embeddings (NanoVectorDB)
 ├── vdb_chunks.json                    # Chunk embeddings for Path C retrieval
 └── graph_chunk_entity_relation.graphml # Bipartite graph structure (NetworkX)
 ```
@@ -607,7 +607,7 @@ ls expr/$DATASET_NAME/
 # kv_store_text_chunks.json
 # kv_store_llm_response_cache.json
 # vdb_entities.json
-# vdb_bipartite_edges.json
+# vdb_relations.json
 # vdb_chunks.json
 # graph_chunk_entity_relation.graphml
 
@@ -619,7 +619,7 @@ import networkx as nx
 # Count entities and relations from GraphML
 G = nx.read_graphml('expr/$DATASET_NAME/graph_chunk_entity_relation.graphml')
 entities = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'entity')
-relations = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'bipartite_edge')
+relations = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'relation')
 print(f'Entities: {entities}')
 print(f'Relations: {relations}')
 
@@ -901,7 +901,7 @@ dataset = "MyDataset"
 files = {
     "graph": f"expr/{dataset}/graph_chunk_entity_relation.graphml",
     "vdb_entities": f"expr/{dataset}/vdb_entities.json",
-    "vdb_bipartite_edges": f"expr/{dataset}/vdb_bipartite_edges.json",
+    "vdb_relations": f"expr/{dataset}/vdb_relations.json",
     "vdb_chunks": f"expr/{dataset}/vdb_chunks.json",
     "text_chunks": f"expr/{dataset}/kv_store_text_chunks.json"
 }
@@ -915,7 +915,7 @@ for name, path in files.items():
 if os.path.exists(files["graph"]):
     G = nx.read_graphml(files["graph"])
     entities = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'entity')
-    relations = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'bipartite_edge')
+    relations = sum(1 for _, attrs in G.nodes(data=True) if attrs.get('role') == 'relation')
     print(f"Graph: {entities} entities, {relations} relations, {G.number_of_edges()} edges")
 
 # Check vector DB contents

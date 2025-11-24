@@ -329,7 +329,7 @@ self.vdb_entities = NanoVectorDBStorage(
 )
 
 # 6. Bipartite edge embeddings
-self.vdb_bipartite_edges = NanoVectorDBStorage(namespace="bipartite_edges")
+self.vdb_relations = NanoVectorDBStorage(namespace="relations")
 
 # 7. Chunk embeddings (for naive mode)
 self.vdb_chunks = NanoVectorDBStorage(namespace="chunks")
@@ -790,7 +790,7 @@ Two types of nodes extracted:
 }
 ```
 
-2. **Bipartite Edge Nodes** (from "hyper-relation" outputs):
+2. **Relation Nodes** (from "hyper-relation" outputs):
 ```python
 {
     "relation": "Paris<|>capital_of<|>France",
@@ -895,13 +895,13 @@ source_ids = ["chunk_1", "chunk_1", "chunk_2"]
 unique_sources = list(set(source_ids))  # ["chunk_1", "chunk_2"]
 ```
 
-**Function:** `_merge_bipartite_edges_then_upsert()` (lines 269-326)
+**Function:** `_merge_relations_then_upsert()` (lines 269-326)
 
-**Bipartite Edge Creation:**
+**Relation Creation:**
 
 ```python
-async def _merge_bipartite_edges_then_upsert(
-    bipartite_edge_name: str,  # ✅ Hash-based ID (e.g., "rel-abc123...")
+async def _merge_relations_then_upsert(
+    relation_name: str,  # ✅ Hash-based ID (e.g., "rel-abc123...")
     nodes_data: list[dict],
     knowledge_graph_inst: BaseGraphStorage,
     global_config: dict
@@ -919,20 +919,20 @@ async def _merge_bipartite_edges_then_upsert(
     2. Sum weights (importance scores)
     3. Collect source chunk IDs
     4. Store content as node attribute (not in ID)
-    5. Create node in graph with role="bipartite_edge"
+    5. Create node in graph with role="relation"
 
     Note: These are NODES in the bipartite graph, not edges!
     """
 ```
 
-**Bipartite Edge Node Structure (Updated Jan 2025):**
+**Relation Node Structure (Updated Jan 2025):**
 ```python
 {
     "id": "rel-abc123xyz",  # ✅ Hash-based ID (A1 implementation)
     "content": "Paris is the capital of France",  # ✅ Stored as node attribute
     "weight": 180,  # Cumulative
     "source_id": "chunk-1<GRAPH_FIELD_SEP>chunk-3",  # Concatenated with separator
-    "role": "bipartite_edge"  # Distinguishes from entity nodes
+    "role": "relation"  # Distinguishes from entity nodes
 }
 ```
 
@@ -946,11 +946,11 @@ async def _merge_edges_then_upsert(
     edges_data: list[dict]
 ) -> None:
     """
-    Create edges connecting bipartite_edge nodes to entity nodes
+    Create edges connecting relation nodes to entity nodes
 
     Process:
     1. For each relation involving entity_name:
-       a. Create edge: bipartite_edge_node ↔ entity_node
+       a. Create edge: relation_node ↔ entity_node
        b. Store metadata: weight, source_id
        c. Undirected edges (NetworkX Graph)
 
@@ -965,8 +965,8 @@ async def _merge_edges_then_upsert(
 │                    Bipartite Graph                             │
 ├────────────────────────────────────────────────────────────────┤
 │                                                                │
-│  Entity Nodes                 Bipartite Edge Nodes            │
-│  (role="entity")              (role="bipartite_edge")         │
+│  Entity Nodes                 Relation Nodes            │
+│  (role="entity")              (role="relation")         │
 │                                                                │
 │  ┌──────────────┐             ┌──────────────────────┐        │
 │  │  Paris       │◄───────────►│  "Paris is capital   │        │
@@ -987,7 +987,7 @@ async def _merge_edges_then_upsert(
 
 Key Properties:
 - Two node types: Entity nodes and Bipartite edge nodes
-- Edges only connect entity ↔ bipartite_edge (no entity-entity edges)
+- Edges only connect entity ↔ relation (no entity-entity edges)
 - Undirected edges (NetworkX Graph)
 - Metadata: weight, source_id on both nodes and edges
 - ✅ Node IDs: Hash-based for bipartite edges (e.g., "rel-abc123..."), uppercase names for entities (e.g., "PARIS")
@@ -1166,7 +1166,7 @@ async def _get_edge_data(
     Relation-based retrieval path
 
     Steps:
-    1. Vector search in vdb_bipartite_edges
+    1. Vector search in vdb_relations
        → Get top-k relation nodes by semantic similarity
 
     2. For each relation node:
@@ -2119,7 +2119,7 @@ expr/{data_source}/
 ├── kv_store_text_chunks.json          # Chunk metadata
 ├── kv_store_full_docs.json            # Original documents
 ├── vdb_entities.json                  # Entity vector DB
-├── vdb_bipartite_edges.json           # Relation vector DB
+├── vdb_relations.json           # Relation vector DB
 ├── graph_chunk_entity_relation.graphml # Bipartite graph
 └── llm_response_cache.json            # LLM cache
 ```
@@ -2132,7 +2132,7 @@ def verify_output_files(working_dir: str):
     required_files = [
         "kv_store_text_chunks.json",
         "vdb_entities.json",
-        "vdb_bipartite_edges.json",
+        "vdb_relations.json",
         "graph_chunk_entity_relation.graphml"
     ]
 
@@ -2195,7 +2195,7 @@ class EmbeddingManager:
 
         # Load vector indices (NanoVectorDB)
         self.entity_index = self._load_index("vdb_entities.json")
-        self.edge_index = self._load_index("vdb_bipartite_edges.json")
+        self.edge_index = self._load_index("vdb_relations.json")
 
         # Load metadata from GraphML
         # Entity and relation metadata (names, descriptions, weights) are stored in the graph
@@ -2652,7 +2652,7 @@ Two node types:
 1. Entity Nodes (role="entity")
    - Properties: entity_name, entity_type, description, weight, source_id
 
-2. Bipartite Edge Nodes (role="bipartite_edge")
+2. Relation Nodes (role="relation")
    - Properties: content, weight, source_id
 
 Edges (undirected):
@@ -2681,7 +2681,7 @@ graph.add_node(
     content="Paris is the capital of France",
     weight=180,
     source_id=["chunk_1"],
-    role="bipartite_edge"
+    role="relation"
 )
 
 # Add edge connecting them
@@ -2708,7 +2708,7 @@ graph.add_edge(
     <node id="edge_123">
       <data key="content">Paris is the capital of France</data>
       <data key="weight">180</data>
-      <data key="role">bipartite_edge</data>
+      <data key="role">relation</data>
     </node>
     <edge source="Paris" target="edge_123">
       <data key="weight">180</data>
@@ -2735,7 +2735,7 @@ graph.add_edge(
 
 **Vector Database Files (NanoVectorDB):**
 
-Files: `vdb_entities.json`, `vdb_bipartite_edges.json`, `vdb_chunks.json`
+Files: `vdb_entities.json`, `vdb_relations.json`, `vdb_chunks.json`
 
 Format: JSON with embedded vectors and metadata
 
@@ -3364,7 +3364,7 @@ rag = BiGRAG(
 expr/demo_test/
 ├── kv_store_text_chunks.json          # Text chunk metadata
 ├── vdb_entities.json                  # Entity VDB (with embeddings)
-├── vdb_bipartite_edges.json           # Edge VDB (with embeddings)
+├── vdb_relations.json           # Edge VDB (with embeddings)
 └── graph_chunk_entity_relation.graphml # Graph visualization
 ```
 

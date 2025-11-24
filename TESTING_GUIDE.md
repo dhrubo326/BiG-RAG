@@ -43,7 +43,7 @@ POST /documents/upload
     Files:
     - graph_chunk_entity_relation.graphml
     - vdb_entities.json
-    - vdb_bipartite_edges.json
+    - vdb_relations.json
     - vdb_chunks.json
     - kv_store_full_docs.json
     - kv_store_text_chunks.json
@@ -118,7 +118,7 @@ Output Directory: expr/demo_test
 [INFO] Files in expr/demo_test:
        - graph_chunk_entity_relation.graphml (50,000+ bytes)
        - vdb_entities.json (20,000+ bytes)
-       - vdb_bipartite_edges.json (20,000+ bytes)
+       - vdb_relations.json (20,000+ bytes)
        - vdb_chunks.json (15,000+ bytes)
        - kv_store_full_docs.json (10,000+ bytes)
        - kv_store_text_chunks.json (15,000+ bytes)
@@ -126,7 +126,7 @@ Output Directory: expr/demo_test
 [INFO] Critical files check:
        [OK] graph_chunk_entity_relation.graphml
        [OK] vdb_entities.json
-       [OK] vdb_bipartite_edges.json
+       [OK] vdb_relations.json
        [OK] vdb_chunks.json
        [OK] kv_store_full_docs.json
        [OK] kv_store_text_chunks.json

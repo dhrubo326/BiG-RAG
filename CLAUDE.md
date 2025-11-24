@@ -214,7 +214,7 @@ expr/2WikiMultiHopQA/
 ├── kv_store_text_chunks.json          # Text chunk metadata
 ├── kv_store_llm_response_cache.json   # LLM response cache (optional)
 ├── vdb_entities.json                  # Entity embeddings (NanoVectorDB)
-├── vdb_bipartite_edges.json           # Relation embeddings (NanoVectorDB)
+├── vdb_relations.json           # Relation embeddings (NanoVectorDB)
 ├── vdb_chunks.json                    # Chunk embeddings for Path C retrieval
 └── graph_chunk_entity_relation.graphml # Bipartite graph structure (NetworkX)
 ```
@@ -389,7 +389,7 @@ Unlike traditional hypergraphs, BiG-RAG uses a **true bipartite graph**:
 │       ▲                                     ▲                │
 │       │                                     │                │
 │       ▼                                     ▼                │
-│  ┌──────────┐     Bipartite Edge    ┌──────────┐           │
+│  ┌──────────┐     Relation    ┌──────────┐           │
 │  │  Doc B   │◄──────────────────────►│ Relation │           │
 │  └──────────┘                         └──────────┘          │
 │       ▲                                     ▲                │
@@ -876,7 +876,7 @@ During system testing, we discovered and fixed 5 critical bugs:
 
 #### Bug #2: API Reading Non-Existent Files
 **Symptom**: Document stats always showed 0 entities and 0 edges
-**Cause**: `api/kg_utils.py` looking for `kv_store_entities.json` and `kv_store_bipartite_edges.json` which were never created
+**Cause**: `api/kg_utils.py` looking for `kv_store_entities.json` and `kv_store_relations.json` which were never created
 **Impact**: All document detail endpoints returned incorrect stats
 **Fixed**: [api/kg_utils.py:53-199](api/kg_utils.py#L53-L199) - Now reads from GraphML
 
@@ -1059,13 +1059,13 @@ BiG-RAG uses a three-layer storage architecture:
 
 **1. Vector Storage (NanoVectorDB by default)**:
 - `vdb_entities.json`: Entity embeddings for Path A (entity-based retrieval)
-- `vdb_bipartite_edges.json`: Relation embeddings for Path B (relation-based retrieval)
+- `vdb_relations.json`: Relation embeddings for Path B (relation-based retrieval)
 - `vdb_chunks.json`: Text chunk embeddings for Path C (chunk-based retrieval)
 
 **2. Graph Storage (NetworkX by default)**:
 - `graph_chunk_entity_relation.graphml`: Complete bipartite graph with all node/edge attributes
   - Entity nodes: `{name, description, entity_type, source_id, weight, role="entity"}`
-  - Relation nodes: `{name, description, source_id, weight, role="bipartite_edge"}`
+  - Relation nodes: `{name, description, source_id, weight, role="relation"}`
   - Edges connect chunks ↔ entities/relations
 
 **3. KV Storage (JSON by default)**:
@@ -1211,7 +1211,7 @@ See [docs/DATASET_AND_CORPUS_GUIDE.md](docs/DATASET_AND_CORPUS_GUIDE.md) for com
 
 9. **File naming**: After rebranding, some file paths changed
    - **Old**: `index_hyperedge.bin`, `kv_store_hyperedges.json`
-   - **New**: `index_bipartite_edge.bin`, `kv_store_bipartite_edges.json`
+   - **New**: `index_relation.bin`, `kv_store_relations.json`
    - If using pre-built graphs, you may need to rename files
 
 10. **Delimiter corruption in LLM output**: LLM sometimes outputs `<<|>>` instead of `<|>`

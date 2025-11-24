@@ -1081,7 +1081,7 @@ import shutil
 import os
 
 # Delete old vector databases
-for file in ["vdb_entities.json", "vdb_bipartite_edges.json", "vdb_chunks.json"]:
+for file in ["vdb_entities.json", "vdb_relations.json", "vdb_chunks.json"]:
     if os.path.exists(f"expr/my_kg/{file}"):
         os.remove(f"expr/my_kg/{file}")
 

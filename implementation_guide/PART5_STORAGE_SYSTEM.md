@@ -106,13 +106,13 @@ Input: Raw Documents
    ↓
 6. Store relations
    ├─→ graph_chunk_entity_relation.graphml (metadata in graph nodes)
-   ├─→ vdb_bipartite_edges.json (vector embeddings via NanoVectorDB)
+   ├─→ vdb_relations.json (vector embeddings via NanoVectorDB)
    └─→ chunk_entity_relation_graph (graph edges)
    │  Implementation: bigrag/operate.py → _merge_edges_then_upsert()
    ↓
 7. Build vector indices
    ├─→ vdb_entities.json (entity vectors in NanoVectorDB)
-   ├─→ vdb_bipartite_edges.json (relation vectors in NanoVectorDB)
+   ├─→ vdb_relations.json (relation vectors in NanoVectorDB)
    └─→ vdb_chunks.json (chunk vectors in NanoVectorDB)
    │  Implementation: bigrag/storage.py → NanoVectorDBStorage
    ↓
@@ -129,7 +129,7 @@ Input: User Query
    ↓
 2. Parallel vector searches
    ├─→ vdb_entities.query() (find similar entities)
-   └─→ vdb_bipartite_edges.query() (find similar relations)
+   └─→ vdb_relations.query() (find similar relations)
    │  Implementation: bigrag/operate.py → _build_query_context()
    ↓
 3. For each result, traverse graph
@@ -315,7 +315,7 @@ BiG-RAG now uses hash-based node IDs for bipartite edge nodes, reducing file siz
    - Example GraphML structure:
    ```xml
    <node id="rel-a1b2c3d4e5f6...">
-     <data key="role">bipartite_edge</data>
+     <data key="role">relation</data>
      <data key="content">The actual relation text...</data>
      <data key="weight">16.0</data>
      <data key="source_id">chunk-abc123</data>
@@ -588,7 +588,7 @@ results = asyncio.run(delete_multiple(["doc-1", "doc-2", "doc-3"]))
 | **text_chunks** | ✅ All doc chunks deleted | N/A |
 | **vdb_chunks** | ✅ All doc chunks deleted | N/A |
 | **vdb_entities** | ✅ If unique to doc | ⚠️ Update if shared |
-| **vdb_bipartite_edges** | ✅ If unique to doc | ⚠️ Update if shared |
+| **vdb_relations** | ✅ If unique to doc | ⚠️ Update if shared |
 | **chunk_entity_relation_graph** | ✅ Nodes with 0 sources | ⚠️ Remove source_ids |
 
 **Benefits:**
@@ -652,7 +652,7 @@ expr/2WikiMultiHopQA/
 ├── kv_store_text_chunks.json          # ✅ Text chunks (KV storage)
 ├── kv_store_llm_response_cache.json   # ✅ LLM cache (optional)
 ├── vdb_entities.json                  # ✅ Entity vectors (NanoVectorDB)
-├── vdb_bipartite_edges.json           # ✅ Relation vectors (NanoVectorDB)
+├── vdb_relations.json           # ✅ Relation vectors (NanoVectorDB)
 ├── vdb_chunks.json                    # ✅ Chunk vectors (NanoVectorDB)
 └── graph_chunk_entity_relation.graphml # ✅ Graph structure + entity/relation metadata
 ```

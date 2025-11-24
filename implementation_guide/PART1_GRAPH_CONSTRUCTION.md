@@ -61,7 +61,7 @@ See [IMPLEMENTATION_PROGRESS.md](../Indexing_update_plan/IMPLEMENTATION_PROGRESS
 
 **BiG-RAG's Solution:** Build a **bipartite graph** that explicitly models:
 - **Entities** (people, places, organizations, events) - stored as graph nodes with `role="entity"`
-- **Relations** (semantic connections between entities) - stored as **bipartite edge nodes** with `role="bipartite_edge"`
+- **Relations** (semantic connections between entities) - stored as **bipartite edge nodes** with `role="relation"`
 - **Documents** (source text chunks) - stored in key-value storage
 - **Graph edges** connecting entity nodes to bipartite edge nodes (NOT traditional entity-to-entity edges)
 
@@ -80,7 +80,7 @@ See [IMPLEMENTATION_PROGRESS.md](../Indexing_update_plan/IMPLEMENTATION_PROGRESS
 | **Knowledge Graphs** | Entity-entity triples (SPO) | Explicit facts | Requires structured data | Extracted from unstructured |
 | **HippoRAG** | Personalized PageRank on KG | Hippocampus-inspired | Heavyweight, slower | Hybrid with vector search |
 | **GraphRAG** | Community detection on entities | Global reasoning | Expensive preprocessing | Faster three-path |
-| **BiG-RAG (Ours)** | **Bipartite: Entity Nodes ↔ Bipartite Edge Nodes** | **Clean structure, fast retrieval, three-path** | **Requires LLM extraction** | **Our contribution** |
+| **BiG-RAG (Ours)** | **Bipartite: Entity Nodes ↔ Relation Nodes** | **Clean structure, fast retrieval, three-path** | **Requires LLM extraction** | **Our contribution** |
 
 **Key Advantages of Bipartite Structure:**
 
@@ -174,7 +174,7 @@ Input: Raw Documents (corpus.jsonl)
 │  STAGE 3: NODE MERGING & DEDUPLICATION                          │
 ├─────────────────────────────────────────────────────────────────┤
 │  Function: _merge_nodes_then_upsert()                           │
-│            _merge_bipartite_edges_then_upsert()                 │
+│            _merge_relations_then_upsert()                 │
 │                                                                  │
 │  Entity Node Merging:                                            │
 │    • Group by entity_name                                        │
@@ -184,8 +184,8 @@ Input: Raw Documents (corpus.jsonl)
 │    • Sum weights across occurrences                             │
 │    • Collect unique source_ids                                  │
 │                                                                  │
-│  Bipartite Edge Node Creation:                                  │
-│    • Each relation becomes a node (role="bipartite_edge")       │
+│  Relation Node Creation:                                  │
+│    • Each relation becomes a node (role="relation")       │
 │    • ✨ Assign hash-based ID (e.g., "rel-abc123...")           │
 │    •    - Uses compute_mdhash_id() for deterministic hashing   │
 │    •    - Content stored as node attribute (not in ID)         │
@@ -213,7 +213,7 @@ Input: Raw Documents (corpus.jsonl)
 │       • Input: entity_name + type + description                 │
 │       • Batch size: 32                                          │
 │                                                                  │
-│    2. Bipartite edge nodes → vdb_bipartite_edges               │
+│    2. Bipartite edge nodes → vdb_relations               │
 │       • Input: relation content                                 │
 │       • Batch size: 32                                          │
 │                                                                  │
@@ -237,7 +237,7 @@ Input: Raw Documents (corpus.jsonl)
 │                                                                  │
 │  Three vector databases:                                         │
 │    1. vdb_entities.json        (entity embeddings)              │
-│    2. vdb_bipartite_edges.json (relation embeddings)            │
+│    2. vdb_relations.json (relation embeddings)            │
 │    3. vdb_chunks.json          (chunk embeddings)               │
 │                                                                  │
 │  Metadata Storage:                                               │
@@ -271,7 +271,7 @@ Output: Knowledge Graph Files
    ├─ kv_store_text_chunks.json            (chunk metadata)
    ├─ kv_store_llm_response_cache.json     (LLM cache, optional)
    ├─ vdb_entities.json                    (entity embeddings)
-   ├─ vdb_bipartite_edges.json             (relation embeddings)
+   ├─ vdb_relations.json             (relation embeddings)
    ├─ vdb_chunks.json                      (chunk embeddings)
    └─ graph_chunk_entity_relation.graphml  (graph structure + metadata)
 ```
@@ -283,7 +283,7 @@ Output: Knowledge Graph Files
 │              BIPARTITE GRAPH STRUCTURE                        │
 ├──────────────────────────────────────────────────────────────┤
 │                                                               │
-│  Layer 1: Entity Nodes              Layer 2: Bipartite Edge  │
+│  Layer 1: Entity Nodes              Layer 2: Relation  │
 │  (role="entity")                    Nodes (role="bipartite   │
 │                                     _edge")                   │
 │                                                               │
@@ -360,7 +360,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
 
     # Stage 2: Entity Extraction
     all_entities = []
-    all_bipartite_edges = []
+    all_relations = []
 
     FOR EACH chunk IN chunks:
         # Multi-turn extraction with gleaning
@@ -378,7 +378,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
             edge.source_id = chunk.chunk_id
 
         all_entities.EXTEND(entities)
-        all_bipartite_edges.EXTEND(edges)
+        all_relations.EXTEND(edges)
 
     # Stage 3: Node Merging
     entity_groups = GROUP_BY(all_entities, key=entity_name)
@@ -388,7 +388,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
         merged = merge_entity_nodes(entity_list)
         merged_entities.APPEND(merged)
 
-    edge_groups = GROUP_BY(all_bipartite_edges, key=content)
+    edge_groups = GROUP_BY(all_relations, key=content)
     merged_edges = []
 
     FOR content, edge_list IN edge_groups:
@@ -419,7 +419,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
             content=edge.content,  # ✨ Content stored as attribute
             weight=edge.weight,
             source_id=edge.source_id,
-            role="bipartite_edge"
+            role="relation"
         )
 
         # Connect to mentioned entities
@@ -452,7 +452,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
         FOR entity, embedding IN ZIP(merged_entities, entity_embeddings)
     })
 
-    vdb_bipartite_edges.upsert({
+    vdb_relations.upsert({
         edge.edge_id: {
             "__vector__": embedding,
             **edge_metadata
@@ -470,7 +470,7 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
 
     # Finalize indices
     vdb_entities.index_done_callback()
-    vdb_bipartite_edges.index_done_callback()
+    vdb_relations.index_done_callback()
     vdb_chunks.index_done_callback()
 
     # Stage 7: Graph Serialization
@@ -487,7 +487,7 @@ END PROCEDURE
 ```python
 ALGORITHM: Extract_Entities_With_Gleaning
 INPUT: chunk: Dict, entity_types: List[str], max_gleaning: int
-OUTPUT: entities: List[Dict], bipartite_edges: List[Dict]
+OUTPUT: entities: List[Dict], relations: List[Dict]
 
 PROCEDURE extract_entities_with_gleaning(chunk, entity_types, max_gleaning):
     # Check cache
@@ -537,9 +537,9 @@ PROCEDURE extract_entities_with_gleaning(chunk, entity_types, max_gleaning):
 
     # Separate entities and bipartite edges
     entity_nodes = [e FOR e IN entities IF e.type == "entity"]
-    bipartite_edges = [e FOR e IN entities IF e.type == "hyper-relation"]
+    relations = [e FOR e IN entities IF e.type == "hyper-relation"]
 
-    RETURN entity_nodes, bipartite_edges
+    RETURN entity_nodes, relations
 
 END PROCEDURE
 ```
@@ -610,7 +610,7 @@ EntityNode = {
 }
 ```
 
-#### Bipartite Edge Node Structure
+#### Relation Node Structure
 
 ```python
 BipartiteEdgeNode = {
@@ -618,7 +618,7 @@ BipartiteEdgeNode = {
     "content": str,            # Relation description/knowledge segment
     "weight": float,           # Importance score (cumulative)
     "source_id": List[str],    # List of chunk IDs where relation appears
-    "role": "bipartite_edge"   # Node type marker
+    "role": "relation"   # Node type marker
 }
 ```
 
@@ -633,8 +633,8 @@ GraphEdge = {
 }
 
 # Constraint: source and target must be different node types
-# Valid: entity → bipartite_edge or bipartite_edge → entity
-# Invalid: entity → entity or bipartite_edge → bipartite_edge
+# Valid: entity → relation or relation → entity
+# Invalid: entity → entity or relation → relation
 ```
 
 #### Chunk Structure
@@ -702,7 +702,7 @@ async def _merge_nodes_then_upsert(
     """Merge duplicate entity nodes"""
     # Implementation: lines 397-518
 
-async def _merge_bipartite_edges_then_upsert(
+async def _merge_relations_then_upsert(
     relation_content: str,
     edges_data: list[dict]
 ) -> dict:
@@ -1156,7 +1156,7 @@ def verify_graph_construction(working_dir: str):
         "kv_store_full_docs.json",
         "kv_store_text_chunks.json",
         "vdb_entities.json",
-        "vdb_bipartite_edges.json",
+        "vdb_relations.json",
         "vdb_chunks.json",
         "graph_chunk_entity_relation.graphml"
     ]
@@ -1177,7 +1177,7 @@ def verify_graph_construction(working_dir: str):
     graph = nx.read_graphml(graph_path)
 
     entity_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'entity']
-    edge_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'bipartite_edge']
+    edge_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'relation']
 
     print(f"\n📊 Graph Statistics:")
     print(f"  Entity nodes: {len(entity_nodes)}")
@@ -1882,7 +1882,7 @@ Where:
    - Embeddings: vdb_entities.json (E_dim × 4 bytes per entity)
    - Example: 10K entities × 1024 dims × 4 bytes = ~40 MB
 
-4. **Bipartite Edge Nodes**: `O(N_edge × (D_len + E_dim))`
+4. **Relation Nodes**: `O(N_edge × (D_len + E_dim))`
    - Similar to entities
    - Typically fewer edges than entities (70-80% of entity count)
 
@@ -2203,7 +2203,7 @@ def test_graph_construction_end_to_end():
             "kv_store_full_docs.json",
             "kv_store_text_chunks.json",
             "vdb_entities.json",
-            "vdb_bipartite_edges.json",
+            "vdb_relations.json",
             "vdb_chunks.json",
             "graph_chunk_entity_relation.graphml"
         ]
@@ -2300,7 +2300,7 @@ def validate_graph_integrity(working_dir: str) -> dict:
         "kv_store_full_docs.json",
         "kv_store_text_chunks.json",
         "vdb_entities.json",
-        "vdb_bipartite_edges.json",
+        "vdb_relations.json",
         "vdb_chunks.json",
         "graph_chunk_entity_relation.graphml"
     ]
@@ -2324,7 +2324,7 @@ def validate_graph_integrity(working_dir: str) -> dict:
 
     # 3. Check graph structure
     entity_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'entity']
-    edge_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'bipartite_edge']
+    edge_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'relation']
 
     results["stats"]["entity_nodes"] = len(entity_nodes)
     results["stats"]["edge_nodes"] = len(edge_nodes)
@@ -2406,7 +2406,7 @@ def compute_quality_metrics(working_dir: str) -> dict:
     graph = nx.read_graphml(os.path.join(working_dir, "graph_chunk_entity_relation.graphml"))
 
     entity_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'entity']
-    edge_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'bipartite_edge']
+    edge_nodes = [n for n, d in graph.nodes(data=True) if d.get('role') == 'relation']
 
     # 1. Graph density
     max_edges = len(entity_nodes) * len(edge_nodes)

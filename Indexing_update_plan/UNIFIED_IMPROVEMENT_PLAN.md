@@ -58,7 +58,7 @@ All critical fixes and quality improvements planned in this document have been s
 
 **Implementation**:
 - `bigrag/operate.py:244-268` - Hash ID generation in `_handle_single_hyperrelation_extraction()`
-- `bigrag/operate.py:270-328` - Content storage in `_merge_bipartite_edges_then_upsert()`
+- `bigrag/operate.py:270-328` - Content storage in `_merge_relations_then_upsert()`
 - `bigrag/operate.py:689-725` - VDB upsertion with hash IDs
 - `bigrag/storage.py:247-257` - Hash ID case preservation in `stabilize_graph()`
 
@@ -176,7 +176,7 @@ All critical fixes and quality improvements planned in this document have been s
   - Comprehensive error logging with context
   - Configurable max_retries and retry_delay
 - `bigrag/operate.py:703-723` - Applied to VDB operations
-  - Wrapped `vdb_bipartite_edges.upsert()`
+  - Wrapped `vdb_relations.upsert()`
   - Wrapped `vdb_entities.upsert()`
 
 **Impact**:
@@ -258,7 +258,7 @@ Use these checklists to verify implementations during testing.
 ### Category A: Critical Fixes
 
 **A1: Hash-Based IDs**
-- [ ] All bipartite edge nodes use `rel-*` IDs (no `<bipartite_edge>` prefix)
+- [ ] All bipartite edge nodes use `rel-*` IDs (no `<relation>` prefix)
 - [ ] GraphML file size reduced by 30-40%
 - [ ] Node lookup time improved by 5-10x
 - [ ] `content` attribute contains full relation text
@@ -289,7 +289,7 @@ Use these checklists to verify implementations during testing.
 - [ ] `bigrag/constants.py` exists (115 lines)
 - [ ] All extraction defaults centralized
 - [ ] Graph field separators defined
-- [ ] ID prefix constants (BIPARTITE_EDGE_PREFIX, ENTITY_PREFIX, CHUNK_PREFIX)
+- [ ] ID prefix constants (RELATION_PREFIX, ENTITY_PREFIX, CHUNK_PREFIX)
 - [ ] DEFAULT_LLM_CONCURRENCY = 16 defined
 
 **B3: Retry Wrapper**
@@ -344,7 +344,7 @@ import sys
 
 graph = nx.read_graphml("expr/demo_test/graph_chunk_entity_relation.graphml")
 for node in graph.nodes():
-    if node.startswith("<BIPARTITE_EDGE>") or "<bipartite_edge>" in node.lower():
+    if node.startswith("<RELATION>") or "<relation>" in node.lower():
         print("ERROR: Old graph format detected!")
         print("Please rebuild: python script_build.py --data_source YOUR_DATASET")
         sys.exit(1)

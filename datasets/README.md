@@ -199,7 +199,7 @@ After building, you'll have:
 expr/my_data/
 ├── kv_store_text_chunks.json          # Text chunks (KV storage)
 ├── vdb_entities.json                  # Entity embeddings (vector DB)
-├── vdb_bipartite_edges.json           # Relation embeddings (vector DB)
+├── vdb_relations.json           # Relation embeddings (vector DB)
 └── graph_chunk_entity_relation.graphml # Graph structure
 ```
 
@@ -265,7 +265,7 @@ expr/
 ├── my_data/                    # Built knowledge graph
 │   ├── kv_store_text_chunks.json
 │   ├── vdb_entities.json
-│   ├── vdb_bipartite_edges.json
+│   ├── vdb_relations.json
 │   └── graph_chunk_entity_relation.graphml
 └── another_dataset/            # Another knowledge graph
     └── [same files]

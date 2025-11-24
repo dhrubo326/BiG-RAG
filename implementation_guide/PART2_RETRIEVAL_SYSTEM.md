@@ -118,7 +118,7 @@ Input: User Query
 │                                                                  │
 │  PATH B: Relation-Based Retrieval (Global)                      │
 │  ┌────────────────────────────────────────────────────────────┐│
-│  │ 1. Query vdb_bipartite_edges with embedding               ││
+│  │ 1. Query vdb_relations with embedding               ││
 │  │    → NanoVectorDB inner product search                     ││
 │  │    → Top-k relation nodes (k=60 default)                   ││
 │  │                                                             ││
@@ -344,7 +344,7 @@ Bipartite edge nodes store content as a separate attribute rather than using it 
 
 ```xml
 <node id="rel-a1b2c3d4e5f6g7h8i9j0">
-  <data key="role">bipartite_edge</data>
+  <data key="role">relation</data>
   <data key="content">The football world eagerly anticipates...</data>
   <data key="weight">85.0</data>
   <data key="source_id">chunk-xyz</data>
@@ -363,17 +363,17 @@ When `_get_edge_data()` performs direct relation-based retrieval:
 ```python
 async def _get_edge_data(
     keywords,
-    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_relations: BaseVectorStorage,
     knowledge_graph_inst: BaseGraphStorage,
     ...
 ):
     # Step 1: Vector DB query returns hash IDs
-    results = await vdb_bipartite_edges.query(keywords, top_k=60)
-    # results = [{bipartite_edge_name: "rel-abc123...", ...}]
+    results = await vdb_relations.query(keywords, top_k=60)
+    # results = [{relation_name: "rel-abc123...", ...}]
 
     # Step 2: Fetch complete node data from graph storage
     edge_datas = await asyncio.gather(
-        *[knowledge_graph_inst.get_node(r["bipartite_edge_name"])
+        *[knowledge_graph_inst.get_node(r["relation_name"])
           for r in results]
     )
 
@@ -381,9 +381,9 @@ async def _get_edge_data(
     knowledge_list = []
     for s in edge_datas:
         # Content is stored in the 'content' attribute
-        bipartite_edge_content = s.get("content", s["bipartite_edge"])
+        relation_content = s.get("content", s["relation"])
         source_ids = s["source_id"].split(GRAPH_FIELD_SEP)
-        knowledge_list.append((bipartite_edge_content, source_ids))
+        knowledge_list.append((relation_content, source_ids))
 
     return knowledge_list
 ```
@@ -411,17 +411,17 @@ async def _find_most_related_edges_from_entities(
     # Returns: [(entity_name, "rel-abc123..."), ...]
 
     # Step 2: Identify bipartite edge nodes (those starting with "rel-")
-    bipartite_edge_ids = [k[1] for k in all_edges
+    relation_ids = [k[1] for k in all_edges
                           if k[1].startswith("rel-")]
 
     # Step 3: Fetch node data for all bipartite edges
-    if bipartite_edge_ids:
+    if relation_ids:
         nodes = await asyncio.gather(
             *[knowledge_graph_inst.get_node(node_id)
-              for node_id in bipartite_edge_ids]
+              for node_id in relation_ids]
         )
         bipartite_node_data = {
-            node_id: node for node_id, node in zip(bipartite_edge_ids, nodes)
+            node_id: node for node_id, node in zip(relation_ids, nodes)
             if node is not None
         }
 
@@ -456,11 +456,11 @@ async def _find_most_related_edges_from_entities(
 
 The vector databases use hash IDs as keys to maintain consistency with graph storage:
 
-**vdb_bipartite_edges.json:**
+**vdb_relations.json:**
 ```json
 {
   "rel-a1b2c3d4e5f6g7h8i9j0": {
-    "bipartite_edge_name": "rel-a1b2c3d4e5f6g7h8i9j0",
+    "relation_name": "rel-a1b2c3d4e5f6g7h8i9j0",
     "embedding": [0.123, 0.456, ...],
     "content": "The football world eagerly anticipates..."
   }
@@ -469,7 +469,7 @@ The vector databases use hash IDs as keys to maintain consistency with graph sto
 
 **Query Flow:**
 1. Embed query text → query vector
-2. VDB finds nearest hash IDs → returns `bipartite_edge_name` keys
+2. VDB finds nearest hash IDs → returns `relation_name` keys
 3. Graph storage retrieves full node data using hash IDs
 4. Content extracted from node `content` attribute
 5. Knowledge fragments returned to user
@@ -642,7 +642,7 @@ PROCEDURE entity_based_retrieval(query_embedding, top_k):
         edge_descriptions = []
         FOR EACH edge_id IN connected_edges:
             edge_data = graph.get_node(edge_id)
-            IF edge_data AND edge_data.role == "bipartite_edge":
+            IF edge_data AND edge_data.role == "relation":
                 edge_descriptions.APPEND({
                     "content": edge_data.content,
                     "weight": edge_data.weight,
@@ -679,7 +679,7 @@ OUTPUT: results: List[Dict]
 
 PROCEDURE relation_based_retrieval(query_embedding, top_k):
     # Step 1: Vector search on relation index
-    relation_matches = vdb_bipartite_edges.query(query_embedding, top_k)
+    relation_matches = vdb_relations.query(query_embedding, top_k)
 
     results = []
 
@@ -1008,7 +1008,7 @@ class BiGRAG:
 async def kg_query(
     query: str,
     vdb_entities: BaseVectorStorage,
-    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_relations: BaseVectorStorage,
     vdb_chunks: BaseVectorStorage,
     graph: BaseGraphStorage,
     embedding_func: callable,
@@ -1036,7 +1036,7 @@ async def _get_node_data(
 
 async def _get_edge_data(
     query_embedding: np.ndarray,
-    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_relations: BaseVectorStorage,
     graph: BaseGraphStorage,
     top_k: int
 ) -> List[Dict]:
@@ -1376,7 +1376,7 @@ results = asyncio.run(
     kg_query(
         query="What is Paris?",
         vdb_entities=rag.vdb_entities,
-        vdb_bipartite_edges=rag.vdb_bipartite_edges,
+        vdb_relations=rag.vdb_relations,
         vdb_chunks=rag.vdb_chunks,
         graph=rag.chunk_entity_relation_graph,
         embedding_func=rag.embedding_func,
@@ -1638,7 +1638,7 @@ await rag.ainsert(documents)
 
 # Or check if vector DBs are loaded
 print(f"Entities: {len(rag.vdb_entities.data) if hasattr(rag.vdb_entities, 'data') else 'N/A'}")
-print(f"Edges: {len(rag.vdb_bipartite_edges.data) if hasattr(rag.vdb_bipartite_edges, 'data') else 'N/A'}")
+print(f"Edges: {len(rag.vdb_relations.data) if hasattr(rag.vdb_relations, 'data') else 'N/A'}")
 ```
 
 **Error:** `ValueError: Query embedding dimension mismatch`
@@ -1671,7 +1671,7 @@ async def parallel_hybrid_query(query, top_k):
 
     # Parallel retrieval
     entity_task = _get_node_data(embeddings[0], rag.vdb_entities, rag.graph, top_k)
-    relation_task = _get_edge_data(embeddings[1], rag.vdb_bipartite_edges, rag.graph, top_k)
+    relation_task = _get_edge_data(embeddings[1], rag.vdb_relations, rag.graph, top_k)
 
     entity_results, relation_results = await asyncio.gather(entity_task, relation_task)
 
@@ -1832,7 +1832,7 @@ class QueryParam:
 async def kg_query(
     query: str,
     vdb_entities: BaseVectorStorage,
-    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_relations: BaseVectorStorage,
     vdb_chunks: BaseVectorStorage,
     graph: BaseGraphStorage,
     embedding_func: callable,
@@ -1844,7 +1844,7 @@ async def kg_query(
     Args:
         query: Search query string
         vdb_entities: Entity vector storage
-        vdb_bipartite_edges: Relation vector storage
+        vdb_relations: Relation vector storage
         vdb_chunks: Chunk vector storage (for naive mode)
         graph: Graph storage instance
         embedding_func: Embedding generation function
@@ -1864,7 +1864,7 @@ async def kg_query(
         >>> results = await kg_query(
         ...     query="What is Paris?",
         ...     vdb_entities=rag.vdb_entities,
-        ...     vdb_bipartite_edges=rag.vdb_bipartite_edges,
+        ...     vdb_relations=rag.vdb_relations,
         ...     vdb_chunks=rag.vdb_chunks,
         ...     graph=rag.graph,
         ...     embedding_func=rag.embedding_func,
@@ -1902,7 +1902,7 @@ async def _get_node_data(
 
 async def _get_edge_data(
     query_embedding: np.ndarray,
-    vdb_bipartite_edges: BaseVectorStorage,
+    vdb_relations: BaseVectorStorage,
     graph: BaseGraphStorage,
     top_k: int
 ) -> List[Dict]:
@@ -1911,7 +1911,7 @@ async def _get_edge_data(
 
     Args:
         query_embedding: Query embedding vector
-        vdb_bipartite_edges: Relation vector storage
+        vdb_relations: Relation vector storage
         graph: Graph storage instance
         top_k: Number of results to retrieve
 
@@ -1922,7 +1922,7 @@ async def _get_edge_data(
         >>> embedding = await embedding_func(["directed by"])
         >>> results = await _get_edge_data(
         ...     embedding[0],
-        ...     rag.vdb_bipartite_edges,
+        ...     rag.vdb_relations,
         ...     rag.graph,
         ...     top_k=60
         ... )

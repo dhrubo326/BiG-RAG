@@ -254,10 +254,13 @@ async def test_bangla_production_pipeline():
             log("Sample Entities (first 10 for investigation):", "INFO")
             for i, entity_id in enumerate(entity_nodes[:10]):
                 entity_data = graph.nodes[entity_id]
-                name = entity_data.get('name', 'N/A')
+                # Entity name is the node ID itself (not stored as 'name' attribute)
+                name = entity_id.strip('"')  # Remove quotes from GraphML node ID
                 entity_type = entity_data.get('entity_type', 'N/A')
                 weight = entity_data.get('weight', 'N/A')
-                log(f"  {i+1}. {name} (type: {entity_type}, weight: {weight})", "DATA")
+                # Truncate long names for readability
+                display_name = name[:60] + "..." if len(name) > 60 else name
+                log(f"  {i+1}. {display_name} (type: {entity_type}, weight: {weight})", "DATA")
             log("")
 
             # Sample relations with MORE details for investigation

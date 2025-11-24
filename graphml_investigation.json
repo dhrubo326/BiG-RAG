@@ -1,0 +1,76 @@
+{
+  "total_entity_nodes": 82,
+  "total_nodes": 142,
+  "total_edges": 96,
+  "first_5_entities": [
+    {
+      "index": 1,
+      "entity_id": "\"আবেদনপত্র অনলাইনে পূরণ ও SUBMISSION শুরু\"",
+      "attributes": {
+        "role": "entity",
+        "entity_type": "concept",
+        "description": "আবেদনপত্র অনলাইনে পূরণ ও Submission শেষ হল ক) এর মান।; আবেদনপত্র অনলাইনে পূরণ ও Submission শুরু হল ক) এর মান।",
+        "weight": 190.0,
+        "source_id": "chunk_0000",
+        "extraction_quality": "PASS"
+      }
+    },
+    {
+      "index": 2,
+      "entity_id": "\"০৪ ডিসেম্বর, ২০২৪ ইং বুধবার, সকাল ১০-০০ মি.\"",
+      "attributes": {
+        "role": "entity",
+        "entity_type": "concept",
+        "description": "০৪ ডিসেম্বর, ২০২৪ ইং বুধবার, সকাল ১০-০০ মি. হল বিষয় এর মান।",
+        "weight": 95.0,
+        "source_id": "chunk_0000",
+        "extraction_quality": "PASS"
+      }
+    },
+    {
+      "index": 3,
+      "entity_id": "\"১৪ ডিসেম্বর, ২০২৪ ইং শনিবার, রাত ১১-৫৯ মি.\"",
+      "attributes": {
+        "role": "entity",
+        "entity_type": "concept",
+        "description": "১৪ ডিসেম্বর, ২০২৪ ইং শনিবার, রাত ১১-৫৯ মি. হল বিষয় এর মান।",
+        "weight": 95.0,
+        "source_id": "chunk_0000",
+        "extraction_quality": "PASS"
+      }
+    },
+    {
+      "index": 4,
+      "entity_id": "\"টাকা জমা দেয়ার শেষ সময়\"",
+      "attributes": {
+        "role": "entity",
+        "entity_type": "concept",
+        "description": "টাকা জমা দেয়ার শেষ সময় হল ক) এর মান।",
+        "weight": 95.0,
+        "source_id": "chunk_0000",
+        "extraction_quality": "PASS"
+      }
+    },
+    {
+      "index": 5,
+      "entity_id": "\"১৫ ডিসেম্বর, ২০২৪ ইং রবিবার, বিকাল ৫-০০ মি.\"",
+      "attributes": {
+        "role": "entity",
+        "entity_type": "concept",
+        "description": "১৫ ডিসেম্বর, ২০২৪ ইং রবিবার, বিকাল ৫-০০ মি. হল বিষয় এর মান।",
+        "weight": 95.0,
+        "source_id": "chunk_0000",
+        "extraction_quality": "PASS"
+      }
+    }
+  ],
+  "available_keys": [
+    "entity_type",
+    "role",
+    "source_id",
+    "description",
+    "extraction_quality",
+    "weight"
+  ],
+  "entities_with_names": "82/82"
+}

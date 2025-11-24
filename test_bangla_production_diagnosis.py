@@ -52,8 +52,8 @@ load_dotenv()
 # ============================================================================
 # CONFIGURATION - Change these variables to test different documents
 # ============================================================================
-TEST_DOCUMENT = "CUET_Admission.md"  # Path to document to test
-SUBGRAPH_NAME = "cuet_diagnosis_test"   # Name for subgraph folder
+TEST_DOCUMENT = "KUET_Admission_info.md"  # Path to document to test
+SUBGRAPH_NAME = "bangla_diagnosis_test_v2"   # Name for subgraph folder
 # ============================================================================
 
 # Global variables for dynamic configuration

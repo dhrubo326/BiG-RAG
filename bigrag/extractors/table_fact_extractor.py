@@ -100,12 +100,18 @@ class TableFactExtractor:
                 table_type
             )
 
+            # Generate relation ID FIRST (needed for entity linking)
+            from bigrag.utils import compute_mdhash_id
+            from bigrag.constants import RELATION_PREFIX
+            relation_id = compute_mdhash_id(relation_content, prefix=RELATION_PREFIX)
+
             relation = {
                 'role': 'relation',
                 'content': relation_content,
                 'description': relation_content,  # Required for BiG-RAG retrieval
                 'completeness_score': 10,  # 100% complete (from structured table)
                 'source_id': chunk_id,
+                'hyper_relation': relation_id,  # Add relation ID for consistency
                 'metadata': {
                     'extraction_method': 'table_row',
                     'table_id': table_data.get('table_id', 'unknown'),
@@ -123,7 +129,8 @@ class TableFactExtractor:
                     cell_value,
                     row,  # Full row context
                     chunk_id,
-                    table_type
+                    table_type,
+                    relation_id  # Pass relation ID to link entities
                 )
                 if entity:
                     entities.append(entity)
@@ -235,7 +242,8 @@ class TableFactExtractor:
         cell_value: str,
         full_row: Dict,
         chunk_id: str,
-        table_type: str
+        table_type: str,
+        relation_id: str = None
     ) -> Optional[Dict]:
         """
         Convert table cell to entity node.
@@ -278,6 +286,7 @@ class TableFactExtractor:
             'description': description,
             'weight': 95.0,  # High weight (from structured data)
             'source_id': chunk_id,
+            'hyper_relation': relation_id,  # Link to parent relation (prevents orphan entities)
             'metadata': {
                 'extraction_method': 'table_cell',
                 'table_column': col_name,

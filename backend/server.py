@@ -39,7 +39,7 @@ import uvicorn
 # Import BiG-RAG core
 from bigrag import BiGRAG
 from bigrag.config import config
-from bigrag.llm import gpt_4o_mini_complete
+from bigrag.llm import gpt_4o_mini_complete, openai_embedding
 from bigrag.logging_config import setup_logger
 
 # Import core modules (managers and dependencies)
@@ -127,6 +127,7 @@ if unified_mode:
         prewarm_subgraphs=args.prewarm,
         enable_parallel=True,
         bigrag_kwargs={
+            "embedding_func": openai_embedding,  # FIX: Pass embedding function to ensure VDB loads correctly
             "llm_model_func": gpt_4o_mini_complete,
             "chunk_token_size": config.chunk_size,
             "chunk_overlap_token_size": config.chunk_overlap_size,

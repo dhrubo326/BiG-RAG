@@ -157,6 +157,345 @@ pip3 install -r requirements-rl.txt
 
 ---
 
+## 🔄 Dual Pipeline System & Unified Subgraph Architecture
+
+BiG-RAG supports two distinct knowledge graph construction pipelines with a unified retrieval backend. Both pipelines produce **100% compatible** graph structures (as of January 2025).
+
+### Two Pipeline Modes
+
+#### Standard Pipeline (Default - Fast & Low Cost)
+
+**Use Cases:**
+- General-purpose RAG applications
+- Quick prototyping and testing
+- Cost-sensitive deployments
+- Large document corpora (>10K documents)
+
+**Characteristics:**
+- **Chunking**: Token-based sliding window (1200 tokens, 100 overlap)
+- **Extraction**: Basic entity and relation extraction
+- **Quality**: Good (90-95% accuracy)
+- **Speed**: Fast (~2-3 minutes per 1K documents)
+- **Cost**: Low (~$0.60 per 10K documents with GPT-4o-mini)
+- **Node IDs**: Hash-based (`entity-abc123`, `rel-def456`)
+
+**Usage:**
+```bash
+# Build via script
+python script_build.py --data_source my_dataset
+
+# Build via API (default)
+curl -X POST "http://localhost:8001/documents/upload" \
+  -F "file=@document.md" \
+  -F "use_production_pipeline=false"  # Optional (default)
+```
+
+**Output**: Standard BiG-RAG knowledge graph in `expr/my_dataset/`
+
+---
+
+#### Production Pipeline (Enhanced - High Accuracy)
+
+**Use Cases:**
+- Educational/technical content with tables and structured data
+- Domain-specific knowledge bases requiring high precision
+- Applications where accuracy is critical
+- Small to medium corpora (<10K documents)
+
+**Characteristics:**
+- **Chunking**: Table-aware semantic chunking (preserves table structure)
+- **Extraction**: Validated entity extraction with entity linking
+- **Quality**: Excellent (95-99% accuracy)
+- **Speed**: Slower (~10-15 minutes per 1K documents)
+- **Cost**: Higher (~$2-3 per 10K documents)
+- **Node IDs**: Hash-based (`entity-abc123`, `rel-def456`) - **identical to standard**
+- **Special Features**:
+  - Table content preservation
+  - Entity consistency validation
+  - Metadata-enhanced extraction
+
+**Usage:**
+```bash
+# Build via script
+python script_build.py --data_source my_dataset --use_production_pipeline
+
+# Build via API
+curl -X POST "http://localhost:8001/documents/upload" \
+  -F "file=@document.md" \
+  -F "use_production_pipeline=true"
+
+# Or use the dynamic dataset endpoint (always uses production pipeline)
+curl -X POST "http://localhost:8001/datasets/create-and-index" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dataset_name": "my_new_dataset",
+    "documents": [
+      {"content": "Document text...", "title": "Doc 1"}
+    ]
+  }'
+```
+
+**Output**: Production BiG-RAG knowledge graph in `expr/my_dataset/`
+
+---
+
+### Graph Structure Compatibility
+
+**CRITICAL UPDATE (January 24, 2025)**: Both pipelines now produce **identical graph structures**:
+
+| Component | Standard Pipeline | Production Pipeline | Compatible? |
+|-----------|------------------|---------------------|-------------|
+| **Entity Node ID** | `entity-abc123` | `entity-abc123` | ✅ **YES** |
+| **Relation Node ID** | `rel-abc123` | `rel-abc123` | ✅ **YES** |
+| **Edge Structure** | `rel-* → entity-*` | `rel-* → entity-*` | ✅ **YES** |
+| **Vector DB Keys** | `entity-abc123` | `entity-abc123` | ✅ **YES** |
+| **GraphML Format** | NetworkX | NetworkX | ✅ **YES** |
+| **Storage Files** | 7 files | 7 files | ✅ **YES** |
+
+**What This Means:**
+- Backend endpoints work seamlessly with graphs from **both pipelines**
+- Unified subgraph system can mix graphs from different pipelines
+- No need for separate retrieval code paths
+- Graphs built with standard pipeline can be queried using production pipeline endpoints (and vice versa)
+
+**Historical Note**: Prior to January 24, 2025, production pipeline used `"relation-abc123"` prefix (bug). This has been fixed to use the standard `"rel-abc123"` prefix via the `RELATION_PREFIX` constant.
+
+---
+
+### Unified Subgraph System
+
+BiG-RAG supports a **unified subgraph architecture** where multiple knowledge graphs (subgraphs) can be managed and queried together via an LLM-based router.
+
+#### What Are Subgraphs?
+
+**Subgraph**: A self-contained knowledge graph built from a specific corpus or domain.
+
+**Examples**:
+- `football` - Knowledge graph about football/soccer
+- `kuet_test` - Knowledge graph about KUET (Khulna University of Engineering & Technology)
+- `medical_drugs` - Knowledge graph about pharmaceutical compounds
+- `company_docs` - Knowledge graph from internal company documentation
+
+**Benefits**:
+- **Domain Isolation**: Each subgraph maintains domain-specific entity typing and relations
+- **Selective Retrieval**: Query only relevant subgraphs (faster, more precise)
+- **Lazy Loading**: Subgraphs loaded on-demand (memory efficient)
+- **Easy Management**: Add/remove subgraphs without affecting others
+
+---
+
+#### Subgraph Registry
+
+**File**: `expr/subgraph_registry.json`
+
+**Purpose**: Central registry tracking all available subgraphs and their metadata.
+
+**Structure**:
+```json
+{
+  "subgraphs": {
+    "football": {
+      "path": "expr/football",
+      "description": "Knowledge graph about football",
+      "aliases": ["football", "soccer"],
+      "topics": ["sports", "football"],
+      "enabled": true,
+      "created_at": "2025-01-20T10:30:00"
+    },
+    "kuet_test": {
+      "path": "expr/kuet_test",
+      "description": "KUET educational content",
+      "aliases": ["kuet", "kuet_test"],
+      "topics": ["education", "university"],
+      "enabled": true,
+      "auto_created": true  // ← Created via /datasets/create-and-index
+    }
+  }
+}
+```
+
+**Key Fields**:
+- `path`: Directory containing subgraph files
+- `description`: Human-readable description for LLM router
+- `aliases`: Alternative names for matching queries
+- `topics`: Topic keywords for semantic routing
+- `enabled`: Whether subgraph is active
+- `auto_created`: Whether created dynamically (vs. manually built)
+
+---
+
+#### Dynamic Dataset Creation
+
+**Endpoint**: `/datasets/create-and-index`
+
+**What It Does**:
+1. Creates new dataset directory structure
+2. Processes documents using **production pipeline** (always)
+3. Updates `subgraph_registry.json` automatically
+4. Reloads unified executor to make new subgraph available **immediately**
+5. No server restart required
+
+**Example**:
+```bash
+# Create new dataset and index documents
+curl -X POST "http://localhost:8001/datasets/create-and-index" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dataset_name": "company_handbook",
+    "documents": [
+      {
+        "content": "Employee handbook content...",
+        "title": "Employee Handbook",
+        "metadata": {"category": "HR", "version": "2025"}
+      }
+    ],
+    "process_async": false
+  }'
+
+# Response includes registry update confirmation
+{
+  "status": "success",
+  "dataset_name": "company_handbook",
+  "registry_updated": true,  // ← New subgraph added
+  "documents_processed": 1
+}
+```
+
+**After Creation**:
+```bash
+# Query new dataset immediately (no restart needed)
+curl -X POST "http://localhost:8001/api/unified/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What is the vacation policy?",
+    "dataset_name": "company_handbook"  // ← Route to specific subgraph
+  }'
+```
+
+---
+
+#### Unified Query Endpoints
+
+**Endpoint**: `/api/unified/query`
+
+**Router Logic**: LLM-based semantic routing to select appropriate subgraph(s).
+
+**Query Modes**:
+
+1. **Auto-Routing** (LLM selects subgraphs):
+```bash
+curl -X POST "http://localhost:8001/api/unified/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Who won the Champions League in 2023?"
+  }'
+
+# LLM router analyzes query → routes to "football" subgraph
+```
+
+2. **Explicit Subgraph Selection**:
+```bash
+curl -X POST "http://localhost:8001/api/unified/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "How many departments are in KUET?",
+    "dataset_name": "kuet_test"  // ← Force specific subgraph
+  }'
+```
+
+3. **Multi-Subgraph Query** (future):
+```bash
+# Query multiple subgraphs and merge results
+curl -X POST "http://localhost:8001/api/unified/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Compare football academies and engineering colleges",
+    "dataset_names": ["football", "kuet_test"]  // ← Multiple subgraphs
+  }'
+```
+
+---
+
+#### Unified Chat Completion
+
+**Endpoint**: `/api/unified/ask`
+
+**Full RAG Pipeline**: Query selection → Retrieval → LLM generation with context.
+
+**Example**:
+```bash
+curl -X POST "http://localhost:8001/api/unified/ask" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What are the admission requirements for CSE at KUET?",
+    "dataset_name": "kuet_test"
+  }'
+
+# Response with generated answer + retrieved context
+{
+  "answer": "The admission requirements for CSE at KUET are...",
+  "contexts": [
+    {"content": "KUET CSE admission criteria...", "score": 0.92},
+    {"content": "Application process details...", "score": 0.87}
+  ],
+  "subgraph_used": "kuet_test"
+}
+```
+
+---
+
+#### Backend Endpoint Behavior
+
+| Endpoint | Pipeline Used | Subgraph Registry | Use Case |
+|----------|--------------|-------------------|----------|
+| `/documents/upload` | **User Choice** (default: standard) | Not updated | Single document upload |
+| `/datasets/create-and-index` | **Always Production** | ✅ **Auto-updated** | Dynamic dataset creation |
+| `/api/unified/query` | N/A (retrieval only) | Uses registry | Query existing subgraphs |
+| `/api/unified/ask` | N/A (RAG pipeline) | Uses registry | Full question answering |
+
+**Key Takeaways**:
+1. `/documents/upload` → User controls pipeline via parameter
+2. `/datasets/create-and-index` → Always uses production pipeline + updates registry
+3. Unified endpoints work with graphs from **both pipelines** seamlessly
+
+---
+
+### Migration from Old Graphs
+
+**Breaking Change (January 24, 2025)**: Old graphs used incompatible node ID formats.
+
+**Action Required**: Rebuild all existing graphs with new code.
+
+**Rebuild Commands**:
+```bash
+# Standard pipeline
+python script_build.py --data_source my_dataset
+
+# Production pipeline
+python script_build.py --data_source my_dataset --use_production_pipeline
+```
+
+**Verification**:
+```bash
+# Check entity node IDs (should start with "entity-")
+grep '<node id="entity-' expr/my_dataset/graph_chunk_entity_relation.graphml | head -3
+
+# Check relation node IDs (should start with "rel-")
+grep '<node id="rel-' expr/my_dataset/graph_chunk_entity_relation.graphml | head -3
+
+# Check edges (should connect rel-* to entity-*)
+grep '<edge source="rel-' expr/my_dataset/graph_chunk_entity_relation.graphml | head -3
+```
+
+**Expected Output**:
+```xml
+<node id="entity-abc123">
+<node id="rel-def456">
+<edge source="rel-def456" target="entity-abc123">
+```
+
+---
+
 ## Common Commands
 
 ### Data Pipeline Workflow

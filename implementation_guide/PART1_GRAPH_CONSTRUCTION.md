@@ -2,7 +2,7 @@
 
 **Deep-Dive Documentation for BiG-RAG Framework**
 
-**Last Updated:** 2025-01-08
+**Last Updated:** 2025-01-24
 
 **📖 See Also:**
 - **[Bipartite Architecture Explained](BIPARTITE_ARCHITECTURE_EXPLAINED.md)** - Complete explanation of graph structure, node types, and design decisions
@@ -14,8 +14,9 @@
 
 BiG-RAG has been significantly enhanced with critical fixes and quality improvements:
 
-**🔧 Critical Fixes:**
-- **Hash-Based Node IDs**: Bipartite edge nodes now use deterministic hash IDs (`rel-abc123...`) instead of full content as IDs → **30-40% file size reduction**
+**🔧 Critical Fixes (Updated January 24, 2025):**
+- **Hash-Based Relation IDs**: Relation nodes now use deterministic hash IDs (`rel-abc123...`) with `RELATION_PREFIX` constant → **30-40% file size reduction**
+- **Entity ID System**: All pipelines use hash-based stable identifiers (`entity-abc123`) instead of entity names as IDs → **100% pipeline compatibility**
 - **Entity Type Normalization**: Automatic normalization of LLM-extracted types (TEAM→organization, PLAYER→person, etc.) → **Consistent typing, better retrieval**
 - **Weight Documentation**: Comprehensive docs on entity/relation weight semantics (see [CLAUDE.md](../CLAUDE.md) and [README.md](../README.md))
 
@@ -186,10 +187,13 @@ Input: Raw Documents (corpus.jsonl)
 │                                                                  │
 │  Relation Node Creation:                                  │
 │    • Each relation becomes a node (role="relation")       │
-│    • ✨ Assign hash-based ID (e.g., "rel-abc123...")           │
-│    •    - Uses compute_mdhash_id() for deterministic hashing   │
+│    • ✨ Assign hash-based ID using RELATION_PREFIX constant    │
+│    •    - Format: "rel-abc123..." (deterministic hashing)      │
+│    •    - Uses compute_mdhash_id() with prefix=RELATION_PREFIX │
 │    •    - Content stored as node attribute (not in ID)         │
 │    •    - 30-40% file size reduction vs full content IDs       │
+│    •    - ⚠️ CRITICAL: Standard + Production pipelines now use │
+│    •      identical "rel-" prefix (unified January 2025)       │
 │    • Aggregate weights                                          │
 │    • Track source chunks                                        │
 │                                                                  │
@@ -409,11 +413,13 @@ PROCEDURE Build_Bipartite_Knowledge_Graph(documents):
             role="entity"
         )
 
-    # Add bipartite edge nodes
+    # Add bipartite edge nodes (relation nodes)
     FOR edge IN merged_edges:
-        # ✨ Generate hash-based ID (deterministic, collision-resistant)
-        edge_id = compute_mdhash_id(edge.content, prefix="rel-")
+        # ✨ Generate hash-based ID using RELATION_PREFIX constant
+        # UNIFIED: Both standard and production pipelines use "rel-" prefix
+        edge_id = compute_mdhash_id(edge.content, prefix=RELATION_PREFIX)
         # Result: "rel-a1b2c3d4e5f6..."
+        # ⚠️ CRITICAL: Must use RELATION_PREFIX (not hardcoded string)
         graph.add_node(
             edge_id,
             content=edge.content,  # ✨ Content stored as attribute
@@ -614,12 +620,18 @@ EntityNode = {
 
 ```python
 BipartiteEdgeNode = {
-    "edge_id": str,            # Unique identifier (MD5 hash of content)
+    "edge_id": str,            # ✨ UNIFIED: Hash ID with RELATION_PREFIX ("rel-abc123...")
     "content": str,            # Relation description/knowledge segment
     "weight": float,           # Importance score (cumulative)
     "source_id": List[str],    # List of chunk IDs where relation appears
     "role": "relation"   # Node type marker
 }
+
+# ⚠️ CRITICAL UPDATE (January 24, 2025):
+# - All pipelines now use RELATION_PREFIX constant for relation IDs
+# - Standard pipeline: "rel-abc123" (always used this)
+# - Production pipeline: "rel-abc123" (fixed from "relation-abc123")
+# - Backend endpoints work seamlessly with both pipeline outputs
 ```
 
 #### Graph Edge Structure

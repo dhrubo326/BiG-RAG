@@ -198,6 +198,7 @@ wandb/
 expr/
 expr2/
 expr_results/
+grahr1/
 
 # Temporary/cache directories
 bigrag_cache_*/

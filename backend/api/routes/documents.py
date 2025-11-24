@@ -174,6 +174,14 @@ async def upload_document(
         # Determine target dataset
         target_dataset = data_source if (data_source and data_source != "string") else current_data_source
 
+        # Ensure dataset exists and is registered (same as /datasets/create-and-index)
+        dataset_info = None
+        if unified_executor:
+            from .datasets import ensure_dataset_exists
+            logger.info(f"[Upload] Ensuring dataset exists: {target_dataset}")
+            dataset_info = await ensure_dataset_exists(target_dataset)
+            logger.info(f"[Upload] Dataset check complete. Registry updated: {dataset_info['registry_updated']}")
+
         # Generate IDs
         doc_id = compute_doc_id(content_text, prefix="doc")
         job_id = f"job-{compute_doc_id(doc_id + str(datetime.now()), prefix='')}"
@@ -241,6 +249,14 @@ async def upload_document(
                 use_production_pipeline=use_production_pipeline
             )
             message = f"Document processed successfully ({'production' if use_production_pipeline else 'standard'} pipeline)"
+
+        # Reload registry in unified executor if dataset was just added
+        if unified_executor and dataset_info.get('registry_updated', False):
+            try:
+                unified_executor.reload_registry()
+                logger.info(f"[Upload] Reloaded unified executor registry after adding new dataset")
+            except Exception as e:
+                logger.warning(f"[Upload] Failed to reload registry: {e}")
 
         # Return response
         return EnhancedUploadResponse(

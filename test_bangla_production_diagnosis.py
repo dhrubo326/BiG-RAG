@@ -544,8 +544,10 @@ async def test_bangla_production_pipeline():
     log(f"Issues Found: {len(issues_found)}", "INFO")
     log("")
 
-    if all(f['exists'] for f in files_status.values()):
-        log("Result: PARTIAL SUCCESS (files created via fallback to standard pipeline)", "RESULT")
+    if all(f['exists'] for f in files_status.values()) and len(issues_found) == 0:
+        log("Result: SUCCESS (production pipeline completed successfully)", "RESULT")
+    elif all(f['exists'] for f in files_status.values()):
+        log("Result: PARTIAL SUCCESS (files created but with warnings)", "RESULT")
     else:
         log("Result: FAILURE (missing files)", "RESULT")
 

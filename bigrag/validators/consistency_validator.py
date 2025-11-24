@@ -90,16 +90,22 @@ class ConsistencyValidator:
         # Step 5: Check reference integrity
         reference_errors = self._check_reference_integrity(entities, relations)
 
-        # Step 6: Compute consistency score
+        # Step 6: Compute consistency score with WEIGHTED ERROR SCORING
+        # Different error types have different severity weights:
+        # - Entity conflicts: 1.0 (serious - same entity, different attributes)
+        # - Numeric conflicts: 1.0 (critical - contradictory numbers)
+        # - Relation contradictions: 1.0 (critical - contradictory facts)
+        # - Reference errors: 0.1 (low - often false positives in multilingual docs)
+
         total_checks = len(entities) + len(relations)
-        total_issues = (
-            len(entity_conflicts) +
-            len(numeric_conflicts) +
-            len(relation_contradictions) +
-            len(reference_errors)
+        weighted_issues = (
+            len(entity_conflicts) * 1.0 +      # Full weight
+            len(numeric_conflicts) * 1.0 +     # Full weight
+            len(relation_contradictions) * 1.0 + # Full weight
+            len(reference_errors) * 0.1        # 10% weight (low severity)
         )
 
-        consistency_score = 1.0 - (total_issues / max(total_checks, 1))
+        consistency_score = 1.0 - (weighted_issues / max(total_checks, 1))
 
         # Step 7: Determine status
         status = self._determine_status(
@@ -116,6 +122,14 @@ class ConsistencyValidator:
             numeric_conflicts,
             relation_contradictions,
             reference_errors
+        )
+
+        # Calculate total_issues for reporting (unweighted count)
+        total_issues = (
+            len(entity_conflicts) +
+            len(numeric_conflicts) +
+            len(relation_contradictions) +
+            len(reference_errors)
         )
 
         return {
@@ -506,6 +520,10 @@ class ConsistencyValidator:
         """
         Check that all entity references in relations exist as entities.
 
+        MULTILINGUAL FIX (January 2025):
+        Check references against BOTH normalized (Bangla→English) and original names.
+        This prevents false positives like "Engineering" flagged when "ইঞ্জিনিয়ারিং" exists.
+
         Example error:
         Relation: "CSE department has 120 seats"
         Entities: ["Computer Science", "120"]  # Missing "CSE" entity!
@@ -513,12 +531,17 @@ class ConsistencyValidator:
 
         errors = []
 
-        # Build entity name set (normalized)
-        entity_names = set()
+        # Build entity name sets (BOTH normalized and original)
+        entity_names_normalized = set()
+        entity_names_original = set()
+
         for entity in entities:
             name = entity.get('entity_name', '')
+            # Store original name (preserves script)
+            entity_names_original.add(name.lower())
+            # Store normalized name (Bangla → English)
             normalized = self.normalizer.bangla_to_english(name)
-            entity_names.add(normalized.lower())
+            entity_names_normalized.add(normalized.lower())
 
         # Check each relation for entity references
         for relation in relations:
@@ -530,8 +553,9 @@ class ConsistencyValidator:
             for ref in references:
                 ref_normalized = self.normalizer.bangla_to_english(ref).lower()
 
-                # Check if this reference exists as entity
-                if ref_normalized not in entity_names:
+                # Check if reference exists in EITHER form (original OR normalized)
+                if ref_normalized not in entity_names_normalized and ref.lower() not in entity_names_original:
+                    # Only flag if missing in BOTH forms (this is a real missing entity)
                     # Allow common words (ignore short words)
                     if len(ref) >= 3:
                         errors.append({

@@ -40,6 +40,7 @@ nano-vectordb  # Lightweight vector database for BiG-RAG
 
 # LLM API Integration (for Algorithmic Mode)
 openai>=1.0.0  # For GPT-4/GPT-4o-mini (recommended)
+google-genai  # For Gemini 2.5 Pro (numeric validation with LLM-as-judge) - NEW unified SDK
 tiktoken  # Token counting for OpenAI models
 ollama  # Optional: Local LLM support (Qwen, Llama, etc.)
 

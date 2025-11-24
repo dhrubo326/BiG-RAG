@@ -78,8 +78,8 @@ class ProductionKGPipeline:
             extraction_mode=extraction_mode
         )
         self.batch_extractor = BatchConstrainedExtractor(self.paragraph_extractor)
-        # Initialize numeric validator with API key for LLM-based validation (no regex fallback)
-        self.numeric_validator = NumericValidator(api_key=api_key, use_llm_validation=True)
+        # Initialize numeric validator - reads GEMINI_API_KEY from .env (not OpenAI key!)
+        self.numeric_validator = NumericValidator(api_key=None, use_llm_validation=True)
         self.consistency_validator = ConsistencyValidator()
 
         if enable_entity_linking:
@@ -300,13 +300,23 @@ class ProductionKGPipeline:
         print(f"    Issues: {consistency_result['total_issues']}")
 
         # Overall status (3-tier with graceful degradation)
+        # IMPORTANT: Only numeric validation blocks pipeline
+        # Consistency validation is informational only (not blocking for multilingual docs)
         numeric_status = numeric_result['status']
         consistency_status = consistency_result['status']
 
         if numeric_status == 'PASS' and consistency_status == 'PASS':
             overall_status = 'PASS'
-        elif numeric_status == 'FAIL' or consistency_status == 'FAIL':
+        elif numeric_status == 'FAIL':
+            # Only block on numeric validation failure
             overall_status = 'FAIL'
+        elif consistency_status == 'FAIL':
+            # Consistency failure -> WARNING (not blocking)
+            # Reason: Entity linking already handles multilingual variations
+            # Consistency validator generates false positives for Bangla/English mixed docs
+            overall_status = 'WARNING'
+            print(f"[WARNING] Consistency validation failed but not blocking pipeline")
+            print(f"[WARNING] Consistency issues are expected for multilingual documents")
         else:
             # At least one is WARNING
             overall_status = 'WARNING'

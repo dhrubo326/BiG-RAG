@@ -566,6 +566,12 @@ class BiGRAG:
         validation = result['validation']
         overall_status = validation['overall_status']
 
+        # Allow WARNING status (with logging), block only on FAIL
+        if overall_status == 'WARNING':
+            logger.warning(f"[Production Pipeline] Validation WARNING - proceeding with caution")
+            logger.warning(f"  Numeric status: {validation['numeric']['status']}")
+            logger.warning(f"  Consistency status: {validation['consistency']['status']}")
+
         if overall_status == 'FAIL':
             numeric_validation = validation['numeric']
             consistency_validation = validation['consistency']
@@ -583,6 +589,10 @@ class BiGRAG:
                 'recommendations': numeric_validation.get('recommendations', [])
             }
 
+            # Determine threshold based on validation level
+            threshold_map = {"STRICT": "95%", "MODERATE": "90%", "LENIENT": "80%"}
+            required_threshold = threshold_map.get(error_details['validation_level'], "90%")
+
             error_message = (
                 f"[Production Pipeline] Validation FAILED\n"
                 f"  Validation Level: {error_details['validation_level']}\n"
@@ -590,7 +600,7 @@ class BiGRAG:
                 f"  \n"
                 f"  Numeric Validation:\n"
                 f"    Status: {error_details['numeric_status']}\n"
-                f"    Coverage: {error_details['numeric_coverage']:.2%} (need 95%+ for MODERATE)\n"
+                f"    Coverage: {error_details['numeric_coverage']:.2%} (need {required_threshold}+ for {error_details['validation_level']})\n"
                 f"    Missing numbers: {len(error_details['missing_numbers'])}\n"
                 f"    Hallucinated numbers: {len(error_details['hallucinated_numbers'])}\n"
                 f"  \n"

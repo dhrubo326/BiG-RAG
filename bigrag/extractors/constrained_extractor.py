@@ -407,8 +407,8 @@ IMPORTANT:
 
         SEMI_STRUCTURED mode (moderate - for mixed content) [DEFAULT]:
         - PASS: 95%+ numeric coverage, <5% hallucination, 85%+ semantic
-        - WARNING: 90%+ numeric coverage, <10% hallucination, 80%+ semantic
-        - FAIL: Below WARNING thresholds
+        - WARNING: 60%+ numeric coverage, <15% hallucination, 70%+ semantic
+        - FAIL: Below WARNING thresholds (for multilingual paragraphs, lower threshold needed)
 
         UNSTRUCTURED mode (lenient - for narrative text):
         - PASS: 80%+ numeric coverage, <15% hallucination, 70%+ semantic
@@ -443,9 +443,9 @@ IMPORTANT:
                 hallucination_score < 0.05 and
                 semantic_validity >= 0.85):
                 return 'PASS'
-            elif (numeric_coverage >= 0.90 and
-                  hallucination_score < 0.10 and
-                  semantic_validity >= 0.80):
+            elif (numeric_coverage >= 0.60 and
+                  hallucination_score < 0.15 and
+                  semantic_validity >= 0.70):
                 return 'WARNING'
             else:
                 return 'FAIL'

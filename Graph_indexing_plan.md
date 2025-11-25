@@ -596,8 +596,10 @@ For questions or issues:
    - ✅ NEW (both): `"rel-abc123"` (using RELATION_PREFIX constant)
 
 3. **Entity-Relation Linkage**:
-   - ❌ OLD: `hyper_relation` field not stored in GraphML (only used during processing)
-   - ✅ NEW: Graph edges (`relation → entity`) used for linkage (always been correct)
+   - **Design**: `hyper_relation` is a **transient field** used during extraction to link entities to their parent relations
+   - **Storage**: Not stored in GraphML (by design) - replaced by graph edges during upsertion
+   - **Mechanism**: Graph edges (`relation → entity`) provide the final linkage structure
+   - **Note**: This has always been the correct approach; not a bug fix
 
 ### Changes Made
 

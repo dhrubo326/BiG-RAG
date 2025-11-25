@@ -1662,9 +1662,10 @@ async def _get_node_data(
     results = await vdb_entities.query(query, top_k=query_param.top_k)
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
-    # Bug #4 Fix: Use defensive dict access to prevent KeyError
-    # Option B3: Use entity_id if available, fallback to entity_name for backward compatibility
-    results = [r.get("entity_id", r.get("entity_name")) for r in results if "entity_id" in r or "entity_name" in r]
+    # CRITICAL FIX (Jan 2025): Extract entity IDs from VDB results
+    # VDB returns: {"__id__": "entity-abc123", "id": "entity-abc123", "entity_name": "name", ...}
+    # We need the ID (entity-abc123), NOT the name
+    results = [r.get("__id__", r.get("id")) for r in results]
     # get entity information
     node_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]
@@ -1832,7 +1833,9 @@ async def _find_most_related_edges_from_entities(
     """
     # Initialize traversal state
     all_relations = []
-    current_entities = {dp["entity_name"]: dp for dp in node_datas}
+    # CRITICAL FIX (Jan 2025): Use entity_id instead of entity_name
+    # Graph nodes are indexed by entity_id (entity-abc123), not entity_name
+    current_entities = {dp["entity_id"]: dp for dp in node_datas}
     visited_entities = set(current_entities.keys())
 
     logger.info(f"[Multi-Hop] Starting traversal with {len(current_entities)} seed entities, max_hops={query_param.max_hops}")
@@ -1842,9 +1845,10 @@ async def _find_most_related_edges_from_entities(
         logger.info(f"[Multi-Hop] Hop {hop+1}/{query_param.max_hops}: Processing {len(current_entities)} entities")
 
         # Get all edges from current hop entities
+        # Use entity_id (not entity_name) to query graph
         edges_batch = await asyncio.gather(
-            *[knowledge_graph_inst.get_node_edges(entity_name)
-              for entity_name in current_entities.keys()]
+            *[knowledge_graph_inst.get_node_edges(entity_id)
+              for entity_id in current_entities.keys()]
         )
 
         # Collect unique edges
@@ -1946,9 +1950,10 @@ async def _get_edge_data(
 
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
-    # Bug #4 Fix: Use defensive dict access to prevent KeyError
-    # Extract edge names from query results (Bug #5 fix: use relation_name, not hash ID)
-    results = [r.get("relation_name") for r in results if "relation_name" in r]
+    # CRITICAL FIX (Jan 2025): Extract relation IDs from VDB results
+    # VDB returns: {"__id__": "rel-abc123", "id": "rel-abc123", ...}
+    # We need the ID (rel-abc123), NOT relation_name (which doesn't exist in VDB)
+    results = [r.get("__id__", r.get("id")) for r in results]
 
     edge_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]

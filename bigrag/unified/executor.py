@@ -6,11 +6,14 @@ Coordinates routing, subgraph loading, query execution, and result aggregation.
 
 import asyncio
 import logging
+import time
 from typing import Dict, List, Optional, Callable, Any
 from pathlib import Path
 
 from .router import SubgraphRouter
 from .cache import SubgraphCache
+from bigrag import BiGRAG
+from bigrag.base import QueryParam
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +88,6 @@ class UnifiedQueryExecutor:
                 - subgraph_results: Per-subgraph results (if include_metadata=True)
                 - execution_time: Total execution time (if include_metadata=True)
         """
-        import time
         start_time = time.time()
 
         # Step 1: Route query to relevant subgraph(s)
@@ -139,17 +141,18 @@ class UnifiedQueryExecutor:
         query_param: Optional[Any]
     ) -> Dict:
         """Query a single subgraph and return results with metadata."""
-        import time
-
         try:
             start_time = time.time()
 
             # TEMPORARY: Load BiGRAG directly without caching to avoid issues
-            from bigrag import BiGRAG
-            from pathlib import Path
-
             subgraph_config = self.router.registry['subgraphs'][subgraph_name]
             subgraph_path = Path(subgraph_config['path'])
+
+            # FIX: Convert relative paths to absolute (resolve from project root)
+            if not subgraph_path.is_absolute():
+                # Get project root: bigrag/unified/executor.py -> bigrag/ -> BiG-RAG/
+                project_root = Path(__file__).parent.parent.parent
+                subgraph_path = (project_root / subgraph_path).resolve()
 
             # Load BiGRAG instance
             rag = BiGRAG(
@@ -157,9 +160,8 @@ class UnifiedQueryExecutor:
                 **self.cache.bigrag_kwargs
             )
 
-            # Import QueryParam if needed
+            # Use default QueryParam if not provided
             if query_param is None:
-                from bigrag.base import QueryParam
                 query_param = QueryParam(
                     only_need_context=True,
                     top_k=10
@@ -262,9 +264,13 @@ class UnifiedQueryExecutor:
                     result_with_meta = result.copy() if isinstance(result, dict) else result
                     if isinstance(result_with_meta, dict):
                         result_with_meta['_subgraph'] = subgraph_name
+                        # Normalize coherence score to 'score' for consistent sorting
+                        # BiGRAG returns '<coherence>' key, but API consumers expect 'score'
+                        if '<coherence>' in result_with_meta and 'score' not in result_with_meta:
+                            result_with_meta['score'] = result_with_meta['<coherence>']
                     combined_results.append(result_with_meta)
 
-        # Sort by relevance if available (assume results have 'score' field)
+        # Sort by relevance score (descending)
         try:
             combined_results.sort(
                 key=lambda x: x.get('score', 0.0) if isinstance(x, dict) else 0.0,

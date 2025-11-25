@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 from api.core import dependencies
+from bigrag.base import QueryParam
 
 router = APIRouter(prefix="/api/unified", tags=["Unified Subgraph"])
 
@@ -73,8 +74,6 @@ async def unified_ask(request: AskRequest) -> Dict:
         )
 
     try:
-        from bigrag.base import QueryParam
-
         query_param = QueryParam(
             only_need_context=True,
             top_k=request.top_k
@@ -131,9 +130,6 @@ async def unified_query(request: UnifiedQueryRequest) -> Dict:
         )
 
     try:
-        # Import QueryParam
-        from bigrag.base import QueryParam
-
         query_param = QueryParam(
             only_need_context=True,
             top_k=request.top_k,

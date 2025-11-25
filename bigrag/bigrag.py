@@ -937,9 +937,10 @@ class BiGRAG:
         # Step 5: Build bipartite graph from enhanced pipeline result
         try:
             await build_bipartite_graph_from_pipeline(
-                result=result,
-                bigrag_instance=self,
-                doc_id=doc_id
+                pipeline_result=result,
+                knowledge_graph_inst=self.chunk_entity_relation_graph,
+                vdb_entities=self.vdb_entities,
+                vdb_relations=self.vdb_relations
             )
             logger.info(f"[Enhanced Pipeline] Built bipartite graph for doc {doc_id}")
 

@@ -1293,12 +1293,427 @@ def recommend_extraction_strategy(document_text: str, metadata: Dict = None) -> 
 
 ---
 
+## Step 6: Human-in-the-Loop (HITL) System for Failed Extractions
+
+**Priority:** Medium (production robustness)
+**Time Estimate:** 4-6 hours
+**Files to Create:**
+- `bigrag/hitl/failed_extraction_store.py`
+- `backend/api/hitl_routes.py`
+
+### 6.1 What We Want to Do
+
+Implement a system to capture and store failed extractions (both chunks and tables) for human review and later reprocessing.
+
+**Current Problem:**
+- Failed chunks are only logged with `print()` statements
+- No persistence - failed extractions are lost
+- No way for humans to review and correct failures
+- Pipeline continues (correct) but we lose track of what failed
+
+### 6.2 Implementation
+
+**Create Storage Module:**
+
+```python
+# bigrag/hitl/failed_extraction_store.py
+
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+
+class FailedExtractionStore:
+    """
+    Store failed extractions for human review and later reprocessing.
+
+    Storage structure:
+        expr/{dataset}/failed_extractions/
+        ├── failed_chunks.json       # Paragraph extraction failures
+        ├── failed_tables.json       # Table extraction failures
+        └── review_queue.json        # Pending human review
+    """
+
+    def __init__(self, dataset_path: str):
+        self.base_path = Path(dataset_path) / "failed_extractions"
+        self.base_path.mkdir(parents=True, exist_ok=True)
+
+        self.chunks_file = self.base_path / "failed_chunks.json"
+        self.tables_file = self.base_path / "failed_tables.json"
+        self.queue_file = self.base_path / "review_queue.json"
+
+    def save_failed_chunk(
+        self,
+        chunk_id: str,
+        chunk_content: str,
+        failure_reason: str,
+        validation_details: Dict,
+        document_id: str,
+        metadata: Optional[Dict] = None
+    ):
+        """Save failed chunk extraction for human review."""
+
+        failure_record = {
+            "extraction_id": f"chunk_{chunk_id}_{datetime.now().timestamp()}",
+            "type": "chunk",
+            "chunk_id": chunk_id,
+            "document_id": document_id,
+            "content": chunk_content,
+            "failure_reason": failure_reason,
+            "validation_details": validation_details,
+            "metadata": metadata or {},
+            "timestamp": datetime.now().isoformat(),
+            "status": "pending_review"
+        }
+
+        self._append_to_file(self.chunks_file, failure_record)
+        self._add_to_review_queue(failure_record)
+
+    def save_failed_table(
+        self,
+        table_id: str,
+        table_data: Dict,
+        failure_reason: str,
+        document_id: str
+    ):
+        """Save failed table extraction for human review."""
+
+        failure_record = {
+            "extraction_id": f"table_{table_id}_{datetime.now().timestamp()}",
+            "type": "table",
+            "table_id": table_id,
+            "document_id": document_id,
+            "table_data": table_data,
+            "failure_reason": failure_reason,
+            "timestamp": datetime.now().isoformat(),
+            "status": "pending_review"
+        }
+
+        self._append_to_file(self.tables_file, failure_record)
+        self._add_to_review_queue(failure_record)
+
+    def get_failed_extractions(self, document_id: Optional[str] = None) -> List[Dict]:
+        """Retrieve all failed extractions (optionally filtered by document)."""
+
+        all_failures = []
+
+        # Load chunks
+        if self.chunks_file.exists():
+            with open(self.chunks_file) as f:
+                all_failures.extend(json.load(f))
+
+        # Load tables
+        if self.tables_file.exists():
+            with open(self.tables_file) as f:
+                all_failures.extend(json.load(f))
+
+        # Filter by document if specified
+        if document_id:
+            all_failures = [f for f in all_failures if f["document_id"] == document_id]
+
+        return all_failures
+
+    def mark_reviewed(self, extraction_id: str, corrected_data: Dict):
+        """Mark extraction as human-reviewed with corrections."""
+        # Implementation: Update status in review_queue.json
+        pass
+
+    def _append_to_file(self, file_path: Path, record: Dict):
+        """Append record to JSON file."""
+        records = []
+        if file_path.exists():
+            with open(file_path) as f:
+                records = json.load(f)
+
+        records.append(record)
+
+        with open(file_path, 'w') as f:
+            json.dump(records, f, indent=2, ensure_ascii=False)
+
+    def _add_to_review_queue(self, record: Dict):
+        """Add to review queue."""
+        self._append_to_file(self.queue_file, record)
+```
+
+**Integration in Enhanced Pipeline:**
+
+```python
+# In bigrag/extractors/constrained_extractor.py
+
+async def extract_from_paragraph(...):
+    # ... existing extraction logic ...
+
+    if result is None:
+        # HITL: Save failed chunk instead of just logging
+        if hasattr(self, 'hitl_store'):
+            await self.hitl_store.save_failed_chunk(
+                chunk_id=chunk_id,
+                chunk_content=paragraph_text,
+                failure_reason="All 3 validation attempts failed",
+                validation_details=last_validation_result,
+                document_id=metadata.get('doc_id'),
+                metadata=metadata
+            )
+
+        print(f"[ERROR] Extraction failed for chunk {chunk_id} - saved for HITL review")
+        return None  # Continue processing other chunks
+```
+
+**API Endpoints:**
+
+```python
+# backend/api/hitl_routes.py
+
+from fastapi import APIRouter, HTTPException
+from bigrag.hitl.failed_extraction_store import FailedExtractionStore
+
+router = APIRouter(prefix="/hitl", tags=["Human-in-the-Loop"])
+
+@router.get("/failed-extractions/{dataset_name}")
+async def get_failed_extractions(dataset_name: str, document_id: Optional[str] = None):
+    """Get failed extractions for human review."""
+    store = FailedExtractionStore(f"expr/{dataset_name}")
+    failures = store.get_failed_extractions(document_id)
+
+    return {
+        "dataset": dataset_name,
+        "total_failures": len(failures),
+        "failures": failures
+    }
+
+@router.post("/correct-extraction/{extraction_id}")
+async def submit_correction(extraction_id: str, corrected_data: Dict):
+    """Submit human-corrected extraction."""
+    # Implementation: Update store and optionally reprocess
+    return {"status": "correction_saved", "extraction_id": extraction_id}
+
+@router.post("/reprocess/{extraction_id}")
+async def reprocess_extraction(extraction_id: str):
+    """Reprocess corrected extraction into graph."""
+    # Implementation: Re-run insertion logic with corrected data
+    return {"status": "reprocessed", "extraction_id": extraction_id}
+```
+
+### 6.3 Success Criteria
+
+- [x] Failed chunks are persisted to JSON files
+- [x] Failed tables are persisted to JSON files
+- [x] API endpoints allow viewing failures
+- [x] Review queue tracks pending items
+- [x] Pipeline continues processing other chunks when failures occur
+
+### 6.4 Benefits
+
+- **No data loss**: All failures captured for later review
+- **Human oversight**: Domain experts can correct extraction errors
+- **Quality improvement**: Failed cases inform prompt engineering
+- **Debugging aid**: Understand why certain chunks fail validation
+
+---
+
+## Additional Recommendations
+
+### 1. Version Metadata (Add to Step 1)
+
+Add pipeline version tracking to enable safe migrations:
+
+```python
+# In bigrag/enhanced_pipeline.py (Step 1)
+
+PIPELINE_VERSION = "enhanced-v1.0"
+BACKWARD_COMPATIBLE_WITH = ['standard-v1.0', 'production-v1.0']
+
+class EnhancedKGPipeline:
+    def __init__(self, ...):
+        # ... existing init code ...
+
+        # Add version metadata to all graphs
+        self.pipeline_metadata = {
+            'pipeline_version': PIPELINE_VERSION,
+            'backward_compatible': BACKWARD_COMPATIBLE_WITH,
+            'created_at': datetime.now().isoformat()
+        }
+
+    async def build_graph(self, ...):
+        # ... build graph ...
+
+        # Add version to graph metadata
+        self.chunk_entity_relation_graph.graph['pipeline_version'] = PIPELINE_VERSION
+        self.chunk_entity_relation_graph.graph['backward_compatible'] = BACKWARD_COMPATIBLE_WITH
+```
+
+**Benefits:**
+- Safe migration between phases
+- Version compatibility checks before loading graphs
+- Rollback support if issues arise
+
+### 2. Migration Helper (Add to Step 1)
+
+```python
+# In bigrag/migration_helper.py (NEW FILE)
+
+def check_graph_compatibility(graph_path: str, current_version: str) -> bool:
+    """Check if existing graph is compatible with current pipeline version."""
+    graph = nx.read_graphml(graph_path)
+    graph_version = graph.graph.get('pipeline_version', 'unknown')
+    compatible_versions = graph.graph.get('backward_compatible', [])
+
+    if current_version in compatible_versions:
+        return True
+
+    logger.warning(f"Graph version {graph_version} may not be compatible with {current_version}")
+    return False
+```
+
+### 3. Debug Aids (Optional)
+
+```python
+# Add to TableAwareChunker (Step 2)
+
+def chunk_document(self, ..., debug_chunking: bool = False):
+    """..."""
+
+    if debug_chunking:
+        # Log chunk boundaries with token counts
+        for i, chunk in enumerate(chunks):
+            tokens = count_tokens_fast(chunk['content'])
+            print(f"[DEBUG] Chunk {i}: {tokens} tokens, type={chunk['type']}")
+            print(f"  Preview: {chunk['content'][:100]}...")
+```
+
+### 4. Extraction Metrics Logging
+
+```python
+# Add to ConstrainedLLMExtractor (Step 3)
+
+class ExtractionMetrics:
+    """Track extraction statistics per document."""
+
+    def __init__(self):
+        self.total_chunks = 0
+        self.successful_extractions = 0
+        self.failed_extractions = 0
+        self.gleaning_improvements = 0  # Entities found in gleaning passes
+        self.avg_validation_score = 0.0
+
+    def log_summary(self):
+        print(f"""
+[EXTRACTION SUMMARY]
+Total chunks: {self.total_chunks}
+Success rate: {self.successful_extractions / self.total_chunks * 100:.1f}%
+Failed: {self.failed_extractions}
+Gleaning improvements: {self.gleaning_improvements} additional entities
+Avg validation score: {self.avg_validation_score:.2f}
+        """)
+```
+
+---
+
+## Phase 2 & Phase 3 Outlines
+
+### Phase 2: Standard Pipeline Integration (Future, 4 weeks)
+
+**Goal:** Allow standard pipeline to use enhanced components without breaking existing behavior.
+
+#### Step 1: Add Toggle to Standard Pipeline (Week 1, 6 hours)
+- Add config: `use_enhanced_components: bool = False`
+- When True:
+  - Import `UnifiedEntityMerger` instead of inline merge
+  - Import smart chunking utilities from `bigrag/utils.py`
+  - Keep gleaning logic as-is (already exists in standard)
+- Default to False (opt-in for gradual rollout)
+
+#### Step 2: Create Adapter Layer (Week 2, 8 hours)
+- Wrap enhanced components with standard pipeline's interface
+- Ensure no breaking changes to standard API
+- Add feature flag system for gradual rollout
+- Example: Adapter wraps `TableAwareChunker._chunk_with_semantic_boundaries()` to match standard's `chunking_by_token_size()` signature
+
+#### Step 3: A/B Testing Framework (Week 2, 4 hours)
+- Build side-by-side comparison tool
+- Compare same document: standard vs standard+enhanced components
+- Metrics to track:
+  - Entity recall (how many entities found)
+  - Chunk quality (context completeness)
+  - Speed (processing time comparison)
+- Generate comparison reports in JSON
+
+#### Step 4: Gradual Migration (Week 3-4)
+- Week 3: Enable `use_enhanced_components=True` for 10% of users, monitor metrics
+- Week 4: Enable for 50% of users, monitor for issues
+- Fix any bugs or performance regressions discovered
+- Adjust based on user feedback
+
+**Success Criteria:**
+- Standard with enhanced components produces ≥95% same output as pure standard
+- No performance regression (speed within 10% of original)
+- All existing tests pass without modification
+- Zero user complaints about breaking changes
+
+---
+
+### Phase 3: Full Unification (Future, 4 weeks)
+
+**Goal:** Single pipeline implementation supporting all use cases with strategy selection.
+
+#### Step 1: Create UnifiedKGPipeline (Week 1, 12 hours)
+- Merge `EnhancedKGPipeline` + standard pipeline into single class
+- Single class with strategy parameter: `extraction_strategy`, `chunking_strategy`, `merge_strategy`
+- Keep ALL features from both pipelines
+- Example:
+  ```python
+  class UnifiedKGPipeline:
+      def __init__(
+          self,
+          extraction_strategy='hybrid',   # strict|gleaning|hybrid
+          chunking_strategy='semantic',   # fixed|semantic
+          merge_strategy='fuzzy'          # basic|fuzzy
+      )
+  ```
+
+#### Step 2: Migration Script (Week 1, 6 hours)
+- Create `scripts/migrate_to_unified.py`
+- Auto-update user configs from old format to new
+- Map old parameters to new unified API:
+  - `use_enhanced_pipeline=True` → `extraction_strategy='hybrid'`
+  - `use_production_pipeline=True` → `extraction_strategy='hybrid', merge_strategy='fuzzy'`
+- Preserve all existing functionality (no feature loss)
+
+#### Step 3: Delete Redundant Code (Week 2, 4 hours)
+- Remove old standard pipeline implementation from `bigrag/operate.py`
+- Remove old production pipeline implementation from `bigrag/production_pipeline.py`
+- Keep only `UnifiedKGPipeline` in `bigrag/unified_pipeline.py`
+- Archive old code in `bigrag/legacy/` for emergency rollback (delete after 6 months)
+
+#### Step 4: Update Documentation (Week 2, 6 hours)
+- Rewrite user guide for unified pipeline
+- Create migration guide for existing users with code examples
+- Add deprecation notices to old config keys
+- Update API documentation with new unified interface
+
+**Success Criteria:**
+- Single pipeline supports ALL use cases from both old pipelines
+- Zero breaking changes for end users (migration script handles everything)
+- All tests pass with unified implementation
+- Documentation is complete and clear
+- Old pipeline code is archived (not deleted) for 6-month safety period
+
+---
+
 ## Next Steps
 
 1. **Review this plan** - Any questions or modifications?
 2. **Set up test data** - Prepare KUET docs for validation
-3. **Begin Step 1** - Add extraction strategy configuration
-4. **Iterative implementation** - Test each step before moving to next
+3. **Begin Step 1** - Add extraction strategy configuration (4 hours)
+4. **Implement Step 2** - Smart chunking (10-12 hours)
+5. **Add Step 3** - Gleaning implementation (8-10 hours)
+6. **Complete Step 4** - Unified entity merging (6 hours)
+7. **(Optional) Step 5** - Pipeline selector helper (3 hours)
+8. **Add Step 6** - HITL system for failed extractions (4-6 hours)
+9. **Testing & Validation** - Run full test suite on KUET dataset
+10. **Phase 2 Planning** - After Phase 1 completes, create detailed Phase 2 plan based on learnings
+
+**Total Estimated Time: 3-4 weeks for Phase 1 (including testing)**
 
 ---
 

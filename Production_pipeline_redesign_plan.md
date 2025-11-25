@@ -290,6 +290,21 @@ class TableAwareChunker:
             Output: 2 chunks
                 Chunk 1: Para1 (800) + Para2 (400) = 1200 tokens [within tolerance]
                 Chunk 2: Para3 (900) + overlap from Para2 (100) = 1000 tokens
+
+        CRITICAL CLARIFICATIONS:
+
+        1. ACCUMULATION DECISION: The decision to flush happens BEFORE adding next paragraph:
+           - If current + next <= 1000: Keep accumulating
+           - If 1000 < current + next <= 1300 (overflow zone):
+             * If current >= 1000: Flush now (already large enough)
+             * If current < 1000: Allow overflow (preserve paragraph)
+           - If current + next > 1300: MUST flush (hard limit)
+
+        2. ASYMMETRIC OVERLAP: Overlap depends on chunk position:
+           - First chunk: 0 before + 100 after = 100 total
+           - Middle chunks: 100 before + 100 after = 200 total
+           - Last chunk: 100 before + 0 after = 100 total
+           - Single chunk: 0 before + 0 after = 0 total
         """
         from bigrag.utils import count_tokens_fast, split_by_sentences
 
@@ -586,12 +601,26 @@ class ConstrainedLLMExtractor:
         """
         Extract entities and relations with optional gleaning.
 
-        Workflow:
-        1. Initial extraction (PASS 1)
-        2. Validate initial extraction
-        3. If gleaning enabled → additional passes (PASS 2-N)
-        4. Merge gleaned results using quality scores
-        5. Final validation
+        Workflow (TWO-STAGE PROCESS):
+        STAGE 1 - Initial Extraction with Retry (Error Recovery):
+          1. Attempt extraction up to 3 times
+          2. Validate after each attempt
+          3. If PASS/WARNING → proceed to Stage 2
+          4. If all 3 attempts FAIL → reject chunk, return None
+          NOTE: Retries use SAME prompt (stateless error recovery)
+
+        STAGE 2 - Gleaning (Refinement, only if Stage 1 succeeded):
+          5. If gleaning enabled, perform 2 additional passes with conversation history
+          6. Each gleaning pass validated independently (failed passes skipped)
+          7. Merge using quality-based comparison
+          8. Final validation
+
+        CRITICAL CLARIFICATIONS:
+        - Gleaning is REFINEMENT, not error recovery
+        - Gleaning only runs if initial extraction passed validation
+        - Quality tiebreaker: score → length → first-seen
+        - key_scores are SUMMED across passes (not averaged)
+        - Context window: Skip examples in gleaning, reserve 2000 tokens for response
         """
 
         # Pre-extraction: Extract ground truth numbers (EXISTING)
@@ -746,6 +775,11 @@ Return JSON with:
         1. For entities with same name → keep better description (higher quality score)
         2. For new entities → add to base
         3. For relations → merge by content similarity
+
+        CRITICAL CLARIFICATIONS:
+        - Tiebreaker hierarchy: quality score → description length → first-seen
+        - key_scores are SUMMED across passes (e.g., 60 + 70 = 130)
+        - This preserves importance signal across extraction passes
         """
         from bigrag.utils import description_quality_score  # Reuse standard pipeline's scoring
 
@@ -769,13 +803,27 @@ Return JSON with:
                 base_quality = description_quality_score(base_desc)
                 glean_quality = description_quality_score(glean_desc)
 
+                # Tiebreaker logic (CRITICAL)
                 if glean_quality > base_quality:
-                    # Replace with better version
+                    # Gleaned version is better
                     base_entities[entity_name] = glean_entity
                     print(f"    [MERGE] Entity '{entity_name}': Gleaned version is better (quality {base_quality:.0f} → {glean_quality:.0f})")
+                elif glean_quality == base_quality:
+                    # Tie on quality - use length as tiebreaker
+                    if len(glean_desc) > len(base_desc):
+                        base_entities[entity_name] = glean_entity
+                        print(f"    [MERGE] Entity '{entity_name}': Gleaned version is longer (quality tie)")
+                    else:
+                        print(f"    [MERGE] Entity '{entity_name}': Keeping original (quality tie, original longer)")
                 else:
-                    # Keep original
+                    # Original is better
                     print(f"    [MERGE] Entity '{entity_name}': Keeping original (quality {base_quality:.0f} vs {glean_quality:.0f})")
+
+                # SUM key_scores across passes (CRITICAL)
+                base_key_score = base_entities[entity_name].get('key_score', 0)
+                glean_key_score = glean_entity.get('key_score', 0)
+                base_entities[entity_name]['key_score'] = base_key_score + glean_key_score
+
             else:
                 # New entity from gleaning
                 base_entities[entity_name] = glean_entity
@@ -1170,6 +1218,33 @@ def recommend_extraction_strategy(document_text: str, metadata: Dict = None) -> 
 | **Extraction** | Single-pass only | Configurable (strict/gleaning/hybrid) | +25% entity recall |
 | **Entity Merge** | Separate implementations | Unified merger | Code reuse, maintainability |
 | **Validation** | Numeric only | Numeric + quality | Better data quality |
+
+---
+
+## CRITICAL IMPLEMENTATION NOTES
+
+**The following clarifications are embedded in Step 2 and Step 3 code sections above. Developers MUST follow these precisely:**
+
+### Chunking (Step 2):
+1. **Accumulation Decision Logic**: Flush decision made BEFORE adding next paragraph
+   - Under 1000: keep accumulating
+   - 1000-1300 (overflow zone): flush if current >= 1000, else allow overflow
+   - Over 1300: MUST flush (hard limit)
+
+2. **Asymmetric Overlap**: Depends on chunk position (first: 0+100, middle: 100+100, last: 100+0, single: 0+0)
+
+### Gleaning (Step 3):
+3. **Two-Stage Flow**: Stage 1 (retry with same prompt) → Stage 2 (gleaning with history, only if Stage 1 passed)
+
+4. **Quality Tiebreaker**: Primary: quality score, Secondary: description length, Tertiary: first-seen (stable sort)
+
+5. **key_score Aggregation**: SUM across passes (e.g., 60 + 70 = 130), don't average or take max
+
+6. **Context Management**: Skip examples in gleaning prompts (~400 tokens saved), reserve 2000 tokens for response
+
+7. **Content Type Detection**: Use explicit metadata if available, else apply heuristics (table syntax, numeric density > 30%), default to gleaning when uncertain
+
+**See TECHNICAL_CLARIFICATIONS.md for detailed algorithms and edge case handling.**
 
 ---
 

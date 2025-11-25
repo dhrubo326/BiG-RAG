@@ -34,11 +34,29 @@ Add a configurable extraction strategy parameter that controls how entity extrac
 
 ### Step 2: Semantic Boundary-Aware Chunking (Week 1-2, 10-12 hours)
 
-Implement smart paragraph chunking that respects semantic boundaries instead of blindly splitting at token positions. Current behavior: both pipelines use fixed sliding window that splits at token 1200 regardless of content, causing the "20,000 candidate selection criteria" paragraph to split mid-sentence across chunks. New behavior: detect paragraph boundaries (double newlines), keep paragraphs under 1300 tokens intact (30% overflow tolerance for completeness), split only at sentence boundaries for larger paragraphs, and use 200 tokens overlap (100 before + 100 after) composed of complete sentences. The algorithm works as follows: (1) split document by double newlines into paragraphs, (2) for each paragraph, if it's less than 1300 tokens, keep the entire paragraph intact and accumulate with other small paragraphs until reaching chunk_size, (3) if a paragraph exceeds 1300 tokens, split it at sentence boundaries (handling both Bengali "।" and English ".!?"), (4) when creating chunks, add 100 tokens overlap before (last few sentences from previous chunk) and 100 tokens overlap after (first few sentences from next chunk), ensuring overlap consists of complete sentences only. Implementation adds new method _chunk_with_semantic_boundaries() to TableAwareChunker class and new utility functions to bigrag/utils.py: count_tokens_fast() for approximate token counting (4 chars ≈ 1 token), split_by_sentences() that handles Bengali and English sentence endings. Tables continue to use existing behavior (never split, each table is one chunk). Testing requirement: verify that the KUET selection criteria paragraph stays intact in one chunk, Query "প্রথম ২০,০০০ প্রার্থী কিভাবে নির্বাচন করা হবে?" must retrieve complete answer. Expected impact: +20% context retention, fixes missing Q5 answer issue, improves retrieval precision by 10-15%.
+Implement smart paragraph chunking that respects semantic boundaries instead of blindly splitting at token positions. Current behavior: both pipelines use fixed sliding window that splits at token 1200 regardless of content, causing the "20,000 candidate selection criteria" paragraph to split mid-sentence across chunks. New behavior: detect paragraph boundaries (double newlines), keep paragraphs under 1300 tokens intact (30% overflow tolerance for completeness), split only at sentence boundaries for larger paragraphs, and use 200 tokens overlap (100 before + 100 after) composed of complete sentences.
+
+**CRITICAL CLARIFICATION - Chunk Accumulation Logic:** When accumulating paragraphs into chunks, we accumulate UNTIL adding the next paragraph would exceed the target (1000 tokens). If the accumulated chunk is below target but adding next paragraph would put us in the overflow zone (1000-1300 tokens), we use a heuristic: if current chunk is already >= 1000 tokens, flush it (don't risk overflow); if current < 1000 tokens, allow overflow to preserve paragraph coherence. The decision is made BEFORE adding the next paragraph, not after. Hard limit: never exceed 1300 tokens - if adding next paragraph would exceed 1300, always flush current chunk first.
+
+**CRITICAL CLARIFICATION - Overlap at Boundaries:** Overlap is asymmetric based on chunk position: (1) First chunk: 0 tokens before + 100 tokens after = 100 total, (2) Middle chunks: 100 tokens before + 100 tokens after = 200 total, (3) Last chunk: 100 tokens before + 0 tokens after = 100 total, (4) Single chunk (document has only one chunk): 0 tokens before + 0 tokens after = 0 total. This prevents trying to overlap with non-existent chunks at boundaries.
+
+The algorithm works as follows: (1) split document by double newlines into paragraphs, (2) for each paragraph, count tokens using approximation (4 chars ≈ 1 token), (3) if paragraph < 1300 tokens, accumulate with other small paragraphs using the accumulation logic above until reaching chunk_size, (4) if a paragraph exceeds 1300 tokens, split it at sentence boundaries (handling both Bengali "।" and English ".!?"), (5) when creating chunks, add asymmetric overlap using complete sentences only (not mid-sentence). Implementation adds new method _chunk_with_semantic_boundaries() to TableAwareChunker class and new utility functions to bigrag/utils.py: count_tokens_fast() for approximate token counting, split_by_sentences() that handles Bengali and English sentence endings. Tables continue to use existing behavior (never split, each table is one chunk). Testing requirement: verify that the KUET selection criteria paragraph stays intact in one chunk, Query "প্রথম ২০,০০০ প্রার্থী কিভাবে নির্বাচন করা হবে?" must retrieve complete answer. Expected impact: +20% context retention, fixes missing Q5 answer issue, improves retrieval precision by 10-15%.
 
 ### Step 3: Gleaning Implementation in Enhanced Pipeline (Week 2, 8-10 hours)
 
-Add multi-pass gleaning loop to ConstrainedLLMExtractor that is IDENTICAL to standard pipeline's gleaning logic, enabling future code unification. Current production behavior: extract_from_paragraph() does single extraction with validation retry up to 3 attempts, but each retry uses the same prompt without conversation history (stateless error recovery). New behavior: after initial extraction passes validation, if gleaning is enabled, perform 2 additional gleaning passes where LLM sees full conversation history and is prompted "CONTINUE EXTRACTION: Review the text again and identify ANY additional entities you may have missed", then merge gleaned entities using quality-based comparison - for entities with the same name, keep the version with higher description_quality_score() (scoring factors: length up to 40 points, keyword density up to 30 points, specificity indicators like numbers/dates up to 30 points), for new entities not in original extraction, add them to the merged result. Implementation refactors extract_from_paragraph() to call new method _extract_once() for single-pass extraction, then adds gleaning loop that builds conversation_history array with user/assistant messages, calls LLM with conversation context, validates each gleaning result, and merges using new method _merge_extractions_by_quality() that imports description_quality_score from bigrag/utils.py (same function standard pipeline uses). The gleaning prompt must be IDENTICAL to standard pipeline's continue_prompt so future unification is seamless. Configuration: enable_gleaning and max_gleaning_iterations are constructor parameters, with hybrid mode setting enable_gleaning=True for paragraph chunks and False for table chunks. Success criteria: gleaning can be toggled via config, finds 20-30% more entities for narrative paragraphs, quality-based merging produces same results as standard pipeline's smart merge, validation still applied after gleaning completes.
+Add multi-pass gleaning loop to ConstrainedLLMExtractor that is IDENTICAL to standard pipeline's gleaning logic, enabling future code unification. Current production behavior: extract_from_paragraph() does single extraction with validation retry up to 3 attempts, but each retry uses the same prompt without conversation history (stateless error recovery). New behavior follows a TWO-STAGE process:
+
+**STAGE 1 - Initial Extraction with Retry (Error Recovery):** Attempt extraction up to 3 times with validation after each attempt. If validation status is PASS or WARNING, proceed to Stage 2. If all 3 attempts fail (status FAIL), reject the chunk entirely and log error. Retries use the SAME prompt without conversation history - this is error recovery, not gleaning.
+
+**STAGE 2 - Gleaning (Refinement, Only if Stage 1 Succeeded):** If gleaning is enabled AND Stage 1 passed, perform 2 additional gleaning passes where LLM sees full conversation history and is prompted "CONTINUE EXTRACTION: Review the text again and identify ANY additional entities you may have missed". Each gleaning pass is validated independently - if validation fails for a gleaning pass, skip that pass but continue with remaining passes. After all gleaning passes complete, merge results using quality-based comparison.
+
+**CRITICAL CLARIFICATION - Quality-Based Merging:** For entities with the same name found across multiple passes (base extraction + gleaning passes), compare using description_quality_score(). If scores are EQUAL (tie), use secondary tiebreaker: longer description wins. If lengths are also equal, use tertiary tiebreaker: keep first-seen version (stable sort). When merging key_scores across passes, SUM them (e.g., base_entity key_score 60 + gleaned_entity key_score 70 = merged key_score 130), because higher key_score indicates higher importance and we want to preserve this signal across passes. For new entities not in previous passes, add them directly to merged result.
+
+**CRITICAL CLARIFICATION - Context Window Management:** To prevent token overflow during gleaning, manage context carefully: (1) Skip examples from prompt during gleaning passes (saves ~400 tokens), (2) If conversation history exceeds safe limit (~2000 tokens for response buffer), drop the oldest gleaning passes first, keep base extraction always, (3) Each gleaning pass should reserve 2000 tokens for LLM response to prevent cutoff.
+
+**CRITICAL CLARIFICATION - Content Type Detection:** For hybrid mode to work, we need to detect whether a chunk is a table or paragraph: (1) If chunk has explicit content_type metadata (from TableAwareChunker), use that directly, (2) If no metadata, apply heuristics: markdown table syntax (lines starting with `|` and containing alignment row) → table, numeric density > 30% (count numeric characters / total characters) → table, else → paragraph (default), (3) Conservative choice: when uncertain, default to gleaning mode (better recall, safe choice).
+
+Implementation refactors extract_from_paragraph() into three methods: _extract_once() for single-pass extraction, _run_extraction_with_retry() for Stage 1 (retry loop), _run_gleaning_passes() for Stage 2 (gleaning loop with conversation history). Merging logic goes in new method _merge_extractions_by_quality() that imports description_quality_score from bigrag/utils.py (same function standard pipeline uses). The gleaning prompt must be IDENTICAL to standard pipeline's continue_prompt so future unification is seamless. Configuration: enable_gleaning and max_gleaning_iterations are constructor parameters, with hybrid mode setting enable_gleaning=True for paragraph chunks and False for table chunks. Success criteria: gleaning can be toggled via config, finds 20-30% more entities for narrative paragraphs, quality-based merging produces same results as standard pipeline's smart merge, two-stage flow correctly rejects chunks that fail Stage 1, validation still applied after gleaning completes.
 
 ### Step 4: Unified Entity Merging (Week 3, 6 hours)
 
@@ -98,6 +116,66 @@ enhanced_pipeline_config: dict = {
 ## Expected Outcomes
 
 **Quantitative Improvements:** Paragraph entity recall increases from 70-80% to 90-95% (+15-20% absolute gain), context completeness for retrieval increases from 75% to 95% (+20%, fixes Q5 missing answer issue), entity deduplication improves from 60% to 90% (+30%, fewer duplicate nodes), overall F1 score on KUET dataset improves from 82% to 90-92% (+8-10 points). Trade-off: extraction time for paragraphs increases by ~2x due to gleaning passes (acceptable given quality gains).
+
+---
+
+## CRITICAL CLARIFICATIONS SUMMARY
+
+The following implementation details are CRITICAL and must be followed exactly to avoid bugs:
+
+### 1. Chunk Accumulation Logic (Step 2)
+When accumulating paragraphs into chunks, the decision to flush happens BEFORE adding the next paragraph:
+- If `current_tokens + next_para_tokens <= 1000`: Keep accumulating (under target)
+- If `1000 < current_tokens + next_para_tokens <= 1300` (overflow zone):
+  - If `current_tokens >= 1000`: Flush now (current already large enough)
+  - If `current_tokens < 1000`: Allow overflow (preserve paragraph coherence)
+- If `current_tokens + next_para_tokens > 1300`: MUST flush (hard limit)
+
+### 2. Asymmetric Overlap at Boundaries (Step 2)
+Overlap depends on chunk position in document:
+- **First chunk:** 0 before + 100 after = 100 total
+- **Middle chunks:** 100 before + 100 after = 200 total
+- **Last chunk:** 100 before + 0 after = 100 total
+- **Single chunk:** 0 before + 0 after = 0 total
+
+### 3. Two-Stage Extraction Flow (Step 3)
+**Stage 1 (Retry for Error Recovery):** Try extraction up to 3 times with SAME prompt. If all fail → reject chunk. If any pass → proceed to Stage 2.
+
+**Stage 2 (Gleaning for Refinement):** Only runs if Stage 1 passed AND gleaning enabled. Perform 2 gleaning passes with conversation history. Each pass validated independently - failed pass is skipped, not retried.
+
+### 4. Quality-Based Merging Tiebreaker (Step 3)
+When merging entities with same name across passes:
+1. **Primary:** Higher description_quality_score() wins
+2. **Secondary:** If scores equal, longer description wins
+3. **Tertiary:** If lengths equal, keep first-seen (stable sort)
+
+When merging key_scores: **SUM** across passes (e.g., 60 + 70 = 130), don't average or pick max.
+
+### 5. Context Window Management (Step 3)
+To prevent token overflow during gleaning:
+- Skip examples from gleaning prompts (saves ~400 tokens)
+- If history exceeds safe limit (~2000 tokens for response buffer), drop oldest gleaning passes first
+- Always keep base extraction in history
+- Reserve 2000 tokens for each LLM response
+
+### 6. Content Type Detection for Hybrid Mode (Step 3)
+Detect whether chunk is table or paragraph:
+1. **Explicit metadata:** If chunk has `content_type` field, use it directly
+2. **Heuristic detection:**
+   - Markdown table syntax (`|` lines + alignment row) → table
+   - Numeric density > 30% → table
+   - Else → paragraph
+3. **Conservative default:** When uncertain, use gleaning mode (better recall)
+
+---
+
+## Additional Recommendations
+
+1. **Debugging Aid - Chunk Visualization:** Add optional flag `debug_chunking=True` that logs chunk boundaries with token counts and overlap regions for manual inspection during development.
+
+2. **Extraction Metrics Logging:** Track and log extraction statistics per document: number of chunks (by type), entities per chunk (average/min/max), gleaning pass success rate, validation failure rate. This helps identify problematic documents.
+
+3. **Gleaning Budget Parameter:** Consider adding `max_gleaning_budget` parameter (default: unlimited) that limits total gleaning passes across all chunks in a document. If document has 100 chunks, `max_gleaning_budget=50` would enable gleaning for only 50 chunks (prioritize longer chunks or those with low initial entity count). This provides cost control for very large documents.
 
 **Qualitative Improvements:** Code maintainability significantly improved through unification (single entity merging implementation instead of two), future pipeline consolidation path is clear (both pipelines can use same components), user experience improved with configurable strategies (can choose speed vs accuracy trade-off), better debugging and monitoring through structured logging.
 

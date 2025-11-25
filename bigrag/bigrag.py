@@ -165,11 +165,20 @@ class BiGRAG:
 
     enable_llm_cache: bool = True
 
-    # Production KG Pipeline (NEW - opt-in for higher accuracy)
-    use_production_pipeline: bool = False  # Default: False (backward compatible)
+    # Production KG Pipeline (DEPRECATED - use use_enhanced_pipeline instead)
+    use_production_pipeline: bool = False  # DEPRECATED: Use use_enhanced_pipeline
     production_pipeline_config: dict = field(default_factory=lambda: {
         "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
         "enable_entity_linking": True,
+        "extraction_mode": "semi_structured"  # structured | semi_structured | unstructured
+    })
+
+    # Enhanced KG Pipeline (NEW - Phase 1 redesign with extraction strategies)
+    use_enhanced_pipeline: bool = False  # Default: False (opt-in for Phase 1)
+    enhanced_pipeline_config: dict = field(default_factory=lambda: {
+        "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
+        "enable_entity_linking": True,
+        "extraction_strategy": "hybrid",  # NEW: strict | gleaning | hybrid [RECOMMENDED]
         "extraction_mode": "semi_structured"  # structured | semi_structured | unstructured
     })
 
@@ -178,6 +187,23 @@ class BiGRAG:
     convert_response_to_json_func: callable = convert_response_to_json
 
     def __post_init__(self):
+        import warnings
+        # NEW: Handle deprecated config keys with migration
+        if self.use_production_pipeline and not self.use_enhanced_pipeline:
+            warnings.warn(
+                "'use_production_pipeline' is deprecated. Use 'use_enhanced_pipeline' instead. "
+                "Automatically migrating to enhanced pipeline.",
+                DeprecationWarning,
+                stacklevel=2
+            )
+            self.use_enhanced_pipeline = True
+            # Migrate production config to enhanced config
+            if not self.enhanced_pipeline_config:
+                self.enhanced_pipeline_config = self.production_pipeline_config.copy()
+                # Add extraction_strategy if not present
+                if 'extraction_strategy' not in self.enhanced_pipeline_config:
+                    self.enhanced_pipeline_config['extraction_strategy'] = 'hybrid'
+
         # Use centralized logging directory or fallback to working_dir/logs
         from bigrag.config import config
         from pathlib import Path
@@ -223,6 +249,18 @@ class BiGRAG:
 
         _print_config = ",\n  ".join([f"{k} = {v}" for k, v in asdict(self).items()])
         logger.debug(f"BiGRAG init with param:\n  {_print_config}\n")
+
+        # NEW (Phase 1 Step 4): Initialize UnifiedEntityMerger if requested
+        self.entity_merger = None
+        entity_merge_strategy = self.addon_params.get('entity_merge_strategy', None)
+        if entity_merge_strategy:
+            try:
+                from bigrag.merging.unified_merger import UnifiedEntityMerger
+                self.entity_merger = UnifiedEntityMerger(strategy=entity_merge_strategy)
+                logger.info(f"[UnifiedMerger] Initialized with strategy={entity_merge_strategy} (standard pipeline)")
+            except Exception as e:
+                logger.warning(f"[UnifiedMerger] Failed to initialize: {e}. Using default merging.")
+                self.entity_merger = None
 
         self.key_string_value_json_storage_cls: Type[BaseKVStorage] = (
             self._get_storage_class()[self.kv_storage]
@@ -295,6 +333,73 @@ class BiGRAG:
                 **self.llm_model_kwargs,
             )
         )
+
+    @staticmethod
+    def recommend_config(
+        sample_documents: list,
+        corpus_size: int,
+        performance_profile: str = "balanced"
+    ) -> dict:
+        """
+        Recommend optimal pipeline configuration (Phase 1 Step 5).
+
+        Uses pipeline selector to analyze documents and recommend configuration.
+
+        Args:
+            sample_documents: Sample of documents (5-10 recommended)
+            corpus_size: Total number of documents in corpus
+            performance_profile: 'speed', 'balanced', or 'accuracy'
+
+        Returns:
+            Dictionary with:
+            {
+                'pipeline_type': 'standard' or 'enhanced',
+                'config': {config_dict},
+                'reasoning': [list of reasons],
+                'estimated_cost': 'low/medium/high',
+                'estimated_time': 'fast/medium/slow',
+                'expected_quality': 'good/very_good/excellent'
+            }
+
+        Example:
+            # Get recommendation
+            rec = BiGRAG.recommend_config(
+                sample_documents=docs[:10],
+                corpus_size=10000,
+                performance_profile='speed'
+            )
+
+            # Use recommended config (standard pipeline)
+            if rec['pipeline_type'] == 'standard':
+                rag = BiGRAG(
+                    working_dir="./graph",
+                    addon_params=rec['config']
+                )
+            # Use enhanced pipeline
+            else:
+                from bigrag.enhanced_pipeline import EnhancedKGPipeline
+                pipeline = EnhancedKGPipeline(
+                    api_key=api_key,
+                    **rec['config']
+                )
+        """
+        from bigrag.pipeline_selector import quick_recommend
+
+        recommendation = quick_recommend(
+            documents=sample_documents,
+            corpus_size=corpus_size,
+            performance_profile=performance_profile
+        )
+
+        return {
+            'pipeline_type': recommendation.pipeline_type.value,
+            'config': recommendation.config,
+            'reasoning': recommendation.reasoning,
+            'estimated_cost': recommendation.estimated_cost,
+            'estimated_time': recommendation.estimated_time,
+            'expected_quality': recommendation.expected_quality,
+            'confidence': recommendation.confidence
+        }
 
     def _get_storage_class(self) -> Type[BaseGraphStorage]:
         return {
@@ -381,10 +486,21 @@ class BiGRAG:
             update_storage = True
             logger.info(f"[New Docs] inserting {len(new_docs)} docs")
 
-            # NEW: Production pipeline vs standard pipeline
-            if self.use_production_pipeline:
-                logger.info("[Production Pipeline] Using enhanced extraction (table-aware, 95%+ validation)")
-                # Process each document with production pipeline
+            # NEW: Enhanced/Production pipeline vs standard pipeline
+            if self.use_enhanced_pipeline:
+                logger.info(f"[Enhanced Pipeline v1.0] Using extraction strategy: {self.enhanced_pipeline_config.get('extraction_strategy', 'hybrid')}")
+                # Process each document with enhanced pipeline
+                for doc_key, doc in new_docs.items():
+                    await self._process_document_with_enhanced_pipeline(
+                        doc_key,
+                        doc["content"],
+                        doc.get("metadata", {})
+                    )
+            elif self.use_production_pipeline:
+                # DEPRECATED: Still supported but migrated to enhanced
+                logger.warning("[Production Pipeline] DEPRECATED - automatically using enhanced pipeline")
+                logger.info("[Enhanced Pipeline v1.0] Using extraction strategy: hybrid")
+                # Process each document with production pipeline (legacy)
                 for doc_key, doc in new_docs.items():
                     await self._process_document_with_production_pipeline(
                         doc_key,
@@ -700,6 +816,184 @@ class BiGRAG:
             logger.info(f"[Production Pipeline] Indexed {len(chunks_for_vdb)} chunks to vector DB (Path C)")
 
         logger.info(f"[Production Pipeline] Document processing complete: {doc_id}")
+
+    async def _process_document_with_enhanced_pipeline(
+        self,
+        doc_id: str,
+        content: str,
+        metadata: dict,
+    ):
+        """
+        Process a single document through EnhancedKGPipeline (Phase 1) and insert into BiGRAG storage.
+
+        NEW in Enhanced Pipeline:
+        - Extraction strategy configuration (strict/gleaning/hybrid)
+        - Version metadata tracking
+        - HITL support for failed extractions
+        - Preparation for semantic chunking (Step 2)
+        - Preparation for gleaning (Step 3)
+
+        This method:
+        1. Initializes EnhancedKGPipeline with API key and config
+        2. Processes document through all 4 phases (chunking, extraction, merging, validation)
+        3. Checks validation status (PASS/WARNING/FAIL)
+        4. Maps Enhanced chunks to BiGRAG chunk IDs
+        5. Stores entities, relations, chunks, and full document
+        6. Indexes to all 3 vector DBs (entities, relations, chunks)
+
+        Args:
+            doc_id: Document ID
+            content: Document content (full text, not chunks)
+            metadata: Document metadata dict
+        """
+        from bigrag.enhanced_pipeline import EnhancedKGPipeline
+        from bigrag.builders.bipartite_graph_builder import build_bipartite_graph_from_pipeline
+        from bigrag.utils import compute_mdhash_id
+
+        logger.info(f"[Enhanced Pipeline v1.0] Processing document: {doc_id}")
+
+        # Step 1: Get OpenAI API key from .env
+        api_key = os.getenv('OPENAI_API_KEY')
+
+        if not api_key:
+            error_msg = (
+                "[Enhanced Pipeline] OPENAI_API_KEY not found in environment variables. "
+                "Enhanced pipeline requires OpenAI API key. "
+                "Please set OPENAI_API_KEY in your .env file or environment."
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        logger.info("[Enhanced Pipeline] API key loaded from OPENAI_API_KEY environment variable")
+
+        # Step 2: Initialize EnhancedKGPipeline with config
+        try:
+            pipeline_config = self.enhanced_pipeline_config
+            pipeline = EnhancedKGPipeline(
+                api_key=api_key,
+                model="gpt-4o-mini",
+                validation_level=pipeline_config.get("validation_level", "MODERATE"),
+                extraction_mode=pipeline_config.get("extraction_mode", "semi_structured"),
+                extraction_strategy=pipeline_config.get("extraction_strategy", "hybrid"),  # NEW
+                enable_entity_linking=pipeline_config.get("enable_entity_linking", True),
+                dataset_path=self.working_dir  # NEW: For HITL storage
+            )
+            logger.info(f"[Enhanced Pipeline] Initialized with validation={pipeline_config.get('validation_level')}, strategy={pipeline_config.get('extraction_strategy')}")
+
+        except Exception as e:
+            error_msg = f"[Enhanced Pipeline] Failed to initialize pipeline: {e}\nNO FALLBACK: Fix initialization error."
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
+
+        # Step 3: Process document through enhanced pipeline
+        try:
+            result = await pipeline.process_document(
+                markdown_text=content,
+                metadata=metadata,
+                language="English"  # TODO: Make configurable
+            )
+            logger.info(f"[Enhanced Pipeline] Extraction complete: {len(result['entities'])} entities, {len(result['relations'])} relations")
+            logger.info(f"[Enhanced Pipeline] Pipeline version: {result['pipeline_metadata']['pipeline_version']}")
+
+        except Exception as e:
+            error_msg = f"[Enhanced Pipeline] Processing failed: {e}\nNO FALLBACK: Fix processing error."
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
+
+        # Step 4: Check validation status (same as production)
+        validation = result['validation']
+        overall_status = validation['overall_status']
+
+        if overall_status == 'WARNING':
+            logger.warning(f"[Enhanced Pipeline] Validation WARNING - proceeding with caution")
+            logger.warning(f"  Numeric status: {validation['numeric']['status']}")
+
+        if overall_status == 'FAIL':
+            numeric_validation = validation['numeric']
+            error_details = {
+                'overall_status': 'FAIL',
+                'numeric_coverage': numeric_validation['numeric_coverage'],
+                'numeric_status': numeric_validation['status'],
+                'missing_numbers': numeric_validation.get('missing_numbers', []),
+                'hallucinated_numbers': numeric_validation.get('hallucinated_numbers', []),
+                'validation_level': validation.get('validation_level', 'MODERATE'),
+                'recommendations': numeric_validation.get('recommendations', [])
+            }
+
+            threshold_map = {"STRICT": "95%", "MODERATE": "90%", "LENIENT": "80%"}
+            required_threshold = threshold_map.get(error_details['validation_level'], "90%")
+
+            error_msg = (
+                f"[Enhanced Pipeline] Document FAILED validation (threshold: {required_threshold}):\n"
+                f"  Numeric coverage: {error_details['numeric_coverage']:.2%}\n"
+                f"  Status: {error_details['numeric_status']}\n"
+                f"  Missing numbers ({len(error_details['missing_numbers'])}): {error_details['missing_numbers'][:10]}\n"
+                f"  Hallucinated numbers ({len(error_details['hallucinated_numbers'])}): {error_details['hallucinated_numbers'][:10]}\n"
+                f"NO FALLBACK: Document must meet validation threshold."
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        # Step 5: Build bipartite graph from enhanced pipeline result
+        try:
+            await build_bipartite_graph_from_pipeline(
+                result=result,
+                bigrag_instance=self,
+                doc_id=doc_id
+            )
+            logger.info(f"[Enhanced Pipeline] Built bipartite graph for doc {doc_id}")
+
+        except Exception as e:
+            error_msg = f"[Enhanced Pipeline] Graph building failed: {e}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
+
+        # Step 6: Store chunks to KV storage
+        production_chunk_to_bigrag_id = {}
+        bigrag_chunks = {}
+
+        for prod_chunk in result['chunks']:
+            chunk_id = compute_mdhash_id(prod_chunk['content'], prefix="chunk-")
+            bigrag_chunks[chunk_id] = {
+                "content": prod_chunk['content'],
+                "tokens": prod_chunk.get('tokens', []),
+                "chunk_order_index": prod_chunk.get('chunk_order_index', 0),
+                "full_doc_id": doc_id,
+                "doc_title": metadata.get("title", ""),
+                "doc_metadata": metadata,
+            }
+
+            prod_chunk_id = prod_chunk.get('chunk_id') or prod_chunk.get('source_id')
+            if prod_chunk_id:
+                production_chunk_to_bigrag_id[prod_chunk_id] = chunk_id
+
+        await self.text_chunks.upsert(bigrag_chunks)
+        logger.info(f"[Enhanced Pipeline] Stored {len(bigrag_chunks)} chunks to KV storage")
+
+        # Step 7: Store full document
+        await self.full_docs.upsert({
+            doc_id: {
+                "content": content,
+                "title": metadata.get("title", ""),
+                "metadata": metadata
+            }
+        })
+        logger.info(f"[Enhanced Pipeline] Stored full document: {doc_id}")
+
+        # Step 8: Index chunks to vdb_chunks for Path C retrieval
+        if self.vdb_chunks is not None:
+            doc_title = metadata.get("title", "")
+            chunks_for_vdb = {
+                chunk_id: {
+                    "content": chunk_data["content"],
+                    "title": doc_title
+                }
+                for chunk_id, chunk_data in bigrag_chunks.items()
+            }
+            await self.vdb_chunks.upsert(chunks_for_vdb)
+            logger.info(f"[Enhanced Pipeline] Indexed {len(chunks_for_vdb)} chunks to vector DB (Path C)")
+
+        logger.info(f"[Enhanced Pipeline] Document processing complete: {doc_id}")
 
     async def _process_document_standard(
         self,

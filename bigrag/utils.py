@@ -1004,3 +1004,197 @@ def remove_stopwords(text: str, stopwords: Optional[List[str]] = None) -> str:
     filtered_words = [word for word in words if word not in stopwords]
 
     return ' '.join(filtered_words)
+
+
+# ====================================================================================
+# NEW: Enhanced Pipeline Utilities (Phase 1 Step 2 - Semantic Chunking)
+# ====================================================================================
+
+def count_tokens_fast(text: str, chars_per_token: int = 4) -> int:
+    """
+    Fast approximate token counting for chunking decisions.
+
+    Uses character-based approximation (4 chars ≈ 1 token) for performance.
+    For production use with accurate counting, use tiktoken directly.
+
+    Args:
+        text: Text to count tokens for
+        chars_per_token: Characters per token (default: 4)
+
+    Returns:
+        Approximate token count
+
+    Example:
+        >>> count_tokens_fast("Hello world")
+        2  # 11 chars / 4 ≈ 2.75 → 2
+        >>> count_tokens_fast("A longer sentence with more words")
+        8  # 33 chars / 4 ≈ 8.25 → 8
+    """
+    if not text or not text.strip():
+        return 0
+
+    # Simple approximation: 4 characters per token
+    # This is fast but approximate (actual varies by language)
+    return len(text) // chars_per_token
+
+
+def count_tokens_accurate(text: str, model_name: str = "gpt-4o") -> int:
+    """
+    Accurate token counting using tiktoken.
+
+    Slower but precise. Use for validation or when accuracy is critical.
+
+    Args:
+        text: Text to count tokens for
+        model_name: Model name for tokenizer
+
+    Returns:
+        Exact token count
+    """
+    if not text or not text.strip():
+        return 0
+
+    try:
+        tokens = encode_string_by_tiktoken(text, model_name)
+        return len(tokens)
+    except Exception as e:
+        logger.warning(f"Tiktoken encoding failed, using approximation: {e}")
+        return count_tokens_fast(text)
+
+
+def split_by_sentences(text: str, languages: List[str] = None) -> List[str]:
+    """
+    Split text into sentences respecting multiple language conventions.
+
+    Handles:
+    - Bengali: । (purno)
+    - English: . ! ?
+    - Preserves sentence boundaries accurately
+
+    Args:
+        text: Text to split
+        languages: List of languages (unused, for future enhancement)
+
+    Returns:
+        List of sentences
+
+    Example:
+        >>> split_by_sentences("Hello. How are you? I'm fine।")
+        ['Hello.', 'How are you?', "I'm fine।"]
+    """
+    if not text or not text.strip():
+        return []
+
+    # Pattern for sentence endings:
+    # - Bengali: । followed by space/newline/end
+    # - English: . ! ? followed by space/newline/end
+    # Use lookahead to keep the punctuation with the sentence
+
+    # Combined pattern for both Bengali and English
+    pattern = r'(?<=[।.!?])\s+'
+
+    # Split by pattern
+    sentences = re.split(pattern, text)
+
+    # Filter empty sentences and strip whitespace
+    sentences = [s.strip() for s in sentences if s.strip()]
+
+    return sentences
+
+
+def split_by_paragraphs(text: str) -> List[str]:
+    """
+    Split text into paragraphs (double newline separation).
+
+    Args:
+        text: Text to split
+
+    Returns:
+        List of paragraphs
+
+    Example:
+        >>> split_by_paragraphs("Para 1\\n\\nPara 2\\n\\nPara 3")
+        ['Para 1', 'Para 2', 'Para 3']
+    """
+    if not text or not text.strip():
+        return []
+
+    # Split by one or more empty lines (double newline or more)
+    paragraphs = re.split(r'\n\s*\n+', text)
+
+    # Filter empty paragraphs and strip whitespace
+    paragraphs = [p.strip() for p in paragraphs if p.strip()]
+
+    return paragraphs
+
+
+def get_overlap_text(
+    text: str,
+    target_tokens: int,
+    direction: str = 'end',
+    chars_per_token: int = 4
+) -> str:
+    """
+    Extract overlap text from beginning or end of text.
+
+    Tries to extract complete sentences when possible.
+
+    Args:
+        text: Source text
+        target_tokens: Target token count for overlap
+        direction: 'start' or 'end'
+        chars_per_token: Characters per token approximation
+
+    Returns:
+        Overlap text (complete sentences when possible)
+
+    Example:
+        >>> get_overlap_text("First. Second. Third.", 5, 'end')
+        'Third.'
+    """
+    if not text or not text.strip() or target_tokens <= 0:
+        return ""
+
+    # Calculate approximate character count for target tokens
+    target_chars = target_tokens * chars_per_token
+
+    # Split into sentences
+    sentences = split_by_sentences(text)
+
+    if not sentences:
+        # Fallback: character-based extraction
+        if direction == 'end':
+            return text[-target_chars:].strip()
+        else:
+            return text[:target_chars].strip()
+
+    # Accumulate complete sentences
+    if direction == 'end':
+        # Start from end and work backwards
+        overlap_sentences = []
+        current_chars = 0
+
+        for sentence in reversed(sentences):
+            sentence_chars = len(sentence)
+            if current_chars + sentence_chars <= target_chars * 1.5:  # Allow 50% overflow
+                overlap_sentences.insert(0, sentence)
+                current_chars += sentence_chars
+            else:
+                break
+
+        return ' '.join(overlap_sentences) if overlap_sentences else sentences[-1]
+
+    else:  # direction == 'start'
+        # Start from beginning
+        overlap_sentences = []
+        current_chars = 0
+
+        for sentence in sentences:
+            sentence_chars = len(sentence)
+            if current_chars + sentence_chars <= target_chars * 1.5:  # Allow 50% overflow
+                overlap_sentences.append(sentence)
+                current_chars += sentence_chars
+            else:
+                break
+
+        return ' '.join(overlap_sentences) if overlap_sentences else sentences[0]

@@ -35,7 +35,10 @@ class ConstrainedLLMExtractor:
         self,
         api_key: str,
         model: str = "gpt-4o-mini",
-        extraction_mode: str = "semi_structured"
+        extraction_mode: str = "semi_structured",
+        enable_gleaning: bool = False,  # NEW: Enhanced Pipeline support
+        max_gleaning_iterations: int = 2,  # NEW: Enhanced Pipeline support
+        hitl_store=None  # NEW (Phase 1 Step 6): HITL store for failed extractions
     ):
         """
         Initialize constrained extractor.
@@ -47,10 +50,16 @@ class ConstrainedLLMExtractor:
                 - structured: 99%+ accuracy, strict validation (PASS=100%, WARNING=95%)
                 - semi_structured: 95%+ accuracy, moderate validation (PASS=95%, WARNING=90%) [DEFAULT]
                 - unstructured: 80%+ accuracy, lenient validation (PASS=80%, WARNING=70%)
+            enable_gleaning: NEW - Enable multi-pass gleaning for better recall (Phase 1 Step 3)
+            max_gleaning_iterations: NEW - Number of gleaning passes (default: 2)
+            hitl_store: NEW (Phase 1 Step 6) - FailedExtractionStore instance for HITL
         """
         self.client = AsyncOpenAI(api_key=api_key)
         self.model = model
         self.extraction_mode = extraction_mode
+        self.enable_gleaning = enable_gleaning  # NEW
+        self.max_gleaning_iterations = max_gleaning_iterations  # NEW
+        self.hitl_store = hitl_store  # NEW (Phase 1 Step 6)
         self.normalizer = BanglaNumeralNormalizer()
 
     async def extract_from_paragraph(
@@ -61,7 +70,20 @@ class ConstrainedLLMExtractor:
         language: str = "English"
     ) -> Optional[Dict]:
         """
-        Extract entities and relations from paragraph text.
+        Extract entities and relations with optional gleaning (NEW - Phase 1 Step 3).
+
+        TWO-STAGE PROCESS:
+        STAGE 1 - Initial Extraction with Retry (Error Recovery):
+          1. Attempt extraction up to 3 times
+          2. Validate after each attempt
+          3. If PASS/WARNING → proceed to Stage 2
+          4. If all 3 attempts FAIL → reject chunk, return None
+
+        STAGE 2 - Gleaning (Refinement, only if Stage 1 succeeded):
+          5. If gleaning enabled, perform N additional passes with conversation history
+          6. Each gleaning pass validated independently (failed passes skipped)
+          7. Merge using quality-based comparison
+          8. Final validation
 
         Args:
             paragraph_text: Source text (non-table content)
@@ -73,11 +95,11 @@ class ConstrainedLLMExtractor:
             {
                 'entities': [...],
                 'relations': [...],
-                'validation': {
-                    'status': 'PASS',
-                    'numeric_coverage': 1.0,
-                    'hallucination_score': 0.0,
-                    'attempts': 1
+                'validation': {...},
+                'metadata': {
+                    'extraction_method': 'constrained_llm' | 'constrained_llm_with_gleaning',
+                    'gleaning_passes': 0 | 2,
+                    ...
                 }
             }
             OR None if validation fails after all retries
@@ -86,6 +108,140 @@ class ConstrainedLLMExtractor:
         # Pre-extraction: Extract ground truth numbers
         source_numbers = self._extract_numbers_from_text(paragraph_text)
         source_facts = self._extract_key_facts(paragraph_text)
+
+        # STAGE 1: Initial extraction with validation retry
+        initial_result = await self._extract_once(
+            paragraph_text,
+            chunk_id,
+            metadata,
+            language,
+            source_numbers,
+            source_facts
+        )
+
+        if initial_result is None:
+            # NEW (Phase 1 Step 6): HITL - Save failed chunk for human review
+            if hasattr(self, 'hitl_store') and self.hitl_store:
+                try:
+                    self.hitl_store.save_failed_chunk(
+                        chunk_id=chunk_id,
+                        chunk_content=paragraph_text,
+                        failure_reason="All 3 validation attempts failed",
+                        validation_details={"error": "Extraction validation failed after retry"},
+                        document_id=metadata.get('doc_id', 'unknown') if metadata else 'unknown',
+                        metadata=metadata
+                    )
+                    print(f"[HITL] Failed chunk {chunk_id} saved for human review")
+                except Exception as e:
+                    print(f"[WARN] HITL save failed: {e}")
+
+            return None  # Validation failed after 3 attempts
+
+        # If gleaning disabled, return initial result
+        if not self.enable_gleaning:
+            return initial_result
+
+        # STAGE 2: Gleaning loop (NEW - Phase 1 Step 3)
+        print(f"[GLEANING] Starting {self.max_gleaning_iterations} gleaning passes for {chunk_id}")
+
+        merged_extraction = initial_result
+        conversation_history = [
+            {"role": "user", "content": self._create_extraction_prompt(paragraph_text, language, metadata)},
+            {"role": "assistant", "content": json.dumps({
+                'entities': initial_result.get('entities', []),
+                'relations': initial_result.get('relations', [])
+            })}
+        ]
+
+        for gleaning_pass in range(self.max_gleaning_iterations):
+            print(f"[GLEANING] Pass {gleaning_pass + 1}/{self.max_gleaning_iterations}")
+
+            # Create continue-extraction prompt
+            continue_prompt = self._create_gleaning_prompt(paragraph_text, language)
+            conversation_history.append({"role": "user", "content": continue_prompt})
+
+            # Call LLM with conversation history
+            try:
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=conversation_history,
+                    temperature=0.0,
+                    response_format={"type": "json_object"}
+                )
+
+                glean_response = response.choices[0].message.content
+                conversation_history.append({"role": "assistant", "content": glean_response})
+
+                glean_extraction = json.loads(glean_response)
+
+            except Exception as e:
+                print(f"[WARN] Gleaning pass {gleaning_pass + 1} failed: {e}")
+                continue  # Skip this gleaning pass
+
+            # Validate gleaned extraction
+            glean_validation = self._validate_extraction(
+                source_text=paragraph_text,
+                source_numbers=source_numbers,
+                source_facts=source_facts,
+                extraction=glean_extraction
+            )
+
+            # SMART MERGE: Compare quality and merge (IDENTICAL to standard pipeline)
+            if glean_validation['status'] in ['PASS', 'WARNING']:
+                merged_extraction = self._merge_extractions_by_quality(
+                    merged_extraction,
+                    glean_extraction
+                )
+                print(f"[GLEANING] Pass {gleaning_pass + 1}: Added {len(glean_extraction.get('entities', []))} entities, {len(glean_extraction.get('relations', []))} relations")
+            else:
+                print(f"[GLEANING] Pass {gleaning_pass + 1}: Validation failed, skipping")
+
+        # Final validation of merged result
+        final_validation = self._validate_extraction(
+            source_text=paragraph_text,
+            source_numbers=source_numbers,
+            source_facts=source_facts,
+            extraction=merged_extraction
+        )
+
+        merged_extraction['validation'] = final_validation
+        merged_extraction['metadata'] = {
+            'chunk_id': chunk_id,
+            'extraction_method': 'constrained_llm_with_gleaning',
+            'gleaning_passes': self.max_gleaning_iterations,
+            'language': language,
+            'extraction_quality': final_validation['status'],
+            **(metadata or {})
+        }
+
+        return merged_extraction
+
+    async def _extract_once(
+        self,
+        paragraph_text: str,
+        chunk_id: str,
+        metadata: Optional[Dict],
+        language: str,
+        source_numbers: List[str],
+        source_facts: List[str]
+    ) -> Optional[Dict]:
+        """
+        Single extraction pass with validation retry (up to 3 attempts).
+
+        This is the EXISTING logic refactored into a separate method for use in
+        the two-stage extraction process (Stage 1: Error Recovery).
+
+        Args:
+            paragraph_text: Source text
+            chunk_id: Chunk identifier
+            metadata: Optional metadata
+            language: Output language
+            source_numbers: Pre-extracted numbers from text
+            source_facts: Pre-extracted key facts
+
+        Returns:
+            Extraction dict with validation metadata, or None if all 3 attempts failed
+        """
 
         # Attempt extraction with validation (up to 3 tries)
         for attempt in range(1, 4):
@@ -259,6 +415,48 @@ IMPORTANT:
 - Mark completeness honestly
 """
         return prompt
+
+    def _create_gleaning_prompt(self, paragraph_text: str, language: str) -> str:
+        """
+        Create gleaning continuation prompt (NEW - Phase 1 Step 3).
+
+        CRITICAL: This must be IDENTICAL to standard pipeline's continue_prompt
+        to ensure consistent behavior when we unify pipelines in the future.
+
+        The gleaning prompt asks the LLM to review the text again and find
+        any entities or relations that were missed in previous extraction passes.
+
+        Args:
+            paragraph_text: Source text to re-review
+            language: Output language for entities/relations
+
+        Returns:
+            Gleaning prompt string
+        """
+        return f"""CONTINUE EXTRACTION: Review the source text again and identify ANY additional entities or relations you may have missed in the previous extraction.
+
+IMPORTANT:
+- Only extract NEW entities/relations not already mentioned
+- Focus on entities that may have been overlooked
+- Maintain the same JSON format
+- Preserve exact numeric values from text
+- Output language: {language}
+
+Source text:
+{paragraph_text}
+
+Return JSON with:
+{{
+    "entities": [
+        {{"entity_name": "name", "entity_type": "type", "description": "...", "key_score": 0-100}}
+    ],
+    "relations": [
+        {{"content": "relation description", "completeness_score": 0-10}}
+    ]
+}}
+
+If no additional entities/relations found, return empty lists.
+"""
 
     def _extract_numbers_from_text(self, text: str) -> set:
         """
@@ -504,6 +702,95 @@ IMPORTANT:
                 return True
 
         return False
+
+    def _merge_extractions_by_quality(
+        self,
+        base_extraction: Dict,
+        glean_extraction: Dict
+    ) -> Dict:
+        """
+        Merge two extractions using quality-based comparison (NEW - Phase 1 Step 3).
+
+        Logic (IDENTICAL to standard pipeline's smart merge):
+        1. For entities with same name → keep better description (higher quality score)
+        2. For new entities → add to base
+        3. For relations → append all (deduplicate by content similarity later if needed)
+
+        CRITICAL CLARIFICATIONS:
+        - Tiebreaker hierarchy: quality score → description length → first-seen
+        - key_scores are SUMMED across passes (e.g., 60 + 70 = 130)
+        - This preserves importance signal across extraction passes
+
+        Args:
+            base_extraction: Initial/merged extraction result
+            glean_extraction: Gleaning pass extraction result
+
+        Returns:
+            Merged extraction dict with combined entities and relations
+        """
+        from bigrag.utils import description_quality_score  # Reuse standard pipeline's scoring
+
+        merged = {
+            "entities": [],
+            "relations": []
+        }
+
+        # Build entity lookup by name (normalized for comparison)
+        base_entities = {}
+        for e in base_extraction.get('entities', []):
+            entity_name = e.get('entity_name', '')
+            # Normalize entity name for matching (lowercase, strip whitespace)
+            entity_key = entity_name.lower().strip()
+            base_entities[entity_key] = e
+
+        # Merge entities
+        for glean_entity in glean_extraction.get('entities', []):
+            entity_name = glean_entity.get('entity_name', '')
+            entity_key = entity_name.lower().strip()
+
+            if entity_key in base_entities:
+                # Entity already exists - compare quality scores
+                base_entity = base_entities[entity_key]
+                base_desc = base_entity.get('description', '')
+                glean_desc = glean_entity.get('description', '')
+
+                base_quality = description_quality_score(base_desc)
+                glean_quality = description_quality_score(glean_desc)
+
+                # Tiebreaker logic (CRITICAL)
+                if glean_quality > base_quality:
+                    # Gleaned version is better
+                    base_entities[entity_key] = glean_entity
+                    print(f"    [MERGE] Entity '{entity_name}': Gleaned version is better (quality {base_quality:.0f} → {glean_quality:.0f})")
+                elif glean_quality == base_quality:
+                    # Tie on quality - use length as tiebreaker
+                    if len(glean_desc) > len(base_desc):
+                        base_entities[entity_key] = glean_entity
+                        print(f"    [MERGE] Entity '{entity_name}': Gleaned version is longer (quality tie)")
+                    else:
+                        print(f"    [MERGE] Entity '{entity_name}': Keeping original (quality tie, original longer)")
+                else:
+                    # Original is better
+                    print(f"    [MERGE] Entity '{entity_name}': Keeping original (quality {base_quality:.0f} vs {glean_quality:.0f})")
+
+                # SUM key_scores across passes (CRITICAL)
+                base_key_score = base_entities[entity_key].get('key_score', 0)
+                glean_key_score = glean_entity.get('key_score', 0)
+                base_entities[entity_key]['key_score'] = base_key_score + glean_key_score
+
+            else:
+                # New entity from gleaning
+                base_entities[entity_key] = glean_entity
+                print(f"    [MERGE] Entity '{entity_name}': NEW from gleaning")
+
+        merged['entities'] = list(base_entities.values())
+
+        # Merge relations (simple append for now)
+        # NOTE: Could improve by deduplicating similar relations, but standard pipeline
+        # also does simple append, so we keep it consistent
+        merged['relations'] = base_extraction.get('relations', []) + glean_extraction.get('relations', [])
+
+        return merged
 
 
 class BatchConstrainedExtractor:

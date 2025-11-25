@@ -48,6 +48,7 @@ from api.core import dependencies
 
 # Import route modules
 from api.routes import health, documents, graph, evaluation, retrieval, jobs, llm, unified, datasets
+from api import hitl_routes  # NEW (Phase 1 Step 6): HITL system routes
 from api import agent
 
 
@@ -261,6 +262,9 @@ app.include_router(llm.router)
 
 # Agent routes (multi-hop reasoning)
 app.include_router(agent.router)
+
+# HITL routes (Phase 1 Step 6): Human-in-the-Loop system
+app.include_router(hitl_routes.router)
 
 # Unified subgraph routes (only if in unified mode)
 if unified_mode:

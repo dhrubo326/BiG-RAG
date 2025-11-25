@@ -101,8 +101,7 @@ async def process_document_background(
     dataset: str,
     rag_instance,
     registry_instance,
-    metadata: Optional[Dict[str, Any]] = None,
-    use_production_pipeline: bool = False
+    metadata: Optional[Dict[str, Any]] = None
 ):
     """
     Background task for document processing
@@ -114,10 +113,13 @@ async def process_document_background(
         content: Document content (plain text)
         title: Document title
         dataset: Dataset/data_source name
-        rag_instance: BiGRAG instance
+        rag_instance: BiGRAG instance (with pipeline mode pre-configured)
         registry_instance: DocumentRegistry instance
-        metadata: Optional document metadata (Phase 2.1: metadata preservation)
-        use_production_pipeline: Enable ProductionKGPipeline (table-aware, higher accuracy)
+        metadata: Optional document metadata (Phase 1: metadata preservation)
+
+    Note:
+        Pipeline mode (standard/enhanced) is configured during BiGRAG initialization.
+        No need to override pipeline settings here.
     """
     job = processing_jobs.get(job_id)
 
@@ -135,7 +137,10 @@ async def process_document_background(
         )
 
         logger.info(f"[Job {job_id}] Starting processing for document: {title}")
-        logger.info(f"[Job {job_id}] Pipeline mode: {'PRODUCTION (table-aware)' if use_production_pipeline else 'STANDARD (token-based)'}")
+
+        # Detect pipeline mode from RAG instance
+        pipeline_mode = "ENHANCED (Phase 1)" if getattr(rag_instance, 'use_enhanced_pipeline', False) else "STANDARD"
+        logger.info(f"[Job {job_id}] Pipeline mode: {pipeline_mode}")
 
         # Update to extraction stage
         job.update(
@@ -145,27 +150,13 @@ async def process_document_background(
 
         # Process document with BiGRAG
         # This handles: chunking, entity extraction, graph building, embedding, indexing
-        # Phase 2.1: Pass metadata to improve entity extraction (+2-3 F1 points)
+        # Phase 1: Pass metadata to improve entity extraction (+2-3 F1 points)
         doc_metadata = metadata or {}
         if title and "title" not in doc_metadata:
             doc_metadata["title"] = title
 
-        # Temporarily enable production pipeline if requested
-        original_pipeline_mode = rag_instance.use_production_pipeline
-        if use_production_pipeline:
-            rag_instance.use_production_pipeline = True
-            if not hasattr(rag_instance, 'production_pipeline_config') or not rag_instance.production_pipeline_config:
-                rag_instance.production_pipeline_config = {
-                    "validation_level": "MODERATE",
-                    "enable_entity_linking": True,
-                    "extraction_mode": "semi_structured"
-                }
-
-        try:
-            await rag_instance.ainsert(content, metadata=doc_metadata)
-        finally:
-            # Restore original pipeline mode
-            rag_instance.use_production_pipeline = original_pipeline_mode
+        # Process with pre-configured pipeline (no override needed)
+        await rag_instance.ainsert(content, metadata=doc_metadata)
 
         # Update progress through remaining stages
         job.update(

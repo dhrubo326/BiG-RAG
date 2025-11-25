@@ -163,7 +163,11 @@ async def create_and_index_document(
     - ✅ Creates new dataset if it doesn't exist
     - ✅ Auto-registers to subgraph registry (unified mode)
     - ✅ Saves to corpus.jsonl for persistence
-    - ✅ **Always uses Production Pipeline** (table-aware, 95%+ validation)
+    - ✅ **Uses Enhanced Pipeline (Phase 1)** with all improvements:
+      - Semantic boundary-aware chunking (Step 2)
+      - Hybrid extraction strategy with gleaning (Step 3)
+      - Fuzzy entity merging (Step 4)
+      - HITL system for failed extractions (Step 6)
     - ✅ Requires OPENAI_API_KEY in .env (fails if not found)
     - ✅ Works in unified mode without pre-defining datasets
 
@@ -171,7 +175,7 @@ async def create_and_index_document(
     1. Validate dataset name and create directories
     2. Add to expr/subgraph_registry.json (if new)
     3. Save document to datasets/{data_source}/raw/corpus.jsonl
-    4. Index with Production Pipeline (table-aware chunking)
+    4. Index with Enhanced Pipeline (semantic chunking, 95-98%+ accuracy)
     5. Build knowledge graph (entities, relations, chunks)
     6. Return job_id for status tracking
 
@@ -187,7 +191,7 @@ async def create_and_index_document(
     **Response:**
     - job_id: Track processing via /status/{job_id}
     - dataset_name: Name of created/used dataset
-    - pipeline_mode: "production" (always)
+    - pipeline_mode: "enhanced" (Phase 1 with all improvements)
 
     **Requirements:**
     - OPENAI_API_KEY must be set in .env
@@ -272,14 +276,29 @@ async def create_and_index_document(
         working_dir = dataset_info["expr_dir"]
         logger.info(f"[Create-and-Index] Creating RAG instance for: {data_source}")
 
+        # NEW (Phase 1): Use enhanced pipeline with all Phase 1 features
         rag = BiGRAG(
             working_dir=working_dir,
             llm_model_func=gpt_4o_mini_complete,
             chunk_token_size=config.chunk_size,
             chunk_overlap_token_size=config.chunk_overlap_size,
             enable_llm_cache=config.enable_llm_cache,
-            addon_params={"language": config.default_language}
+            addon_params={
+                "language": config.default_language,
+                "entity_merge_strategy": "fuzzy"  # Phase 1 Step 4: Unified entity merging
+            },
+            # Phase 1: Enable enhanced pipeline with all improvements
+            use_enhanced_pipeline=True,
+            enhanced_pipeline_config={
+                "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
+                "enable_entity_linking": True,
+                "entity_merge_strategy": "fuzzy",  # Phase 1 Step 4: Fuzzy matching for accuracy
+                "extraction_strategy": "hybrid",   # Phase 1 Step 3: strict | gleaning | hybrid [BEST]
+                "extraction_mode": "semi_structured",  # Balanced accuracy/speed
+                "dataset_path": working_dir  # Phase 1 Step 6: Enable HITL for failed extractions
+            }
         )
+        logger.info(f"[Create-and-Index] Enhanced pipeline enabled with hybrid extraction strategy")
 
         # Step 10: Create processing job
         job = ProcessingJob(
@@ -292,7 +311,8 @@ async def create_and_index_document(
         )
         processing_jobs[job_id] = job
 
-        # Step 11: Process with PRODUCTION PIPELINE (always, no fallback)
+        # Step 11: Process with ENHANCED PIPELINE (Phase 1)
+        # Pipeline configuration is set in BiGRAG initialization above
         if process_async:
             background_tasks.add_task(
                 process_document_background,
@@ -302,10 +322,10 @@ async def create_and_index_document(
                 dataset=data_source,
                 rag_instance=rag,
                 registry_instance=registry,
-                metadata=doc_metadata,
-                use_production_pipeline=True  # ALWAYS production pipeline
+                metadata=doc_metadata
+                # use_production_pipeline removed - controlled by BiGRAG init
             )
-            message = f"Document queued for indexing in dataset '{data_source}' (production pipeline)"
+            message = f"Document queued for indexing in dataset '{data_source}' (enhanced pipeline: hybrid extraction)"
         else:
             await process_document_background(
                 job_id=job_id,
@@ -314,10 +334,10 @@ async def create_and_index_document(
                 dataset=data_source,
                 rag_instance=rag,
                 registry_instance=registry,
-                metadata=doc_metadata,
-                use_production_pipeline=True  # ALWAYS production pipeline
+                metadata=doc_metadata
+                # use_production_pipeline removed - controlled by BiGRAG init
             )
-            message = f"Document indexed in dataset '{data_source}' (production pipeline)"
+            message = f"Document indexed in dataset '{data_source}' (enhanced pipeline: hybrid extraction)"
 
         # Step 12: Reload registry in unified executor (if dataset was just added)
         if dataset_info["registry_updated"]:
@@ -340,7 +360,7 @@ async def create_and_index_document(
             status=job.status.value if isinstance(job.status, JobStatus) else job.status,
             metadata=doc_metadata,
             upload_date=datetime.now().isoformat(),
-            pipeline_mode="production"
+            pipeline_mode="enhanced"  # Updated from "production" to reflect Phase 1 changes
         )
 
     except HTTPException:

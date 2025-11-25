@@ -1188,12 +1188,12 @@ async def extract_entities(
     from .constants import DEFAULT_MAX_RETRIES
 
     if vdb_relations is not None:
-        # A1: relation_name is already a hash ID (rel-abc123...)
-        # No need to hash again. Use relation_content for vector embedding.
+        # FIX #2: Clearer field naming
+        # relation_name field contains hash ID (rel-abc123), so rename to relation_id
         data_for_vdb = {
-            dp["relation_name"]: {  # Already hash ID
+            dp["relation_name"]: {  # Key: hash ID like "rel-abc123"
                 "content": dp.get("relation_content", ""),  # Use actual content for embedding
-                "relation_name": dp.get("relation_content", ""),  # BUG FIX: Store actual content, not hash ID!
+                "relation_id": dp["relation_name"],  # FIX #2: Store hash ID with clear field name
             }
             for dp in all_relations_data
         }
@@ -1663,9 +1663,9 @@ async def _get_node_data(
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
     # CRITICAL FIX (Jan 2025): Extract entity IDs from VDB results
-    # VDB returns: {"__id__": "entity-abc123", "id": "entity-abc123", "entity_name": "name", ...}
-    # We need the ID (entity-abc123), NOT the name
-    results = [r.get("__id__", r.get("id")) for r in results]
+    # VDB now returns: {"__id__": "entity-abc123", "id": "entity-abc123", "entity_id": "entity-abc123", "entity_name": "name", ...}
+    # Priority: entity_id (new field from Fix #1) > __id__ > id (all contain the same hash ID)
+    results = [r.get("entity_id", r.get("__id__", r.get("id"))) for r in results]
     # get entity information
     node_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]
@@ -1742,8 +1742,9 @@ async def _find_most_related_text_unit_from_entities(
         split_string_by_multi_markers(dp["source_id"], [GRAPH_FIELD_SEP])
         for dp in node_datas
     ]
+    # FIX #3: Use entity_id instead of entity_name (graph nodes indexed by entity_id)
     edges = await asyncio.gather(
-        *[knowledge_graph_inst.get_node_edges(dp["entity_name"]) for dp in node_datas]
+        *[knowledge_graph_inst.get_node_edges(dp["entity_id"]) for dp in node_datas]
     )
     all_one_hop_nodes = set()
     for this_edges in edges:
@@ -1951,9 +1952,9 @@ async def _get_edge_data(
     if not results or not len(results):  # Check for None or empty
         return []  # Return empty list when no results (not empty strings)
     # CRITICAL FIX (Jan 2025): Extract relation IDs from VDB results
-    # VDB returns: {"__id__": "rel-abc123", "id": "rel-abc123", ...}
-    # We need the ID (rel-abc123), NOT relation_name (which doesn't exist in VDB)
-    results = [r.get("__id__", r.get("id")) for r in results]
+    # VDB now returns: {"__id__": "rel-abc123", "id": "rel-abc123", "relation_id": "rel-abc123", ...}
+    # Priority: relation_id (new field) > __id__ > id (all contain the same hash ID)
+    results = [r.get("relation_id", r.get("__id__", r.get("id"))) for r in results]
 
     edge_datas = await asyncio.gather(
         *[knowledge_graph_inst.get_node(r) for r in results]

@@ -271,14 +271,14 @@ class BiGRAG:
             namespace="entities",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
-            meta_fields={"entity_name"},  # Bug #5 fix: Store entity_name for node lookup
+            meta_fields={"entity_id", "entity_name"},  # FIX #1: Store both entity_id and entity_name
             **self.vector_db_storage_cls_kwargs,
         )
         self.vdb_relations = self.vector_db_storage_cls(
             namespace="relations",
             global_config=asdict(self),
             embedding_func=self.embedding_func,
-            meta_fields={"relation_name"},  # Phase 3: Renamed from bipartite_edge_name for clarity
+            meta_fields={"relation_id"},  # FIX #2: Renamed from relation_name for clarity (stores hash ID)
             **self.vector_db_storage_cls_kwargs,
         )
         self.vdb_chunks = self.vector_db_storage_cls(

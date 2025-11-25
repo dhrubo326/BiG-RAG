@@ -1,649 +1,345 @@
-# Production Knowledge Graph Building Plan
+# BiG-RAG Knowledge Graph Indexing Reference
 
-**Last Updated**: November 24, 2025
-**Domain**: Educational admission information (multilingual, table-heavy documents)
-**Target Accuracy**: 90-95%+ with flexible validation
-**Status**: ✅ **PRODUCTION READY** - Full multilingual support with Gemini 2.5 Pro
-
-**NEW (November 2025)**:
-- ✅ **Gemini 2.5 Pro Integration**: Both extraction AND validation use Gemini (superior Bangla support)
-- ✅ **Flexible Validation**: WARNING status non-blocking, 60%+ per-chunk threshold for paragraphs
-- ✅ **Consistency Non-Blocking**: Entity linking handles merging, consistency validator informational only
-- ✅ **100% Extraction Success**: All chunks processed successfully (was 50% before fixes)
-- ✅ **Stable Entity ID System**: Hash-based entity IDs survive name changes during merging (reduced orphans by 72.7%)
+**Status**: ✅ **PRODUCTION READY** - Unified indexing with stable entity IDs
+**Version**: 2.0 (Post-unification)
 
 ---
 
 ## Overview
 
-BiGRAG now supports two knowledge graph building modes:
+BiG-RAG supports two knowledge graph building pipelines with **100% compatible output**:
 
-| Mode | Best For | Speed | Cost | Accuracy |
-|------|----------|-------|------|----------|
-| **Standard** (default) | General documents, fast prototyping | Fast | Low ($0.01/doc) | Good (85-90%) |
-| **Production** (opt-in) | Educational docs, tables, multilingual | Slower | Higher ($0.40/doc) | Excellent (95-99%) |
 
-**Key Difference**: Production mode uses table-aware chunking and multi-level validation to ensure critical data (seat counts, GPAs, dates) is extracted with 99%+ accuracy.
+**Key Difference**: Production pipeline uses table-aware chunking, entity linking, and multi-level validation.
 
-**New Features (January 2025)**:
-- ✅ **Two-Model Cross-Validation**: GPT-4o extracts, GPT-4o-mini validates (catches extraction errors)
-- ✅ **Graceful Degradation**: Skips failed tables, continues with valid ones (no all-or-nothing)
-- ✅ **Human Review Queue**: Failed validations saved to `expr/human_review_queue.json` for manual review
-- ✅ **Gemini 2.5 Pro Support**: Automatic fallback for large documents (>100K tokens)
-- ✅ **NO Regex Patterns**: All validation is LLM-based for better semantic understanding
+**Critical Achievement (Jan 2025)**: Both pipelines now produce **identical graph structures** (unified node IDs, edge formats, storage layout).
 
 ---
 
-## Architecture
+## Unified Graph Structure (Both Pipelines)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   PRODUCTION KG PIPELINE                         │
-└─────────────────────────────────────────────────────────────────┘
+### Node ID Format
 
-Input: Academic Documents (PDF/Markdown, Tables, Multilingual)
-  │
-  ├─ PHASE 1: PRE-PROCESSING
-  │   ├─ Table Extraction (GPT-4o structured output)
-  │   ├─ Language Detection (Bangla/English/Mixed)
-  │   └─ Smart Chunking (Table-Aware)
-  │       → Keeps tables intact, prevents splitting
-  │
-  ├─ PHASE 2: EXTRACTION
-  │   ├─ Table Facts (Deterministic conversion)
-  │   │   → Each row = 1 relation + N entities
-  │   ├─ Paragraph Facts (LLM with validation)
-  │   │   → GPT-4o-mini constrained extraction
-  │   └─ Immediate Validation (numeric + dates)
-  │
-  ├─ PHASE 3: ENTITY MERGING
-  │   ├─ Stable Entity IDs (hash-based, survives name changes)
-  │   ├─ Canonicalization (CSE ↔ Computer Science)
-  │   ├─ Fuzzy Matching (typo tolerance)
-  │   ├─ Embedding Similarity (bilingual: "CSE" ↔ "কম্পিউটার")
-  │   ├─ LLM Verification (uncertain cases only)
-  │   └─ ID Remapping (updates relations with canonical IDs)
-  │
-  ├─ PHASE 4: VALIDATION
-  │   ├─ Numeric Coverage (95%+ required)
-  │   │   → All numbers in source MUST appear in KG
-  │   ├─ Consistency Check (no contradictions)
-  │   │   → Detect: "CSE has 120 seats" vs "CSE has 180 seats"
-  │   └─ Quality Metrics Export
-  │
-  └─ PHASE 5: GRAPH CONSTRUCTION
-      ├─ Bipartite Graph (V_E ↔ V_R architecture)
-      ├─ Three-Path Indexing (Entity + Relation + Chunk)
-      └─ Production Deployment
-
-Output: Validated Knowledge Graph (95-99% accuracy)
-```
-
----
-
-## How It Works
-
-### Phase 1: Pre-Processing
-
-**Problem**: Tables get split across chunks → data loss
-
-**Solution**: Extract tables FIRST (GPT-4o or Gemini 2.5 Pro), then chunk remaining text
-
-**NEW (January 2025): Automatic Model Selection**:
-- **<100K tokens**: Use GPT-4o (128K context, $2.50/1M tokens)
-- **>100K tokens**: Use Gemini 2.5 Pro (2M context, $1.25/1M tokens)
-
-**Example**:
-```
-Before:
-Chunk 1: "Department | Seats\nCSE | 1..."  ← Table split!
-Chunk 2: "...20\nEEE | 90"                 ← Table split!
-
-After:
-Chunk 1: Full table preserved as single chunk
-Chunk 2: Remaining paragraphs
-```
-
-**Model Selection Logic**:
 ```python
-# Count tokens
-token_count = count_tokens(markdown_text)
+# Entity Nodes
+entity_id = "entity-abc123"  # Hash-based stable ID (MD5 of entity_name)
+# Stored in: Graph node ID, VDB key
 
-# Select model
-if token_count > 100_000 and gemini_api_key:
-    print(f"Document has {token_count:,} tokens - using Gemini 2.5 Pro")
-    model = "gemini-2.5-pro"
-else:
-    print(f"Document has {token_count:,} tokens - using GPT-4o")
-    model = "gpt-4o"
+# Relation Nodes
+relation_id = "rel-abc123"  # Hash-based ID (MD5 of relation content)
+# Stored in: Graph node ID, VDB key
+
+# Chunk Nodes
+chunk_id = "chunk-abc123"  # Hash-based ID (MD5 of chunk content)
+# Stored in: KV store key, source_id references
 ```
 
-**Cost Comparison**:
-| Document Size | Model | Context Limit | Cost per 1M tokens | Avg Cost/Doc |
-|---------------|-------|---------------|-----------------------|--------------|
-| 50K tokens | GPT-4o | 128K | $2.50 | $0.13 |
-| 150K tokens | Gemini 2.5 Pro | 2M | $1.25 | $0.19 |
-| 500K tokens | Gemini 2.5 Pro | 2M | $1.25 | $0.63 |
+### Graph Structure
 
-**Code**:
-- Smart chunker: [bigrag/preprocessors/smart_chunker.py](bigrag/preprocessors/smart_chunker.py)
-- Table extractor with Gemini support: [bigrag/preprocessors/table_extractor.py](bigrag/preprocessors/table_extractor.py)
+```
+Bipartite Graph: V_E (entities) ↔ V_R (relations)
 
----
-
-### Phase 2: Extraction
-
-**Two-Mode Approach**:
-
-1. **Tables** → Deterministic extraction (NO LLM needed)
-   - Each table row = 1 relation + N entities
-   - 100% accurate (no hallucinations)
-   - Example: `{"Department": "CSE", "Seats": "120"}` → Entity("CSE"), Entity("120"), Relation("CSE has 120 seats")
-
-2. **Paragraphs** → LLM extraction with validation
-   - GPT-4o-mini with strict prompts
-   - Numeric accuracy check (reject if < 95% coverage)
-   - Date preservation check
-
-**Code**:
-- Tables: [bigrag/extractors/table_fact_extractor.py](bigrag/extractors/table_fact_extractor.py)
-- Paragraphs: [bigrag/extractors/paragraph_extractor.py](bigrag/extractors/paragraph_extractor.py)
-
----
-
-### Phase 3: Entity Merging
-
-**Problem**: Duplicates like "CSE", "Computer Science", "কম্পিউটার সায়েন্স" should merge
-
-**Critical Challenge**: When entities merge and names change, relation references break → orphan nodes
-
-**Solution: Stable Entity ID System (November 2025)**:
-```python
-# Before entity linking
-entity = {
-    'entity_id': 'entity-abc123',  # Hash-based stable ID
-    'entity_name': 'Civil Engineering',
-    'description': '...'
-}
-relation = {
-    'linked_entities': ['entity-abc123']  # Reference by ID, not name
-}
-
-# After entity linking (name changed)
-merged_entity = {
-    'entity_id': 'entity-abc123',  # ID stays the same!
-    'entity_name': 'CIVIL ENGINEERING',  # Name canonicalized
-    'aliases': ['Civil Engineering', 'CE', 'সিভিল']
-}
-relation = {
-    'linked_entities': ['entity-abc123']  # Still valid!
-}
+┌─────────────┐         ┌─────────────┐
+│   Entity    │         │  Relation   │
+│ entity-123  │◄───────►│  rel-456    │
+└─────────────┘         └─────────────┘
+      ▲                        ▲
+      │                        │
+      └────────────┬───────────┘
+                   │
+            ┌──────────────┐
+            │ Text Chunks  │
+            │  chunk-789   │
+            └──────────────┘
 ```
 
-**Impact**: Reduced orphan entities by **72.7%** (22 → 6 orphans in test dataset)
+**Edges**: `relation → entity` (directed, weighted)
 
-**Multi-Strategy Merging**:
-1. **Stable Entity IDs**: Hash-based IDs survive name changes (NEW)
-2. **Canonicalization**: Pre-defined maps (CSE → COMPUTER SCIENCE)
-3. **Fuzzy Matching**: Typo tolerance (90% similarity threshold)
-4. **Embedding Similarity**: Bilingual matching via embeddings (85% threshold)
-5. **LLM Verification**: Uncertain cases only (cost-effective)
-6. **ID Remapping**: Update all relation references with canonical IDs (NEW)
+### Storage Files (Identical for Both Pipelines)
 
-**Code**:
-- Entity linking: [bigrag/merging/entity_linker.py](bigrag/merging/entity_linker.py)
-- ID remapping: [bigrag/production_pipeline.py](bigrag/production_pipeline.py) (lines 271-296)
-
----
-
-### Phase 4: Validation
-
-**Multi-Level Quality Checks (UPDATED: November 2025)**:
-
-1. **Gemini 2.5 Pro Numeric Validation** (NEW - November 2025)
-   - **Extraction**: Gemini extracts numbers from source text
-   - **Validation**: Gemini judges if extracted KG preserves all numbers
-   - **Benefit**: Superior Bangla/English multilingual understanding
-   - **Three-tier system**: PASS (90%+), WARNING (75-90%), FAIL (<75%)
-   - **Non-blocking WARNING**: Pipeline proceeds with warnings for review
-
-   ```python
-   # Phase 1: Extraction (GPT-4o)
-   tables = await gpt4o_extract_tables(markdown)
-
-   # Phase 2: Validation (GPT-4o-mini)
-   for table in tables:
-       validation = await gpt4o_mini_validate(source_markdown, table)
-
-       if validation['status'] == 'FAIL':
-           # Skip failed table, add to review queue
-           review_queue.append({
-               'table': table,
-               'reason': validation['feedback'],
-               'severity': calculate_severity(validation)
-           })
-   ```
-
-2. **Graceful Degradation** (NEW)
-   - OLD behavior: Reject entire document if one table fails
-   - NEW behavior: Skip failed tables, continue with validated ones
-   - Track success rate: "9/10 tables passed (90%)"
-
-   ```python
-   successful_tables = 0
-   failed_tables = []
-
-   for table in tables:
-       if table['metadata']['validation_status'] == 'FAIL':
-           failed_tables.append(table)  # Add to review queue
-           continue
-
-       # Process validated table
-       facts = extract_facts(table)
-       successful_tables += 1
-
-   print(f"Success rate: {successful_tables}/{len(tables)}")
-   ```
-
-3. **Human Review Queue** (NEW)
-   - Failed validations saved to `expr/human_review_queue.json`
-   - Includes: table_id, source markdown, extracted data, error details
-   - Severity levels: critical, high, medium, low
-
-   ```json
-   {
-     "items": [
-       {
-         "id": "review_20250123_143052_chunk_002",
-         "timestamp": "2025-01-23T14:30:52",
-         "status": "pending",
-         "severity": "high",
-         "numeric_coverage": 0.87,
-         "missing_numbers": ["১২০", "৪.৫০"],
-         "source_markdown": "...",
-         "extracted_data": {...}
-       }
-     ]
-   }
-   ```
-
-2. **Flexible Per-Chunk Validation** (UPDATED - November 2025)
-   - **Thresholds by extraction mode**:
-     - SEMI_STRUCTURED (default): PASS (95%+), WARNING (60%+), FAIL (<60%)
-     - STRUCTURED (tables): PASS (100%), WARNING (95%+), FAIL (<95%)
-     - UNSTRUCTURED (narrative): PASS (80%+), WARNING (70%+), FAIL (<70%)
-   - **Benefit**: Allows paragraph extraction with partial coverage
-   - **Per-chunk threshold lowered**: 60% (was 90%) for paragraphs
-
-3. **Consistency Validation (Non-Blocking)** (UPDATED - November 2025)
-   - **Purpose**: Detects cross-chunk naming conflicts
-   - **Behavior**: Logs issues but does NOT block pipeline
-   - **Rationale**: Entity linking (Phase 3) already handles multilingual merging
-   - **Status mapping**: Consistency FAIL → Overall WARNING (not FAIL)
-   - **Expected**: High issue count for Bangla/English mixed documents
-
-5. **Consistency Check**
-   ```python
-   # Detect contradictions across chunks
-   if "CSE has 120 seats" AND "CSE has 180 seats":
-       FLAG_FOR_HUMAN_REVIEW
-   ```
-
-**Code**:
-- Table validation: [bigrag/preprocessors/table_extractor.py](bigrag/preprocessors/table_extractor.py)
-- Graceful degradation: [bigrag/production_pipeline.py](bigrag/production_pipeline.py)
-- Numeric validator: [bigrag/validators/numeric_validator.py](bigrag/validators/numeric_validator.py)
-- Consistency validator: [bigrag/validators/consistency_validator.py](bigrag/validators/consistency_validator.py)
+```
+expr/YOUR_DATASET/
+├── graph_chunk_entity_relation.graphml  # NetworkX graph
+├── vdb_entities.json                    # Entity embeddings (Path A)
+├── vdb_relations.json                   # Relation embeddings (Path B)
+├── vdb_chunks.json                      # Chunk embeddings (Path C)
+├── kv_store_text_chunks.json           # Chunk metadata
+├── kv_store_full_docs.json             # Document metadata
+└── kv_store_llm_response_cache.json    # LLM cache (optional)
+```
 
 ---
 
-## Implementation Status
+## Indexing Process
 
-### ✅ Completed Components
+### Standard Pipeline (Default)
 
-| Component | File | Status | Notes |
-|-----------|------|--------|-------|
-| Table Extraction | `bigrag/production_pipeline.py` | ✅ Complete | GPT-4o structured output |
-| Smart Chunking | `bigrag/production_pipeline.py` | ✅ Complete | Table-aware |
-| Table Facts | `bigrag/production_pipeline.py` | ✅ Complete | Deterministic |
-| Paragraph Facts | `bigrag/production_pipeline.py` | ✅ Complete | LLM with validation |
-| Entity Merging | `bigrag/production_pipeline.py` | ✅ Complete | Multi-strategy |
-| Validation | `bigrag/production_pipeline.py` | ✅ Complete | Numeric + consistency |
-| Bipartite Graph Builder | `bigrag/builders/bipartite_graph_builder.py` | ✅ Complete | BiGRAG integration |
-| BiGRAG Integration | `bigrag/bigrag.py` | ✅ Complete | Opt-in via flag |
-
----
-
-## Usage
-
-### Enable Production Pipeline
+**File**: [bigrag/operate.py](bigrag/operate.py)
 
 ```python
 from bigrag import BiGRAG
 
-# Initialize with production mode
+rag = BiGRAG(working_dir="expr/my_dataset")
+await rag.ainsert(["Document text..."])
+```
+
+**Steps**:
+
+1. **Chunking** ([operate.py:176-223](bigrag/operate.py#L176-L223))
+   - Token-based sliding window (1200 tokens, 100 overlap)
+   - Preserves document metadata (title, tags, category)
+
+2. **Entity & Relation Extraction** ([operate.py:739-1224](bigrag/operate.py#L739-L1224))
+   - LLM extracts entities and relations per chunk
+   - Generates stable entity IDs: `compute_mdhash_id(entity_name, prefix="entity-")`
+   - Generates relation IDs: `compute_mdhash_id(relation_content, prefix="rel-")`
+   - Validation: Type normalization, sanitization, orphan detection
+
+3. **Graph Construction** ([operate.py:595-736](bigrag/operate.py#L595-L736))
+   - Merges duplicate entities/relations by ID
+   - Aggregates weights (importance scores)
+   - Builds bipartite edges: `relation → entity`
+
+4. **Vector Indexing** ([operate.py:1190-1222](bigrag/operate.py#L1190-L1222))
+   - **Entities**: Store `entity_id`, `entity_name` in VDB
+   - **Relations**: Store `relation_id` in VDB
+   - **Chunks**: Index all chunks for Path C retrieval
+
+**Output**: 7 files (see Storage Files above)
+
+---
+
+### Production Pipeline (Opt-In)
+
+**File**: [bigrag/production_pipeline.py](bigrag/production_pipeline.py)
+
+```python
 rag = BiGRAG(
     working_dir="expr/educational_kg",
-    use_production_pipeline=True,  # ← Enable production mode
-    production_pipeline_config={
-        "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
-        "enable_entity_linking": True,   # Merge duplicate entities
-        "extraction_mode": "semi_structured"  # Best for tables + paragraphs
-    }
-)
-
-# Insert documents (automatically uses ProductionKGPipeline)
-documents = [open("KUET_Admission_info.md").read()]
-metadata = [{
-    "title": "KUET Admission 2024-25",
-    "category": "university_admission",
-    "tags": ["engineering", "admission", "KUET"]
-}]
-
-await rag.ainsert(documents, metadata)
-```
-
-### Fallback Behavior
-
-Production pipeline gracefully falls back to standard extraction if:
-- ❌ No OpenAI API key found
-- ❌ Validation fails (numeric coverage < 95%)
-- ❌ Any exception during processing
-
-**Logs will show**:
-```
-[Production Pipeline] Validation FAILED - falling back to standard extraction
-```
-
----
-
-## Configuration Options
-
-### Validation Levels
-
-| Level | Numeric Coverage | Consistency Threshold | Use Case |
-|-------|------------------|----------------------|----------|
-| **STRICT** | 99%+ | 99%+ | Critical production data |
-| **MODERATE** | 95%+ | 95%+ | Standard academic docs (recommended) |
-| **LENIENT** | 80%+ | 80%+ | Experimental/development |
-
-### Extraction Modes
-
-| Mode | Description | Best For |
-|------|-------------|----------|
-| **structured** | Tables only | Pure tabular documents |
-| **semi_structured** | Tables + paragraphs | Mixed content (recommended) |
-| **unstructured** | Paragraphs only | Text-heavy documents |
-
----
-
-## Testing
-
-### Run Test Script
-
-```bash
-# Test on KUET admission document
-python test_kuet_indexing.py
-
-# Output: expr/kuet_test/
-# - graph_chunk_entity_relation.graphml
-# - vdb_entities.json (582 KB)
-# - vdb_relations.json (274 KB)
-# - vdb_chunks.json (49 KB)
-# - kv_store_text_chunks.json (24 KB)
-# - kv_store_full_docs.json (18 KB)
-```
-
-### Expected Results
-
-```
-Extraction Statistics:
-  - Total chunks: 7 (5 tables, 2 paragraphs)
-  - Entities extracted: 72
-  - Relations extracted: 39
-  - Entity merge reduction: 46 duplicates removed
-
-Validation Results:
-  - Overall status: PASS or WARNING
-  - Numeric coverage: 95%+
-  - Consistency score: 95%+
-
-Graph Structure:
-  - Entity nodes: 72
-  - Relation nodes: 39
-  - Chunk nodes: 6
-  - Bipartite edges: 118
-```
-
----
-
-## Cost Analysis
-
-### Per Document (1000-token doc with 5 tables)
-
-| Component | Model | Cost |
-|-----------|-------|------|
-| Table extraction | GPT-4o | $0.10 |
-| Paragraph extraction | GPT-4o-mini | $0.05 |
-| Entity verification | GPT-4o-mini | $0.01 |
-| Embeddings | bge-large (local) | $0.00 |
-| **Total** | | **~$0.16/doc** |
-
-### Comparison
-
-| Mode | Cost per Doc | Cost per 1000 Docs |
-|------|--------------|-------------------|
-| Standard | $0.01 | $10 |
-| Production | $0.16 | $160 |
-
-**ROI**: 16x cost increase for 10-15% accuracy improvement (worth it for educational domain)
-
----
-
-## Quality Metrics
-
-### Target Metrics
-
-| Metric | Target | Actual (Nov 2025) | Measurement |
-|--------|--------|-------------------|-------------|
-| Table extraction accuracy | 100% | 100% | All numbers preserved exactly |
-| Numeric coverage | 95%+ | 95.2% | Extracted numbers ÷ Source numbers |
-| Entity deduplication | 95%+ | 93.2% | 124 → 85 entities (31.5% reduction) |
-| Orphan node rate | <5% | 8.2% | 6/73 entities orphaned (72.7% improvement) |
-| Cross-chunk consistency | 100% | 7.2% | Non-blocking (multilingual expected) |
-| Query accuracy (EM) | 95%+ | TBD | Exact match on test questions |
-| Query accuracy (F1) | 95%+ | TBD | Token-level F1 score |
-
-**Key Achievements (November 2025)**:
-- ✅ **Orphan Node Reduction**: Stable entity IDs reduced orphans from 22 (26.5%) → 6 (8.2%)
-- ✅ **Entity Merging**: Successfully merged 39 duplicate entities across Bangla/English variations
-- ✅ **Numeric Accuracy**: 95.2% coverage with zero hallucinations
-
-### Metrics Evaluation
-
-Actual metrics depend on document quality, language complexity, and domain. See test reports in `docs/reports/` for specific evaluation results.
-
----
-
-## File Structure
-
-```
-bigrag/
-├── production_pipeline.py          # Main production pipeline class
-├── builders/
-│   └── bipartite_graph_builder.py  # BiGRAG integration
-├── preprocessors/                   # (Future expansion)
-│   ├── table_extractor.py
-│   ├── language_detector.py
-│   └── smart_chunker.py
-├── extractors/                      # (Future expansion)
-│   ├── table_fact_extractor.py
-│   └── paragraph_extractor.py
-├── merging/                         # (Future expansion)
-│   ├── entity_linker.py
-│   └── canonicalization.py
-└── validators/                      # (Future expansion)
-    ├── numeric_validator.py
-    └── consistency_validator.py
-```
-
-**Note**: Currently all components are in `production_pipeline.py`. Future refactoring may split into separate modules.
-
----
-
-## Roadmap
-
-### Completed ✅
-- [x] Table-aware chunking
-- [x] Deterministic table extraction
-- [x] LLM paragraph extraction with validation
-- [x] Multi-strategy entity merging
-- [x] Numeric + consistency validation
-- [x] BiGRAG integration with fallback
-- [x] End-to-end testing (KUET doc)
-- [x] Windows compatibility (Unicode fix)
-
-### Future Enhancements ⏳
-- [ ] Domain canonicalization maps (KUET, BUET departments)
-- [ ] Human review queue for contradictions
-- [ ] Batch processing with checkpointing
-- [ ] Performance optimization (concurrent processing)
-- [ ] CLI integration (`script_build.py --production`)
-- [ ] Evaluation test suite (100-question benchmark)
-
----
-
-## Troubleshooting
-
-### Issue: Production pipeline not being used
-
-**Symptoms**: Logs show standard pipeline, not production pipeline
-
-**Checklist**:
-- [ ] `use_production_pipeline=True` set in BiGRAG init?
-- [ ] `openai_api_key.txt` exists in project root?
-- [ ] API key is valid?
-
-### Issue: Validation always fails
-
-**Symptoms**: Always falls back to standard pipeline
-
-**Possible Causes**:
-1. Document has < 95% numeric coverage (try LENIENT mode)
-2. Tables not extracted properly (check GPT-4o response)
-3. Consistency issues (review validation report)
-
-**Solution**: Lower validation threshold temporarily:
-```python
-rag = BiGRAG(
     use_production_pipeline=True,
     production_pipeline_config={
-        "validation_level": "LENIENT"  # 80% threshold
+        "validation_level": "MODERATE",  # STRICT | MODERATE | LENIENT
+        "enable_entity_linking": True
     }
 )
 ```
 
-### Issue: High cost
+**Enhanced Steps**:
 
-**Problem**: Production mode costs 16x more than standard
+1. **Pre-Processing**
+   - Table extraction with GPT-4o/Gemini 2.5 Pro (structured output)
+   - Language detection (Bangla/English/Mixed)
+   - Table-aware chunking (keeps tables intact)
 
-**Solutions**:
-1. Use production mode only for critical documents
-2. Mix modes: production for tables, standard for general text
-3. Batch documents to reduce per-call overhead
-4. Use GPT-4o-mini for paragraph extraction (cheaper)
+2. **Extraction** (Two-Mode)
+   - **Tables**: Deterministic extraction (100% accuracy)
+     - Each row → 1 relation + N entities
+   - **Paragraphs**: LLM extraction with immediate validation
+
+3. **Entity Linking** ([bigrag/merging/entity_linker.py](bigrag/merging/entity_linker.py))
+   - **Stable Entity IDs**: Hash-based IDs survive name changes
+   - Multi-strategy merging:
+     - Canonicalization (CSE → COMPUTER SCIENCE)
+     - Fuzzy matching (90% similarity threshold)
+     - Embedding similarity (85% threshold, bilingual)
+     - LLM verification (uncertain cases only)
+   - **ID Remapping**: Update relation references with canonical IDs
+   - **Impact**: 72.7% orphan node reduction (22 → 6 orphans)
+
+4. **Validation**
+   - Gemini 2.5 Pro numeric validation (95%+ coverage required)
+   - Three-tier system: PASS (90%+) | WARNING (75-90%) | FAIL (<75%)
+   - Graceful degradation (skip failed tables, continue with valid ones)
+   - Human review queue for failed validations
+
+5. **Graph Construction** ([bigrag/builders/bipartite_graph_builder.py](bigrag/builders/bipartite_graph_builder.py))
+   - Uses **RELATION_PREFIX** constant (`"rel-"`) for compatibility
+   - Identical graph structure to standard pipeline
+
+**Output**: Same 7 files as standard pipeline (100% compatible)
 
 ---
 
-## References
+## Critical Implementation Details
 
-- **Main implementation**: [bigrag/production_pipeline.py](bigrag/production_pipeline.py)
-- **Integration code**: [bigrag/bigrag.py](bigrag/bigrag.py) (lines 491-757)
-- **Test script**: [test_kuet_indexing.py](test_kuet_indexing.py)
-- **Status document**: [PRODUCTION_PIPELINE_INTEGRATION_STATUS.md](PRODUCTION_PIPELINE_INTEGRATION_STATUS.md)
+### VDB Meta Fields Configuration
+
+**File**: [bigrag/bigrag.py:270-283](bigrag/bigrag.py#L270-L283)
+
+```python
+# Entity VDB - stores both ID and name
+self.vdb_entities = self.vector_db_storage_cls(
+    namespace="entities",
+    meta_fields={"entity_id", "entity_name"},  # Both fields stored
+)
+
+# Relation VDB - stores hash ID
+self.vdb_relations = self.vector_db_storage_cls(
+    namespace="relations",
+    meta_fields={"relation_id"},  # Hash ID stored
+)
+
+# Chunk VDB - no meta fields needed
+self.vdb_chunks = self.vector_db_storage_cls(
+    namespace="chunks"
+)
+```
+
+**Why This Matters**:
+- `meta_fields` determines which fields are copied to VDB storage
+- Retrieval code extracts these fields from query results
+- Backward compatibility: Falls back to `__id__` if fields missing
 
 ---
 
-## Contact
+### VDB Indexing Data Format
 
-For questions or issues:
-1. Check logs for fallback warnings
-2. Review [PRODUCTION_PIPELINE_INTEGRATION_STATUS.md](PRODUCTION_PIPELINE_INTEGRATION_STATUS.md)
-3. See [test_kuet_indexing.py](test_kuet_indexing.py) for working example
-4. Open GitHub issue with logs attached
+**File**: [bigrag/operate.py:1190-1222](bigrag/operate.py#L1190-L1222)
+
+```python
+# Relations
+data_for_vdb = {
+    "rel-abc123": {  # Key: hash ID
+        "content": "Lionel Messi plays for Barcelona",  # For embedding
+        "relation_id": "rel-abc123"  # Stored in VDB (meta_fields)
+    }
+}
+
+# Entities
+data_for_vdb = {
+    "entity-abc123": {  # Key: hash ID
+        "content": "LIONEL MESSI Argentinian footballer...",
+        "entity_id": "entity-abc123",  # Stored in VDB (meta_fields)
+        "entity_name": "LIONEL MESSI"  # Stored in VDB (meta_fields)
+    }
+}
+```
+
+**VDB Query Returns**:
+```python
+results = [
+    {
+        "__id__": "entity-abc123",
+        "id": "entity-abc123",
+        "entity_id": "entity-abc123",  # From meta_fields
+        "entity_name": "LIONEL MESSI",  # From meta_fields
+        "distance": 0.92
+    }
+]
+```
 
 ---
 
-**Last Updated**: November 23, 2024
-**Version**: 1.0 (Production Ready)
+### Retrieval Field Extraction
+
+**File**: [bigrag/operate.py:1665-1668, 1953-1957](bigrag/operate.py#L1665-L1668)
+
+```python
+# Entity Retrieval (Path A)
+results = [r.get("entity_id", r.get("__id__", r.get("id"))) for r in results]
+# Priority: entity_id > __id__ > id (all contain "entity-abc123")
+
+# Relation Retrieval (Path B)
+results = [r.get("relation_id", r.get("__id__", r.get("id"))) for r in results]
+# Priority: relation_id > __id__ > id (all contain "rel-abc123")
+```
+
+**Backward Compatibility**: Triple fallback ensures old graphs (without `entity_id`/`relation_id` fields) still work via `__id__`.
 
 ---
 
-## ⚠️ CRITICAL UPDATE: January 24, 2025 - Graph Structure Unification
+## Key Design Decisions
 
-### Breaking Changes - Rebuild Required
+### 1. Why Hash-Based IDs?
 
-**Issue Discovered**: Old graphs used incompatible node ID formats between standard and production pipelines.
+**Problem**: Entity names change during merging (e.g., "CSE" → "COMPUTER SCIENCE")
+**Solution**: Hash-based IDs remain stable
+
+**Before** (name-based):
+```python
+entity_name = "Civil Engineering"
+# After merging: "CIVIL ENGINEERING"
+# Graph lookup fails: node ID changed!
+```
+
+**After** (hash-based):
+```python
+entity_id = "entity-abc123"  # Computed from original name
+# After merging: entity_id stays "entity-abc123"
+# Graph lookup succeeds: node ID unchanged!
+```
+
+**Impact**: Orphan entities reduced by 72.7%
+
+---
+
+### 2. Why Store Both `entity_id` and `entity_name`?
+
+**Purpose**: Optimization + backward compatibility
+
+- `entity_id`: Used for graph lookups (primary key)
+- `entity_name`: Human-readable debugging, display in UI
+
+**Without `entity_name`**: Would need extra graph lookup to get name
+**With `entity_name`**: Direct access from VDB results
+
+---
+
+### 3. Why `relation_id` Instead of `relation_name`?
+
+**Old Naming** (confusing):
+```python
+"relation_name": dp.get("relation_content", "")  # Field name doesn't match content!
+```
+
+**New Naming** (clear):
+```python
+"relation_id": "rel-abc123"  # Field name matches content (hash ID)
+```
+
+**Semantic Clarity**: Field names now accurately describe their contents.
+
+---
+
+### 4. Why Transient `hyper_relation` Field?
+
+**Design**: `hyper_relation` links entities to parent relations **during extraction only**
+
+**Lifecycle**:
+1. **Extraction** ([operate.py:448](bigrag/operate.py#L448)): Entity stores `hyper_relation: "rel-abc123"`
+2. **Graph Building** ([operate.py:688-736](bigrag/operate.py#L688-L736)): Converted to graph edge `rel-abc123 → entity-abc123`
+3. **Storage**: `hyper_relation` field NOT stored in GraphML (replaced by edges)
+
+**Why Not Store It?**
+- Graph edges provide the same linkage information
+- Redundant storage wastes space
+- Bipartite structure ensures correct traversal via edges
+
+---
+
+## Migration from Old Graphs
+
+### Breaking Change (January 24, 2025)
+
+**Issue**: Old graphs used incompatible node ID formats.
 
 **Problems Fixed**:
+- ❌ OLD standard: Entity names as node IDs (`"MANCHESTER CITY"`)
+- ❌ OLD production: Wrong relation prefix (`"relation-abc123"`)
+- ✅ NEW both: Unified format (`"entity-abc123"`, `"rel-abc123"`)
 
-1. **Entity Node IDs**:
-   - ❌ OLD (standard): Entity name as ID (`"MANCHESTER CITY"`)
-   - ✅ NEW (both): Hash-based stable ID (`"entity-abc123"`)
+### Action Required
 
-2. **Relation Node IDs**:
-   - ❌ OLD (production): `"relation-abc123"` (wrong prefix in BipartiteGraphBuilder)
-   - ✅ NEW (both): `"rel-abc123"` (using RELATION_PREFIX constant)
+**Rebuild all existing graphs**:
 
-3. **Entity-Relation Linkage**:
-   - **Design**: `hyper_relation` is a **transient field** used during extraction to link entities to their parent relations
-   - **Storage**: Not stored in GraphML (by design) - replaced by graph edges during upsertion
-   - **Mechanism**: Graph edges (`relation → entity`) provide the final linkage structure
-   - **Note**: This has always been the correct approach; not a bug fix
-
-### Changes Made
-
-**File**: [bigrag/builders/bipartite_graph_builder.py](bigrag/builders/bipartite_graph_builder.py)
-
-**Lines changed**: 19, 139, 251
-
-**Before**:
-```python
-relation_id = compute_mdhash_id(relation['content'], prefix='relation-')  # WRONG
-```
-
-**After**:
-```python
-from bigrag.constants import RELATION_PREFIX
-relation_id = compute_mdhash_id(relation['content'], prefix=RELATION_PREFIX)  # rel-
-```
-
-### Impact Assessment
-
-| Component | Standard Pipeline | Production Pipeline | Compatible? |
-|-----------|------------------|---------------------|-------------|
-| Entity Node ID | `entity-abc123` | `entity-abc123` | ✅ YES |
-| Relation Node ID | `rel-abc123` | `rel-abc123` | ✅ YES (after fix) |
-| Edge Structure | `rel-* → entity-*` | `rel-* → entity-*` | ✅ YES |
-| Vector DB Keys | `entity-abc123` | `entity-abc123` | ✅ YES |
-| Backend Endpoints | All work | All work | ✅ YES |
-
-### Migration Required
-
-**All old graphs MUST be rebuilt** before they are compatible with:
-- New retrieval code
-- Backend endpoints
-- Unified subgraph system
-
-**Rebuild Commands**:
 ```bash
 # Standard pipeline
-python script_build.py --data_source demo_test
+python script_build.py --data_source my_dataset
 
 # Production pipeline
-python script_build.py --data_source kuet_test --use_production_pipeline
+python script_build.py --data_source my_dataset --use_production_pipeline
 
-# Or via backend upload
+# Or via backend
 curl -X POST "http://localhost:8001/documents/upload" \
   -F "file=@document.md" \
   -F "use_production_pipeline=true"
@@ -651,35 +347,135 @@ curl -X POST "http://localhost:8001/documents/upload" \
 
 ### Verification
 
-After rebuilding, verify graph structure:
-
 ```bash
 # Check entity node IDs (should start with "entity-")
-grep '<node id="entity-' expr/YOUR_DATASET/graph_chunk_entity_relation.graphml | head -3
+grep '<node id="entity-' expr/my_dataset/graph_chunk_entity_relation.graphml | head -3
 
 # Check relation node IDs (should start with "rel-")
-grep '<node id="rel-' expr/YOUR_DATASET/graph_chunk_entity_relation.graphml | head -3
+grep '<node id="rel-' expr/my_dataset/graph_chunk_entity_relation.graphml | head -3
 
 # Check edges (should connect rel-* to entity-*)
-grep '<edge source="rel-' expr/YOUR_DATASET/graph_chunk_entity_relation.graphml | head -3
+grep '<edge source="rel-' expr/my_dataset/graph_chunk_entity_relation.graphml | head -3
 ```
 
-Expected output:
+**Expected Output**:
 ```xml
 <node id="entity-abc123">
 <node id="rel-def456">
 <edge source="rel-def456" target="entity-abc123">
 ```
 
-### Benefits
 
-✅ **100% Pipeline Compatibility**: Both pipelines produce identical graph structures  
-✅ **Backend Works Seamlessly**: All endpoints work with both pipeline outputs  
-✅ **Unified System Ready**: Router can mix graphs from different pipelines  
-✅ **Clean Architecture**: Single code path for retrieval  
-✅ **No Future Migrations**: Stable ID system prevents breaking changes  
+
+## Configuration Examples
+
+### Standard Pipeline (Default)
+
+```python
+from bigrag import BiGRAG
+
+rag = BiGRAG(working_dir="expr/general_docs")
+await rag.ainsert(
+    documents=["Document text..."],
+    metadata=[{"title": "Doc 1", "tags": ["general"]}]
+)
+```
+
+### Production Pipeline (Educational Domain)
+
+```python
+rag = BiGRAG(
+    working_dir="expr/educational_kg",
+    use_production_pipeline=True,
+    production_pipeline_config={
+        "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
+        "enable_entity_linking": True,
+        "extraction_mode": "semi_structured"  # structured | semi_structured | unstructured
+    }
+)
+
+await rag.ainsert(
+    documents=[open("KUET_Admission.md").read()],
+    metadata=[{
+        "title": "KUET Admission 2024-25",
+        "category": "university_admission",
+        "tags": ["engineering", "admission", "KUET"]
+    }]
+)
+```
 
 ---
 
-**Updated**: January 24, 2025  
-**Action Required**: Rebuild all existing graphs with new code
+## Troubleshooting
+
+### Issue: VDB Fields Missing in Query Results
+
+**Symptoms**: Retrieval returns 0 results or falls back to `__id__`
+
+**Cause**: VDB `meta_fields` not configured correctly
+
+**Solution**: Verify [bigrag/bigrag.py:274-281](bigrag/bigrag.py#L274-L281) has:
+```python
+meta_fields={"entity_id", "entity_name"}  # Entities
+meta_fields={"relation_id"}  # Relations
+```
+
+### Issue: Graph Nodes Not Found
+
+**Symptoms**: `Some nodes are missing, maybe the storage is damaged`
+
+**Cause**: VDB returns entity names instead of entity IDs
+
+**Solution**: Check retrieval code uses `entity_id` field (not `entity_name`)
+
+### Issue: Old Graphs Not Working
+
+**Symptoms**: Retrieval fails after code update
+
+**Cause**: Incompatible node ID formats
+
+**Solution**: Rebuild graphs with new code (see Migration section)
+
+---
+
+## References
+
+### Core Implementation Files
+
+| Component | File | Lines |
+|-----------|------|-------|
+| Standard extraction | [bigrag/operate.py](bigrag/operate.py) | 739-1224 |
+| Production pipeline | [bigrag/production_pipeline.py](bigrag/production_pipeline.py) | Full file |
+| Entity linking | [bigrag/merging/entity_linker.py](bigrag/merging/entity_linker.py) | Full file |
+| Graph builder | [bigrag/builders/bipartite_graph_builder.py](bigrag/builders/bipartite_graph_builder.py) | Full file |
+| VDB configuration | [bigrag/bigrag.py](bigrag/bigrag.py) | 270-289 |
+| Retrieval logic | [bigrag/operate.py](bigrag/operate.py) | 1654-2108 |
+
+### Constants & Configuration
+
+| Constant | Value | File |
+|----------|-------|------|
+| ENTITY_PREFIX | `"entity-"` | [bigrag/constants.py:114](bigrag/constants.py#L114) |
+| RELATION_PREFIX | `"rel-"` | [bigrag/constants.py:110](bigrag/constants.py#L110) |
+| CHUNK_PREFIX | `"chunk-"` | [bigrag/constants.py:119](bigrag/constants.py#L119) |
+| GRAPH_FIELD_SEP | `"<SEP>"` | [bigrag/constants.py:107](bigrag/constants.py#L107) |
+
+### Related Documentation
+
+- **Setup Guide**: [docs/technical/SETUP_VENV.md](docs/technical/SETUP_VENV.md)
+- **API Documentation**: [backend/README.md](backend/README.md)
+- **Test Reports**: [docs/reports/](docs/reports/)
+- **Main README**: [README.md](README.md)
+
+---
+
+## Summary
+
+### ✅ What's Production-Ready
+
+1. **Unified Graph Structure**: Both pipelines produce identical output
+2. **Stable Entity IDs**: Hash-based IDs survive name changes
+3. **Three-Path Retrieval**: Entity + Relation + Chunk indexing
+4. **Backward Compatible**: Triple fallback in retrieval code
+5. **Production Validated**: 95.2% numeric accuracy, 8.2% orphan rate
+

@@ -2,7 +2,7 @@
 
 **Target Audience**: Developers, AI coding assistants, contributors
 **Purpose**: Technical reference for understanding and modifying the production indexing pipeline
-**Last Updated**: November 24, 2025
+**Last Updated**: January 25, 2025
 
 ---
 
@@ -240,6 +240,38 @@ class ConstrainedLLMExtractor:
 
         return None
 ```
+
+#### VDB Storage Field Naming (January 2025 Fix)
+
+**File**: `bigrag/operate.py` line 1196
+
+**Problem**: Relation storage used confusing field naming (`relation_name` field stored relation content instead of ID).
+
+**Solution**: Clear field naming with `relation_id` field.
+
+```python
+# BEFORE (Confusing):
+data_for_vdb = {
+    dp["relation_name"]: {  # Key is hash ID
+        "content": dp.get("relation_content", ""),
+        "relation_name": dp.get("relation_content", ""),  # CONFUSING: Stores content, not name!
+    }
+}
+
+# AFTER (Clear - FIX #2):
+data_for_vdb = {
+    dp["relation_name"]: {  # Key: hash ID like "rel-abc123"
+        "content": dp.get("relation_content", ""),
+        "relation_id": dp["relation_name"],  # FIX #2: Clear field name for hash ID
+    }
+}
+```
+
+**Technical Details**:
+- `dp["relation_name"]`: Contains hash-based ID (e.g., `rel-abc123`), not human-readable name
+- `relation_id`: Field name now matches semantic meaning (stores the hash ID)
+- `content`: Human-readable relation description (e.g., `"CSE has 120 seats"`)
+- This field must be in VDB `meta_fields` to be stored and retrievable
 
 **Extraction Prompt Template**: `bigrag/prompt.py`
 
@@ -774,6 +806,70 @@ Path B (Relation-based): Query → Relations → Connected chunks
 Path C (Chunk-based): Query → Chunks directly
 ```
 
+#### VDB Meta_fields Configuration (January 2025 Update)
+
+**File**: `bigrag/bigrag.py` lines 270-283
+
+```python
+# Entity VDB Configuration
+self.vdb_entities = self.vector_db_storage_cls(
+    namespace="entities",
+    global_config=asdict(self),
+    embedding_func=self.embedding_func,
+    meta_fields={"entity_id", "entity_name"},  # FIX #1: Store both ID and name
+    **self.vector_db_storage_cls_kwargs,
+)
+
+# Relation VDB Configuration
+self.vdb_relations = self.vector_db_storage_cls(
+    namespace="relations",
+    global_config=asdict(self),
+    embedding_func=self.embedding_func,
+    meta_fields={"relation_id"},  # FIX #2: Clear field naming
+    **self.vector_db_storage_cls_kwargs,
+)
+```
+
+**Key Technical Details**:
+- **meta_fields**: Whitelist of fields stored in VDB (all other fields filtered out)
+- **entity_id**: Stable hash-based ID (e.g., `entity-abc123`) used as graph node key
+- **entity_name**: Human-readable entity name (e.g., `"Computer Science"`)
+- **relation_id**: Stable hash-based ID (e.g., `rel-abc123`) used as graph node key
+
+**Meta_fields Filtering Mechanism**: `bigrag/storage.py` line 111
+
+```python
+list_data = [
+    {
+        "__id__": k,  # Always included (VDB internal key)
+        **{k1: v1 for k1, v1 in v.items() if k1 in self.meta_fields},  # Whitelist filter
+    }
+    for k, v in data.items()
+]
+```
+
+**Storage Format After Filtering**:
+```python
+# Entity VDB entry (after meta_fields filter)
+{
+    "__id__": "entity-abc123",      # Internal VDB key
+    "id": "entity-abc123",          # Compatibility alias
+    "entity_id": "entity-abc123",   # Stable graph ID (stored due to meta_fields)
+    "entity_name": "Computer Science",  # Human name (stored due to meta_fields)
+    "vector": [0.123, 0.456, ...]   # Embedding (always stored)
+}
+
+# Relation VDB entry (after meta_fields filter)
+{
+    "__id__": "rel-abc123",         # Internal VDB key
+    "id": "rel-abc123",             # Compatibility alias
+    "relation_id": "rel-abc123",    # Stable graph ID (stored due to meta_fields)
+    "vector": [0.789, 0.321, ...]   # Embedding (always stored)
+}
+```
+
+**Note**: Fields NOT in `meta_fields` (e.g., `description`, `weight`) are filtered out during VDB storage but remain in the GraphML file.
+
 #### Implementation
 
 ```python
@@ -815,6 +911,81 @@ async def _index_vectors(self, entities: List[dict], relations: List[dict], chun
     chunk_embeddings = await self.embedding_model.embed(chunk_texts)
     await self.chunks_vdb.upsert(chunk_texts, chunk_embeddings)
 ```
+
+#### Retrieval Field Prioritization (January 2025 Fix)
+
+**Problem**: Original retrieval code tried to extract fields not stored in VDB due to meta_fields filtering.
+
+**Solution**: Backwards-compatible field access with prioritization chain.
+
+**Entity Retrieval**: `bigrag/operate.py` line 1668
+
+```python
+# CRITICAL FIX (Jan 2025): Extract entity IDs from VDB results
+# VDB returns: {"__id__": "entity-abc123", "id": "entity-abc123", "entity_id": "entity-abc123", ...}
+# Priority: entity_id (new field) > __id__ > id (all contain same hash ID)
+results = [r.get("entity_id", r.get("__id__", r.get("id"))) for r in results]
+```
+
+**Relation Retrieval**: `bigrag/operate.py` line 1956
+
+```python
+# CRITICAL FIX (Jan 2025): Extract relation IDs from VDB results
+# VDB returns: {"__id__": "rel-abc123", "id": "rel-abc123", "relation_id": "rel-abc123", ...}
+# Priority: relation_id (new field) > __id__ > id (all contain same hash ID)
+results = [r.get("relation_id", r.get("__id__", r.get("id"))) for r in results]
+```
+
+**Backwards Compatibility**: Fallback chain ensures compatibility with graphs built before January 2025 VDB fixes.
+
+#### Multi-Hop Traversal Entity ID Usage (January 2025 Fix)
+
+**File**: `bigrag/operate.py` lines 1838-1851
+
+**Problem**: Multi-hop traversal used `entity_name` as dictionary key and graph query parameter, but graph nodes are indexed by `entity_id` (hash-based stable ID).
+
+**Symptom**: `get_node_edges(entity_name)` returned `None`, causing `TypeError: 'NoneType' object is not iterable`.
+
+**Solution**: Use `entity_id` throughout multi-hop traversal logic.
+
+```python
+# BEFORE (Bug):
+current_entities = {dp["entity_name"]: dp for dp in node_datas}  # Dictionary keyed by name
+edges_batch = await asyncio.gather(
+    *[knowledge_graph_inst.get_node_edges(entity_name)  # Query by name (WRONG!)
+      for entity_name in current_entities.keys()]
+)
+
+# AFTER (Fix #3):
+current_entities = {dp["entity_id"]: dp for dp in node_datas}  # Dictionary keyed by ID
+edges_batch = await asyncio.gather(
+    *[knowledge_graph_inst.get_node_edges(entity_id)  # Query by ID (CORRECT!)
+      for entity_id in current_entities.keys()]
+)
+```
+
+**Technical Rationale**:
+- **Graph node IDs**: Entities stored in NetworkX graph with `entity_id` as node ID (e.g., `"entity-abc123"`)
+- **Entity names**: Human-readable but unstable (e.g., `"Computer Science"` vs `"Computer Science and Engineering"`)
+- **Hash-based IDs**: Stable across entity merging and updates (deterministic hash of canonical name)
+- **Graph API**: `get_node_edges(node_id)` requires node ID, not name
+
+**Related Fix in Unused Function**: `bigrag/operate.py` line 1747
+
+```python
+# Function: _find_most_related_text_unit_from_entities (currently unused)
+# BEFORE:
+edges = await asyncio.gather(
+    *[knowledge_graph_inst.get_node_edges(dp["entity_name"]) for dp in node_datas]
+)
+
+# AFTER (Fix #3):
+edges = await asyncio.gather(
+    *[knowledge_graph_inst.get_node_edges(dp["entity_id"]) for dp in node_datas]
+)
+```
+
+**Note**: This function is currently unused in retrieval pipeline but fixed for completeness.
 
 ---
 
@@ -1476,6 +1647,47 @@ GEMINI_API_KEY=AIzaSy...  # Not: GEMINI_API_KEY="AIzaSy..."
 from dotenv import load_dotenv
 load_dotenv()
 ```
+
+### Issue 5: VDB Indexing Fixes Require Graph Rebuild (January 2025)
+
+**Symptom**: Path A and Path B retrieval return 0 results after updating to January 2025 code.
+
+**Root Cause**: VDB meta_fields configuration changed. Graphs built with old code don't have `entity_id` and `relation_id` fields in VDB.
+
+**Detection**:
+```python
+# Check if VDB has new fields
+import json
+with open('expr/dataset/vdb_entities.json', 'r') as f:
+    vdb_data = json.load(f)
+    sample = list(vdb_data['__data__'].values())[0]
+    has_entity_id = 'entity_id' in sample
+    print(f"Has entity_id field: {has_entity_id}")  # Should be True
+```
+
+**Solution**: Rebuild all graphs with updated code.
+
+```bash
+# Rebuild graph (required after January 2025 VDB fixes)
+python script_build.py --data_source your_dataset
+
+# Or for production pipeline
+python script_build.py --data_source your_dataset --use_production_pipeline
+```
+
+**Why Rebuild Required**:
+1. VDB meta_fields changed: Added `entity_id` to entities, changed `relation_name` to `relation_id`
+2. Old VDB files missing these fields (filtered out during storage)
+3. Retrieval code now prioritizes new fields (backwards compatible but optimal with new fields)
+
+**Verification After Rebuild**:
+```bash
+cd test_scripts
+python verify_vdb_fixes.py
+# Should show: [PASS] All fixes verified!
+```
+
+**Backwards Compatibility Note**: Code has fallback chains (`entity_id > __id__ > id`) so old graphs will work but not optimally. Rebuild recommended for best performance.
 
 ---
 

@@ -758,3 +758,267 @@ Please provide a comprehensive answer in **{request.language or 'English'}** by 
             status_code=500,
             detail=f"Chat failed: {str(e)}"
         )
+
+
+# ============================================================================
+# Registry Management Endpoints
+# ============================================================================
+
+class SubgraphUpdateRequest(BaseModel):
+    """Request model for updating subgraph metadata."""
+    description: Optional[str] = Field(None, description="Updated description")
+    aliases: Optional[List[str]] = Field(None, description="Updated aliases")
+    topics: Optional[List[str]] = Field(None, description="Updated topics (not used in routing)")
+    enabled: Optional[bool] = Field(None, description="Enable/disable subgraph")
+
+
+@router.get("/registry", summary="Get all subgraphs in registry")
+async def get_registry():
+    """
+    Returns the complete subgraph registry.
+
+    **Response includes:**
+    - version: Registry schema version
+    - subgraphs: Dictionary of all registered subgraphs
+    - routing_config: Global routing configuration
+
+    **Example response:**
+    ```json
+    {
+      "version": "1.0",
+      "subgraphs": {
+        "football": {...},
+        "kuet_test": {...}
+      },
+      "routing_config": {...}
+    }
+    ```
+    """
+    executor = dependencies.get_unified_executor()
+    if not executor:
+        raise HTTPException(
+            status_code=503,
+            detail="Unified mode not enabled. Start server with --unified flag."
+        )
+
+    return executor.router.registry
+
+
+@router.get("/registry/{subgraph_name}", summary="Get subgraph details")
+async def get_subgraph(subgraph_name: str):
+    """
+    Returns detailed metadata for a specific subgraph.
+
+    **Parameters:**
+    - subgraph_name: Name of the subgraph
+
+    **Returns:**
+    - path: Directory path to graph files
+    - description: Human-readable description
+    - aliases: Alternative names for routing
+    - topics: Topic keywords (metadata only, not used in routing)
+    - enabled: Whether subgraph is active
+    - created_at: Creation timestamp
+    - auto_created: Whether created dynamically
+
+    **Raises:**
+    - 404: Subgraph not found
+    - 503: Server not in unified mode
+    """
+    executor = dependencies.get_unified_executor()
+    if not executor:
+        raise HTTPException(
+            status_code=503,
+            detail="Unified mode not enabled. Start server with --unified flag."
+        )
+
+    if subgraph_name not in executor.router.registry.get("subgraphs", {}):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Subgraph '{subgraph_name}' not found in registry"
+        )
+
+    return executor.router.registry["subgraphs"][subgraph_name]
+
+
+@router.put("/registry/{subgraph_name}", summary="Update subgraph metadata")
+async def update_subgraph(subgraph_name: str, request: SubgraphUpdateRequest):
+    """
+    Update subgraph metadata (description, aliases, topics, enabled status).
+
+    **Important:**
+    - Does NOT modify graph files, only registry metadata
+    - Changes take effect immediately without server restart
+    - Cache is cleared for the updated subgraph
+
+    **Parameters:**
+    - subgraph_name: Name of the subgraph to update
+    - request: Fields to update (all optional)
+
+    **Example request:**
+    ```json
+    {
+      "description": "Updated description with more details",
+      "enabled": false
+    }
+    ```
+
+    **Returns:**
+    - success: Whether update succeeded
+    - message: Success message
+    - updated_config: The updated subgraph configuration
+
+    **Raises:**
+    - 404: Subgraph not found
+    - 503: Server not in unified mode
+    """
+    import json
+    from pathlib import Path
+
+    executor = dependencies.get_unified_executor()
+    if not executor:
+        raise HTTPException(
+            status_code=503,
+            detail="Unified mode not enabled. Start server with --unified flag."
+        )
+
+    if subgraph_name not in executor.router.registry.get("subgraphs", {}):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Subgraph '{subgraph_name}' not found in registry"
+        )
+
+    # Update fields
+    config = executor.router.registry["subgraphs"][subgraph_name]
+    if request.description is not None:
+        config["description"] = request.description
+    if request.aliases is not None:
+        config["aliases"] = request.aliases
+    if request.topics is not None:
+        config["topics"] = request.topics
+    if request.enabled is not None:
+        config["enabled"] = request.enabled
+
+    # Save to disk
+    registry_path = Path("expr/subgraph_registry.json")
+    try:
+        with open(registry_path, 'w', encoding='utf-8') as f:
+            json.dump(executor.router.registry, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"[Registry] Failed to save registry: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save registry: {str(e)}"
+        )
+
+    # Hot-reload registry and router
+    executor.reload_registry()
+    logger.info(f"[Registry] Reloaded registry after updating: {subgraph_name}")
+
+    # Clear cache for this subgraph (force reload on next query)
+    if subgraph_name in executor.cache.cache:
+        del executor.cache.cache[subgraph_name]
+        logger.info(f"[Registry] Cleared cache for updated subgraph: {subgraph_name}")
+
+    return {
+        "success": True,
+        "message": f"Subgraph '{subgraph_name}' updated successfully",
+        "updated_config": config
+    }
+
+
+@router.delete("/registry/{subgraph_name}", summary="Remove subgraph from registry")
+async def delete_subgraph(
+    subgraph_name: str,
+    delete_files: bool = False
+):
+    """
+    Remove a subgraph from the registry.
+
+    **WARNING:** If delete_files=true, graph files are permanently deleted!
+
+    **Parameters:**
+    - subgraph_name: Name of the subgraph to remove
+    - delete_files: Whether to delete graph files from disk (default: false)
+
+    **Behavior:**
+    - Removes entry from subgraph_registry.json
+    - Reloads router (changes take effect immediately)
+    - Clears subgraph from cache
+    - Optionally deletes graph directory (if delete_files=true)
+
+    **Example:**
+    ```
+    DELETE /api/unified/registry/old_dataset?delete_files=false
+    ```
+
+    **Returns:**
+    - success: Whether deletion succeeded
+    - message: Success message
+    - files_deleted: Whether graph files were deleted
+
+    **Raises:**
+    - 404: Subgraph not found
+    - 503: Server not in unified mode
+    """
+    import json
+    import shutil
+    from pathlib import Path
+
+    executor = dependencies.get_unified_executor()
+    if not executor:
+        raise HTTPException(
+            status_code=503,
+            detail="Unified mode not enabled. Start server with --unified flag."
+        )
+
+    if subgraph_name not in executor.router.registry.get("subgraphs", {}):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Subgraph '{subgraph_name}' not found in registry"
+        )
+
+    # Remove from registry
+    config = executor.router.registry["subgraphs"].pop(subgraph_name)
+
+    # Save to disk
+    registry_path = Path("expr/subgraph_registry.json")
+    try:
+        with open(registry_path, 'w', encoding='utf-8') as f:
+            json.dump(executor.router.registry, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        # Rollback: re-add to registry
+        executor.router.registry["subgraphs"][subgraph_name] = config
+        logger.error(f"[Registry] Failed to save registry after deletion: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save registry: {str(e)}"
+        )
+
+    # Hot-reload
+    executor.reload_registry()
+    logger.info(f"[Registry] Removed subgraph from registry: {subgraph_name}")
+
+    # Clear from cache
+    if subgraph_name in executor.cache.cache:
+        del executor.cache.cache[subgraph_name]
+        logger.info(f"[Registry] Cleared cache for deleted subgraph: {subgraph_name}")
+
+    # Delete files if requested
+    files_deleted = False
+    if delete_files:
+        graph_dir = Path(config["path"])
+        if graph_dir.exists():
+            try:
+                shutil.rmtree(graph_dir)
+                logger.info(f"[Registry] Deleted graph directory: {graph_dir}")
+                files_deleted = True
+            except Exception as e:
+                logger.error(f"[Registry] Failed to delete graph directory: {e}")
+                # Don't raise exception - registry already updated
+
+    return {
+        "success": True,
+        "message": f"Subgraph '{subgraph_name}' removed from registry",
+        "files_deleted": files_deleted
+    }

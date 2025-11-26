@@ -344,8 +344,13 @@ async def create_and_index_document(
             try:
                 unified_executor.reload_registry()
                 logger.info(f"[Create-and-Index] Reloaded unified executor registry")
+
+                # NEW: Pre-load the new subgraph immediately
+                await unified_executor.cache.get(data_source)
+                logger.info(f"[Create-and-Index] Pre-loaded new subgraph: {data_source}")
+
             except Exception as e:
-                logger.warning(f"[Create-and-Index] Failed to reload registry: {e}")
+                logger.warning(f"[Create-and-Index] Failed to reload/prewarm: {e}")
 
         return DatasetIndexResponse(
             success=True,

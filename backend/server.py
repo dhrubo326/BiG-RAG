@@ -70,8 +70,8 @@ parser.add_argument('--unified', action='store_true',
                     help='Enable unified multi-subgraph mode')
 parser.add_argument('--registry_path', default='expr/subgraph_registry.json',
                     help='Path to subgraph registry (unified mode only)')
-parser.add_argument('--max_cached', type=int, default=5,
-                    help='Max cached subgraphs in unified mode (default: 5)')
+parser.add_argument('--max_cached', type=int, default=10,
+                    help='Max cached subgraphs in unified mode (default: 10, LRU eviction)')
 parser.add_argument('--prewarm', nargs='*',
                     help='Subgraphs to preload at startup (unified mode)')
 args = parser.parse_args()
@@ -287,10 +287,17 @@ async def startup_event():
     # Prewarm cache in unified mode
     if unified_mode:
         unified_exec = dependencies.get_unified_executor()
-        if unified_exec and unified_exec.cache.prewarm_list:
-            api_logger.info(f"Prewarming cache with: {unified_exec.cache.prewarm_list}")
-            await unified_exec.cache.preload(unified_exec.cache.prewarm_list)
-            api_logger.info("Cache prewarming completed")
+        if unified_exec:
+            # Auto-prewarm: Load top N subgraphs by priority
+            api_logger.info("[Startup] Auto-prewarming cache...")
+            await unified_exec.auto_prewarm()
+
+            # Manual prewarm: Override with explicit list if provided
+            if unified_exec.cache.prewarm_list:
+                api_logger.info(f"[Startup] Manual prewarm with: {unified_exec.cache.prewarm_list}")
+                await unified_exec.cache.preload(unified_exec.cache.prewarm_list)
+
+            api_logger.info("[Startup] Cache prewarming completed")
 
     api_logger.info("=" * 60)
     api_logger.info("BiG-RAG API Server started")

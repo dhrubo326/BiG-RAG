@@ -944,7 +944,8 @@ class BiGRAG:
 
         for prod_chunk in result['chunks']:
             # Generate hash-based chunk ID (same logic as Step 6)
-            chunk_id = compute_mdhash_id(prod_chunk['content'], prefix="chunk-")
+            # FIX: Use .strip() for consistent chunk ID generation (matches retrieval logic)
+            chunk_id = compute_mdhash_id(prod_chunk['content'].strip(), prefix="chunk-")
             prod_chunk_id = prod_chunk.get('chunk_id') or prod_chunk.get('source_id')
             if prod_chunk_id:
                 production_chunk_to_bigrag_id[prod_chunk_id] = chunk_id
@@ -974,7 +975,8 @@ class BiGRAG:
 
                 # Update BOTH fields for compatibility with graph builder
                 entity['source_ids'] = new_ids
-                entity['source_id'] = new_ids[0] if new_ids else 'unknown'
+                # FIX: Join all IDs with <SEP> to preserve ALL chunk references (not just first)
+                entity['source_id'] = GRAPH_FIELD_SEP.join(new_ids) if new_ids else 'unknown'
                 entities_remapped += 1
                 logger.debug(f"[Enhanced Pipeline] Remapped merged entity source_ids: {old_source_ids} -> {new_ids}")
 
@@ -1072,7 +1074,8 @@ class BiGRAG:
 
         for prod_chunk in result['chunks']:
             # Reuse hash-based chunk ID from earlier mapping
-            chunk_id = compute_mdhash_id(prod_chunk['content'], prefix="chunk-")
+            # FIX: Use .strip() for consistent chunk ID generation (matches Step 4.5 mapping)
+            chunk_id = compute_mdhash_id(prod_chunk['content'].strip(), prefix="chunk-")
             bigrag_chunks[chunk_id] = {
                 "content": prod_chunk['content'],
                 "tokens": prod_chunk.get('tokens', 0),  # FIX 3: Changed from [] to 0 (prevents TypeError in aggregation)

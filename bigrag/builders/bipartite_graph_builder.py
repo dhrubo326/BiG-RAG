@@ -16,7 +16,7 @@ import asyncio
 from typing import Dict, List, Optional
 from bigrag.utils import compute_mdhash_id, logger
 from bigrag.base import BaseGraphStorage, BaseVectorStorage
-from bigrag.constants import RELATION_PREFIX
+from bigrag.constants import RELATION_PREFIX, GRAPH_FIELD_SEP
 
 
 class BipartiteGraphBuilder:
@@ -222,7 +222,8 @@ class BipartiteGraphBuilder:
             # Note: After entity merging, source_id may be a list or missing
             source_id = entity.get('source_id', entity.get('source_ids', ['unknown']))
             if isinstance(source_id, list):
-                source_id = source_id[0] if source_id else 'unknown'
+                # FIX: Join all source chunks with <SEP> to preserve ALL provenance (not just first)
+                source_id = GRAPH_FIELD_SEP.join(source_id) if source_id else 'unknown'
 
             node_data = {
                 'role': 'entity',

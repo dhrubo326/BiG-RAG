@@ -39,8 +39,33 @@ async def chat_completions(
     embedding_manager: EmbeddingDep
 ):
     """
-    OpenAI-compatible chat completions endpoint with RAG
+    ⚠️ DEPRECATED: OpenAI-compatible chat completions endpoint with RAG
 
+    **DEPRECATION NOTICE:**
+    This endpoint is deprecated and will be removed in v2.0 (July 2025).
+    Please migrate to the new unified chat endpoint:
+
+    **Replacement:** `POST /api/unified/chat`
+
+    **Migration Example:**
+    ```bash
+    # OLD (deprecated)
+    POST /chat/completions
+    {
+      "messages": [{"role": "user", "content": "Your question"}],
+      "use_rag": true
+    }
+
+    # NEW (recommended)
+    POST /api/unified/chat
+    {
+      "messages": [{"role": "user", "content": "Your question"}],
+      "output_mode": "answer_only",
+      "use_rag": true
+    }
+    ```
+
+    **Legacy Behavior:**
     This endpoint:
     1. Retrieves relevant context from the knowledge graph (if use_rag=True)
     2. Synthesizes a comprehensive answer using the specified LLM

@@ -92,7 +92,7 @@ async def main():
     print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
     # Test standard pipeline
-    std_results = await test_pipeline("standard", "D:/BiG-RAG/expr/kuet_standard")
+    std_results = await test_pipeline("standard", "D:/BiG-RAG/expr/keut_unfied")
 
     # Test production pipeline
     prod_results = await test_pipeline("production", "D:/BiG-RAG/expr/kuet_production")
@@ -100,7 +100,7 @@ async def main():
     # Save combined results
     output = {
         "test_date": datetime.now().isoformat(),
-        "standard": std_results,
+        "unfied": std_results,
         "production": prod_results
     }
 

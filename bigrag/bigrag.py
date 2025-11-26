@@ -936,17 +936,36 @@ class BiGRAG:
 
         # Step 5: Build bipartite graph from enhanced pipeline result
         try:
-            await build_bipartite_graph_from_pipeline(
+            logger.info(f"[Enhanced Pipeline] BEFORE graph building:")
+            logger.info(f"  - Entities in result: {len(result.get('entities', []))}")
+            logger.info(f"  - Relations in result: {len(result.get('relations', []))}")
+            if result.get('entities'):
+                logger.info(f"  - First 3 entity names: {[e.get('entity_name', 'NO_NAME') for e in result['entities'][:3]]}")
+            if result.get('relations'):
+                logger.info(f"  - First 3 relation snippets: {[r.get('content', 'NO_CONTENT')[:50] for r in result['relations'][:3]]}")
+            logger.info(f"  - Graph instance type: {type(self.chunk_entity_relation_graph).__name__}")
+            logger.info(f"  - Current graph nodes: {self.chunk_entity_relation_graph.graph.number_of_nodes() if hasattr(self.chunk_entity_relation_graph, 'graph') else 'N/A'}")
+
+            graph_stats = await build_bipartite_graph_from_pipeline(
                 pipeline_result=result,
                 knowledge_graph_inst=self.chunk_entity_relation_graph,
                 vdb_entities=self.vdb_entities,
                 vdb_relations=self.vdb_relations
             )
+
+            logger.info(f"[Enhanced Pipeline] AFTER graph building:")
+            logger.info(f"  - Graph stats returned: {graph_stats}")
+            logger.info(f"  - Graph nodes after build: {self.chunk_entity_relation_graph.graph.number_of_nodes() if hasattr(self.chunk_entity_relation_graph, 'graph') else 'N/A'}")
+            logger.info(f"  - Graph edges after build: {self.chunk_entity_relation_graph.graph.number_of_edges() if hasattr(self.chunk_entity_relation_graph, 'graph') else 'N/A'}")
             logger.info(f"[Enhanced Pipeline] Built bipartite graph for doc {doc_id}")
 
         except Exception as e:
             error_msg = f"[Enhanced Pipeline] Graph building failed: {e}"
             logger.error(error_msg)
+            logger.error(f"  - Exception type: {type(e).__name__}")
+            logger.error(f"  - Exception details: {str(e)}")
+            import traceback
+            logger.error(f"  - Traceback:\n{traceback.format_exc()}")
             raise RuntimeError(error_msg) from e
 
         # Step 6: Store chunks to KV storage

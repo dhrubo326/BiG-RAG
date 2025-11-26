@@ -71,31 +71,58 @@ class BipartiteGraphBuilder:
         entities = pipeline_result.get('entities', [])
         relations = pipeline_result.get('relations', [])
 
+        logger.info(f"[GraphBuilder] ========== GRAPH BUILDER START ==========")
+        logger.info(f"[GraphBuilder] Received pipeline_result with keys: {list(pipeline_result.keys())}")
         logger.info(f"[GraphBuilder] Building graph from {len(entities)} entities, {len(relations)} relations")
 
+        if entities:
+            logger.info(f"[GraphBuilder] Sample entities (first 3):")
+            for i, entity in enumerate(entities[:3]):
+                logger.info(f"  Entity {i+1}: name='{entity.get('entity_name', 'NO_NAME')}', type={entity.get('entity_type', 'NO_TYPE')}, has_entity_id={bool(entity.get('entity_id'))}")
+        else:
+            logger.warning(f"[GraphBuilder] NO ENTITIES in pipeline_result!")
+
+        if relations:
+            logger.info(f"[GraphBuilder] Sample relations (first 3):")
+            for i, relation in enumerate(relations[:3]):
+                content_preview = relation.get('content', 'NO_CONTENT')[:60]
+                linked_entities = relation.get('metadata', {}).get('linked_entities', [])
+                logger.info(f"  Relation {i+1}: content='{content_preview}...', linked_entities_count={len(linked_entities)}")
+        else:
+            logger.warning(f"[GraphBuilder] NO RELATIONS in pipeline_result!")
+
         # Step 1: Create relation nodes (V_R partition)
+        logger.info(f"[GraphBuilder] STEP 1: Creating {len(relations)} relation nodes...")
         relation_nodes_created = await self._create_relation_nodes(
             relations,
             knowledge_graph_inst,
             vdb_relations
         )
+        logger.info(f"[GraphBuilder] STEP 1 Complete: {relation_nodes_created} relation nodes created")
 
         # Step 2: Create entity nodes (V_E partition)
+        logger.info(f"[GraphBuilder] STEP 2: Creating {len(entities)} entity nodes...")
         entity_nodes_created = await self._create_entity_nodes(
             entities,
             knowledge_graph_inst,
             vdb_entities
         )
+        logger.info(f"[GraphBuilder] STEP 2 Complete: {entity_nodes_created} entity nodes created")
 
         # Step 3: Create bipartite edges (V_R → V_E)
+        logger.info(f"[GraphBuilder] STEP 3: Creating bipartite edges...")
         edges_created, orphan_count = await self._create_bipartite_edges(
             relations,
             knowledge_graph_inst
         )
+        logger.info(f"[GraphBuilder] STEP 3 Complete: {edges_created} edges created, {orphan_count} orphans")
 
         logger.info(
-            f"[GraphBuilder] Created {entity_nodes_created} entity nodes, "
-            f"{relation_nodes_created} relation nodes, {edges_created} edges"
+            f"[GraphBuilder] ========== SUMMARY ==========\n"
+            f"  Entity nodes: {entity_nodes_created}\n"
+            f"  Relation nodes: {relation_nodes_created}\n"
+            f"  Bipartite edges: {edges_created}\n"
+            f"  Orphan relations: {orphan_count}"
         )
 
         if orphan_count > 0:

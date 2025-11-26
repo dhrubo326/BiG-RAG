@@ -390,13 +390,22 @@ class EnhancedKGPipeline:
             # ConstrainedLLMExtractor now supports multi-pass extraction with
             # quality-based merging when enable_gleaning=True
 
+            print(f"    DEBUG: Calling batch extractor with {len(paragraph_chunks)} paragraph chunks")
+
             batch_result = await self.batch_extractor.extract_from_chunks(
                 paragraph_chunks,
                 language=language
             )
 
-            for extraction in batch_result['extractions']:
+            print(f"    DEBUG: Batch result contains {len(batch_result['extractions'])} successful extractions")
+            print(f"    DEBUG: Failed chunks: {len(batch_result.get('failed_chunks', []))}")
+
+            entities_before = len(all_entities)
+            relations_before = len(all_relations)
+
+            for idx, extraction in enumerate(batch_result['extractions']):
                 chunk_id = extraction['chunk_id']
+                print(f"      Processing extraction {idx+1}/{len(batch_result['extractions'])}: chunk_id={chunk_id}, entities={len(extraction['entities'])}, relations={len(extraction['relations'])}")
 
                 # Add source_id, metadata, and entity_id to each entity
                 from bigrag.utils import compute_mdhash_id
@@ -434,6 +443,9 @@ class EnhancedKGPipeline:
 
                 all_entities.extend(extraction['entities'])
                 all_relations.extend(extraction['relations'])
+
+            print(f"    DEBUG: Added {len(all_entities) - entities_before} entities and {len(all_relations) - relations_before} relations from paragraphs")
+            print(f"    DEBUG: Total entities now: {len(all_entities)}, Total relations now: {len(all_relations)}")
 
             stats = batch_result['statistics']
             print(f"    Success rate: {stats['success_rate']:.2%}")
@@ -561,7 +573,16 @@ class EnhancedKGPipeline:
         if failed_tables:
             await self._save_to_review_queue(failed_tables, metadata)
 
-        return {
+        # DEBUG: Final result assembly
+        print(f"\n[DEBUG] FINAL RESULT ASSEMBLY:")
+        print(f"  - merged_entities count: {len(merged_entities)}")
+        print(f"  - all_relations count: {len(all_relations)}")
+        if merged_entities:
+            print(f"  - Sample entity names: {[e.get('entity_name') for e in merged_entities[:3]]}")
+        if all_relations:
+            print(f"  - Sample relation snippets: {[r.get('content', '')[:50] for r in all_relations[:3]]}")
+
+        result_dict = {
             'entities': merged_entities,
             'relations': all_relations,
             'chunks': chunks,
@@ -586,6 +607,12 @@ class EnhancedKGPipeline:
             'pipeline_metadata': self.pipeline_metadata,  # NEW
             'failed_tables': failed_tables
         }
+
+        print(f"[DEBUG] Returning result_dict with keys: {list(result_dict.keys())}")
+        print(f"[DEBUG] result_dict['entities'] type: {type(result_dict['entities'])}, length: {len(result_dict['entities'])}")
+        print(f"[DEBUG] result_dict['relations'] type: {type(result_dict['relations'])}, length: {len(result_dict['relations'])}")
+
+        return result_dict
 
     async def _save_to_review_queue(self, failed_items: List[Dict], document_metadata: Optional[Dict] = None):
         """Save failed validations to human review queue (JSON file)."""

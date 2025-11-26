@@ -178,12 +178,14 @@ class ConstrainedLLMExtractor:
                 print(f"[WARN] Gleaning pass {gleaning_pass + 1} failed: {e}")
                 continue  # Skip this gleaning pass
 
-            # Validate gleaned extraction
+            # Validate gleaned extraction with RELAXED thresholds
+            # (skip numeric coverage, focus on hallucination prevention)
             glean_validation = self._validate_extraction(
                 source_text=paragraph_text,
                 source_numbers=source_numbers,
                 source_facts=source_facts,
-                extraction=glean_extraction
+                extraction=glean_extraction,
+                is_gleaning=True  # ← CRITICAL: Use relaxed validation for incremental extraction
             )
 
             # SMART MERGE: Compare quality and merge (IDENTICAL to standard pipeline)
@@ -194,7 +196,7 @@ class ConstrainedLLMExtractor:
                 )
                 print(f"[GLEANING] Pass {gleaning_pass + 1}: Added {len(glean_extraction.get('entities', []))} entities, {len(glean_extraction.get('relations', []))} relations")
             else:
-                print(f"[GLEANING] Pass {gleaning_pass + 1}: Validation failed, skipping")
+                print(f"[GLEANING] Pass {gleaning_pass + 1}: Validation FAILED (hallucination or nonsense), skipping")
 
         # Final validation of merged result
         final_validation = self._validate_extraction(
@@ -491,19 +493,29 @@ If no additional entities/relations found, return empty lists.
         source_text: str,
         source_numbers: set,
         source_facts: List[str],
-        extraction: Dict
+        extraction: Dict,
+        is_gleaning: bool = False  # NEW: Relax validation for incremental gleaning passes
     ) -> Dict:
         """
         Triple-constraint validation.
 
         Checks:
-        1. Numeric coverage: 100% of source numbers in extraction
+        1. Numeric coverage: 100% of source numbers in extraction (SKIPPED for gleaning)
         2. No hallucination: No numbers in extraction not in source
         3. Semantic validity: Entity names mentioned in source
 
+        Args:
+            source_text: Original source text
+            source_numbers: Set of numbers extracted from source
+            source_facts: List of key facts from source
+            extraction: Extraction result to validate
+            is_gleaning: If True, use relaxed validation (skip numeric coverage)
+                        Gleaning is incremental - it only returns NEW entities,
+                        so numeric coverage check doesn't make sense.
+
         Returns:
             {
-                'status': 'PASS' or 'FAIL',
+                'status': 'PASS' or 'FAIL' or 'WARNING',
                 'numeric_coverage': 1.0,
                 'hallucination_score': 0.0,
                 'semantic_validity': 1.0,
@@ -565,12 +577,33 @@ If no additional entities/relations found, return empty lists.
 
         semantic_validity = 1.0 - (len(hallucinated_entities) / max(len(entities), 1))
 
-        # Determine overall status using 3-tier validation
-        status = self._determine_validation_status(
-            numeric_coverage=numeric_coverage,
-            hallucination_score=hallucination_score,
-            semantic_validity=semantic_validity
-        )
+        # Determine overall status
+        if is_gleaning:
+            # RELAXED VALIDATION FOR GLEANING:
+            # Gleaning is incremental - it only returns NEW entities not already extracted.
+            # Therefore, we SKIP numeric coverage check (would always be low).
+            # Instead, focus ONLY on preventing hallucinations and nonsense entities.
+
+            if hallucination_score < 0.10 and semantic_validity >= 0.50:
+                # Low hallucination + reasonable semantic validity = accept
+                status = 'PASS'
+            elif hallucination_score < 0.20 and semantic_validity >= 0.40:
+                # Moderate quality - usable but warn
+                status = 'WARNING'
+            else:
+                # High hallucination or nonsense entities = reject
+                status = 'FAIL'
+
+            # Log gleaning validation details
+            print(f"      [GLEANING VALIDATION] hallucination={hallucination_score:.2%}, semantic={semantic_validity:.2%}, status={status}")
+        else:
+            # NORMAL VALIDATION FOR INITIAL EXTRACTION:
+            # Use full 3-tier validation with numeric coverage
+            status = self._determine_validation_status(
+                numeric_coverage=numeric_coverage,
+                hallucination_score=hallucination_score,
+                semantic_validity=semantic_validity
+            )
 
         return {
             'status': status,

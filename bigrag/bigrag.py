@@ -777,7 +777,7 @@ class BiGRAG:
 
             bigrag_chunks[chunk_id] = {
                 "content": prod_chunk['content'],
-                "tokens": prod_chunk.get('tokens', []),
+                "tokens": prod_chunk.get('tokens', 0),  # FIX 2: Changed from [] to 0 (prevents TypeError in aggregation)
                 "chunk_order_index": prod_chunk.get('chunk_order_index', 0),
                 "full_doc_id": doc_id,
                 "doc_title": metadata.get("title", ""),
@@ -976,7 +976,7 @@ class BiGRAG:
             chunk_id = compute_mdhash_id(prod_chunk['content'], prefix="chunk-")
             bigrag_chunks[chunk_id] = {
                 "content": prod_chunk['content'],
-                "tokens": prod_chunk.get('tokens', []),
+                "tokens": prod_chunk.get('tokens', 0),  # FIX 3: Changed from [] to 0 (prevents TypeError in aggregation)
                 "chunk_order_index": prod_chunk.get('chunk_order_index', 0),
                 "full_doc_id": doc_id,
                 "doc_title": metadata.get("title", ""),

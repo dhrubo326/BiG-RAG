@@ -424,7 +424,9 @@ class EnhancedKGPipeline:
                         entity_id = compute_mdhash_id(entity['entity_name'], prefix=ENTITY_PREFIX)
                         entity['entity_id'] = entity_id
 
-                # Add source_id, metadata, and linked_entities to each relation
+                # Add source_id, metadata, relation_id, and linked_entities to each relation
+                from bigrag.constants import RELATION_PREFIX
+
                 for relation in extraction['relations']:
                     if 'source_id' not in relation:
                         relation['source_id'] = chunk_id
@@ -433,13 +435,18 @@ class EnhancedKGPipeline:
                     relation['metadata']['extraction_method'] = 'constrained_llm'
                     relation['metadata']['extraction_strategy'] = self.extraction_strategy  # NEW
 
-                    # Extract linked entities from relation content
-                    linked_entities = []
-                    for entity in extraction['entities']:
-                        if entity['entity_name'] in relation['content']:
-                            linked_entities.append(entity['entity_id'])
+                    # FIX 1A: Generate relation_id (CRITICAL - enables hyper_relation linking at line 518)
+                    # Without this, paragraph relations are skipped during hyper_relation linking
+                    if 'relation_id' not in relation:
+                        relation_id = compute_mdhash_id(relation['content'], prefix=RELATION_PREFIX)
+                        relation['relation_id'] = relation_id
 
-                    relation['metadata']['linked_entities'] = linked_entities
+                    # FIX 1B: Initialize empty linked_entities (will be populated in post-merge linking)
+                    # Per-chunk linking REMOVED - it failed for cross-chunk entities
+                    # (e.g., paragraph relation mentioning table entity from different chunk)
+                    if 'metadata' not in relation:
+                        relation['metadata'] = {}
+                    relation['metadata']['linked_entities'] = []  # Will be populated after entity merging
 
                 all_entities.extend(extraction['entities'])
                 all_relations.extend(extraction['relations'])
@@ -509,14 +516,53 @@ class EnhancedKGPipeline:
             print("  [3.1] Entity linking disabled - using raw entities")
             merged_entities = all_entities
 
-        # Add hyper_relation to entities
-        print("  [3.3] Adding hyper_relation to entities (bidirectional linking)...")
+        # FIX 1C: Post-merge entity linking (enables cross-chunk entity references)
+        print("  [3.3] Linking entities to relations (post-merge, cross-chunk)...")
+        entities_linked = 0
+
+        for relation in all_relations:
+            linked_entities = []
+            relation_content = relation.get('content', '')
+
+            # CRITICAL: Check against MERGED entities (not per-chunk)
+            # This enables cross-chunk linking (e.g., paragraph relation mentions table entity)
+            for entity in merged_entities:
+                entity_name = entity.get('entity_name', '')
+                # Simple substring match (works for both English and Bangla)
+                # TODO: Enhance with fuzzy matching for better recall
+                if entity_name and entity_name in relation_content:
+                    linked_entities.append(entity.get('entity_id'))
+                    entities_linked += 1
+
+            # Update relation metadata
+            if 'metadata' not in relation:
+                relation['metadata'] = {}
+            relation['metadata']['linked_entities'] = linked_entities
+
+        print(f"    Linked {entities_linked} entity references across {len(all_relations)} relations")
+        if all_relations and entities_linked > 0:
+            print(f"    Avg entities per relation: {entities_linked / len(all_relations):.1f}")
+
+        # Add hyper_relation to entities (renumbered from 3.3 to 3.4 after adding post-merge linking)
+        print("  [3.4] Adding hyper_relation to entities (bidirectional linking)...")
         entity_lookup = {e['entity_id']: e for e in merged_entities if e.get('entity_id')}
 
+        # FIX 1D: Diagnostic logging for relation_id coverage
+        relations_with_id = sum(1 for r in all_relations if r.get('relation_id'))
+        relations_without_id = len(all_relations) - relations_with_id
+        print(f"    DEBUG: {relations_with_id}/{len(all_relations)} relations have relation_id")
+        if relations_without_id > 0:
+            print(f"    [WARN] {relations_without_id} relations missing relation_id (will be skipped)")
+
         hyper_relation_added = 0
+        skipped_relations_logged = 0
         for relation in all_relations:
             relation_id = relation.get('relation_id')
             if not relation_id:
+                # Log first 3 problematic relations for debugging
+                if skipped_relations_logged < 3:
+                    print(f"    [WARN] Skipping relation (no ID): {relation.get('content', '')[:60]}...")
+                    skipped_relations_logged += 1
                 continue
 
             linked_entities = relation.get('metadata', {}).get('linked_entities', [])

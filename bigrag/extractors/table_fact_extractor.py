@@ -111,7 +111,7 @@ class TableFactExtractor:
                 'description': relation_content,  # Required for BiG-RAG retrieval
                 'completeness_score': 10,  # 100% complete (from structured table)
                 'source_id': chunk_id,
-                'hyper_relation': relation_id,  # Add relation ID for consistency
+                'relation_id': relation_id,  # CRITICAL FIX: Changed from 'hyper_relation' to 'relation_id' (matches lookup at enhanced_pipeline.py:560)
                 'metadata': {
                     'extraction_method': 'table_row',
                     'table_id': table_data.get('table_id', 'unknown'),

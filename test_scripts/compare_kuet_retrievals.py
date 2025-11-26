@@ -29,9 +29,6 @@ QUERIES = [
     "আবেদনপত্র জমা দেওয়ার শেষ তারিখ কবে?",  # Structured - dates
     "ভর্তি পরীক্ষার যোগ্যতা কি কি?",  # Narrative
     "প্রথম ২০,০০০ প্রার্থী কিভাবে নির্বাচন করা হবে?",  # Narrative
-    "GCE 'A' লেভেল পরীক্ষায় কোন বিষয়ে কত গ্রেড প্রয়োজন?",  # Complex - conditional eligibility
-    "বায়োমেডিকেল ইঞ্জিনিয়ারিং বিভাগে ভর্তির জন্য অতিরিক্ত কি যোগ্যতা লাগে?",  # Specific requirement
-    "খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে মোট কতটি আসন আছে?",  # Numerical - aggregate
 ]
 
 async def test_pipeline(pipeline_name, working_dir):
@@ -95,7 +92,7 @@ async def main():
     print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
     # Test standard pipeline
-    std_results = await test_pipeline("standard", "D:/BiG-RAG/expr/kuet_unified")
+    std_results = await test_pipeline("standard", "D:/BiG-RAG/expr/kuet_standard")
 
     # Test production pipeline
     prod_results = await test_pipeline("production", "D:/BiG-RAG/expr/kuet_production")
@@ -103,7 +100,7 @@ async def main():
     # Save combined results
     output = {
         "test_date": datetime.now().isoformat(),
-        "unified": std_results,
+        "standard": std_results,
         "production": prod_results
     }
 

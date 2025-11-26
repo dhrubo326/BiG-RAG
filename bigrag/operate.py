@@ -374,7 +374,8 @@ async def _handle_single_entity_extraction(
         # This prevents data loss while still tracking the sequencing issue
         from .constants import RELATION_PREFIX
         default_relation_content = f"General context for chunk {chunk_key}"
-        now_hyper_relation = compute_mdhash_id(default_relation_content, prefix=RELATION_PREFIX)
+        # FIX: Use .strip() for consistency (though f-strings don't add whitespace)
+        now_hyper_relation = compute_mdhash_id(default_relation_content.strip(), prefix=RELATION_PREFIX)
         # Note: The default relation won't be stored in maybe_edges,
         # but entities will have a valid hyper_relation reference
 
@@ -520,7 +521,8 @@ async def _handle_single_hyperrelation_extraction(
 
     # Generate hash-based ID for relation node
     from .constants import RELATION_PREFIX
-    edge_id = compute_mdhash_id(knowledge_fragment, prefix=RELATION_PREFIX)
+    # FIX: Use .strip() for consistent relation ID generation
+    edge_id = compute_mdhash_id(knowledge_fragment.strip(), prefix=RELATION_PREFIX)
 
     # Return validated relation data
     logger.debug(f"{chunk_key}: [SUCCESS] Relation '{knowledge_fragment[:40]}...' score={weight}")

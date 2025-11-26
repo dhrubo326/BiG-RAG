@@ -437,7 +437,8 @@ class EnhancedKGPipeline:
                     # FIX 1A: Generate relation_id (CRITICAL - enables hyper_relation linking at line 518)
                     # Without this, paragraph relations are skipped during hyper_relation linking
                     if 'relation_id' not in relation:
-                        relation_id = compute_mdhash_id(relation['content'], prefix=RELATION_PREFIX)
+                        # FIX: Use .strip() for consistent relation ID generation
+                        relation_id = compute_mdhash_id(relation['content'].strip(), prefix=RELATION_PREFIX)
                         relation['relation_id'] = relation_id
 
                     # FIX 1B: Initialize empty linked_entities (will be populated in post-merge linking)

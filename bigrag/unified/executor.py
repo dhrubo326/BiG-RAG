@@ -307,3 +307,58 @@ class UnifiedQueryExecutor:
         # Update cache registry reference
         self.cache.registry = self.router.registry
         logger.info("Registry reloaded in executor and cache")
+
+    async def auto_prewarm(self, top_n: Optional[int] = None):
+        """
+        Automatically pre-load most important subgraphs on startup.
+
+        Priority order:
+        1. Manually curated subgraphs (auto_created=False) first
+        2. Most recently created subgraphs (by created_at timestamp)
+        3. Up to top_n subgraphs (defaults to cache max_size)
+
+        Args:
+            top_n: Number of subgraphs to prewarm (defaults to cache.max_size)
+        """
+        if top_n is None:
+            top_n = self.cache.max_size
+
+        # Get all enabled subgraphs
+        enabled_subgraphs = [
+            (name, config)
+            for name, config in self.router.registry.get("subgraphs", {}).items()
+            if config.get("enabled", True)
+        ]
+
+        # Sort by priority: manual-first, then most recent
+        def sort_key(item):
+            name, config = item
+            is_manual = not config.get("auto_created", False)
+            created_at = config.get("created_at", "1970-01-01T00:00:00")
+            return (is_manual, created_at)
+
+        sorted_subgraphs = sorted(enabled_subgraphs, key=sort_key, reverse=True)
+        top_subgraphs = [name for name, _ in sorted_subgraphs[:top_n]]
+
+        if not top_subgraphs:
+            logger.warning("[Auto-Prewarm] No enabled subgraphs found to prewarm")
+            return
+
+        logger.info(
+            f"[Auto-Prewarm] Pre-loading {len(top_subgraphs)} subgraphs: "
+            f"{top_subgraphs}"
+        )
+
+        # Load subgraphs into cache
+        for subgraph_name in top_subgraphs:
+            try:
+                await self.cache.get(subgraph_name)
+                logger.info(f"[Auto-Prewarm] Loaded subgraph: {subgraph_name}")
+            except Exception as e:
+                logger.error(
+                    f"[Auto-Prewarm] Failed to load subgraph '{subgraph_name}': {e}"
+                )
+
+        logger.info(
+            f"[Auto-Prewarm] Completed. Cache stats: {self.cache.get_stats()}"
+        )

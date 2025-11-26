@@ -103,7 +103,8 @@ class TableFactExtractor:
             # Generate relation ID FIRST (needed for entity linking)
             from bigrag.utils import compute_mdhash_id
             from bigrag.constants import RELATION_PREFIX
-            relation_id = compute_mdhash_id(relation_content, prefix=RELATION_PREFIX)
+            # FIX: Use .strip() for consistent relation ID generation
+            relation_id = compute_mdhash_id(relation_content.strip(), prefix=RELATION_PREFIX)
 
             relation = {
                 'role': 'relation',

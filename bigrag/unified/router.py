@@ -72,7 +72,6 @@ class SubgraphRouter:
 Subgraph: {name}
 Description: {config['description']}
 Aliases: {', '.join(config['aliases'])}
-Topics: {', '.join(config['topics'][:10])}  # Limit to first 10 topics
 """
             subgraph_info.append(info.strip())
 
@@ -88,7 +87,7 @@ User Query: "{query}"
 
 Instructions:
 1. Analyze the query to identify the main topic/domain
-2. Match the query against subgraph descriptions, aliases, and topics
+2. Match the query against subgraph descriptions and aliases
 3. Select 1-3 most relevant subgraphs (prefer fewer if possible)
 4. Provide confidence score (0.0-1.0) and brief reasoning
 
@@ -103,6 +102,7 @@ Important:
 - If query clearly matches ONE subgraph, only select that one
 - If query is ambiguous or cross-domain, select 2-3 subgraphs
 - If no clear match, select the fallback subgraph: "{self.registry.get('routing_config', {}).get('fallback_subgraph', 'demo_test')}"
+- Pay close attention to specific names/identifiers in the query (e.g., "KUET" vs "BUET")
 - Respond ONLY with valid JSON, no additional text
 """
         return prompt

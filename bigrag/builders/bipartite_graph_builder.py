@@ -163,7 +163,8 @@ class BipartiteGraphBuilder:
         for relation in relations:
             # Generate relation ID (hash of content for uniqueness)
             # UNIFIED: Use RELATION_PREFIX constant (rel-) for compatibility with standard pipeline
-            relation_id = compute_mdhash_id(relation['content'], prefix=RELATION_PREFIX)
+            # FIX: Use .strip() for consistent relation ID generation (matches retrieval logic)
+            relation_id = compute_mdhash_id(relation['content'].strip(), prefix=RELATION_PREFIX)
 
             # Create node data (compatible with BiG-RAG storage format)
             node_data = {
@@ -276,7 +277,8 @@ class BipartiteGraphBuilder:
 
         for relation in relations:
             # UNIFIED: Use RELATION_PREFIX constant (rel-) for compatibility with standard pipeline
-            relation_id = compute_mdhash_id(relation['content'], prefix=RELATION_PREFIX)
+            # FIX: Use .strip() for consistent relation ID generation (matches line 167)
+            relation_id = compute_mdhash_id(relation['content'].strip(), prefix=RELATION_PREFIX)
 
             # Option B3: Extract linked entity IDs from metadata (now stores IDs, not names)
             linked_entity_ids = relation.get('metadata', {}).get('linked_entities', [])

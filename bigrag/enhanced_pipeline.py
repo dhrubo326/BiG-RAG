@@ -271,6 +271,10 @@ class EnhancedKGPipeline:
         print(f"Extraction Strategy: {self.extraction_strategy}")
         print("=" * 80)
 
+        # Import utilities needed throughout the pipeline (moved from inside loops for efficiency)
+        from bigrag.utils import compute_mdhash_id
+        from bigrag.constants import ENTITY_PREFIX, RELATION_PREFIX
+
         # Phase 1: Pre-processing
         print("\n[PHASE 1] Pre-processing")
         print("-" * 80)
@@ -408,9 +412,6 @@ class EnhancedKGPipeline:
                 print(f"      Processing extraction {idx+1}/{len(batch_result['extractions'])}: chunk_id={chunk_id}, entities={len(extraction['entities'])}, relations={len(extraction['relations'])}")
 
                 # Add source_id, metadata, and entity_id to each entity
-                from bigrag.utils import compute_mdhash_id
-                from bigrag.constants import ENTITY_PREFIX
-
                 for entity in extraction['entities']:
                     if 'source_id' not in entity:
                         entity['source_id'] = chunk_id
@@ -425,8 +426,6 @@ class EnhancedKGPipeline:
                         entity['entity_id'] = entity_id
 
                 # Add source_id, metadata, relation_id, and linked_entities to each relation
-                from bigrag.constants import RELATION_PREFIX
-
                 for relation in extraction['relations']:
                     if 'source_id' not in relation:
                         relation['source_id'] = chunk_id

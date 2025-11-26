@@ -934,6 +934,37 @@ class BiGRAG:
             logger.error(error_msg)
             raise ValueError(error_msg)
 
+        # Step 4.5: Remap source_ids to use hash-based chunk IDs (before graph building)
+        # CRITICAL FIX: Enhanced pipeline uses sequential chunk IDs (chunk_0003) during extraction,
+        # but KV storage uses content-based hash IDs (chunk-561d2cb...). We need to remap
+        # entity/relation source_ids to match the hash-based IDs that will be stored in KV.
+        logger.info(f"[Enhanced Pipeline] Creating chunk ID mapping...")
+        production_chunk_to_bigrag_id = {}
+
+        for prod_chunk in result['chunks']:
+            # Generate hash-based chunk ID (same logic as Step 6)
+            chunk_id = compute_mdhash_id(prod_chunk['content'], prefix="chunk-")
+            prod_chunk_id = prod_chunk.get('chunk_id') or prod_chunk.get('source_id')
+            if prod_chunk_id:
+                production_chunk_to_bigrag_id[prod_chunk_id] = chunk_id
+
+        logger.info(f"[Enhanced Pipeline] Remapping {len(production_chunk_to_bigrag_id)} chunk IDs in entities/relations")
+        source_id_remapped = 0
+
+        for entity in result['entities']:
+            old_source_id = entity.get('source_id')
+            if old_source_id and old_source_id in production_chunk_to_bigrag_id:
+                entity['source_id'] = production_chunk_to_bigrag_id[old_source_id]
+                source_id_remapped += 1
+
+        for relation in result['relations']:
+            old_source_id = relation.get('source_id')
+            if old_source_id and old_source_id in production_chunk_to_bigrag_id:
+                relation['source_id'] = production_chunk_to_bigrag_id[old_source_id]
+                source_id_remapped += 1
+
+        logger.info(f"[Enhanced Pipeline] Remapped {source_id_remapped} source_id references (entities + relations)")
+
         # Step 5: Build bipartite graph from enhanced pipeline result
         try:
             logger.info(f"[Enhanced Pipeline] BEFORE graph building:")
@@ -968,11 +999,11 @@ class BiGRAG:
             logger.error(f"  - Traceback:\n{traceback.format_exc()}")
             raise RuntimeError(error_msg) from e
 
-        # Step 6: Store chunks to KV storage
-        production_chunk_to_bigrag_id = {}
+        # Step 6: Store chunks to KV storage (using hash-based IDs from Step 4.5 mapping)
         bigrag_chunks = {}
 
         for prod_chunk in result['chunks']:
+            # Reuse hash-based chunk ID from earlier mapping
             chunk_id = compute_mdhash_id(prod_chunk['content'], prefix="chunk-")
             bigrag_chunks[chunk_id] = {
                 "content": prod_chunk['content'],
@@ -983,12 +1014,8 @@ class BiGRAG:
                 "doc_metadata": metadata,
             }
 
-            prod_chunk_id = prod_chunk.get('chunk_id') or prod_chunk.get('source_id')
-            if prod_chunk_id:
-                production_chunk_to_bigrag_id[prod_chunk_id] = chunk_id
-
         await self.text_chunks.upsert(bigrag_chunks)
-        logger.info(f"[Enhanced Pipeline] Stored {len(bigrag_chunks)} chunks to KV storage")
+        logger.info(f"[Enhanced Pipeline] Stored {len(bigrag_chunks)} chunks to KV storage (hash-based IDs)")
 
         # Step 7: Store full document
         await self.full_docs.upsert({

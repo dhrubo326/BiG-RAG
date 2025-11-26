@@ -150,6 +150,10 @@ class BipartiteGraphBuilder:
         Each relation becomes a node in the bipartite graph.
         Relations are indexed to vector DB for Path B (relation-based) retrieval.
 
+        PERFORMANCE: Uses batch insertion pattern from graphr1 for vector DB operations.
+        Graph nodes are created sequentially (for consistency), but vector embeddings
+        are collected and inserted in a single batch (massive speedup).
+
         Args:
             relations: List of relation dicts from pipeline
             graph: Graph storage backend
@@ -159,7 +163,7 @@ class BipartiteGraphBuilder:
             Number of relation nodes created
         """
 
-        count = 0
+        # Step 1: Create graph nodes (sequential for data consistency)
         for relation in relations:
             # Generate relation ID (hash of content for uniqueness)
             # UNIFIED: Use RELATION_PREFIX constant (rel-) for compatibility with standard pipeline
@@ -179,14 +183,19 @@ class BipartiteGraphBuilder:
             # Upsert to graph storage
             await graph.upsert_node(relation_id, node_data=node_data)
 
-            # Upsert to vector DB for semantic search (Path B)
-            await vdb.upsert({
-                relation_id: {'content': relation['content']}
-            })
+        # Step 2: Batch collect vector data (graphr1 pattern)
+        vdb_batch_data = {
+            compute_mdhash_id(rel['content'].strip(), prefix=RELATION_PREFIX): {
+                'content': rel['content']
+            }
+            for rel in relations
+        }
 
-            count += 1
+        # Step 3: Single batch insert to vector DB (huge performance gain)
+        if vdb_batch_data:
+            await vdb.upsert(vdb_batch_data)
 
-        return count
+        return len(relations)
 
     async def _create_entity_nodes(
         self,
@@ -200,6 +209,10 @@ class BipartiteGraphBuilder:
         Each entity becomes a node in the bipartite graph.
         Entities are indexed to vector DB for Path A (entity-based) retrieval.
 
+        PERFORMANCE: Uses batch insertion pattern from graphr1 for vector DB operations.
+        Graph nodes are created sequentially (for consistency), but vector embeddings
+        are collected and inserted in a single batch (massive speedup).
+
         Args:
             entities: List of entity dicts from pipeline
             graph: Graph storage backend
@@ -209,7 +222,7 @@ class BipartiteGraphBuilder:
             Number of entity nodes created
         """
 
-        count = 0
+        # Step 1: Create graph nodes (sequential for data consistency)
         for entity in entities:
             # Option B3: Use entity_id as node ID (stable across name changes)
             entity_id = entity.get('entity_id')
@@ -239,19 +252,27 @@ class BipartiteGraphBuilder:
             # Upsert to graph storage using entity_id
             await graph.upsert_node(entity_id, node_data=node_data)
 
-            # Upsert to vector DB for semantic search (Path A)
-            # Store both entity_id and entity_name for retrieval
-            await vdb.upsert({
-                entity_id: {
-                    'content': entity['description'],
-                    'entity_id': entity_id,
-                    'entity_name': entity_name
-                }
-            })
+        # Step 2: Batch collect vector data (graphr1 pattern)
+        vdb_batch_data = {}
+        for entity in entities:
+            entity_id = entity.get('entity_id')
+            entity_name = entity['entity_name']
 
-            count += 1
+            # Fallback: Use normalized name if no entity_id (backward compatibility)
+            if not entity_id:
+                entity_id = f'"{entity_name.upper()}"'
 
-        return count
+            vdb_batch_data[entity_id] = {
+                'content': entity['description'],
+                'entity_id': entity_id,
+                'entity_name': entity_name
+            }
+
+        # Step 3: Single batch insert to vector DB (huge performance gain)
+        if vdb_batch_data:
+            await vdb.upsert(vdb_batch_data)
+
+        return len(entities)
 
     async def _create_bipartite_edges(
         self,

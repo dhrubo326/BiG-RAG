@@ -11,7 +11,7 @@
  */
 
 import { useState } from 'react';
-import { Save, RotateCcw, Check, AlertCircle, Key, Database, Palette, Zap } from 'lucide-react';
+import { Save, RotateCcw, Check, AlertCircle, Key, Database, Palette, Zap, RefreshCw } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -21,6 +21,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs'
 import { Slider } from '../components/ui/slider';
 import { Badge } from '../components/ui/badge';
 import useSettingsStore from '../stores/settings';
+import { useDatasets } from '../hooks/useDatasets';
 import { toast } from 'sonner';
 import { AVAILABLE_MODELS, QUERY_MODES, THEMES, LANGUAGES } from '../utils/constants';
 import api from '../services/api';
@@ -49,6 +50,8 @@ export function Settings() {
     setLanguage,
     resetToDefaults,
   } = useSettingsStore();
+
+  const { datasets, isLoading: loadingDatasets, isUnifiedMode, refetch: refetchDatasets } = useDatasets();
 
   const [localApiKey, setLocalApiKey] = useState(openaiApiKey || '');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -173,21 +176,45 @@ export function Settings() {
 
               {/* Dataset */}
               <div>
-                <Label htmlFor="dataset">Default Dataset</Label>
-                <Select value={dataset} onValueChange={setDataset}>
-                  <SelectTrigger id="dataset" className="mt-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="demo_test">Demo Test (Default)</SelectItem>
-                    <SelectItem value="SingleTopic">SingleTopic</SelectItem>
-                    <SelectItem value="2WikiMultiHopQA">2WikiMultiHopQA</SelectItem>
-                    <SelectItem value="HotpotQA">HotpotQA</SelectItem>
-                    <SelectItem value="Musique">Musique</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="dataset">Default Dataset</Label>
+                  {isUnifiedMode && (
+                    <Badge variant="default" className="text-xs">
+                      Unified Mode
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Select value={dataset} onValueChange={setDataset} disabled={loadingDatasets}>
+                    <SelectTrigger id="dataset" className="flex-1">
+                      <SelectValue placeholder={loadingDatasets ? "Loading datasets..." : "Select dataset"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {datasets.length > 0 ? (
+                        datasets.map((ds) => (
+                          <SelectItem key={ds.name} value={ds.name}>
+                            {ds.name} {ds.description && `- ${ds.description.substring(0, 50)}${ds.description.length > 50 ? '...' : ''}`}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="demo_test">demo_test (default)</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={refetchDatasets}
+                    disabled={loadingDatasets}
+                    title="Refresh datasets"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingDatasets ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  The dataset to use for queries and graph visualization
+                  {isUnifiedMode
+                    ? 'The subgraph to use for queries (auto-routing available in chat)'
+                    : 'The dataset to use for queries and graph visualization'}
                 </p>
               </div>
 

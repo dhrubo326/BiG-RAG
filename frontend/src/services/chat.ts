@@ -4,74 +4,67 @@ import { API_ENDPOINTS } from '../utils/constants';
 
 /**
  * Ask a question and get a response with retrieval
- * Uses /chat/completions endpoint for full RAG pipeline (retrieval + answer generation)
+ * Uses /api/unified/chat endpoint for full RAG pipeline (retrieval + answer generation)
  */
 export const askQuestion = async (params: QueryParams): Promise<QueryResponse> => {
-  const response = await api.post(API_ENDPOINTS.CHAT_COMPLETIONS, {
-    model: params.model || 'gpt-4o-mini',
+  // Get active dataset from localStorage (settings store)
+  const settingsStore = localStorage.getItem('settings-store');
+  let activeDataset = 'demo_test'; // Default fallback
+
+  if (settingsStore) {
+    try {
+      const settings = JSON.parse(settingsStore);
+      activeDataset = settings.state?.activeDataset || 'demo_test';
+    } catch (e) {
+      console.warn('Failed to parse settings:', e);
+    }
+  }
+
+  const response = await api.post(API_ENDPOINTS.UNIFIED_CHAT, {
     messages: [
       {
         role: 'user',
         content: params.query,
       },
     ],
+    use_rag: true,
+    force_subgraphs: [activeDataset], // Use active dataset
+    mode: params.mode || 'hybrid',
+    top_k: params.top_k || 60,
+    enable_reranking: params.enable_reranking !== undefined ? params.enable_reranking : true,
+
+    // LLM parameters
+    model: params.model || 'gpt-4o-mini',
     temperature: params.temperature || 0.7,
     max_tokens: params.max_tokens || 4096,
-    llm_provider: params.llm_provider,
-    use_rag: true, // Enable RAG for knowledge retrieval
-    enable_reranking: params.enable_reranking,
-    top_k: params.top_k || 60,  // Retrieval count (default: 60)
-    num_kg_in_context: params.num_kg_in_context || 15,  // KG output count (default: 15)
-    num_chunks_in_context: params.num_chunks_in_context || 5,  // Chunk output count (default: 5)
-    mode: params.mode || 'hybrid',  // Query mode (default: hybrid)
-    language: params.language,  // Language override (optional)
+    llm_provider: params.llm_provider || 'openai',
+    language: params.language,
+
+    // Output mode: get both answer and contexts
+    output_mode: 'answer_with_context',
+    include_metadata: true,
   });
 
-  // Transform OpenAI-compatible response to our QueryResponse type
   const data = response.data;
-  const content = data.choices?.[0]?.message?.content || '';
 
-  // Since /chat/completions returns the final answer, we need to extract contexts separately
-  // For now, we'll use a separate call to /ask for contexts if needed
-  let contexts: any[] = [];
-
-  // Optionally fetch contexts for display (non-blocking)
-  try {
-    const contextResponse = await api.post(API_ENDPOINTS.ASK, {
-      question: params.query,
-      top_k: params.top_k || 60,  // Match chat/completions defaults
-      num_kg_in_context: params.num_kg_in_context || 15,
-      num_chunks_in_context: params.num_chunks_in_context || 5,
-      mode: params.mode || 'hybrid',
-      enable_reranking: params.enable_reranking,
-      language: params.language,  // Pass language parameter
-    });
-
-    // Map retrieved_contexts from backend to our RetrievedContext type
-    const retrievedContexts = contextResponse.data.retrieved_contexts || [];
-    contexts = retrievedContexts.map((ctx: any, index: number) => ({
-      content: ctx.context || '',
-      score: ctx.coherence_score || 0,
-      source: `Source ${ctx.rank || index + 1}`,
-      type: ctx.type || 'chunk',  // Use actual type from backend (entity/relation/chunk)
-      metadata: {
-        rank: ctx.rank || index + 1,
-        ...ctx.metadata,
-      },
-    }));
-  } catch (err) {
-    console.warn('Failed to fetch contexts for display:', err);
-  }
+  // Map contexts from unified API response
+  const contexts: RetrievedContext[] = (data.contexts || []).map((ctx: any, index: number) => ({
+    content: ctx.content || '',
+    score: ctx.score || 0,
+    source: ctx.source || `Source ${index + 1}`,
+    type: ctx.type || 'chunk',
+    metadata: ctx.metadata || {},
+  }));
 
   return {
-    answer: content,
+    answer: data.answer || '',
     contexts: contexts,
     thinking: undefined,
     metadata: {
-      model: data.model || params.model || 'unknown',
-      retrieval_time: 0,
-      generation_time: 0,
-      total_tokens: data.usage?.total_tokens || 0,
+      model: data.llm_metrics?.model || params.model || 'unknown',
+      retrieval_time: data.retrieval_metrics?.latency_ms || 0,
+      generation_time: data.llm_metrics?.latency_ms || 0,
+      total_tokens: data.llm_metrics?.total_tokens || 0,
     },
   };
 };

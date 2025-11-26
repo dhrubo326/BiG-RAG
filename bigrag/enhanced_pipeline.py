@@ -578,6 +578,35 @@ class EnhancedKGPipeline:
         if orphan_entities:
             print(f"    [WARN] Found {len(orphan_entities)} orphan entities (no relation link)")
             print(f"           Orphan rate: {len(orphan_entities)/len(merged_entities)*100:.1f}%")
+
+            # NEW: Phase 3.5 - Post-merge orphan linking
+            print("\n  [3.5] Post-merge orphan linking (fix cross-lingual entities)...")
+            linked_orphans, synthetic_relations = await self._link_orphan_entities(
+                orphan_entities,
+                merged_entities,
+                all_relations
+            )
+
+            if synthetic_relations:
+                print(f"    Created {len(synthetic_relations)} synthetic relations for orphans")
+                all_relations.extend(synthetic_relations)
+
+                # Update entity_lookup with newly linked orphans
+                for entity in linked_orphans:
+                    entity_id = entity.get('entity_id')
+                    if entity_id and entity_id in entity_lookup:
+                        entity_lookup[entity_id]['hyper_relation'] = entity.get('hyper_relation')
+
+                print(f"    Linked {len(linked_orphans)} orphan entities")
+
+                # Re-validate orphans
+                remaining_orphans = [e for e in merged_entities if not e.get('hyper_relation')]
+                if remaining_orphans:
+                    print(f"    [WARN] {len(remaining_orphans)} orphans remain after linking")
+                else:
+                    print(f"    [SUCCESS] All orphan entities linked!")
+            else:
+                print(f"    [INFO] No linkable orphans found")
         else:
             print(f"    [OK] No orphan entities found")
 
@@ -659,6 +688,157 @@ class EnhancedKGPipeline:
         print(f"[DEBUG] result_dict['relations'] type: {type(result_dict['relations'])}, length: {len(result_dict['relations'])}")
 
         return result_dict
+
+    async def _link_orphan_entities(
+        self,
+        orphan_entities: List[Dict],
+        all_entities: List[Dict],
+        all_relations: List[Dict]
+    ) -> tuple[List[Dict], List[Dict]]:
+        """
+        Link orphan entities by creating synthetic relations.
+
+        Strategy:
+        1. For each orphan entity, find similar entities (by type and context)
+        2. If similar entity has relations, create synthetic relation for orphan
+        3. Link orphan to synthetic relation
+
+        This fixes cross-lingual orphans (e.g., "CIVIL ENGINEERING" vs "সিভিল ইঞ্জিনিয়ারিং")
+
+        Args:
+            orphan_entities: Entities with no relation links
+            all_entities: All merged entities
+            all_relations: All relations
+
+        Returns:
+            (linked_orphans, synthetic_relations)
+        """
+        from bigrag.utils import compute_mdhash_id
+        from bigrag.constants import RELATION_PREFIX
+
+        linked_orphans = []
+        synthetic_relations = []
+
+        # Build index of connected entities by type
+        connected_by_type = {}
+        for entity in all_entities:
+            if entity.get('hyper_relation'):  # Has connection
+                entity_type = entity.get('entity_type', 'unknown')
+                if entity_type not in connected_by_type:
+                    connected_by_type[entity_type] = []
+                connected_by_type[entity_type].append(entity)
+
+        # Process each orphan
+        for orphan in orphan_entities:
+            orphan_type = orphan.get('entity_type', 'unknown')
+            orphan_name = orphan.get('entity_name', '')
+            orphan_id = orphan.get('entity_id')
+
+            if not orphan_id or not orphan_name:
+                continue
+
+            # Strategy 1: Find related entities of same type with connections
+            related_entities = connected_by_type.get(orphan_type, [])
+
+            if related_entities:
+                # Find the best match (by source_id proximity or name similarity)
+                best_match = self._find_best_match(orphan, related_entities)
+
+                if best_match:
+                    # Get the relation of the best match
+                    match_relation_id = best_match.get('hyper_relation')
+                    match_relation = None
+
+                    for rel in all_relations:
+                        if rel.get('relation_id') == match_relation_id:
+                            match_relation = rel
+                            break
+
+                    if match_relation:
+                        # Create synthetic relation for orphan based on matched relation
+                        match_content = match_relation.get('content', '')
+                        match_name = best_match.get('entity_name', '')
+
+                        # Replace matched entity name with orphan name in relation content
+                        if match_name in match_content:
+                            synthetic_content = match_content.replace(match_name, orphan_name)
+                        else:
+                            # Fallback: Create generic relation
+                            synthetic_content = f"{orphan_name} is a {orphan_type} related to {match_name}."
+
+                        # Generate unique relation ID
+                        synthetic_relation_id = compute_mdhash_id(
+                            synthetic_content.strip(),
+                            prefix=RELATION_PREFIX
+                        )
+
+                        # Create synthetic relation
+                        synthetic_relation = {
+                            'role': 'relation',
+                            'content': synthetic_content,
+                            'description': synthetic_content,
+                            'completeness_score': 7,  # Lower than original (synthetic)
+                            'source_id': orphan.get('source_id', 'unknown'),
+                            'relation_id': synthetic_relation_id,
+                            'metadata': {
+                                'extraction_method': 'synthetic_orphan_linking',
+                                'linked_entities': [orphan_id],
+                                'original_relation_id': match_relation_id,
+                                'orphan_entity': orphan_name,
+                                'matched_entity': match_name,
+                                'purpose': 'Link orphan entity (likely cross-lingual duplicate)'
+                            }
+                        }
+
+                        synthetic_relations.append(synthetic_relation)
+
+                        # Link orphan to synthetic relation
+                        orphan['hyper_relation'] = synthetic_relation_id
+                        linked_orphans.append(orphan)
+
+        return linked_orphans, synthetic_relations
+
+    def _find_best_match(self, orphan: Dict, candidates: List[Dict]) -> Optional[Dict]:
+        """
+        Find best matching entity for orphan.
+
+        Matching criteria:
+        1. Same source_id (from same chunk)
+        2. Name similarity (for cross-lingual matches)
+        3. Same entity_type (already filtered)
+
+        Args:
+            orphan: Orphan entity
+            candidates: Candidate entities with connections
+
+        Returns:
+            Best matching entity or None
+        """
+        orphan_source = orphan.get('source_id', '')
+        orphan_name = orphan.get('entity_name', '').lower()
+
+        # Strategy 1: Same source chunk (highest confidence)
+        for candidate in candidates:
+            candidate_source = candidate.get('source_id', '')
+            if orphan_source and candidate_source and orphan_source in candidate_source:
+                return candidate
+
+        # Strategy 2: Name similarity (for cross-lingual: "CSE" matches "সিএসই")
+        # For department_code type, prioritize shorter names (codes)
+        if orphan.get('entity_type') == 'department_code':
+            for candidate in candidates:
+                candidate_name = candidate.get('entity_name', '').lower()
+                # Check if one is abbreviation of other
+                if len(orphan_name) < 10 and candidate_name.startswith(orphan_name[:3]):
+                    return candidate
+                if len(candidate_name) < 10 and orphan_name.startswith(candidate_name[:3]):
+                    return candidate
+
+        # Strategy 3: Return first candidate (fallback)
+        if candidates:
+            return candidates[0]
+
+        return None
 
     async def _save_to_review_queue(self, failed_items: List[Dict], document_metadata: Optional[Dict] = None):
         """Save failed validations to human review queue (JSON file)."""

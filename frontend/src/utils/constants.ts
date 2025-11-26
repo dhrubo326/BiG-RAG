@@ -6,7 +6,14 @@ export const API_ENDPOINTS = {
   HEALTH: '/',
   STATS: '/stats',
 
-  // Chat & Search
+  // Unified API (NEW - Multi-subgraph support)
+  UNIFIED_CHAT: '/api/unified/chat',
+  UNIFIED_ASK: '/api/unified/ask',
+  UNIFIED_QUERY: '/api/unified/query',
+  UNIFIED_REGISTRY: '/api/unified/registry',
+  UNIFIED_SUBGRAPHS: '/api/unified/subgraphs',
+
+  // Legacy Single-Mode API (Deprecated - use unified endpoints)
   ASK: '/ask',
   CHAT_COMPLETIONS: '/chat/completions',
   SEARCH: '/search',

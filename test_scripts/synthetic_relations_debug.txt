@@ -1,0 +1,15 @@
+SYNTHETIC RELATIONS CONTENT:
+================================================================================
+
+1. সিভিল ইঞ্জিনিয়ারিং is a department with code CE and ১২০ seats.
+
+2. বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট is a department with code BECM and ৬০ seats.
+
+3. আরবান এন্ড রিজিওনাল প্লানিং is a department with code URP and ৬০ seats.
+
+4. আর্কিটেকচার is a department with code Arch and ৪০ seats.
+
+5. ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং is a department with code EEE and ১২০ seats.
+
+
+Total synthetic relations with English pattern: 5

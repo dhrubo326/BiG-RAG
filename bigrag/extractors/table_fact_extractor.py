@@ -124,6 +124,7 @@ class TableFactExtractor:
             }
 
             # Extract entities from each cell
+            row_entities = []  # Track entities from this row for synthetic relation generation
             for col_name, cell_value in row.items():
                 entity = TableFactExtractor._cell_to_entity(
                     col_name,
@@ -135,11 +136,22 @@ class TableFactExtractor:
                 )
                 if entity:
                     entities.append(entity)
+                    row_entities.append(entity)
                     # Link entity to relation using entity_id (Option B3: survives name changes)
                     relation['metadata']['linked_entities'].append(entity['entity_id'])
 
             # Add relation after populating linked_entities
             relations.append(relation)
+
+            # NEW: Generate synthetic English relations for potential orphan entities
+            # This fixes orphan entities created by cross-lingual extraction
+            synthetic_relations = TableFactExtractor._generate_synthetic_relations(
+                row,
+                row_entities,
+                chunk_id,
+                table_type
+            )
+            relations.extend(synthetic_relations)
 
         return {
             'relations': relations,
@@ -500,3 +512,101 @@ class TableFactExtractor:
         else:
             # Generic description
             return f"{cell_value} হল {col_name} এর মান।"
+
+    @staticmethod
+    def _generate_synthetic_relations(
+        row: Dict,
+        row_entities: List[Dict],
+        chunk_id: str,
+        table_type: str
+    ) -> List[Dict]:
+        """
+        Generate synthetic English-language relations for entities that may become orphans.
+
+        PURPOSE:
+        Fixes orphan entities created when:
+        - Bengali table content → Bengali relation ("কম্পিউটার সায়েন্স...")
+        - Entity merger creates English entity ("COMPUTER SCIENCE AND ENGINEERING")
+        - English entity name NOT in Bengali relation content → orphan entity (degree=0)
+
+        SOLUTION:
+        Create English-language synthetic relations that explicitly mention entity names,
+        enabling substring matching during entity-relation linking (enhanced_pipeline.py:533).
+
+        Args:
+            row: Original table row data
+            row_entities: Entities extracted from this row
+            chunk_id: Source chunk ID
+            table_type: Table classification
+
+        Returns:
+            List of synthetic relation dicts
+        """
+        synthetic_relations = []
+
+        # Only generate for table types prone to orphans
+        if table_type != 'department_seats':
+            return synthetic_relations
+
+        # Extract key entities from row
+        dept_entity = None
+        code_entity = None
+        seats_entity = None
+
+        for entity in row_entities:
+            entity_type = entity.get('entity_type', '')
+            if entity_type == 'department':
+                dept_entity = entity
+            elif entity_type == 'department_code':
+                code_entity = entity
+            elif entity_type == 'seat_count':
+                seats_entity = entity
+
+        # Generate synthetic relation if we have department info
+        if dept_entity and (code_entity or seats_entity):
+            from bigrag.utils import compute_mdhash_id
+            from bigrag.constants import RELATION_PREFIX
+
+            # Build English relation content
+            dept_name = dept_entity.get('entity_name', '')
+            code_name = code_entity.get('entity_name', '') if code_entity else None
+            seats_count = seats_entity.get('entity_name', '') if seats_entity else None
+
+            # Create relation content with all entity names mentioned
+            relation_content = f"{dept_name} is a department"
+            if code_name:
+                relation_content += f" with code {code_name}"
+            if seats_count:
+                relation_content += f" and {seats_count} seats"
+            relation_content += "."
+
+            # Generate relation ID
+            relation_id = compute_mdhash_id(relation_content.strip(), prefix=RELATION_PREFIX)
+
+            # Collect linked entities
+            linked_entities = [dept_entity['entity_id']]
+            if code_entity:
+                linked_entities.append(code_entity['entity_id'])
+            if seats_entity:
+                linked_entities.append(seats_entity['entity_id'])
+
+            # Create synthetic relation
+            synthetic_relation = {
+                'role': 'relation',
+                'content': relation_content,
+                'description': relation_content,
+                'completeness_score': 8,  # Slightly lower than original (synthetic)
+                'source_id': chunk_id,
+                'relation_id': relation_id,
+                'metadata': {
+                    'extraction_method': 'synthetic_cross_lingual',
+                    'table_type': table_type,
+                    'linked_entities': linked_entities,
+                    'original_relation': 'Bengali table row',
+                    'purpose': 'Prevent orphan entities from cross-lingual extraction'
+                }
+            }
+
+            synthetic_relations.append(synthetic_relation)
+
+        return synthetic_relations

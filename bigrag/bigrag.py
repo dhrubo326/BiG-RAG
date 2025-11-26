@@ -774,7 +774,8 @@ class BiGRAG:
 
         for prod_chunk in chunks:
             # Create BiGRAG chunk ID (hash of content)
-            chunk_id = compute_mdhash_id(prod_chunk['content'], prefix='chunk-')
+            # FIX: Use .strip() for consistent chunk ID generation (matches enhanced pipeline)
+            chunk_id = compute_mdhash_id(prod_chunk['content'].strip(), prefix='chunk-')
 
             bigrag_chunks[chunk_id] = {
                 "content": prod_chunk['content'],

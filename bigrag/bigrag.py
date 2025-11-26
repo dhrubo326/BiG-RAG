@@ -26,6 +26,7 @@ from .utils import (
     logger,
     set_logger,
 )
+from .constants import GRAPH_FIELD_SEP
 from .base import (
     BaseGraphStorage,
     BaseKVStorage,
@@ -949,21 +950,64 @@ class BiGRAG:
                 production_chunk_to_bigrag_id[prod_chunk_id] = chunk_id
 
         logger.info(f"[Enhanced Pipeline] Remapping {len(production_chunk_to_bigrag_id)} chunk IDs in entities/relations")
+        logger.info(f"[Enhanced Pipeline] Chunk ID mapping: {production_chunk_to_bigrag_id}")
         source_id_remapped = 0
+        entities_remapped = 0
+        relations_remapped = 0
+        entities_not_found = 0
 
+        # Remap entity source_ids (handle both single IDs and multi-source IDs with <SEP>)
         for entity in result['entities']:
             old_source_id = entity.get('source_id')
-            if old_source_id and old_source_id in production_chunk_to_bigrag_id:
-                entity['source_id'] = production_chunk_to_bigrag_id[old_source_id]
-                source_id_remapped += 1
+            if not old_source_id:
+                continue
 
+            # Handle multi-source entities (merged from multiple chunks)
+            if GRAPH_FIELD_SEP in str(old_source_id):
+                old_ids = str(old_source_id).split(GRAPH_FIELD_SEP)
+                new_ids = []
+                for old_id in old_ids:
+                    if old_id in production_chunk_to_bigrag_id:
+                        new_ids.append(production_chunk_to_bigrag_id[old_id])
+                    else:
+                        new_ids.append(old_id)  # Keep original if not in mapping
+                        entities_not_found += 1
+                entity['source_id'] = GRAPH_FIELD_SEP.join(new_ids)
+                entities_remapped += 1
+            # Handle single-source entities
+            elif old_source_id in production_chunk_to_bigrag_id:
+                entity['source_id'] = production_chunk_to_bigrag_id[old_source_id]
+                entities_remapped += 1
+            else:
+                entities_not_found += 1
+                logger.debug(f"[Enhanced Pipeline] Entity source_id not in mapping: {old_source_id}")
+
+        # Remap relation source_ids (same logic as entities)
         for relation in result['relations']:
             old_source_id = relation.get('source_id')
-            if old_source_id and old_source_id in production_chunk_to_bigrag_id:
-                relation['source_id'] = production_chunk_to_bigrag_id[old_source_id]
-                source_id_remapped += 1
+            if not old_source_id:
+                continue
 
-        logger.info(f"[Enhanced Pipeline] Remapped {source_id_remapped} source_id references (entities + relations)")
+            # Handle multi-source relations
+            if GRAPH_FIELD_SEP in str(old_source_id):
+                old_ids = str(old_source_id).split(GRAPH_FIELD_SEP)
+                new_ids = []
+                for old_id in old_ids:
+                    if old_id in production_chunk_to_bigrag_id:
+                        new_ids.append(production_chunk_to_bigrag_id[old_id])
+                    else:
+                        new_ids.append(old_id)
+                relation['source_id'] = GRAPH_FIELD_SEP.join(new_ids)
+                relations_remapped += 1
+            # Handle single-source relations
+            elif old_source_id in production_chunk_to_bigrag_id:
+                relation['source_id'] = production_chunk_to_bigrag_id[old_source_id]
+                relations_remapped += 1
+
+        source_id_remapped = entities_remapped + relations_remapped
+        logger.info(f"[Enhanced Pipeline] Remapped {source_id_remapped} source_id references ({entities_remapped} entities + {relations_remapped} relations)")
+        if entities_not_found > 0:
+            logger.warning(f"[Enhanced Pipeline] Found {entities_not_found} entity source_ids not in mapping (may be from table extraction)")
 
         # Step 5: Build bipartite graph from enhanced pipeline result
         try:

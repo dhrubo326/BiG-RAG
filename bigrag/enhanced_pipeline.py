@@ -313,7 +313,7 @@ class EnhancedKGPipeline:
             if validation_status == 'FAIL':
                 # Save to HITL if available
                 if self.hitl_store:
-                    await self.hitl_store.save_failed_table(
+                    self.hitl_store.save_failed_table(
                         table_id=chunk.get('structured_data', {}).get('table_id', 'unknown'),
                         table_data=chunk.get('structured_data', {}),
                         failure_reason='LLM validation failed',
@@ -347,7 +347,7 @@ class EnhancedKGPipeline:
             except Exception as e:
                 # If fact extraction fails, skip and add to review queue
                 if self.hitl_store:
-                    await self.hitl_store.save_failed_table(
+                    self.hitl_store.save_failed_table(
                         table_id=chunk.get('structured_data', {}).get('table_id', 'unknown'),
                         table_data=chunk.get('structured_data', {}),
                         failure_reason=f'Fact extraction error: {str(e)}',
@@ -467,7 +467,7 @@ class EnhancedKGPipeline:
                         # Find the original chunk
                         original_chunk = next((c for c in paragraph_chunks if c['chunk_id'] == failed_chunk_id), None)
                         if original_chunk:
-                            await self.hitl_store.save_failed_chunk(
+                            self.hitl_store.save_failed_chunk(
                                 chunk_id=failed_chunk_id,
                                 chunk_content=original_chunk['content'],
                                 failure_reason="All 3 validation attempts failed",

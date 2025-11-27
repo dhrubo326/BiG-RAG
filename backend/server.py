@@ -140,6 +140,9 @@ if unified_mode:
     # Set unified executor for dependency injection
     dependencies.set_unified_executor(unified_executor)
 
+    # Set server metadata for unified mode (needed for health endpoint)
+    dependencies.set_server_metadata(server_start_time, "unified", str(PROJECT_ROOT / working_dir_base))
+
     # Set dummy instances for single-mode routes (not used in unified mode)
     rag = None
     embedding_manager = None

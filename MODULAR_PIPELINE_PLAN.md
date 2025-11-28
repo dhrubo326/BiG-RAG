@@ -554,6 +554,209 @@ VALIDATION_THRESHOLDS = {
 #     0.2 * source_count +               # How many chunks mention this entity?
 #     0.1 * type_specificity             # Is type specific vs. generic?
 # )
+
+
+# ========== QUALITY SCORING ALGORITHM ==========
+
+def description_quality_score(description: str) -> float:
+    """
+    Calculate quality score for entity description (used in gleaning merge).
+
+    Scoring factors:
+    - Length (40 points max): Longer descriptions are more detailed
+    - Keyword density (30 points max): Informative words (who, what, where, when)
+    - Specificity (30 points max): Numbers, dates, proper names
+
+    Returns: Score 0-100
+
+    Examples:
+        >>> description_quality_score("KUET has 18 departments established in 1967.")
+        85.0  # Good length, has numbers and dates
+
+        >>> description_quality_score("University")
+        10.0  # Too short, no details
+    """
+    if not description:
+        return 0.0
+
+    score = 0.0
+
+    # Factor 1: Length (up to 40 points)
+    length_score = min(len(description) / 5, 40)  # 200 chars = 40 points
+    score += length_score
+
+    # Factor 2: Keyword density (up to 30 points)
+    informative_words = ['who', 'what', 'when', 'where', 'why', 'how', 'which',
+                         'কে', 'কি', 'কোথায়', 'কেন']
+    keyword_count = sum(1 for word in informative_words if word in description.lower())
+    keyword_score = min(keyword_count * 10, 30)
+    score += keyword_score
+
+    # Factor 3: Specificity (up to 30 points)
+    import re
+    has_numbers = bool(re.search(r'\d', description))
+    has_dates = bool(re.search(r'\d{4}|\d{1,2}/\d{1,2}', description))
+    has_names = bool(re.search(r'[A-Z][a-z]+|[অ-হ]{3,}', description))
+
+    specificity_score = (
+        (10 if has_numbers else 0) +
+        (10 if has_dates else 0) +
+        (10 if has_names else 0)
+    )
+    score += specificity_score
+
+    return score
+```
+
+---
+
+## 🔧 Implementation Notes for Developers
+
+### Semantic Chunking Algorithm
+
+**Critical Details** (for `enable_table_detection=True` + `chunk_mode="semantic"`):
+
+#### 1. Accumulation Decision Logic
+
+Decision to flush happens **BEFORE** adding next paragraph:
+
+```python
+# Pseudo-code for paragraph accumulation
+current_tokens = count_tokens(current_chunk)
+para_tokens = count_tokens(next_paragraph)
+
+if current_tokens + para_tokens <= 1000:
+    # Keep accumulating
+    current_chunk.append(next_paragraph)
+elif 1000 < current_tokens + para_tokens <= 1300:
+    # Overflow zone (30% tolerance)
+    if current_tokens >= 1000:
+        flush_current_chunk()  # Already large enough
+        current_chunk = [next_paragraph]
+    else:
+        # Allow overflow to preserve paragraph
+        current_chunk.append(next_paragraph)
+elif current_tokens + para_tokens > 1300:
+    # Hard limit exceeded - MUST flush
+    flush_current_chunk()
+    current_chunk = [next_paragraph]
+```
+
+#### 2. Asymmetric Overlap Strategy
+
+Overlap depends on chunk position:
+
+| Chunk Position | Overlap Before | Overlap After | Total Overlap |
+|----------------|----------------|---------------|---------------|
+| First chunk | 0 tokens | 100 tokens | 100 tokens |
+| Middle chunks | 100 tokens | 100 tokens | 200 tokens |
+| Last chunk | 100 tokens | 0 tokens | 100 tokens |
+| Single chunk | 0 tokens | 0 tokens | 0 tokens |
+
+```python
+# Overlap calculation
+if chunk_index == 0:
+    overlap_before = 0
+    overlap_after = 100
+elif chunk_index == total_chunks - 1:
+    overlap_before = 100
+    overlap_after = 0
+else:
+    overlap_before = 100
+    overlap_after = 100
+```
+
+#### 3. Sentence Boundary Detection
+
+```python
+# Bengali sentence endings: । (dari), ! (exclamation), ? (question)
+# English: . ! ?
+sentence_pattern = r'([।!?।।]+\s*|[.!?]+\s+)'
+
+# Split by sentence endings (keep delimiters)
+sentences = re.split(sentence_pattern, text)
+```
+
+**Reference**: See `Production_pipeline_redesign_plan.md` Step 2 for full implementation.
+
+---
+
+### Gleaning Extraction Implementation
+
+**Two-Stage Process** (when `enable_gleaning=True`):
+
+#### STAGE 1: Initial Extraction with Retry (Error Recovery)
+
+```python
+# Attempt extraction up to 3 times
+for attempt in range(3):
+    result = await extract_once(chunk)
+    validation = validate(result)
+
+    if validation['status'] in ['PASS', 'WARNING']:
+        break  # Proceed to Stage 2
+    elif attempt == 2:
+        # All 3 attempts failed
+        if hitl_store:
+            hitl_store.save_failed_chunk(chunk, validation)
+        return None  # Skip this chunk
+```
+
+**Key Points**:
+- Retries use **SAME prompt** (stateless error recovery)
+- If any attempt passes → proceed to gleaning
+- If all fail → save to HITL and skip
+
+#### STAGE 2: Gleaning (Refinement, Only if Stage 1 Succeeded)
+
+```python
+# Only runs if initial extraction passed
+merged_extraction = initial_result
+conversation_history = [initial_prompt, initial_response]
+
+for gleaning_pass in range(max_gleaning_iterations):
+    # Create continue-extraction prompt
+    continue_prompt = "CONTINUE EXTRACTION: Find any additional entities..."
+    conversation_history.append({"role": "user", "content": continue_prompt})
+
+    # Call LLM with conversation history
+    glean_result = await llm.complete(conversation_history)
+    conversation_history.append({"role": "assistant", "content": glean_result})
+
+    # Validate gleaned extraction
+    validation = validate(glean_result)
+
+    if validation['status'] in ['PASS', 'WARNING']:
+        # Merge using quality-based comparison
+        merged_extraction = merge_by_quality(merged_extraction, glean_result)
+```
+
+#### Critical Clarifications
+
+1. **Gleaning is REFINEMENT, not error recovery**
+   - Only runs after successful initial extraction
+   - Uses conversation history (NOT stateless retries)
+
+2. **Quality Tiebreaker Hierarchy**
+   - Primary: Quality score (use `description_quality_score()`)
+   - Secondary: Description length
+   - Tertiary: First-seen (stable sort)
+
+3. **key_score Aggregation**
+   ```python
+   # IMPORTANT: SUM across passes, don't average
+   merged_entity['key_score'] = base_score + glean_score  # e.g., 60 + 70 = 130
+   ```
+
+4. **Context Window Management**
+   - Skip examples in gleaning prompts (~400 tokens saved)
+   - Reserve 2000 tokens for response
+   - Total context budget: ~4096 tokens
+
+**Reference**: See `Production_pipeline_redesign_plan.md` Step 3 for full implementation.
+
+---
+
 ```
 
 #### 1.2 Create Unified Pipeline Class
@@ -1075,6 +1278,213 @@ logger.info(f"Failed chunks: {failed_chunks} (saved to HITL queue)")
 logger.info(f"Validation strictness: {self.features.validation_strictness}")
 logger.info("=" * 80)
 ```
+
+---
+
+## 🔄 Human-in-the-Loop (HITL) System
+
+### Overview
+
+When `enable_hitl=True`, the pipeline captures and stores failed extractions for human review and later reprocessing.
+
+**Problem Solved**:
+- Failed chunks are no longer lost (previously only logged)
+- Humans can review and correct extraction failures
+- Pipeline continues gracefully while tracking what failed
+
+### Storage Structure
+
+```
+expr/{dataset}/failed_extractions/
+├── failed_chunks.json       # Paragraph extraction failures
+├── failed_tables.json       # Table extraction failures
+└── review_queue.json        # Pending human review
+```
+
+### Implementation
+
+**File**: `bigrag/hitl/failed_extraction_store.py`
+
+```python
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+
+class FailedExtractionStore:
+    """
+    Store failed extractions for human review and later reprocessing.
+
+    Usage:
+        store = FailedExtractionStore("expr/my_dataset")
+        store.save_failed_chunk(chunk_id, content, reason, validation, doc_id)
+    """
+
+    def __init__(self, dataset_path: str):
+        self.base_path = Path(dataset_path) / "failed_extractions"
+        self.base_path.mkdir(parents=True, exist_ok=True)
+
+        self.chunks_file = self.base_path / "failed_chunks.json"
+        self.tables_file = self.base_path / "failed_tables.json"
+        self.queue_file = self.base_path / "review_queue.json"
+
+    def save_failed_chunk(
+        self,
+        chunk_id: str,
+        chunk_content: str,
+        failure_reason: str,
+        validation_details: Dict,
+        document_id: str,
+        metadata: Optional[Dict] = None
+    ):
+        """Save failed chunk extraction for human review."""
+
+        failure_record = {
+            "extraction_id": f"chunk_{chunk_id}_{datetime.now().timestamp()}",
+            "type": "chunk",
+            "chunk_id": chunk_id,
+            "document_id": document_id,
+            "content": chunk_content,
+            "failure_reason": failure_reason,
+            "validation_details": validation_details,
+            "metadata": metadata or {},
+            "timestamp": datetime.now().isoformat(),
+            "status": "pending_review"
+        }
+
+        self._append_to_file(self.chunks_file, failure_record)
+        self._add_to_review_queue(failure_record)
+
+    def save_failed_table(
+        self,
+        table_id: str,
+        table_data: Dict,
+        failure_reason: str,
+        document_id: str
+    ):
+        """Save failed table extraction for human review."""
+
+        failure_record = {
+            "extraction_id": f"table_{table_id}_{datetime.now().timestamp()}",
+            "type": "table",
+            "table_id": table_id,
+            "document_id": document_id,
+            "table_data": table_data,
+            "failure_reason": failure_reason,
+            "timestamp": datetime.now().isoformat(),
+            "status": "pending_review"
+        }
+
+        self._append_to_file(self.tables_file, failure_record)
+        self._add_to_review_queue(failure_record)
+
+    def get_failed_extractions(self, document_id: Optional[str] = None) -> List[Dict]:
+        """Retrieve all failed extractions (optionally filtered by document)."""
+
+        all_failures = []
+
+        # Load chunks
+        if self.chunks_file.exists():
+            with open(self.chunks_file) as f:
+                all_failures.extend(json.load(f))
+
+        # Load tables
+        if self.tables_file.exists():
+            with open(self.tables_file) as f:
+                all_failures.extend(json.load(f))
+
+        # Filter by document if specified
+        if document_id:
+            all_failures = [f for f in all_failures if f["document_id"] == document_id]
+
+        return all_failures
+
+    def mark_reviewed(self, extraction_id: str, corrected_data: Dict):
+        """Mark extraction as human-reviewed with corrections."""
+        # Update status in review_queue.json
+        pass
+
+    def _append_to_file(self, file_path: Path, record: Dict):
+        """Append record to JSON file."""
+        records = []
+        if file_path.exists():
+            with open(file_path) as f:
+                records = json.load(f)
+
+        records.append(record)
+
+        with open(file_path, 'w') as f:
+            json.dump(records, f, indent=2, ensure_ascii=False)
+
+    def _add_to_review_queue(self, record: Dict):
+        """Add to review queue."""
+        self._append_to_file(self.queue_file, record)
+```
+
+### Integration Example
+
+**In extractor** (when extraction fails):
+
+```python
+# bigrag/extractors/llm_extractor.py
+
+async def extract(self, chunk):
+    result = await self._attempt_extraction(chunk)
+
+    if result is None and self.hitl_store:
+        # Save failed chunk for human review
+        await self.hitl_store.save_failed_chunk(
+            chunk_id=chunk['chunk_id'],
+            chunk_content=chunk['content'],
+            failure_reason="All validation attempts failed",
+            validation_details=last_validation_result,
+            document_id=chunk.get('metadata', {}).get('doc_id'),
+            metadata=chunk.get('metadata')
+        )
+        logger.warning(f"Chunk {chunk['chunk_id']} saved to HITL queue")
+
+    return result  # Continue with other chunks
+```
+
+### API Endpoints
+
+**File**: `backend/api/hitl_routes.py`
+
+```python
+from fastapi import APIRouter
+from bigrag.hitl.failed_extraction_store import FailedExtractionStore
+
+router = APIRouter(prefix="/hitl", tags=["Human-in-the-Loop"])
+
+@router.get("/failed-extractions/{dataset_name}")
+async def get_failed_extractions(dataset_name: str, document_id: Optional[str] = None):
+    """Get failed extractions for human review."""
+    store = FailedExtractionStore(f"expr/{dataset_name}")
+    failures = store.get_failed_extractions(document_id)
+
+    return {
+        "dataset": dataset_name,
+        "total_failures": len(failures),
+        "failures": failures
+    }
+
+@router.post("/correct-extraction/{extraction_id}")
+async def submit_correction(extraction_id: str, corrected_data: Dict):
+    """Submit human-corrected extraction."""
+    return {"status": "correction_saved", "extraction_id": extraction_id}
+
+@router.post("/reprocess/{extraction_id}")
+async def reprocess_extraction(extraction_id: str):
+    """Reprocess corrected extraction into graph."""
+    return {"status": "reprocessed", "extraction_id": extraction_id}
+```
+
+### Benefits
+
+- **No data loss**: All failures captured for later review
+- **Human oversight**: Domain experts can correct extraction errors
+- **Quality improvement**: Failed cases inform prompt engineering
+- **Debugging aid**: Understand why certain chunks fail validation
 
 ---
 

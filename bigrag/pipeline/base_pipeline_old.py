@@ -9,7 +9,7 @@ Architecture:
     - Import existing components from operate.py (no code duplication)
     - Feature-flag based configuration
     - Graceful degradation on errors
-    - HITL integration for failed extractions
+    - HITL integration for failed extractions (Week 2-3)
 """
 
 import asyncio
@@ -46,15 +46,14 @@ class UnifiedPipeline:
     Architecture:
         1. Chunking (required) - token-based or table-aware
         2. Extraction (required) - with optional gleaning
-        3. Validation (optional) - numeric/entity/relation validation
-        4. Merging (required) - basic or fuzzy entity deduplication
-        5. HITL (optional) - save failed extractions for review
+        3. Validation (optional) - Week 2-3
+        4. Merging (required) - Week 2-3
+        5. HITL (optional) - Week 2-3
 
     Features:
         - Zero code duplication (imports from operate.py)
         - Graceful degradation (feature failures don't crash pipeline)
         - Production-ready error handling
-        - HITL integration
     """
 
     def __init__(
@@ -92,7 +91,6 @@ class UnifiedPipeline:
         # Initialize components based on features
         self.chunker = self._init_chunker()
         self.extractor = self._init_extractor()
-        self.hitl_store = self._init_hitl() if features.enable_hitl else None
 
     def _detect_preset(self) -> str:
         """Detect which preset was used (for logging)."""
@@ -155,17 +153,9 @@ class UnifiedPipeline:
             api_key=self.features.openai_api_key,
             model=self.llm_model,
             enable_gleaning=self.features.enable_gleaning,
-            max_gleaning_iterations=self.features.max_gleaning_iterations,
-            extraction_concurrency=self.features.extraction_concurrency
+            max_gleaning_iterations=self.features.max_gleaning_iterations
+            # Note: extraction_concurrency is handled by extract_entities() function, not the extractor
         )
-
-    def _init_hitl(self):
-        """Initialize HITL store if enabled."""
-        if not self.features.enable_hitl or not self.dataset_path:
-            return None
-
-        logger.info(f"[Unified Pipeline] HITL enabled: {self.dataset_path}")
-        return FailedExtractionStore(self.dataset_path)
 
     async def process_document(
         self,
@@ -175,8 +165,7 @@ class UnifiedPipeline:
         """
         Process document through modular pipeline.
 
-        This is a THIN WRAPPER around existing operate.py functions.
-        All actual processing happens in operate.py (no code duplication).
+        This is a STUB for Week 1 smoke tests - full implementation in Week 2.
 
         Args:
             content: Document text
@@ -190,146 +179,25 @@ class UnifiedPipeline:
                 'statistics': Dict,        # Counts and metrics
                 'pipeline_metadata': Dict  # Pipeline configuration info
             }
-
-        Raises:
-            Exception: If critical pipeline step fails (with detailed error message)
         """
         metadata = metadata or {}
-        result = {
+
+        # For Week 1: Just return a stub response to verify instantiation works
+        logger.warning("[Pipeline] process_document() is a stub for Week 1 - full implementation in Week 2")
+
+        return {
             'chunks': [],
             'entities': [],
             'relations': [],
-            'statistics': {},
+            'statistics': {
+                'total_chunks': 0,
+                'total_entities': 0,
+                'total_relations': 0
+            },
             'pipeline_metadata': {
                 'preset': self._detect_preset(),
                 'features': self._summarize_features(),
-                'version': self.features.pipeline_version
+                'version': self.features.pipeline_version,
+                'status': 'WEEK_1_STUB'
             }
         }
-
-        try:
-            # Step 1: Chunking (REQUIRED)
-            logger.info("[Pipeline] Step 1: Chunking...")
-            chunks = await self._chunk_document(content, metadata)
-            result['chunks'] = chunks
-            logger.info(f"[Pipeline] Created {len(chunks)} chunks")
-
-            # Step 2: Extraction (REQUIRED)
-            logger.info("[Pipeline] Step 2: Extraction...")
-            entities, relations = await self._extract_entities_relations(chunks, metadata)
-            result['entities'] = entities
-            result['relations'] = relations
-            logger.info(f"[Pipeline] Extracted {len(entities)} entities, {len(relations)} relations")
-
-            # Step 3: Statistics
-            result['statistics'] = {
-                'total_chunks': len(chunks),
-                'total_entities': len(entities),
-                'total_relations': len(relations),
-                'avg_entities_per_chunk': len(entities) / len(chunks) if chunks else 0
-            }
-
-            logger.info("[Pipeline] ✓ Processing complete")
-            return result
-
-        except Exception as e:
-            logger.error(f"[Pipeline] ✗ Processing failed: {e}")
-            raise
-
-    async def _chunk_document(
-        self,
-        content: str,
-        metadata: Dict
-    ) -> List[Dict]:
-        """
-        Chunk document using selected chunking strategy.
-
-        Uses existing operate.py functions (NO CODE DUPLICATION).
-        """
-        try:
-            if self.chunker:
-                # Table-aware chunking (enhanced pipeline)
-                chunks = await self.chunker.chunk_document(content, metadata)
-            else:
-                # Token-based chunking (standard pipeline)
-                chunks = chunking_by_token_size(
-                    content,
-                    chunk_token_size=self.features.chunk_size,
-                    chunk_overlap_token_size=self.features.chunk_overlap,
-                    tiktoken_model=self.llm_model
-                )
-                # Convert to dict format with metadata
-                chunks = [
-                    {
-                        'content': chunk,
-                        'metadata': metadata,
-                        'chunk_order_index': i
-                    }
-                    for i, chunk in enumerate(chunks)
-                ]
-
-            return chunks
-
-        except Exception as e:
-            logger.error(f"[Pipeline] Chunking failed: {e}")
-            # Graceful degradation: fallback to token-based chunking
-            if self.chunker:
-                logger.warning("[Pipeline] Falling back to token-based chunking")
-                chunks = chunking_by_token_size(
-                    content,
-                    chunk_token_size=self.features.chunk_size,
-                    chunk_overlap_token_size=self.features.chunk_overlap,
-                    tiktoken_model=self.llm_model
-                )
-                return [
-                    {
-                        'content': chunk,
-                        'metadata': metadata,
-                        'chunk_order_index': i
-                    }
-                    for i, chunk in enumerate(chunks)
-                ]
-            else:
-                raise  # If token chunking fails, we can't proceed
-
-    async def _extract_entities_relations(
-        self,
-        chunks: List[Dict],
-        metadata: Dict
-    ) -> tuple[List[Dict], List[Dict]]:
-        """
-        Extract entities and relations from chunks.
-
-        Uses existing operate.py functions (NO CODE DUPLICATION).
-        """
-        try:
-            # Use ConstrainedLLMExtractor (handles gleaning internally)
-            entities = []
-            relations = []
-
-            for chunk in chunks:
-                chunk_content = chunk.get('content', chunk) if isinstance(chunk, dict) else chunk
-
-                # Extract from chunk
-                extraction_result = await self.extractor.extract_from_chunk(
-                    chunk_content,
-                    metadata=metadata
-                )
-
-                # Handle HITL if enabled
-                if extraction_result.get('failed') and self.hitl_store:
-                    await self.hitl_store.save_failed_extraction(
-                        chunk_content,
-                        extraction_result.get('error'),
-                        metadata
-                    )
-
-                # Collect results
-                entities.extend(extraction_result.get('entities', []))
-                relations.extend(extraction_result.get('relations', []))
-
-            return entities, relations
-
-        except Exception as e:
-            logger.error(f"[Pipeline] Extraction failed: {e}")
-            raise

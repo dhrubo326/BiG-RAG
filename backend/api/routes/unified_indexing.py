@@ -219,7 +219,7 @@ async def index_document_with_features(
             # Background processing
             background_tasks.add_task(
                 _process_with_bigrag,
-                data_source,
+                str(expr_dir),  # Pass absolute path (not dataset name)
                 doc_id,
                 content_text,
                 doc_title,
@@ -231,7 +231,7 @@ async def index_document_with_features(
         else:
             # Synchronous processing
             await _process_with_bigrag(
-                data_source,
+                str(expr_dir),  # Pass absolute path (not dataset name)
                 doc_id,
                 content_text,
                 doc_title,
@@ -279,7 +279,7 @@ async def index_document_with_features(
 
 
 async def _process_with_bigrag(
-    dataset_name: str,
+    working_dir: str,
     document_id: str,
     content: str,
     title: str,
@@ -289,17 +289,31 @@ async def _process_with_bigrag(
     """
     Process document using BiGRAG with EnhancedPipeline.
 
-    BiGRAG handles:
-    - EnhancedPipeline initialization with features
-    - Graph building from pipeline results
-    - Storage to all backends (GraphML, vector DBs, KV stores)
+    Args:
+        working_dir: Absolute path to dataset directory (e.g., D:/BiG-RAG/expr/kuet_test)
+                    This ensures files are created in the correct location regardless of CWD.
+        document_id: Unique document identifier
+        content: Document content (markdown text)
+        title: Document title
+        metadata: Document metadata dict
+        features: Pipeline feature configuration
+
+    Returns:
+        Dict with processing result
+
+    Note:
+        This function uses dependency injection pattern (working_dir as parameter)
+        to match the architecture of /datasets/create-and-index endpoint.
+        The caller computes the absolute path once and passes it here.
     """
     try:
         logger.info(f"[Indexing] Processing {document_id}")
+        logger.debug(f"[Indexing] Working directory: {working_dir}")
 
-        # Initialize BiGRAG with features
+        # Initialize BiGRAG with absolute path
+        # Path is pre-computed by caller using PROJECT_ROOT, ensuring correct location
         rag = BiGRAG(
-            working_dir=f"expr/{dataset_name}",
+            working_dir=working_dir,  # Use absolute path directly (not relative)
             pipeline_features=features
         )
 

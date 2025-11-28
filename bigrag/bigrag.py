@@ -468,56 +468,133 @@ class BiGRAG:
             update_storage = True
             logger.info(f"[New Docs] inserting {len(new_docs)} docs")
 
-            # Use standard pipeline (UnifiedPipeline integration deferred to Week 4)
-            # For now, pipeline_features is accepted but standard extraction is used
-            logger.info(f"[BiGRAG] Using standard extraction pipeline")
-            if self.pipeline_features:
-                # Log which features are configured (for future use)
-                logger.debug(f"[BiGRAG] Pipeline features configured: {self.pipeline_features}")
+            # Use Unified Modular Pipeline (Week 4 integration complete)
+            from bigrag.pipeline.base_pipeline import UnifiedPipeline
+            from bigrag.builders.bipartite_graph_builder import build_bipartite_graph_from_pipeline
 
+            # Initialize pipeline with configured features
+            pipeline = UnifiedPipeline(
+                features=self.pipeline_features,
+                dataset_path=self.working_dir,
+                llm_model=self.tiktoken_model_name
+            )
+
+            # Process all documents through unified pipeline
             inserting_chunks = {}
+            all_pipeline_results = []
+
             for doc_key, doc in tqdm_async(
-                new_docs.items(), desc="Chunking documents", unit="doc"
+                new_docs.items(), desc="Processing documents", unit="doc"
             ):
-                chunks = {
-                    compute_mdhash_id(dp["content"], prefix="chunk-"): {
-                        **dp,
+                # Process document through unified pipeline
+                result = await pipeline.process_document(
+                    content=doc["content"],
+                    metadata={"title": doc.get("title", ""), **doc.get("metadata", {})}
+                )
+
+                # Store result for later graph building
+                all_pipeline_results.append((doc_key, result))
+
+                # Extract and convert chunks to BiGRAG format
+                for chunk in result['chunks']:
+                    chunk_content = chunk.get('content', '')
+                    if not chunk_content:
+                        continue
+
+                    chunk_id = compute_mdhash_id(chunk_content, prefix="chunk-")
+                    inserting_chunks[chunk_id] = {
+                        "content": chunk_content,
                         "full_doc_id": doc_key,
+                        "doc_title": doc.get("title", ""),
+                        "doc_metadata": doc.get("metadata", {}),
+                        "chunk_order_index": chunk.get('chunk_order_index', 0),
+                        "metadata": chunk.get('metadata', {}),
                     }
-                    for dp in chunking_by_token_size(
-                        doc["content"],
-                        overlap_token_size=self.chunk_overlap_token_size,
-                        max_token_size=self.chunk_token_size,
-                        tiktoken_model=self.tiktoken_model_name,
-                        doc_title=doc.get("title", ""),
-                        doc_metadata=doc.get("metadata", {}),
-                    )
-                }
-                inserting_chunks.update(chunks)
+
+            # Filter out already-stored chunks
             _add_chunk_keys = await self.text_chunks.filter_keys(
                 list(inserting_chunks.keys())
             )
             inserting_chunks = {
                 k: v for k, v in inserting_chunks.items() if k in _add_chunk_keys
             }
+
             if not len(inserting_chunks):
                 logger.warning("All chunks are already in the storage")
                 return
             logger.info(f"[New Chunks] inserting {len(inserting_chunks)} chunks")
 
-            logger.info("[Entity Extraction]...")
-            maybe_new_kg = await extract_entities(
-                inserting_chunks,
-                knowledge_graph_inst=self.chunk_entity_relation_graph,
-                vdb_entities=self.vdb_entities,
-                vdb_relations=self.vdb_relations,
-                global_config=asdict(self),
-            )
-            if maybe_new_kg is None:
-                logger.warning("No new relations and entities found")
-                return
-            self.chunk_entity_relation_graph = maybe_new_kg
+            # Build KG from pipeline results (FIXED - use entities/relations from pipeline)
+            logger.info("[Building Knowledge Graph from Unified Pipeline Results]...")
 
+            for doc_key, result in all_pipeline_results:
+                # Step 1: Remap chunk source_ids to hash-based IDs
+                logger.info(f"[Unified Pipeline] Remapping chunk IDs for doc {doc_key}...")
+                chunk_id_mapping = {}
+
+                for chunk in result['chunks']:
+                    chunk_content = chunk.get('content', '').strip()
+                    hash_id = compute_mdhash_id(chunk_content, prefix="chunk-")
+                    prod_chunk_id = chunk.get('chunk_id') or chunk.get('source_id')
+                    if prod_chunk_id:
+                        chunk_id_mapping[prod_chunk_id] = hash_id
+
+                # Step 2: Remap entity source_ids
+                entities_remapped = 0
+                for entity in result['entities']:
+                    old_source_id = entity.get('source_id')
+                    old_source_ids = entity.get('source_ids')  # From entity linking
+
+                    # Handle plural source_ids (from merged entities)
+                    if old_source_ids and isinstance(old_source_ids, list):
+                        new_ids = []
+                        for old_id in old_source_ids:
+                            new_ids.append(chunk_id_mapping.get(old_id, old_id))
+                        entity['source_ids'] = new_ids
+                        entities_remapped += 1
+                    # Handle singular source_id
+                    elif old_source_id and old_source_id in chunk_id_mapping:
+                        entity['source_id'] = chunk_id_mapping[old_source_id]
+                        entities_remapped += 1
+
+                # Step 3: Remap relation source_ids
+                relations_remapped = 0
+                for relation in result['relations']:
+                    old_source_id = relation.get('source_id')
+                    if not old_source_id:
+                        continue
+
+                    # Handle multi-source relations (separated by GRAPH_FIELD_SEP)
+                    if GRAPH_FIELD_SEP in str(old_source_id):
+                        old_ids = str(old_source_id).split(GRAPH_FIELD_SEP)
+                        new_ids = []
+                        for old_id in old_ids:
+                            new_ids.append(chunk_id_mapping.get(old_id, old_id))
+                        relation['source_id'] = GRAPH_FIELD_SEP.join(new_ids)
+                        relations_remapped += 1
+                    # Handle single-source relations
+                    elif old_source_id in chunk_id_mapping:
+                        relation['source_id'] = chunk_id_mapping[old_source_id]
+                        relations_remapped += 1
+
+                logger.info(f"[Unified Pipeline] Remapped {entities_remapped} entity refs + {relations_remapped} relation refs")
+
+                # Step 4: Build bipartite graph from pipeline result
+                try:
+                    graph_stats = await build_bipartite_graph_from_pipeline(
+                        pipeline_result=result,
+                        knowledge_graph_inst=self.chunk_entity_relation_graph,
+                        vdb_entities=self.vdb_entities,
+                        vdb_relations=self.vdb_relations
+                    )
+                    logger.info(f"[Unified Pipeline] Graph built: {graph_stats}")
+                except Exception as e:
+                    logger.error(f"[Unified Pipeline] Graph building failed: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    raise
+
+            # Store documents and chunks
             await self.full_docs.upsert(new_docs)
             await self.text_chunks.upsert(inserting_chunks)
 

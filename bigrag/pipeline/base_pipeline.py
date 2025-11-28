@@ -281,8 +281,14 @@ class UnifiedPipeline:
     async def _chunk_document(self, content: str, metadata: Dict) -> List[Dict]:
         """Chunk document using selected strategy (DIRECT function calls)."""
         if self.chunker:
-            # Use TableAwareChunker DIRECTLY
-            chunks = await self.chunker.chunk_document(content, metadata)
+            # Use TableAwareChunker DIRECTLY with correct parameters
+            chunks = await self.chunker.chunk_document(
+                markdown_text=content,
+                chunk_size=self.features.chunk_size,
+                overlap=self.features.chunk_overlap,
+                metadata=metadata,
+                use_semantic_chunking=(self.features.chunk_mode == "semantic")
+            )
             # Normalize format
             result_chunks = []
             for i, chunk in enumerate(chunks):

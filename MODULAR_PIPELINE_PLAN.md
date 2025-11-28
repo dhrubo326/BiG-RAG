@@ -8,13 +8,20 @@
 
 ## 🎯 Executive Summary
 
-Transform BiG-RAG from 3 separate pipelines into **ONE modular unified pipeline** that:
-- ✅ Keeps proven **standard pipeline** (`operate.py`) as the reliable foundation
-- ✅ Preserves **all enhanced features** (table extraction, validation, smart chunking)
-- ✅ Allows **mix-and-match features** via simple configuration flags
-- ✅ Maintains **100% backward compatibility** with existing code
+**🚨 DEVELOPMENT PHILOSOPHY**: Build the ideal modular pipeline - **NO backward compatibility constraints**.
 
-**Core Philosophy**: "Use what you need, skip what you don't"
+Replace all existing pipelines with **ONE modular unified pipeline** that:
+- ✅ Imports proven components from `operate.py` (don't duplicate code)
+- ✅ Integrates **all enhanced features** (table extraction, validation, smart chunking)
+- ✅ Allows **mix-and-match features** via simple configuration flags
+- ✅ Clean, modern architecture - **no legacy support needed**
+
+**Core Philosophy**: "Build it right, not backward compatible"
+
+**Project Status**:
+- 🟢 **Development Phase** - APIs can change, graphs will be rebuilt, old code is reference only
+- 🟢 **Old pipelines kept for emergency rollback only** - Not for gradual migration
+- 🟢 **Focus**: Clean, modular, ideal implementation (not compatibility layers)
 
 ---
 
@@ -754,6 +761,351 @@ for gleaning_pass in range(max_gleaning_iterations):
    - Total context budget: ~4096 tokens
 
 **Reference**: See `Production_pipeline_redesign_plan.md` Step 3 for full implementation.
+
+---
+
+## 📋 Implementation Decisions & Developer FAQ
+
+**🚨 IMPORTANT**: This is a **greenfield development** - focus on ideal implementation, NOT backward compatibility.
+
+### Decision 1: Code Reuse Strategy
+
+**Question**: Should we copy code from `operate.py` or import it?
+
+**ANSWER**: **IMPORT, NEVER COPY** ✅
+
+**Reasoning**:
+- `operate.py` has battle-tested functions (`chunking_by_token_size`, `extract_entities`, etc.)
+- Copying = maintenance nightmare (bugs fixed in 2 places)
+- Importing = single source of truth
+
+**Example**:
+```python
+# ✅ CORRECT - Import and wrap
+from bigrag.operate import chunking_by_token_size as _token_chunk_impl
+
+class TokenChunker:
+    def chunk(self, text, size, overlap):
+        return _token_chunk_impl(text, size, overlap)
+
+# ❌ WRONG - Copy-paste code
+class TokenChunker:
+    def chunk(self, text, size, overlap):
+        # 200 lines of copied code from operate.py
+```
+
+**Action**: Always import from existing modules. Create thin wrappers if needed for interface consistency.
+
+---
+
+### Decision 2: Existing Component Reuse
+
+**Question**: Which existing components should we reuse?
+
+**ANSWER**: Reuse **ALL** existing well-tested components ✅
+
+**Reuse Table**:
+
+| Component | File | Status | Action |
+|-----------|------|--------|--------|
+| Token chunking | `operate.py::chunking_by_token_size` | ✅ Production | Import |
+| Entity extraction | `operate.py::extract_entities` | ✅ Production | Import |
+| **Table extraction** | `preprocessors/table_extractor.py` | ✅ Tested | Import |
+| **Smart chunking** | `preprocessors/smart_chunker.py` (627 lines) | ✅ Tested | Import |
+| **Constrained extraction** | `extractors/constrained_extractor.py` | ✅ Has gleaning | Import |
+| **Table fact extraction** | `extractors/table_fact_extractor.py` | ✅ Tested | Import |
+| **Numeric validation** | `validators/numeric_validator.py` | ✅ Tested | Import |
+| **Entity merging** | `merging/entity_linker.py` | ✅ Multiple strategies | Import |
+| **HITL system** | `hitl/failed_extraction_store.py` (460 lines) | ✅ Complete | Import |
+
+**What's NEW** (needs implementation):
+- `bigrag/pipeline/features.py` - PipelineFeatures dataclass + VALIDATION_THRESHOLDS
+- `bigrag/pipeline/base_pipeline.py` - UnifiedPipeline orchestrator
+- `bigrag/utils/quality_scoring.py` - description_quality_score() function
+
+**That's it!** Only 3 new files. Everything else is imported.
+
+---
+
+### Decision 3: Directory Structure
+
+**Question**: Follow exact structure in plan or adapt?
+
+**ANSWER**: **Minimal new directories - leverage existing structure** ✅
+
+**Final Structure**:
+```
+bigrag/
+├── pipeline/                    # NEW - Only 2 files
+│   ├── __init__.py
+│   ├── features.py              # PipelineFeatures + VALIDATION_THRESHOLDS
+│   └── base_pipeline.py         # UnifiedPipeline class
+│
+├── preprocessors/               # EXISTING - Import from here
+│   ├── table_extractor.py       # Has: GPT4TableExtractor
+│   └── smart_chunker.py         # Has: TableAwareChunker
+│
+├── extractors/                  # EXISTING - Import from here
+│   ├── constrained_extractor.py # Has: ConstrainedLLMExtractor (with gleaning!)
+│   └── table_fact_extractor.py  # Has: TableFactExtractor
+│
+├── validators/                  # EXISTING - Import from here
+│   └── numeric_validator.py     # Has: NumericValidator
+│
+├── merging/                     # EXISTING - Import from here
+│   ├── entity_linker.py         # Has: SimpleEntityLinker, ProductionEntityLinker
+│   └── canonicalization.py      # Has: EntityCanonicalizationMap
+│
+├── hitl/                        # EXISTING - Import from here
+│   └── failed_extraction_store.py  # Has: FailedExtractionStore (complete!)
+│
+├── utils/                       # NEW - Add 1 file
+│   └── quality_scoring.py       # NEW: description_quality_score() function
+│
+├── operate.py                   # EXISTING - Import core functions
+│
+└── [OLD PIPELINES - IGNORE]     # For emergency rollback only
+    ├── production_pipeline.py   # Don't touch, don't import
+    ├── enhanced_pipeline.py     # Don't touch, don't import
+    └── educational_pipeline.py  # Don't touch, don't import
+```
+
+**Why this structure**:
+- ✅ Only 3 new files (minimal code to write)
+- ✅ Maximum reuse of tested code
+- ✅ Clear separation: `pipeline/` = orchestration, everything else = execution
+- ✅ No complex migration or compatibility layers
+
+---
+
+### Decision 4: Gleaning Implementation
+
+**Question**: Is gleaning already implemented?
+
+**ANSWER**: **YES - Already perfect in ConstrainedLLMExtractor** ✅
+
+**Current Implementation** (`extractors/constrained_extractor.py` lines 65-80):
+- ✅ Stage 1: Retry with validation (up to 3 attempts)
+- ✅ Stage 2: Gleaning refinement (if `enable_gleaning=True`)
+- ✅ Quality-based merging
+
+**What You Need to Do**:
+1. Import `ConstrainedLLMExtractor`
+2. Pass `enable_gleaning` parameter from `PipelineFeatures`
+3. **That's it!**
+
+**Example**:
+```python
+# In UnifiedPipeline.__init__
+if self.features.enable_gleaning:
+    self.extractor = ConstrainedLLMExtractor(
+        api_key=self.features.openai_api_key,
+        enable_gleaning=True,
+        max_gleaning_iterations=self.features.max_gleaning_iterations,
+        hitl_store=self.hitl_store
+    )
+```
+
+**What's NEW**: Quality scoring function (`description_quality_score()`) - implement in `utils/quality_scoring.py`.
+
+---
+
+### Decision 5: Semantic Chunking
+
+**Question**: Does TableAwareChunker already have semantic chunking?
+
+**ANSWER**: **Check and verify, likely YES** ⚠️
+
+**Action Steps**:
+1. Read `bigrag/preprocessors/smart_chunker.py` (627 lines)
+2. Check for:
+   - ✅ Table-aware chunking (likely present)
+   - ❓ Asymmetric overlap (first/middle/last chunks)
+   - ❓ Bengali sentence detection (।!?)
+   - ❓ 30% overflow tolerance
+3. If missing features: Add them to `smart_chunker.py` directly
+4. Import in `UnifiedPipeline`
+
+**Usage**:
+```python
+# In UnifiedPipeline.__init__
+if self.features.enable_table_detection:
+    from bigrag.preprocessors.table_extractor import GPT4TableExtractor
+    from bigrag.preprocessors.smart_chunker import TableAwareChunker
+
+    self.table_extractor = GPT4TableExtractor(api_key=self.features.openai_api_key)
+    self.chunker = TableAwareChunker(self.table_extractor)
+else:
+    # Use token-based chunking from operate.py
+    from bigrag.operate import chunking_by_token_size
+    self.chunker = lambda text: chunking_by_token_size(text, 1200, 100)
+```
+
+---
+
+### Decision 6: HITL Integration
+
+**Question**: Do we need to create HITL system?
+
+**ANSWER**: **NO - Already exists and is perfect** ✅
+
+**Existing Implementation**:
+- File: `bigrag/hitl/failed_extraction_store.py` (460 lines)
+- Has: `save_failed_chunk()`, `save_failed_table()`, `get_failed_extractions()`
+- Matches plan exactly
+
+**What You Need**:
+1. ✅ Import `FailedExtractionStore`
+2. ✅ Pass to extractors
+3. ❓ Check if API endpoints exist (`backend/api/hitl_routes.py`)
+   - If missing: Create endpoints from plan (lines 1246-1277)
+   - If exists: Verify completeness
+
+**Usage**:
+```python
+# In UnifiedPipeline.__init__
+if self.features.enable_hitl:
+    from bigrag.hitl.failed_extraction_store import FailedExtractionStore
+    self.hitl_store = FailedExtractionStore(dataset_path)
+else:
+    self.hitl_store = None
+
+# Pass to extractor
+self.extractor = ConstrainedLLMExtractor(
+    ...,
+    hitl_store=self.hitl_store
+)
+```
+
+---
+
+### Decision 7: Error Handling Location
+
+**Question**: Where should error handling live?
+
+**ANSWER**: **Both levels - defense in depth** ✅
+
+**High-Level (UnifiedPipeline)**:
+```python
+async def process_document(self, text, metadata):
+    # Feature-level fallback
+    try:
+        if self.features.enable_table_detection:
+            chunks = await self.semantic_chunker.chunk(text, metadata)
+    except TableExtractionError as e:
+        logger.warning(f"Table extraction failed: {e}. Falling back to token chunking.")
+        chunks = await self.token_chunker.chunk(text)
+```
+
+**Low-Level (Individual Modules)**:
+```python
+# In table_extractor.py (already implemented)
+async def extract_table(self, markdown):
+    try:
+        return await self.gpt4_call(markdown)
+    except APIError:
+        return None  # Let pipeline handle fallback
+```
+
+**Strategy**: Graceful degradation (not fail-fast). If optional feature fails, use simpler alternative.
+
+---
+
+### Decision 8: Testing Approach
+
+**Question**: How to test?
+
+**ANSWER**: **Test-driven with existing test data** ✅
+
+**Test Data**:
+- ✅ KUET admission info (40K chars, tables, bilingual) - `datasets/kuet_test/`
+- ✅ BUET admission info (if available)
+- ✅ SingleTopic dataset
+
+**Success Criteria** (simplified - no backward compatibility needed):
+
+**Phase 1 (Core Implementation)**:
+- ✅ Standard preset completes KUET document without errors
+- ✅ Quality preset completes KUET document without errors
+- ✅ Balanced preset completes KUET document without errors
+- ✅ All feature flags work (enable/disable doesn't crash)
+- ✅ Results are reasonable (80-100 entities, 60-90 relations for KUET)
+
+**Phase 2 (Feature Validation)**:
+- ✅ Table extraction finds all tables in KUET doc
+- ✅ Numeric validation catches hallucinations
+- ✅ Entity merging reduces duplicates
+- ✅ HITL captures failed extractions
+
+**No need to compare with old pipelines** - just verify new pipeline works correctly!
+
+---
+
+### Decision 9: Implementation Priority
+
+**Question**: What order to implement?
+
+**ANSWER**: **Phase 1 → Test → Phase 2 → Test → Done** ✅
+
+**Week 1: Core Implementation**
+1. Create `bigrag/pipeline/features.py` (PipelineFeatures dataclass)
+2. Create `bigrag/utils/quality_scoring.py` (description_quality_score)
+3. Create `bigrag/pipeline/base_pipeline.py` (UnifiedPipeline class)
+4. Write basic tests (can it run?)
+
+**Week 2: Integration & Testing**
+5. Test with KUET document (all 3 presets)
+6. Fix bugs
+7. Add error handling
+8. Test error handling (API failures, timeouts)
+
+**Week 3: API Integration**
+9. Update `backend/server.py` endpoints
+10. Add/update HITL endpoints if needed
+11. Test via API calls
+
+**Week 4: Polish**
+12. Documentation updates (CLAUDE.md, README.md)
+13. Performance benchmarks
+14. Edge case testing
+
+**Total**: 4 weeks to production-ready modular pipeline!
+
+---
+
+## ⚠️ Critical "Don't Do This" List
+
+1. ❌ **DON'T copy code from `operate.py`** - Import functions, create thin wrappers
+2. ❌ **DON'T reimplement existing modules** - `ConstrainedLLMExtractor`, `TableAwareChunker`, etc. are already perfect
+3. ❌ **DON'T create backward compatibility layers** - We're in development, break things if needed
+4. ❌ **DON'T touch old pipeline files** - They're for emergency rollback only
+5. ❌ **DON'T create deep directory hierarchies** - Keep it flat (`pipeline/`, not `pipeline/chunkers/token/`)
+6. ❌ **DON'T add migration scripts** - Users will rebuild graphs, no migration needed
+7. ❌ **DON'T preserve old API endpoints** - Change them to match new design
+8. ❌ **DON'T implement PipelineSelector execution** - It's recommendation-only, keep it that way
+9. ❌ **DON'T skip quality_scoring.py** - It's small but critical for gleaning merge
+10. ❌ **DON'T over-engineer** - 3 new files (features.py, base_pipeline.py, quality_scoring.py) + imports = done!
+
+---
+
+## ✅ Quick Start Checklist
+
+**Before you start coding**:
+- [ ] Read this entire plan
+- [ ] Review existing components (1 hour):
+  - [ ] `bigrag/operate.py` - Core functions
+  - [ ] `bigrag/extractors/constrained_extractor.py` - Has gleaning!
+  - [ ] `bigrag/preprocessors/smart_chunker.py` - Has semantic chunking?
+  - [ ] `bigrag/hitl/failed_extraction_store.py` - HITL system
+- [ ] Understand you're building from scratch (no migration)
+
+**Week 1 Deliverables**:
+- [ ] `bigrag/pipeline/features.py` (200 lines)
+- [ ] `bigrag/pipeline/base_pipeline.py` (300 lines)
+- [ ] `bigrag/utils/quality_scoring.py` (50 lines)
+- [ ] Tests pass with KUET document
+
+**You're ready to start! Focus on clean code, not compatibility.**
 
 ---
 

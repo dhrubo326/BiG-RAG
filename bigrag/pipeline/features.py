@@ -297,3 +297,33 @@ class PipelineFeatures:
             openai_api_key=openai_api_key,
             gemini_api_key=gemini_api_key
         )
+
+
+# ========== VALIDATION THRESHOLDS ==========
+
+VALIDATION_THRESHOLDS = {
+    "STRICT": {
+        "numeric_coverage_min": 0.95,
+        "entity_quality_min": 0.90,
+        "relation_completeness_min": 8.0,
+        "entity_name_min_length": 3,
+        "relation_description_min_length": 20,
+        "allow_generic_types": False,
+    },
+    "MODERATE": {
+        "numeric_coverage_min": 0.85,
+        "entity_quality_min": 0.75,
+        "relation_completeness_min": 6.0,
+        "entity_name_min_length": 2,
+        "relation_description_min_length": 10,
+        "allow_generic_types": True,
+    },
+    "LENIENT": {
+        "numeric_coverage_min": 0.70,
+        "entity_quality_min": 0.60,
+        "relation_completeness_min": 4.0,
+        "entity_name_min_length": 1,
+        "relation_description_min_length": 5,
+        "allow_generic_types": True,
+    }
+}

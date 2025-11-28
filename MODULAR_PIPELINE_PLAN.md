@@ -1045,31 +1045,49 @@ async def extract_table(self, markdown):
 
 **Question**: What order to implement?
 
-**ANSWER**: **Phase 1 → Test → Phase 2 → Test → Done** ✅
+**ANSWER**: **Hybrid Testing Approach** ✅
 
-**Week 1: Core Implementation**
+**Testing Strategy**:
+- **Weeks 1-3**: Smoke tests only (fast iteration, verify no crashes)
+- **Week 4**: Comprehensive testing (all features, integration, performance, bug fixes)
+
+**Week 1: Core Implementation** (Smoke tests only)
 1. Create `bigrag/pipeline/features.py` (PipelineFeatures dataclass)
 2. Create `bigrag/utils/quality_scoring.py` (description_quality_score)
 3. Create `bigrag/pipeline/base_pipeline.py` (UnifiedPipeline class)
-4. Write basic tests (can it run?)
+4. **Smoke test**: Can it instantiate? Does `from_preset()` work? No crashes?
+5. Verify `smart_chunker.py` has all features (asymmetric overlap, Bengali, overflow)
+6. If missing: Add features to `smart_chunker.py` directly
 
-**Week 2: Integration & Testing**
-5. Test with KUET document (all 3 presets)
-6. Fix bugs
-7. Add error handling
-8. Test error handling (API failures, timeouts)
+**Week 2: Feature Integration** (Smoke tests only)
+7. Import and connect all existing modules
+8. Implement `UnifiedPipeline.process_document()` orchestration
+9. Add error handling (graceful degradation)
+10. **Smoke test**: Does each preset instantiate? Can it process a simple doc? No crashes?
 
-**Week 3: API Integration**
-9. Update `backend/server.py` endpoints
-10. Add/update HITL endpoints if needed
-11. Test via API calls
+**Week 3: API Integration** (Smoke tests only)
+11. Update `backend/server.py` - remove old parameters, add preset/features
+12. Check if HITL endpoints exist, create if missing
+13. **Smoke test**: Can API accept requests? Does it return something? No crashes?
 
-**Week 4: Polish**
-12. Documentation updates (CLAUDE.md, README.md)
-13. Performance benchmarks
-14. Edge case testing
+**Week 4: Comprehensive Testing & Bug Fixes** (ALL testing happens here)
+14. **Test all 3 presets** with KUET document (standard, quality, balanced)
+15. **Test feature flags** - enable/disable each feature, verify no crashes
+16. **Test error handling** - API failures, timeouts, missing API keys
+17. **Test via API** - all endpoints, all parameter combinations
+18. **Fix all bugs discovered** during testing
+19. **Integration tests** - end-to-end document processing
+20. **Performance benchmarks** - time, cost, accuracy for each preset
+21. **Documentation updates** - CLAUDE.md, README.md with new usage examples
+22. **Edge case testing** - empty docs, huge docs, special characters, Unicode
 
 **Total**: 4 weeks to production-ready modular pipeline!
+
+**Why Hybrid Approach?**
+- Faster development in weeks 1-3 (no time spent on comprehensive tests)
+- Catch critical crashes early (smoke tests)
+- Fix all bugs together in week 4 (more efficient)
+- Allows rapid iteration without test maintenance overhead
 
 ---
 
@@ -1103,7 +1121,18 @@ async def extract_table(self, markdown):
 - [ ] `bigrag/pipeline/features.py` (200 lines)
 - [ ] `bigrag/pipeline/base_pipeline.py` (300 lines)
 - [ ] `bigrag/utils/quality_scoring.py` (50 lines)
-- [ ] Tests pass with KUET document
+- [ ] Smoke tests pass (instantiation, no crashes)
+
+**Week 2-3 Deliverables**:
+- [ ] All modules integrated
+- [ ] API endpoints updated
+- [ ] Smoke tests pass (basic functionality, no crashes)
+
+**Week 4 Deliverables**:
+- [ ] Comprehensive tests pass (all presets, all features, edge cases)
+- [ ] All bugs fixed
+- [ ] Performance benchmarks complete
+- [ ] Documentation updated
 
 **You're ready to start! Focus on clean code, not compatibility.**
 

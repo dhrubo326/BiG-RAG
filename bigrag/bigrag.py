@@ -505,6 +505,12 @@ class BiGRAG:
                         doc["content"],
                         doc.get("metadata", {})
                     )
+
+                # CRITICAL FIX: Persist all storage to disk after processing all documents
+                # This saves: GraphML, 3 vector DBs (entities/relations/chunks), 2 KV stores
+                await self._insert_done()
+                logger.info(f"[Enhanced Pipeline] Persisted {len(new_docs)} documents to storage")
+
             elif self.use_production_pipeline:
                 # DEPRECATED: Still supported but migrated to enhanced
                 logger.warning("[Production Pipeline] DEPRECATED - automatically using enhanced pipeline")
@@ -516,6 +522,11 @@ class BiGRAG:
                         doc["content"],
                         doc.get("metadata", {})
                     )
+
+                # CRITICAL FIX: Persist all storage to disk after processing all documents
+                await self._insert_done()
+                logger.info(f"[Production Pipeline] Persisted {len(new_docs)} documents to storage")
+
             else:
                 # EXISTING: Standard pipeline (unchanged)
                 inserting_chunks = {}

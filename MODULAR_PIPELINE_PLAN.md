@@ -425,7 +425,7 @@ class PipelineFeatures:
         )
 
     @classmethod
-    def _preset_quality(cls) -> 'PipelineFeatures':
+    def _preset_quality(cls, openai_api_key: Optional[str] = None, gemini_api_key: Optional[str] = None) -> 'PipelineFeatures':
         """
         QUALITY preset: Slow, accurate (current enhanced pipeline).
 
@@ -436,6 +436,8 @@ class PipelineFeatures:
 
         Performance: ~2-5 minutes for 40K document
         Accuracy: 95-99%
+        Cost: ~$0.40-0.60 per 40K document (table extraction + validation + gleaning)
+        API Calls: ~60-100 (table detection + extraction + validation + gleaning)
         """
         return cls(
             # Chunking
@@ -463,11 +465,15 @@ class PipelineFeatures:
             # Quality
             enable_hitl=True,
             enable_orphan_linking=True,
-            enable_quality_scoring=True
+            enable_quality_scoring=True,
+
+            # API Keys
+            openai_api_key=openai_api_key,
+            gemini_api_key=gemini_api_key
         )
 
     @classmethod
-    def _preset_balanced(cls) -> 'PipelineFeatures':
+    def _preset_balanced(cls, openai_api_key: Optional[str] = None, gemini_api_key: Optional[str] = None) -> 'PipelineFeatures':
         """
         BALANCED preset: Medium speed/quality.
 
@@ -478,6 +484,8 @@ class PipelineFeatures:
 
         Performance: ~1-2 minutes for 40K document
         Accuracy: 92-96%
+        Cost: ~$0.25-0.35 per 40K document (table extraction + single-pass extraction)
+        API Calls: ~40-60 (table detection + extraction, no gleaning)
         """
         return cls(
             # Chunking
@@ -504,8 +512,48 @@ class PipelineFeatures:
             # Quality
             enable_hitl=True,
             enable_orphan_linking=False,
-            enable_quality_scoring=False
+            enable_quality_scoring=False,
+
+            # API Keys
+            openai_api_key=openai_api_key,
+            gemini_api_key=gemini_api_key
         )
+
+
+# ========== VALIDATION THRESHOLDS ==========
+
+# Validation strictness levels define quality thresholds for filtering entities and relations
+VALIDATION_THRESHOLDS = {
+    "STRICT": {
+        "numeric_coverage_min": 0.95,      # 95% of numbers in source must be found in extraction
+        "entity_quality_min": 0.90,         # 90% quality score (description completeness)
+        "relation_completeness_min": 8.0,   # 8/10 completeness score
+        "description_min_length": 20,       # Entity descriptions must be >= 20 chars
+        "allow_generic_types": False,       # Reject generic types like "OTHER", "UNKNOWN"
+    },
+    "MODERATE": {
+        "numeric_coverage_min": 0.85,      # 85% of numbers must be found
+        "entity_quality_min": 0.75,         # 75% quality score
+        "relation_completeness_min": 6.0,   # 6/10 completeness score
+        "description_min_length": 10,       # Descriptions must be >= 10 chars
+        "allow_generic_types": True,        # Allow generic types with warning
+    },
+    "LENIENT": {
+        "numeric_coverage_min": 0.70,      # 70% of numbers must be found
+        "entity_quality_min": 0.60,         # 60% quality score
+        "relation_completeness_min": 4.0,   # 4/10 completeness score
+        "description_min_length": 5,        # Descriptions must be >= 5 chars
+        "allow_generic_types": True,        # Allow all types
+    }
+}
+
+# Quality scoring formula (used by enable_quality_scoring feature)
+# entity_quality_score = (
+#     0.4 * description_completeness +  # How detailed is the description?
+#     0.3 * context_relevance +          # Is entity mentioned in relevant context?
+#     0.2 * source_count +               # How many chunks mention this entity?
+#     0.1 * type_specificity             # Is type specific vs. generic?
+# )
 ```
 
 #### 1.2 Create Unified Pipeline Class
@@ -846,6 +894,187 @@ class TokenChunker:
 ```
 
 *(Continue implementation in next sections...)*
+
+---
+
+## 🛡️ Error Handling Strategy
+
+### Graceful Degradation Philosophy
+
+**Core Principle**: If an optional feature fails, fall back to simpler alternative instead of failing the entire pipeline.
+
+### Feature-Specific Error Handling
+
+#### 1. **Table Extraction Failure**
+
+**Scenario**: GPT-4 table extraction times out or returns invalid JSON
+
+**Handling**:
+```python
+try:
+    # Attempt table extraction
+    tables = await self.table_extractor.extract(content)
+except (TimeoutError, JSONDecodeError, APIError) as e:
+    logger.warning(f"Table extraction failed: {e}. Falling back to token chunking.")
+    # Graceful degradation: Treat entire content as plain text
+    tables = []
+    # Continue with token-based chunking
+```
+
+**User Impact**: Pipeline continues, but table structure is lost (acceptable for most use cases)
+
+#### 2. **Numeric Validation Failure**
+
+**Scenario**: Gemini API unavailable or quota exceeded
+
+**Handling**:
+```python
+if self.features.enable_numeric_validation:
+    try:
+        validation_result = await self.numeric_validator.validate_llm(entities, source)
+    except (APIError, QuotaExceededError) as e:
+        logger.warning(f"LLM validation unavailable: {e}. Using regex fallback.")
+        validation_result = self.numeric_validator.validate_regex(entities, source)
+```
+
+**User Impact**: Lower validation accuracy (regex-based), but pipeline completes
+
+#### 3. **Entity Merging Failure**
+
+**Scenario**: Fuzzy merging crashes due to memory or logic error
+
+**Handling**:
+```python
+if self.features.merge_strategy == "fuzzy":
+    try:
+        merged_entities = await self.fuzzy_merger.merge(entities)
+    except (MemoryError, RuntimeError) as e:
+        logger.error(f"Fuzzy merging failed: {e}. Falling back to basic merging.")
+        # Fallback to basic (hash-based) merging
+        merged_entities = await self.basic_merger.merge(entities)
+```
+
+**User Impact**: More duplicate entities, but pipeline completes
+
+#### 4. **Extraction Timeout**
+
+**Scenario**: LLM extraction hangs or takes too long
+
+**Handling**:
+```python
+# Set per-chunk timeout
+async with asyncio.timeout(self.extraction_timeout):
+    try:
+        entities, relations = await self.extractor.extract(chunk)
+    except asyncio.TimeoutError:
+        logger.warning(f"Chunk {chunk_id} extraction timed out. Skipping.")
+        # Add to failed extraction store if HITL enabled
+        if self.hitl_store:
+            await self.hitl_store.save_failed(chunk, reason="timeout")
+        entities, relations = [], []
+```
+
+**User Impact**: Some chunks skipped, but most data extracted
+
+#### 5. **API Key Missing**
+
+**Scenario**: Feature requires API key but none provided
+
+**Handling**:
+```python
+def _init_table_extractor(self):
+    if not self.features.openai_api_key:
+        # Check environment variable as fallback
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            logger.error("Table extraction requires OPENAI_API_KEY. Feature disabled.")
+            return None
+    # Initialize extractor
+    return GPT4TableExtractor(api_key=api_key)
+```
+
+**User Impact**: Feature silently disabled with warning
+
+### Error Reporting Levels
+
+**CRITICAL** (Pipeline fails):
+- Invalid document format (empty, corrupted)
+- All chunks fail extraction
+- Storage backend unavailable
+
+**ERROR** (Feature fails, pipeline continues):
+- Table extraction fails → fallback to token chunking
+- Fuzzy merging fails → fallback to basic merging
+- Validation API unavailable → skip validation or use fallback
+
+**WARNING** (Degraded performance):
+- Single chunk extraction times out → skip chunk
+- Numeric validation uses regex fallback → lower accuracy
+- API key missing → feature disabled
+
+**INFO** (Expected behavior):
+- Gleaning iteration produces no new entities → stop early
+- Orphan linking finds no orphans → skip processing
+
+### Retry Strategy
+
+**Retry with Backoff** (for transient API errors):
+```python
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type((APIConnectionError, RateLimitError))
+)
+async def extract_with_retry(chunk):
+    return await llm_extract(chunk)
+```
+
+**Don't Retry** (for permanent errors):
+- Invalid API key → fail immediately
+- Malformed response → skip and log
+- Timeout → skip chunk (user may have limited time budget)
+
+### Failed Extraction Queue (HITL)
+
+When `enable_hitl=True`, failed extractions are saved for human review:
+
+```python
+# Structure of failed extraction record
+{
+    "chunk_id": "chunk-abc123",
+    "content": "Original chunk text...",
+    "failure_reason": "timeout" | "api_error" | "validation_failed",
+    "error_message": "Extraction timed out after 60s",
+    "timestamp": "2024-11-26T17:43:00Z",
+    "retry_count": 2,
+    "feature": "table_extraction"
+}
+```
+
+**Review Workflow**:
+1. Pipeline saves failed chunks to `{dataset}/failed_extractions/queue.json`
+2. User reviews queue and fixes manually or adjusts configuration
+3. Re-run pipeline with `retry_failed=True` flag
+
+### Validation Error Summary
+
+At end of pipeline, log validation summary:
+
+```python
+logger.info("=" * 80)
+logger.info("PIPELINE VALIDATION SUMMARY")
+logger.info("=" * 80)
+logger.info(f"Total entities extracted: {total_entities}")
+logger.info(f"  - PASS: {pass_count} ({pass_rate:.1%})")
+logger.info(f"  - FAIL: {fail_count} ({fail_rate:.1%})")
+logger.info(f"  - SKIPPED: {skip_count} (feature disabled)")
+logger.info(f"Total relations extracted: {total_relations}")
+logger.info(f"  - PASS: {rel_pass_count} ({rel_pass_rate:.1%})")
+logger.info(f"  - FAIL: {rel_fail_count} ({rel_fail_rate:.1%})")
+logger.info(f"Failed chunks: {failed_chunks} (saved to HITL queue)")
+logger.info(f"Validation strictness: {self.features.validation_strictness}")
+logger.info("=" * 80)
+```
 
 ---
 

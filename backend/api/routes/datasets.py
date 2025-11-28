@@ -180,13 +180,38 @@ async def create_and_index_document(
     5. Build knowledge graph (entities, relations, chunks)
     6. Return job_id for status tracking
 
-    **Example:**
+    **Preset Options:**
+    - **standard**: Fast (30-60s), 90-95% accuracy, $0.15/40K doc
+    - **balanced**: Medium (1-2min), 92-96% accuracy, $0.25-0.35/40K doc
+    - **quality**: Slow (2-5min), 95-99% accuracy, $0.40-0.60/40K doc (default)
+
+    **Example 1 - Standard Preset (Fast):**
     ```bash
     curl -X POST "http://localhost:8001/datasets/create-and-index" \\
-      -F "file=@university_info.md" \\
-      -F "data_source=new_university" \\
-      -F "title=University Admission Guide" \\
-      -F 'metadata={"category":"education","tags":["admission"]}'
+      -F "file=@document.md" \\
+      -F "data_source=my_dataset" \\
+      -F "title=My Document" \\
+      -F "preset=standard"
+    ```
+
+    **Example 2 - Quality Preset (Recommended for Educational/Technical Content):**
+    ```bash
+    curl -X POST "http://localhost:8001/datasets/create-and-index" \\
+      -F "file=@KUET_Admission_info.md" \\
+      -F "data_source=kuet_admission" \\
+      -F "title=KUET Admission 2024-2025" \\
+      -F "preset=quality" \\
+      -F 'metadata={"category":"education","university":"KUET","year":"2024","tags":["admission","engineering"]}'
+    ```
+
+    **Example 3 - Balanced Preset (General Use):**
+    ```bash
+    curl -X POST "http://localhost:8001/datasets/create-and-index" \\
+      -F "file=@company_docs.md" \\
+      -F "data_source=company_kb" \\
+      -F "title=Company Handbook" \\
+      -F "preset=balanced" \\
+      -F 'metadata={"category":"internal","department":"HR"}'
     ```
 
     **Response:**

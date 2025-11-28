@@ -61,36 +61,38 @@ async def upload_document(
     - **NEW:** Production Pipeline support (table-aware, higher accuracy)
     - Progress tracking via /status/{job_id}
 
-    **Example usage:**
+    **Pipeline Presets:**
+    - **standard (default):** Fast (30-60s), 90-95% accuracy, $0.15/40K doc
+    - **balanced:** Medium (1-2min), 92-96% accuracy, $0.25-0.35/40K doc
+    - **quality:** Slow (2-5min), 95-99% accuracy, $0.40-0.60/40K doc
+
+    **Example 1 - Standard Preset (Fast, Default):**
     ```bash
-    # Basic upload (standard preset - default)
     curl -X POST "http://localhost:8001/documents/upload" \\
       -F "file=@document.md" \\
-      -F "title=My Research Paper"
-
-    # With metadata (standard preset)
-    curl -X POST "http://localhost:8001/documents/upload" \\
-      -F "file=@document.md" \\
-      -F "title=BiG-RAG Paper" \\
-      -F 'metadata={"category":"research","tags":["RAG","NLP"]}'
-
-    # With quality preset (table-aware, higher accuracy for educational content)
-    curl -X POST "http://localhost:8001/documents/upload" \\
-      -F "file=@kuet_admission.md" \\
-      -F "title=KUET Admission Guide" \\
-      -F 'metadata={"category":"education","tags":["KUET","admission"]}' \\
-      -F "preset=quality"
-
-    # With balanced preset (medium speed/quality)
-    curl -X POST "http://localhost:8001/documents/upload" \\
-      -F "file=@my_doc.md" \\
-      -F "preset=balanced"
+      -F "data_source=my_dataset" \\
+      -F "title=My Document"
     ```
 
-    **Pipeline Presets:**
-    - **standard (default):** Fast, token-based chunking, gleaning, ~30-60s per 40K doc
-    - **quality:** Table-aware, validation, fuzzy merging, ~2-5min per 40K doc, highest accuracy
-    - **balanced:** Table detection, single-pass extraction, ~1-2min per 40K doc, good speed/quality trade-off
+    **Example 2 - Quality Preset (KUET Document - Tables + Validation):**
+    ```bash
+    curl -X POST "http://localhost:8001/documents/upload" \\
+      -F "file=@KUET_Admission_info.md" \\
+      -F "data_source=kuet_admission" \\
+      -F "title=KUET Admission 2024-2025" \\
+      -F "preset=quality" \\
+      -F 'metadata={"category":"education","university":"KUET","year":"2024","tags":["admission","engineering"]}'
+    ```
+
+    **Example 3 - Balanced Preset (Good for General Documents):**
+    ```bash
+    curl -X POST "http://localhost:8001/documents/upload" \\
+      -F "file=@company_handbook.md" \\
+      -F "data_source=company_kb" \\
+      -F "title=Employee Handbook" \\
+      -F "preset=balanced" \\
+      -F 'metadata={"category":"HR","department":"Human Resources"}'
+    ```
 
     **Returns:** job_id for tracking processing status via /status/{job_id}
     """

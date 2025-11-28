@@ -332,9 +332,9 @@ class UnifiedPipeline:
         normalized_chunks = []
         for i, chunk in enumerate(chunks):
             if isinstance(chunk, dict):
-                # Ensure chunk_id exists
+                # Ensure chunk_id exists (use 4 digits to match TableAwareChunker)
                 if 'chunk_id' not in chunk:
-                    chunk['chunk_id'] = f"chunk_{i:03d}"
+                    chunk['chunk_id'] = f"chunk_{i:04d}"
 
                 # Ensure content is a string (not dict)
                 content = chunk.get('content', chunk.get('text', ''))
@@ -349,7 +349,7 @@ class UnifiedPipeline:
                 normalized_chunks.append(chunk)
             else:
                 normalized_chunks.append({
-                    'chunk_id': f"chunk_{i:03d}",
+                    'chunk_id': f"chunk_{i:04d}",
                     'content': str(chunk),
                     'metadata': {}
                 })
@@ -443,9 +443,9 @@ class UnifiedPipeline:
 
         filtered = []
         for relation in relations:
-            desc = relation.get('description', '').strip()
-            if (len(desc) >= thresholds['relation_description_min_length'] and
-                relation.get('head_entity') and relation.get('tail_entity')):
+            # Relations use 'content' field (not 'description')
+            content = relation.get('content', '').strip()
+            if len(content) >= thresholds['relation_description_min_length']:
                 filtered.append(relation)
 
         return filtered

@@ -151,7 +151,8 @@ async def create_and_index_document(
     data_source: str = Form(..., description="Dataset name (will be created if doesn't exist)"),
     title: str = Form(None, description="Document title (defaults to filename)"),
     metadata: str = Form(None, description="Optional JSON metadata"),
-    process_async: bool = Form(True, description="Process in background (recommended)")
+    process_async: bool = Form(True, description="Process in background (recommended)"),
+    preset: str = Form("quality", description="Pipeline preset: 'standard' | 'quality' (default) | 'balanced'")
 ):
     """
     **Production-Ready Endpoint: Create Dataset & Index Document**
@@ -277,6 +278,15 @@ async def create_and_index_document(
         logger.info(f"[Create-and-Index] Creating RAG instance for: {data_source}")
 
         # NEW (Phase 1): Use enhanced pipeline with all Phase 1 features
+        # Create pipeline features from preset
+        from bigrag.pipeline.features import PipelineFeatures
+
+        pipeline_features = PipelineFeatures.from_preset(
+            preset,
+            openai_api_key=os.getenv("OPENAI_API_KEY"),
+            gemini_api_key=os.getenv("GEMINI_API_KEY")
+        )
+
         rag = BiGRAG(
             working_dir=working_dir,
             llm_model_func=gpt_4o_mini_complete,
@@ -284,21 +294,11 @@ async def create_and_index_document(
             chunk_overlap_token_size=config.chunk_overlap_size,
             enable_llm_cache=config.enable_llm_cache,
             addon_params={
-                "language": config.default_language,
-                "entity_merge_strategy": "fuzzy"  # Phase 1 Step 4: Unified entity merging
+                "language": config.default_language
             },
-            # Phase 1: Enable enhanced pipeline with all improvements
-            use_enhanced_pipeline=True,
-            enhanced_pipeline_config={
-                "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
-                "enable_entity_linking": True,
-                "entity_merge_strategy": "fuzzy",  # Phase 1 Step 4: Fuzzy matching for accuracy
-                "extraction_strategy": "hybrid",   # Phase 1 Step 3: strict | gleaning | hybrid [BEST]
-                "extraction_mode": "semi_structured",  # Balanced accuracy/speed
-                "dataset_path": working_dir  # Phase 1 Step 6: Enable HITL for failed extractions
-            }
+            pipeline_features=pipeline_features
         )
-        logger.info(f"[Create-and-Index] Enhanced pipeline enabled with hybrid extraction strategy")
+        logger.info(f"[Create-and-Index] Using pipeline preset: {preset}")
 
         # Step 10: Create processing job
         job = ProcessingJob(

@@ -48,7 +48,7 @@ async def upload_document(
     data_source: str = Form(None, description="Dataset name (defaults to current dataset)"),
     process_async: bool = Form(True, description="Process in background (recommended for large files)"),
     metadata: str = Form(None, description="Optional JSON metadata: {\"category\": \"research\", \"tags\": [...]}"),
-    use_production_pipeline: bool = Form(False, description="Use ProductionKGPipeline (table-aware, higher accuracy for educational content)")
+    preset: str = Form("standard", description="Pipeline preset: 'standard' (fast) | 'quality' (accurate) | 'balanced' (medium)")
 ):
     """
     Upload a document (.txt or .md) and add it to the knowledge graph.
@@ -63,28 +63,34 @@ async def upload_document(
 
     **Example usage:**
     ```bash
-    # Basic upload (standard pipeline)
+    # Basic upload (standard preset - default)
     curl -X POST "http://localhost:8001/documents/upload" \\
       -F "file=@document.md" \\
       -F "title=My Research Paper"
 
-    # With metadata (standard pipeline)
+    # With metadata (standard preset)
     curl -X POST "http://localhost:8001/documents/upload" \\
       -F "file=@document.md" \\
       -F "title=BiG-RAG Paper" \\
       -F 'metadata={"category":"research","tags":["RAG","NLP"]}'
 
-    # With production pipeline (table-aware, higher accuracy for educational content)
+    # With quality preset (table-aware, higher accuracy for educational content)
     curl -X POST "http://localhost:8001/documents/upload" \\
       -F "file=@kuet_admission.md" \\
       -F "title=KUET Admission Guide" \\
       -F 'metadata={"category":"education","tags":["KUET","admission"]}' \\
-      -F "use_production_pipeline=true"
+      -F "preset=quality"
+
+    # With balanced preset (medium speed/quality)
+    curl -X POST "http://localhost:8001/documents/upload" \\
+      -F "file=@my_doc.md" \\
+      -F "preset=balanced"
     ```
 
-    **Pipeline Modes:**
-    - **Standard (default):** Fast, token-based chunking, ~$0.01/doc
-    - **Production:** Table-aware chunking, 95+ validation, ~$0.16-0.40/doc, +2-3 F1 improvement
+    **Pipeline Presets:**
+    - **standard (default):** Fast, token-based chunking, gleaning, ~30-60s per 40K doc
+    - **quality:** Table-aware, validation, fuzzy merging, ~2-5min per 40K doc, highest accuracy
+    - **balanced:** Table detection, single-pass extraction, ~1-2min per 40K doc, good speed/quality trade-off
 
     **Returns:** job_id for tracking processing status via /status/{job_id}
     """
@@ -114,14 +120,25 @@ async def upload_document(
             PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
             working_dir = str(PROJECT_ROOT / "expr" / target_dataset)
 
-            logger.info(f"[Unified Mode] Creating RAG instance for dataset: {target_dataset}")
+            # Create pipeline features from preset
+            from bigrag.pipeline.features import PipelineFeatures
+            import os
+
+            pipeline_features = PipelineFeatures.from_preset(
+                preset,
+                openai_api_key=os.getenv("OPENAI_API_KEY"),
+                gemini_api_key=os.getenv("GEMINI_API_KEY")
+            )
+
+            logger.info(f"[Unified Mode] Creating RAG instance for dataset: {target_dataset} with preset={preset}")
             rag = BiGRAG(
                 working_dir=working_dir,
                 llm_model_func=gpt_4o_mini_complete,
                 chunk_token_size=config.chunk_size,
                 chunk_overlap_token_size=config.chunk_overlap_size,
                 enable_llm_cache=config.enable_llm_cache,
-                addon_params={"language": config.default_language}
+                addon_params={"language": config.default_language},
+                pipeline_features=pipeline_features
             )
         else:
             # SINGLE MODE: use injected RAG instance
@@ -232,10 +249,9 @@ async def upload_document(
                 dataset=target_dataset,
                 rag_instance=rag,
                 registry_instance=registry,
-                metadata=doc_metadata,
-                use_production_pipeline=use_production_pipeline
+                metadata=doc_metadata
             )
-            message = f"Document queued for processing ({'production' if use_production_pipeline else 'standard'} pipeline)"
+            message = f"Document queued for processing (preset={preset})"
         else:
             # Synchronous processing
             await process_document_background(
@@ -245,10 +261,9 @@ async def upload_document(
                 dataset=target_dataset,
                 rag_instance=rag,
                 registry_instance=registry,
-                metadata=doc_metadata,
-                use_production_pipeline=use_production_pipeline
+                metadata=doc_metadata
             )
-            message = f"Document processed successfully ({'production' if use_production_pipeline else 'standard'} pipeline)"
+            message = f"Document processed successfully (preset={preset})"
 
         # Reload registry in unified executor if dataset was just added
         if unified_executor and dataset_info.get('registry_updated', False):

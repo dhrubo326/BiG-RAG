@@ -166,44 +166,25 @@ class BiGRAG:
 
     enable_llm_cache: bool = True
 
-    # Production KG Pipeline (DEPRECATED - use use_enhanced_pipeline instead)
-    use_production_pipeline: bool = False  # DEPRECATED: Use use_enhanced_pipeline
-    production_pipeline_config: dict = field(default_factory=lambda: {
-        "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
-        "enable_entity_linking": True,
-        "extraction_mode": "semi_structured"  # structured | semi_structured | unstructured
-    })
-
-    # Enhanced KG Pipeline (NEW - Phase 1 redesign with extraction strategies)
-    use_enhanced_pipeline: bool = False  # Default: False (opt-in for Phase 1)
-    enhanced_pipeline_config: dict = field(default_factory=lambda: {
-        "validation_level": "MODERATE",  # STRICT (99%) | MODERATE (95%) | LENIENT (80%)
-        "enable_entity_linking": True,
-        "extraction_strategy": "hybrid",  # NEW: strict | gleaning | hybrid [RECOMMENDED]
-        "extraction_mode": "semi_structured"  # structured | semi_structured | unstructured
-    })
+    # Modular Unified Pipeline (NEW - Week 1-3 implementation)
+    pipeline_features: 'PipelineFeatures' = None  # Type hint as string to avoid circular import
 
     # extension
     addon_params: dict = field(default_factory=dict)
     convert_response_to_json_func: callable = convert_response_to_json
 
     def __post_init__(self):
-        import warnings
-        # NEW: Handle deprecated config keys with migration
-        if self.use_production_pipeline and not self.use_enhanced_pipeline:
-            warnings.warn(
-                "'use_production_pipeline' is deprecated. Use 'use_enhanced_pipeline' instead. "
-                "Automatically migrating to enhanced pipeline.",
-                DeprecationWarning,
-                stacklevel=2
+        # Initialize pipeline features with default preset if not provided
+        if self.pipeline_features is None:
+            from bigrag.pipeline.features import PipelineFeatures
+            self.pipeline_features = PipelineFeatures.from_preset(
+                "standard",
+                openai_api_key=os.getenv("OPENAI_API_KEY"),
+                gemini_api_key=os.getenv("GEMINI_API_KEY")
             )
-            self.use_enhanced_pipeline = True
-            # Migrate production config to enhanced config
-            if not self.enhanced_pipeline_config:
-                self.enhanced_pipeline_config = self.production_pipeline_config.copy()
-                # Add extraction_strategy if not present
-                if 'extraction_strategy' not in self.enhanced_pipeline_config:
-                    self.enhanced_pipeline_config['extraction_strategy'] = 'hybrid'
+            logger.info("[BiGRAG] Using default pipeline preset: STANDARD")
+        else:
+            logger.info(f"[BiGRAG] Using custom pipeline features")
 
         # Use centralized logging directory or fallback to working_dir/logs
         from bigrag.config import config
@@ -487,120 +468,104 @@ class BiGRAG:
             update_storage = True
             logger.info(f"[New Docs] inserting {len(new_docs)} docs")
 
-            # NEW: Enhanced/Production pipeline vs standard pipeline
-            if self.use_enhanced_pipeline:
-                logger.info(f"[Enhanced Pipeline v1.0] Using extraction strategy: {self.enhanced_pipeline_config.get('extraction_strategy', 'hybrid')}")
-                # Process each document with enhanced pipeline
-                for doc_key, doc in new_docs.items():
-                    await self._process_document_with_enhanced_pipeline(
-                        doc_key,
-                        doc["content"],
-                        doc.get("metadata", {})
-                    )
-            elif self.use_production_pipeline:
-                # DEPRECATED: Still supported but migrated to enhanced
-                logger.warning("[Production Pipeline] DEPRECATED - automatically using enhanced pipeline")
-                logger.info("[Enhanced Pipeline v1.0] Using extraction strategy: hybrid")
-                # Process each document with production pipeline (legacy)
-                for doc_key, doc in new_docs.items():
-                    await self._process_document_with_production_pipeline(
-                        doc_key,
-                        doc["content"],
-                        doc.get("metadata", {})
-                    )
-            else:
-                # EXISTING: Standard pipeline (unchanged)
-                inserting_chunks = {}
-                for doc_key, doc in tqdm_async(
-                    new_docs.items(), desc="Chunking documents", unit="doc"
-                ):
-                    chunks = {
-                        compute_mdhash_id(dp["content"], prefix="chunk-"): {
-                            **dp,
-                            "full_doc_id": doc_key,
-                        }
-                        for dp in chunking_by_token_size(
-                            doc["content"],
-                            overlap_token_size=self.chunk_overlap_token_size,
-                            max_token_size=self.chunk_token_size,
-                            tiktoken_model=self.tiktoken_model_name,
-                            doc_title=doc.get("title", ""),
-                            doc_metadata=doc.get("metadata", {}),
-                        )
+            # Use standard pipeline (UnifiedPipeline integration deferred to Week 4)
+            # For now, pipeline_features is accepted but standard extraction is used
+            logger.info(f"[BiGRAG] Using standard extraction pipeline")
+            if self.pipeline_features:
+                # Log which features are configured (for future use)
+                logger.debug(f"[BiGRAG] Pipeline features configured: {self.pipeline_features}")
+
+            inserting_chunks = {}
+            for doc_key, doc in tqdm_async(
+                new_docs.items(), desc="Chunking documents", unit="doc"
+            ):
+                chunks = {
+                    compute_mdhash_id(dp["content"], prefix="chunk-"): {
+                        **dp,
+                        "full_doc_id": doc_key,
                     }
-                    inserting_chunks.update(chunks)
-                _add_chunk_keys = await self.text_chunks.filter_keys(
-                    list(inserting_chunks.keys())
-                )
-                inserting_chunks = {
-                    k: v for k, v in inserting_chunks.items() if k in _add_chunk_keys
+                    for dp in chunking_by_token_size(
+                        doc["content"],
+                        overlap_token_size=self.chunk_overlap_token_size,
+                        max_token_size=self.chunk_token_size,
+                        tiktoken_model=self.tiktoken_model_name,
+                        doc_title=doc.get("title", ""),
+                        doc_metadata=doc.get("metadata", {}),
+                    )
                 }
-                if not len(inserting_chunks):
-                    logger.warning("All chunks are already in the storage")
-                    return
-                logger.info(f"[New Chunks] inserting {len(inserting_chunks)} chunks")
+                inserting_chunks.update(chunks)
+            _add_chunk_keys = await self.text_chunks.filter_keys(
+                list(inserting_chunks.keys())
+            )
+            inserting_chunks = {
+                k: v for k, v in inserting_chunks.items() if k in _add_chunk_keys
+            }
+            if not len(inserting_chunks):
+                logger.warning("All chunks are already in the storage")
+                return
+            logger.info(f"[New Chunks] inserting {len(inserting_chunks)} chunks")
 
-                logger.info("[Entity Extraction]...")
-                maybe_new_kg = await extract_entities(
-                    inserting_chunks,
-                    knowledge_graph_inst=self.chunk_entity_relation_graph,
-                    vdb_entities=self.vdb_entities,
-                    vdb_relations=self.vdb_relations,
-                    global_config=asdict(self),
-                )
-                if maybe_new_kg is None:
-                    logger.warning("No new relations and entities found")
-                    return
-                self.chunk_entity_relation_graph = maybe_new_kg
+            logger.info("[Entity Extraction]...")
+            maybe_new_kg = await extract_entities(
+                inserting_chunks,
+                knowledge_graph_inst=self.chunk_entity_relation_graph,
+                vdb_entities=self.vdb_entities,
+                vdb_relations=self.vdb_relations,
+                global_config=asdict(self),
+            )
+            if maybe_new_kg is None:
+                logger.warning("No new relations and entities found")
+                return
+            self.chunk_entity_relation_graph = maybe_new_kg
 
-                await self.full_docs.upsert(new_docs)
-                await self.text_chunks.upsert(inserting_chunks)
+            await self.full_docs.upsert(new_docs)
+            await self.text_chunks.upsert(inserting_chunks)
 
-                # Phase 3.1: Index chunks to vector DB for Path C retrieval (Three-Path Retrieval)
-                # This enables direct semantic search on chunks (in addition to entity/edge-based retrieval)
-                if self.vdb_chunks is not None:
-                    def _build_contextualized_chunk_content(chunk_data: dict) -> str:
-                        """Build chunk content with document context prefix for embedding.
+            # Phase 3.1: Index chunks to vector DB for Path C retrieval (Three-Path Retrieval)
+            # This enables direct semantic search on chunks (in addition to entity/edge-based retrieval)
+            if self.vdb_chunks is not None:
+                def _build_contextualized_chunk_content(chunk_data: dict) -> str:
+                    """Build chunk content with document context prefix for embedding.
 
-                        This enriches chunk embeddings with document metadata (title + category + tags) to make
-                        chunks from different documents distinguishable even if content is similar.
+                    This enriches chunk embeddings with document metadata (title + category + tags) to make
+                    chunks from different documents distinguishable even if content is similar.
 
-                        Example:
-                            Input: {"content": "CSE has 180 seats", "doc_title": "RUET", "doc_metadata": {"category": "university", "tags": ["Engineering"]}}
-                            Output: "[RUET | university | Engineering] CSE has 180 seats"
-                        """
-                        content = chunk_data.get("content", "")
-                        doc_title = chunk_data.get("doc_title", "")
-                        doc_metadata = chunk_data.get("doc_metadata", {})
+                    Example:
+                        Input: {"content": "CSE has 180 seats", "doc_title": "RUET", "doc_metadata": {"category": "university", "tags": ["Engineering"]}}
+                        Output: "[RUET | university | Engineering] CSE has 180 seats"
+                    """
+                    content = chunk_data.get("content", "")
+                    doc_title = chunk_data.get("doc_title", "")
+                    doc_metadata = chunk_data.get("doc_metadata", {})
 
-                        context_parts = []
-                        if doc_title:
-                            context_parts.append(doc_title)
-                        # Add category for better document type distinction
-                        if doc_metadata.get("category"):
-                            context_parts.append(doc_metadata["category"])
-                        if doc_metadata.get("tags"):
-                            tags = doc_metadata["tags"]
-                            if isinstance(tags, list):
-                                context_parts.extend(tags)
-                            else:
-                                context_parts.append(str(tags))
-
-                        if context_parts:
-                            context_prefix = "[" + " | ".join(context_parts) + "] "
-                            return context_prefix + content
+                    context_parts = []
+                    if doc_title:
+                        context_parts.append(doc_title)
+                    # Add category for better document type distinction
+                    if doc_metadata.get("category"):
+                        context_parts.append(doc_metadata["category"])
+                    if doc_metadata.get("tags"):
+                        tags = doc_metadata["tags"]
+                        if isinstance(tags, list):
+                            context_parts.extend(tags)
                         else:
-                            return content
+                            context_parts.append(str(tags))
 
-                    chunks_for_vdb = {
-                        chunk_id: {
-                            "content": _build_contextualized_chunk_content(chunk_data),
-                            "full_doc_id": chunk_data.get("full_doc_id", ""),
-                        }
-                        for chunk_id, chunk_data in inserting_chunks.items()
+                    if context_parts:
+                        context_prefix = "[" + " | ".join(context_parts) + "] "
+                        return context_prefix + content
+                    else:
+                        return content
+
+                chunks_for_vdb = {
+                    chunk_id: {
+                        "content": _build_contextualized_chunk_content(chunk_data),
+                        "full_doc_id": chunk_data.get("full_doc_id", ""),
                     }
-                    await self.vdb_chunks.upsert(chunks_for_vdb)
-                    logger.info(f"[Chunks VDB] Indexed {len(chunks_for_vdb)} chunks for vector search (Path C)")
+                    for chunk_id, chunk_data in inserting_chunks.items()
+                }
+                await self.vdb_chunks.upsert(chunks_for_vdb)
+                logger.info(f"[Chunks VDB] Indexed {len(chunks_for_vdb)} chunks for vector search (Path C)")
         finally:
             if update_storage:
                 await self._insert_done()

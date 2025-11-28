@@ -29,6 +29,7 @@ from bigrag.extractors.constrained_extractor import ConstrainedLLMExtractor, Bat
 from bigrag.merging.canonicalization import EntityCanonicalizationMap
 from bigrag.merging.entity_linker import ProductionEntityLinker, SimpleEntityLinker
 from bigrag.validators.numeric_validator import NumericValidator
+from bigrag.pipeline.features import PipelineFeatures
 
 # Pipeline version for migration tracking
 PIPELINE_VERSION = "enhanced-v1.0"
@@ -60,48 +61,89 @@ class EnhancedKGPipeline:
 
     def __init__(
         self,
-        api_key: str,
+        features: PipelineFeatures = None,  # NEW: Primary interface
+        # Legacy parameters (backward compatible)
+        api_key: str = None,
         model: str = "gpt-4o-mini",
         validation_level: str = "MODERATE",
         enable_entity_linking: bool = True,
-        entity_merge_strategy: str = "fuzzy",  # NEW: Phase 1 Step 4
-        extraction_strategy: str = "hybrid",  # NEW: strict|gleaning|hybrid
+        entity_merge_strategy: str = "fuzzy",
+        extraction_strategy: str = "hybrid",
         extraction_mode: str = "semi_structured",
         review_queue_path: str = "expr/human_review_queue.json",
-        dataset_path: Optional[str] = None  # NEW: for HITL storage
+        dataset_path: Optional[str] = None
     ):
         """
         Initialize enhanced pipeline.
 
+        NEW: Accepts PipelineFeatures for full control via feature flags.
+        Legacy parameters still work for backward compatibility.
+
         Args:
-            api_key: OpenAI API key
-            model: LLM model to use (gpt-4o-mini recommended for cost efficiency)
+            features: PipelineFeatures object (recommended - provides full control)
+            api_key: OpenAI API key (legacy - required if features not provided)
+            model: LLM model to use (gpt-4o-mini recommended)
             validation_level: STRICT (production), MODERATE (dev), LENIENT (test)
             enable_entity_linking: Whether to merge entities
-            entity_merge_strategy: NEW (Phase 1 Step 4) - Entity merging approach
-                - "basic": Simple name-based grouping (fast, O(n))
-                - "fuzzy": Canonicalization + fuzzy matching (accurate, O(n²))
-                - "hybrid": Adaptive based on entity count [FUTURE]
-            extraction_strategy: NEW - Controls extraction approach
-                - "strict": Single-pass with validation (fastest, 95%+ accuracy)
-                - "gleaning": Multi-pass with conversation history (slowest, 98%+ accuracy)
-                - "hybrid": Adaptive (strict for tables, gleaning for paragraphs) [RECOMMENDED]
-            extraction_mode: Validation mode (structured/semi_structured/unstructured)
-                - structured: 99%+ accuracy, strict validation (best for tables)
-                - semi_structured: 95%+ accuracy, moderate validation [DEFAULT]
-                - unstructured: 80%+ accuracy, lenient validation (best for narrative text)
+            entity_merge_strategy: Entity merging approach (basic|fuzzy|hybrid)
+            extraction_strategy: Extraction approach (strict|gleaning|hybrid)
+            extraction_mode: Validation mode (structured|semi_structured|unstructured)
             review_queue_path: Path to human review queue JSON file
             dataset_path: Path to dataset (for HITL failed extraction storage)
         """
-        self.api_key = api_key
-        self.model = model
-        self.validation_level = validation_level
-        self.enable_entity_linking = enable_entity_linking
-        self.entity_merge_strategy = entity_merge_strategy  # NEW: Phase 1 Step 4
-        self.extraction_strategy = extraction_strategy
-        self.extraction_mode = extraction_mode
-        self.review_queue_path = Path(review_queue_path)
-        self.dataset_path = dataset_path
+
+        # NEW: Map from PipelineFeatures if provided
+        if features:
+            # API Keys
+            self.api_key = features.openai_api_key
+            self.gemini_api_key = features.gemini_api_key
+
+            # Model (keep parameter, not in features yet)
+            self.model = model
+
+            # Validation
+            self.validation_level = features.validation_strictness
+
+            # Entity Linking/Merging
+            self.enable_entity_linking = features.enable_entity_merging
+            self.entity_merge_strategy = features.merge_strategy
+
+            # Extraction Strategy (map from gleaning flag)
+            if features.enable_gleaning:
+                self.extraction_strategy = "gleaning"
+            elif features.enable_table_fact_extraction:
+                self.extraction_strategy = "hybrid"  # Tables + LLM
+            else:
+                self.extraction_strategy = "strict"  # LLM only
+
+            # Extraction Mode (keep default for now)
+            self.extraction_mode = extraction_mode
+
+            # HITL
+            self.review_queue_path = Path(review_queue_path)
+
+            # Dataset path
+            self.dataset_path = dataset_path
+
+            # Store features for later reference
+            self.features = features
+
+        else:
+            # Legacy mode - use parameters as before
+            if api_key is None:
+                raise ValueError("Either 'features' or 'api_key' must be provided")
+
+            self.api_key = api_key
+            self.gemini_api_key = None  # Not available in legacy mode
+            self.model = model
+            self.validation_level = validation_level
+            self.enable_entity_linking = enable_entity_linking
+            self.entity_merge_strategy = entity_merge_strategy
+            self.extraction_strategy = extraction_strategy
+            self.extraction_mode = extraction_mode
+            self.review_queue_path = Path(review_queue_path)
+            self.dataset_path = dataset_path
+            self.features = None
 
         # NEW: Pipeline metadata for version tracking
         self.pipeline_metadata = {
@@ -282,11 +324,24 @@ class EnhancedKGPipeline:
         # Step 1.1: Smart chunking (includes table extraction)
         # TODO: Step 2 will add semantic boundary-aware chunking
         print("  [1.1] Smart chunking with table extraction...")
+
+        # Determine chunk parameters from features if available
+        if self.features:
+            chunk_size = self.features.chunk_size
+            chunk_overlap = self.features.chunk_overlap
+            use_semantic = (self.features.chunk_mode == "semantic")
+        else:
+            # Legacy defaults
+            chunk_size = 1000
+            chunk_overlap = 100
+            use_semantic = False
+
         chunks = await self.chunker.chunk_document(
-            markdown_text,
-            chunk_size=1000,  # NEW: Reduced from 1200 to 1000 (more conservative)
-            overlap=100,
-            metadata=metadata
+            markdown_text=markdown_text,
+            chunk_size=chunk_size,
+            overlap=chunk_overlap,
+            metadata=metadata,
+            use_semantic_chunking=use_semantic
         )
         table_chunks = [c for c in chunks if c['type'] == 'table']
         paragraph_chunks = [c for c in chunks if c['type'] == 'paragraph']

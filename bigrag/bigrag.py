@@ -183,6 +183,9 @@ class BiGRAG:
         "extraction_mode": "semi_structured"  # structured | semi_structured | unstructured
     })
 
+    # NEW: PipelineFeatures interface (Phase 2 - replaces enhanced_pipeline_config)
+    pipeline_features: 'PipelineFeatures' = None  # If set, overrides use_enhanced_pipeline
+
     # extension
     addon_params: dict = field(default_factory=dict)
     convert_response_to_json_func: callable = convert_response_to_json
@@ -204,6 +207,11 @@ class BiGRAG:
                 # Add extraction_strategy if not present
                 if 'extraction_strategy' not in self.enhanced_pipeline_config:
                     self.enhanced_pipeline_config['extraction_strategy'] = 'hybrid'
+
+        # NEW: If pipeline_features provided, auto-enable enhanced pipeline
+        if self.pipeline_features:
+            self.use_enhanced_pipeline = True
+            logger.info("[BiGRAG] PipelineFeatures provided - automatically enabling enhanced pipeline")
 
         # Use centralized logging directory or fallback to working_dir/logs
         from bigrag.config import config
@@ -868,19 +876,30 @@ class BiGRAG:
 
         logger.info("[Enhanced Pipeline] API key loaded from OPENAI_API_KEY environment variable")
 
-        # Step 2: Initialize EnhancedKGPipeline with config
+        # Step 2: Initialize EnhancedKGPipeline with config or PipelineFeatures
         try:
-            pipeline_config = self.enhanced_pipeline_config
-            pipeline = EnhancedKGPipeline(
-                api_key=api_key,
-                model="gpt-4o-mini",
-                validation_level=pipeline_config.get("validation_level", "MODERATE"),
-                extraction_mode=pipeline_config.get("extraction_mode", "semi_structured"),
-                extraction_strategy=pipeline_config.get("extraction_strategy", "hybrid"),  # NEW
-                enable_entity_linking=pipeline_config.get("enable_entity_linking", True),
-                dataset_path=self.working_dir  # NEW: For HITL storage
-            )
-            logger.info(f"[Enhanced Pipeline] Initialized with validation={pipeline_config.get('validation_level')}, strategy={pipeline_config.get('extraction_strategy')}")
+            if self.pipeline_features:
+                # NEW: Use PipelineFeatures interface
+                logger.info("[Enhanced Pipeline] Using PipelineFeatures interface")
+                pipeline = EnhancedKGPipeline(
+                    features=self.pipeline_features,
+                    dataset_path=self.working_dir
+                )
+                logger.info(f"[Enhanced Pipeline] Initialized with features (merge={self.pipeline_features.merge_strategy}, gleaning={self.pipeline_features.enable_gleaning})")
+            else:
+                # Legacy: Use enhanced_pipeline_config dict
+                logger.info("[Enhanced Pipeline] Using legacy config dict")
+                pipeline_config = self.enhanced_pipeline_config
+                pipeline = EnhancedKGPipeline(
+                    api_key=api_key,
+                    model="gpt-4o-mini",
+                    validation_level=pipeline_config.get("validation_level", "MODERATE"),
+                    extraction_mode=pipeline_config.get("extraction_mode", "semi_structured"),
+                    extraction_strategy=pipeline_config.get("extraction_strategy", "hybrid"),
+                    enable_entity_linking=pipeline_config.get("enable_entity_linking", True),
+                    dataset_path=self.working_dir
+                )
+                logger.info(f"[Enhanced Pipeline] Initialized with validation={pipeline_config.get('validation_level')}, strategy={pipeline_config.get('extraction_strategy')}")
 
         except Exception as e:
             error_msg = f"[Enhanced Pipeline] Failed to initialize pipeline: {e}\nNO FALLBACK: Fix initialization error."

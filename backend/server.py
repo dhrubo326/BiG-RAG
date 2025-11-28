@@ -47,7 +47,7 @@ from api.core.managers import LLMProviderManager, EmbeddingManager
 from api.core import dependencies
 
 # Import route modules
-from api.routes import health, documents, graph, evaluation, retrieval, jobs, llm, unified, datasets
+from api.routes import health, documents, graph, evaluation, retrieval, jobs, llm, unified, datasets, unified_indexing
 from api import hitl_routes  # NEW (Phase 1 Step 6): HITL system routes
 from api import agent
 
@@ -274,6 +274,9 @@ if unified_mode:
     app.include_router(unified.router)
     # Production dataset management (only in unified mode)
     app.include_router(datasets.router)
+
+# NEW: Unified indexing endpoint (PipelineFeatures interface)
+app.include_router(unified_indexing.router)
 
 
 # ============================================================================

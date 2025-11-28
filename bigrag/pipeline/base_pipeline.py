@@ -244,6 +244,9 @@ class UnifiedPipeline:
             entities = await self._merge_entities(entities, relations)
             logger.info(f"[Pipeline] Merged to {len(entities)} unique entities")
 
+            # Step 4.5: Add hyper-relation bidirectional linking (REQUIRED)
+            self._add_hyper_relations(entities, relations)
+
             # Step 5: Post-processing (OPTIONAL)
             if self.features.enable_orphan_linking:
                 logger.info("[Pipeline] Step 5: Post-processing (orphan detection)...")
@@ -354,17 +357,115 @@ class UnifiedPipeline:
                     'metadata': {}
                 })
 
-        # Call existing batch extraction method DIRECTLY
-        result = await batch_extractor.extract_from_chunks(
-            chunks=normalized_chunks,
-            language="English"
-        )
+        # NEW: Table fact extraction (if enabled)
+        # Process table chunks separately for 0% hallucination
+        if self.features.enable_table_fact_extraction:
+            from ..extractors.table_fact_extractor import TableFactExtractor
 
-        # Aggregate results from extractions
+            table_chunks = []
+            text_chunks = []
+
+            for chunk in normalized_chunks:
+                chunk_metadata = chunk.get('metadata', {})
+                if chunk_metadata.get('contains_table') and chunk_metadata.get('table_data'):
+                    table_chunks.append(chunk)
+                else:
+                    text_chunks.append(chunk)
+
+            logger.info(f"[Pipeline] Extracting from {len(table_chunks)} table chunks + {len(text_chunks)} text chunks")
+        else:
+            text_chunks = normalized_chunks
+            table_chunks = []
+
+        # Call existing batch extraction method DIRECTLY for text chunks
+        if text_chunks:
+            result = await batch_extractor.extract_from_chunks(
+                chunks=text_chunks,
+                language="English"
+            )
+        else:
+            result = {'extractions': []}
+
+        # NEW: Extract from table chunks using rule-based approach
+        table_extraction_count = 0
+        if self.features.enable_table_fact_extraction and table_chunks:
+            from ..extractors.table_fact_extractor import TableFactExtractor
+
+            for table_chunk in table_chunks:
+                chunk_id = table_chunk.get('chunk_id', '')
+                table_data = table_chunk.get('metadata', {}).get('table_data')
+
+                if table_data:
+                    try:
+                        facts = TableFactExtractor.extract_facts_from_table(
+                            table_data=table_data,
+                            chunk_id=chunk_id
+                        )
+                        # Add table extraction to result
+                        result['extractions'].append({
+                            'chunk_id': chunk_id,
+                            'entities': facts['entities'],
+                            'relations': facts['relations']
+                        })
+                        table_extraction_count += 1
+                    except Exception as e:
+                        logger.warning(f"[Pipeline] Table extraction failed for {chunk_id}: {e}")
+
+            logger.info(f"[Pipeline] Extracted facts from {table_extraction_count} table chunks")
+
+        # Aggregate results from extractions and add required fields
+        # (Following production_pipeline.py pattern: lines 213-246)
         all_entities = []
         all_relations = []
 
+        from bigrag.utils import compute_mdhash_id
+        from bigrag.constants import ENTITY_PREFIX, RELATION_PREFIX
+
         for extraction in result.get('extractions', []):
+            chunk_id = extraction.get('chunk_id', '')
+
+            # Add source_id and entity_id to entities (production pipeline pattern)
+            for entity in extraction.get('entities', []):
+                if 'source_id' not in entity:
+                    entity['source_id'] = chunk_id
+                if 'metadata' not in entity:
+                    entity['metadata'] = {}
+
+                # Track extraction method (unified_pipeline or table_row)
+                if 'extraction_method' not in entity.get('metadata', {}):
+                    entity['metadata']['extraction_method'] = 'unified_pipeline'
+
+                # Generate stable entity ID if not present
+                if 'entity_id' not in entity:
+                    entity_id = compute_mdhash_id(entity['entity_name'], prefix=ENTITY_PREFIX)
+                    entity['entity_id'] = entity_id
+
+            # Add source_id, relation_id, and linked_entities to relations (production pipeline pattern)
+            for relation in extraction.get('relations', []):
+                if 'source_id' not in relation:
+                    relation['source_id'] = chunk_id
+                if 'metadata' not in relation:
+                    relation['metadata'] = {}
+
+                # Track extraction method
+                if 'extraction_method' not in relation.get('metadata', {}):
+                    relation['metadata']['extraction_method'] = 'unified_pipeline'
+
+                # Generate relation ID if not present
+                if 'relation_id' not in relation:
+                    relation_id = compute_mdhash_id(relation.get('content', ''), prefix=RELATION_PREFIX)
+                    relation['relation_id'] = relation_id
+
+                # Extract linked entities from relation content
+                # Skip if already populated (e.g., by TableFactExtractor)
+                if 'linked_entities' not in relation.get('metadata', {}):
+                    linked_entities = []
+                    for entity in extraction.get('entities', []):
+                        # Simple heuristic: if entity name appears in relation content
+                        if entity['entity_name'] in relation.get('content', ''):
+                            linked_entities.append(entity['entity_id'])
+                    relation['metadata']['linked_entities'] = linked_entities
+
             all_entities.extend(extraction.get('entities', []))
             all_relations.extend(extraction.get('relations', []))
 
@@ -384,15 +485,46 @@ class UnifiedPipeline:
             'warnings': []
         }
 
-        # Use NumericValidator DIRECTLY (if enabled)
+        # NEW: Full numeric validation using NumericValidator.validate_extraction()
         if self.validator and self.features.enable_numeric_validation:
             try:
-                # NumericValidator has different API - just log for now
-                logger.info("[Validation] Numeric validation enabled")
-                validation_report['numeric_validation'] = 'ENABLED'
+                logger.info(f"[Validation] Running numeric validation (level: {self.features.validation_strictness})")
+
+                # Reconstruct source document from chunks
+                source_document = '\n\n'.join([
+                    chunk.get('content', '') for chunk in chunks
+                ])
+
+                # Call full validation method
+                numeric_result = await self.validator.validate_extraction(
+                    source_document=source_document,
+                    entities=entities,
+                    relations=relations,
+                    validation_level=self.features.validation_strictness
+                )
+
+                validation_report['numeric_validation'] = numeric_result
+
+                # Update overall status based on numeric validation
+                if numeric_result.get('status') == 'FAIL':
+                    validation_report['status'] = 'FAILED'
+                    validation_report['warnings'].append(
+                        f"Numeric validation failed: {numeric_result.get('message', 'Unknown error')}"
+                    )
+                elif numeric_result.get('status') == 'WARNING':
+                    validation_report['warnings'].append(
+                        f"Numeric validation warning: {numeric_result.get('message', 'See details')}"
+                    )
+
+                logger.info(f"[Validation] Numeric validation: {numeric_result.get('status', 'UNKNOWN')}")
+
             except Exception as e:
                 logger.warning(f"[Validation] Numeric validation failed: {e}")
-                validation_report['warnings'].append(str(e))
+                validation_report['warnings'].append(f"Numeric validation error: {str(e)}")
+                validation_report['numeric_validation'] = {
+                    'status': 'ERROR',
+                    'message': str(e)
+                }
 
         # Entity quality filtering (if enabled)
         if self.features.enable_entity_validation:
@@ -481,19 +613,67 @@ class UnifiedPipeline:
 
         return merged
 
-    def _detect_orphans(self, entities: List[Dict], relations: List[Dict]) -> int:
-        """Detect orphan entities (inline logic, no wrapper)."""
-        entity_names = {e.get('entity_name') for e in entities}
-        entities_in_relations = set()
+    def _add_hyper_relations(self, entities: List[Dict], relations: List[Dict]) -> None:
+        """
+        Add hyper_relation to entities (bidirectional linking).
 
+        Following production_pipeline.py pattern (lines 299-327).
+        This creates a reverse mapping from entities to relations.
+
+        IMPORTANT: After entity merging, entity_ids change. We need to remap
+        old entity_ids to new merged entity_ids using entity_ids_merged field.
+        """
+        # Build entity lookup dict AND entity ID remapping
+        entity_lookup = {}
+        entity_id_remap = {}  # old_id -> new_id mapping
+
+        for entity in entities:
+            entity_id = entity.get('entity_id')
+            if entity_id:
+                entity_lookup[entity_id] = entity
+
+                # If this entity was created by merging, map all old IDs to new ID
+                merged_ids = entity.get('entity_ids_merged', [])
+                if merged_ids:
+                    for old_id in merged_ids:
+                        entity_id_remap[old_id] = entity_id
+
+        hyper_relation_added = 0
         for relation in relations:
-            entities_in_relations.add(relation.get('head_entity'))
-            entities_in_relations.add(relation.get('tail_entity'))
+            relation_id = relation.get('relation_id')
+            if not relation_id:
+                # Generate relation_id if somehow missing
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import RELATION_PREFIX
+                relation_id = compute_mdhash_id(relation.get('content', ''), prefix=RELATION_PREFIX)
+                relation['relation_id'] = relation_id
 
-        orphans = entity_names - entities_in_relations
-        orphan_ratio = len(orphans) / len(entities) if entities else 0
+            linked_entities = relation.get('metadata', {}).get('linked_entities', [])
+
+            for old_entity_id in linked_entities:
+                # Remap old entity ID to merged entity ID
+                new_entity_id = entity_id_remap.get(old_entity_id, old_entity_id)
+
+                if new_entity_id in entity_lookup:
+                    entity_lookup[new_entity_id]['hyper_relation'] = relation_id
+                    hyper_relation_added += 1
+
+        logger.info(f"[Pipeline] Added hyper_relation to {hyper_relation_added} entity references")
+
+    def _detect_orphans(self, entities: List[Dict], relations: List[Dict]) -> int:
+        """
+        Detect orphan entities using hyper_relation field (production pipeline pattern).
+
+        Orphan entities are those without any relation connection.
+        """
+        # Check hyper_relation instead of name matching (production pipeline: line 322)
+        orphans = [e for e in entities if not e.get('hyper_relation')]
+        orphan_count = len(orphans)
+        orphan_ratio = orphan_count / len(entities) if entities else 0
 
         if orphan_ratio > 0.1:
-            logger.warning(f"[Orphan Detection] {len(orphans)} orphans ({orphan_ratio:.1%}) - consider improving extraction")
+            logger.warning(f"[Orphan Detection] {orphan_count} orphans ({orphan_ratio:.1%}) - consider improving extraction")
+        else:
+            logger.info(f"[Orphan Detection] {orphan_count} orphans ({orphan_ratio:.1%})")
 
-        return len(orphans)
+        return orphan_count

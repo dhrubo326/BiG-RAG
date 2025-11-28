@@ -2103,17 +2103,821 @@ curl -X POST "http://localhost:8001/datasets/create-and-index" \
 
 ---
 
-## 📖 Next Steps
+## ✅ IMPLEMENTATION STATUS (As of November 28, 2025)
 
-1. **Review this plan** - Provide feedback on architecture
-2. **Approve presets** - Confirm "standard", "quality", "balanced" naming
-3. **Begin implementation** - Start with Phase 1 (core infrastructure)
-4. **Test on BUET** - Validate standard preset solves the problem
-5. **Document features** - Create user guide for feature selection
+### 📊 ACCURACY UPDATE: What's ACTUALLY Done vs Missing
+
+**Status Verification Completed**: November 28, 2025
+
+**Feature Implementation Summary**:
+- ✅ **7 features COMPLETE** (including 2 that were already done but not documented)
+- ⚠️ **3 features PARTIALLY DONE** (flags exist but not wired up)
+- ❌ **2 features MISSING** (not started)
+
+**Total Progress**: **7/12 features complete** = **58% done** (not 90% as initially claimed)
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: November 26, 2024
-**Status**: Awaiting Review
-**Estimated Effort**: 4 weeks (1 developer)
+### What's Already Done ✅
+
+**Week 1-3: Core Infrastructure & Integration** (COMPLETE)
+- ✅ `bigrag/pipeline/features.py` - PipelineFeatures dataclass with 3 presets (features.py:1-600)
+- ✅ `bigrag/pipeline/base_pipeline.py` - UnifiedPipeline class with DIRECT imports (base_pipeline.py:1-650)
+- ✅ BiGRAG.ainsert() integration - Uses UnifiedPipeline with chunk ID remapping (bigrag.py:471-596)
+- ✅ `description_quality_score()` function - Already in utils.py:407,1205 (**TODO 2.2 DONE**)
+- ✅ Quality preset configuration - Already enables table extraction (features.py:231) (**TODO 1.4 DONE**)
+- ✅ All existing components imported:
+  - ✅ TableAwareChunker (table detection + semantic chunking)
+  - ✅ ConstrainedLLMExtractor (gleaning support)
+  - ✅ NumericValidator (imported but not wired up - see TODO 1.3)
+  - ✅ SimpleEntityLinker + ProductionEntityLinker (basic + fuzzy merging)
+  - ✅ FailedExtractionStore (HITL system)
+  - ✅ EntityCanonicalizationMap (entity linking)
+
+**Newly Discovered Complete Items**:
+- ✅ **TODO 1.4**: Quality preset already enables table fact extraction
+- ✅ **TODO 2.2**: Quality scoring function already implemented
+
+**Current State**: UnifiedPipeline is **58% complete** - 3 critical features need wiring, 2 optional features missing
+
+---
+
+## 🔴 MISSING FEATURES & IMPLEMENTATION GUIDE
+
+This section lists **ONLY** what's missing from the current UnifiedPipeline implementation. Everything else is already working!
+
+---
+
+### **PHASE 1: CRITICAL FEATURES** (Estimated: 4-6 hours)
+
+These features are essential for the quality preset to work correctly.
+
+---
+
+#### ✅ **TODO 1.1: Integrate TableFactExtractor** 🔴 **CRITICAL**
+**Priority**: HIGH (needed for quality preset)
+**Effort**: 2-3 hours
+**Status**: ⚠️ **FEATURE FLAG EXISTS BUT NOT WIRED UP**
+
+**Current State** (verified November 28, 2025):
+- ✅ Feature flag `enable_table_fact_extraction` EXISTS in features.py:33
+- ✅ Quality preset ENABLES it (features.py:231)
+- ✅ Balanced preset ENABLES it (features.py:278)
+- ❌ UnifiedPipeline does NOT import TableFactExtractor
+- ❌ UnifiedPipeline sends ALL chunks to ConstrainedLLMExtractor (base_pipeline.py:329-371)
+
+**What's Missing**:
+- Need to import TableFactExtractor in `_extract_entities_relations()`
+- Need to split chunks by type (table vs paragraph)
+- Need conditional routing: tables → TableFactExtractor, paragraphs → ConstrainedLLMExtractor
+
+**Reference Code**:
+- `bigrag/extractors/table_fact_extractor.py` (already exists - 200 lines)
+- `bigrag/enhanced_pipeline.py` lines 295-350 (table/paragraph split logic)
+
+**Files to Modify**:
+1. ~~`bigrag/pipeline/features.py`~~ ✅ **ALREADY DONE** - Feature flag exists on line 33
+
+2. `bigrag/pipeline/base_pipeline.py` - Update `_extract_entities_relations()` (line 329):
+   ```python
+   # Line 326+ (in _extract_entities_relations method)
+
+   async def _extract_entities_relations(self, chunks: List[Dict]) -> Tuple[List[Dict], List[Dict]]:
+       """Extract entities and relations (DIRECT use of existing extractors)."""
+
+       all_entities = []
+       all_relations = []
+
+       # NEW: Separate table and paragraph chunks
+       table_chunks = [c for c in chunks if c.get('type') == 'table']
+       paragraph_chunks = [c for c in chunks if c.get('type') != 'table']
+
+       # NEW: Extract from tables (rule-based if enabled)
+       if self.features.enable_table_fact_extraction and table_chunks:
+           from ..extractors.table_fact_extractor import TableFactExtractor
+
+           logger.info(f"[Extraction] Processing {len(table_chunks)} tables via TableFactExtractor")
+           for chunk in table_chunks:
+               if 'table_data' in chunk:
+                   result = TableFactExtractor.extract_facts_from_table(
+                       table_data=chunk['table_data'],
+                       chunk_id=chunk.get('chunk_id', 'unknown')
+                   )
+                   all_entities.extend(result['entities'])
+                   all_relations.extend(result['relations'])
+
+       # Extract from paragraphs (LLM-based) OR all chunks if table extraction disabled
+       chunks_for_llm = paragraph_chunks if self.features.enable_table_fact_extraction else chunks
+
+       if chunks_for_llm:
+           logger.info(f"[Extraction] Processing {len(chunks_for_llm)} paragraphs via ConstrainedLLMExtractor")
+           batch_extractor = BatchConstrainedExtractor(self.extractor)
+
+           # Existing normalization code...
+           normalized_chunks = []
+           for i, chunk in enumerate(chunks_for_llm):
+               # ... existing code ...
+
+           result = await batch_extractor.extract_from_chunks(normalized_chunks, language="English")
+
+           for extraction in result.get('extractions', []):
+               all_entities.extend(extraction.get('entities', []))
+               all_relations.extend(extraction.get('relations', []))
+
+       return all_entities, all_relations
+   ```
+
+**How to Test**:
+1. Create document with table + paragraph
+2. Use quality preset (enable_table_fact_extraction=True)
+3. Verify tables use TableFactExtractor (check logs for "Processing X tables via TableFactExtractor")
+4. Verify paragraphs use ConstrainedLLMExtractor (check logs for "Processing X paragraphs via ConstrainedLLMExtractor")
+5. Verify no LLM hallucinations in table data (100% numeric accuracy)
+
+**Success Criteria**:
+- Tables extracted via TableFactExtractor (rule-based, instant, free)
+- Paragraphs extracted via ConstrainedLLMExtractor (LLM-based, slower, costs API calls)
+- Quality preset uses both extractors correctly
+
+---
+
+#### ✅ **TODO 1.2: Integrate UnifiedEntityMerger** 🟡 **IMPORTANT**
+**Priority**: MEDIUM (enables hybrid strategy)
+**Effort**: 1 hour
+**Status**: ⚠️ **BASIC/FUZZY WORK, HYBRID MISSING**
+
+**Current State** (verified November 28, 2025):
+- ✅ UnifiedPipeline uses SimpleEntityLinker for basic strategy (base_pipeline.py:175-178)
+- ✅ UnifiedPipeline uses ProductionEntityLinker for fuzzy strategy (base_pipeline.py:165-173)
+- ❌ UnifiedPipeline does NOT use UnifiedEntityMerger class
+- ❌ No "hybrid" strategy implementation (features.py:57 has it in enum but not implemented)
+
+**What's Missing**:
+- Replace separate entity linkers with single UnifiedEntityMerger interface
+- Enable "hybrid" strategy support (currently only basic/fuzzy work)
+
+**Reference Code**:
+- `bigrag/merging/unified_merger.py` (already exists - 150 lines)
+- Provides single API: `UnifiedEntityMerger(strategy="basic"|"fuzzy"|"hybrid")`
+
+**Files to Modify**:
+1. `bigrag/pipeline/base_pipeline.py` - Replace `_init_entity_linker()` and `_merge_entities()`:
+   ```python
+   # Line 164-178 (replace existing _init_entity_linker method)
+
+   def _init_entity_linker(self):
+       """Initialize entity linker - use UnifiedEntityMerger for all strategies."""
+       from bigrag.merging.unified_merger import UnifiedEntityMerger
+
+       logger.info(f"[Unified Pipeline] Using UnifiedEntityMerger (strategy={self.features.merge_strategy})")
+       return UnifiedEntityMerger(strategy=self.features.merge_strategy)
+
+   # Line 442-454 (replace existing _merge_entities method)
+
+   async def _merge_entities(self, entities: List[Dict], relations: List[Dict]) -> List[Dict]:
+       """Merge entities using UnifiedEntityMerger."""
+       if not self.features.enable_entity_merging:
+           return entities
+
+       # UnifiedEntityMerger.merge() method
+       merged = await self.entity_linker.merge(entities, relations)
+       return merged
+   ```
+
+**How to Test**:
+1. Test basic strategy: `PipelineFeatures(merge_strategy="basic")`
+2. Test fuzzy strategy: `PipelineFeatures(merge_strategy="fuzzy")`
+3. Test hybrid strategy: `PipelineFeatures(merge_strategy="hybrid")`
+4. Verify all 3 strategies work without errors
+5. Verify merging reduces duplicate entities
+
+**Success Criteria**:
+- All 3 merge strategies work (basic, fuzzy, hybrid)
+- Switching strategies requires only config change (no code change)
+- Hybrid strategy adapts based on entity count
+
+---
+
+#### ✅ **TODO 1.3: Complete Numeric Validation Integration** 🟡 **IMPORTANT**
+**Priority**: MEDIUM (quality preset needs this)
+**Effort**: 2 hours
+**Status**: ⚠️ **PARTIALLY IMPLEMENTED**
+
+**What's Missing**:
+- NumericValidator is imported ✅
+- But `_validate()` method just logs "validation enabled" without actually validating ❌
+- No threshold checks (STRICT/MODERATE/LENIENT) ❌
+- No validation failure handling ❌
+
+**Current Code** (`base_pipeline.py` lines 388-395):
+```python
+# CURRENT (INCOMPLETE):
+if self.validator and self.features.enable_numeric_validation:
+    try:
+        logger.info("[Validation] Numeric validation enabled")
+        validation_report['numeric_validation'] = 'ENABLED'  # ❌ Just logging!
+    except Exception as e:
+        logger.warning(f"[Validation] Numeric validation failed: {e}")
+```
+
+**Reference Code**:
+- `bigrag/validators/numeric_validator.py` (already exists)
+- `bigrag/enhanced_pipeline.py` lines 947-979 (validation status handling)
+- `bigrag/pipeline/features.py` lines 530-555 (VALIDATION_THRESHOLDS already defined ✅)
+
+**Files to Modify**:
+1. `bigrag/pipeline/base_pipeline.py` - Complete `_validate()` method:
+   ```python
+   # Line 373-416 (replace existing _validate method)
+
+   async def _validate(
+       self,
+       entities: List[Dict],
+       relations: List[Dict],
+       chunks: List[Dict]
+   ) -> Tuple[List[Dict], List[Dict], Dict]:
+       """Validate entities and relations with full NumericValidator integration."""
+       validation_report = {
+           'status': 'PASSED',
+           'original_entities': len(entities),
+           'original_relations': len(relations),
+           'warnings': []
+       }
+
+       # Numeric validation (if enabled)
+       if self.validator and self.features.enable_numeric_validation:
+           try:
+               # Reconstruct full document text from chunks
+               full_text = "\n\n".join([c.get('content', '') for c in chunks])
+
+               # Run NumericValidator.validate()
+               numeric_result = await self.validator.validate(
+                   original_text=full_text,
+                   entities=entities,
+                   relations=relations,
+                   validation_level=self.features.validation_strictness
+               )
+
+               validation_report['numeric_validation'] = numeric_result
+
+               # Check if validation failed
+               if numeric_result.get('status') == 'FAIL':
+                   if self.features.validation_strictness == 'STRICT':
+                       # STRICT mode: Fail pipeline
+                       raise ValueError(
+                           f"Numeric validation FAILED (threshold: {self.features.validation_strictness}):\n"
+                           f"  Coverage: {numeric_result.get('coverage', 0):.2%}\n"
+                           f"  Message: {numeric_result.get('message', 'Unknown')}"
+                       )
+                   else:
+                       # MODERATE/LENIENT: Warn but continue
+                       validation_report['status'] = 'WARNING'
+                       validation_report['warnings'].append(
+                           f"Numeric validation warning: {numeric_result.get('message')}"
+                       )
+                       logger.warning(f"[Validation] Numeric validation warning: {numeric_result.get('message')}")
+
+           except ValueError:
+               # Re-raise validation failures in STRICT mode
+               raise
+           except Exception as e:
+               logger.warning(f"[Validation] Numeric validation error: {e}")
+               validation_report['warnings'].append(f"Numeric validation error: {str(e)}")
+
+       # Entity quality filtering (if enabled)
+       if self.features.enable_entity_validation:
+           original_count = len(entities)
+           entities = self._filter_low_quality_entities(entities)
+           filtered = original_count - len(entities)
+           validation_report['filtered_entities'] = filtered
+           logger.info(f"[Validation] Filtered {filtered} low-quality entities")
+
+       # Relation quality filtering (if enabled)
+       if self.features.enable_relation_validation:
+           original_count = len(relations)
+           relations = self._filter_incomplete_relations(relations)
+           filtered = original_count - len(relations)
+           validation_report['filtered_relations'] = filtered
+           logger.info(f"[Validation] Filtered {filtered} incomplete relations")
+
+       validation_report['final_entities'] = len(entities)
+       validation_report['final_relations'] = len(relations)
+
+       return entities, relations, validation_report
+   ```
+
+**How to Test**:
+1. Create document with numbers (e.g., "KUET has 180 CSE seats")
+2. Test STRICT mode: Should fail if <95% numbers found
+3. Test MODERATE mode: Should warn if <85% numbers found
+4. Test LENIENT mode: Should warn if <70% numbers found
+5. Verify validation catches hallucinated numbers
+
+**Success Criteria**:
+- STRICT mode fails pipeline on validation failure
+- MODERATE/LENIENT modes warn but continue
+- Validation report includes coverage percentage
+- Thresholds enforced correctly (95%/85%/70%)
+
+---
+
+#### ✅ **TODO 1.4: Update Quality Preset** 🟢 **EASY**
+**Priority**: LOW (just config change)
+**Effort**: 30 minutes
+**Status**: ✅ **ALREADY DONE**
+
+**Current State** (verified November 28, 2025):
+- ✅ Quality preset ALREADY enables `enable_table_fact_extraction=True` (features.py:231)
+- ✅ Balanced preset ALSO enables it (features.py:278)
+- ✅ Standard preset has it disabled (features.py:184)
+- ✅ This TODO is **COMPLETE** - no action needed
+
+**Files to Modify**:
+1. `bigrag/pipeline/features.py` - Update `_preset_quality()`:
+   ```python
+   # Line 435-480 (update _preset_quality method)
+
+   @classmethod
+   def _preset_quality(cls, openai_api_key: Optional[str] = None, gemini_api_key: Optional[str] = None) -> 'PipelineFeatures':
+       """
+       QUALITY preset: Slow, accurate (current enhanced pipeline).
+
+       Use for:
+       - Educational/technical documents with tables
+       - When accuracy is critical
+       - Small to medium documents (<50K chars)
+
+       Performance: ~2-5 minutes for 40K document
+       Accuracy: 95-99%
+       Cost: ~$0.40-0.60 per 40K document (table extraction + validation + gleaning)
+       API Calls: ~60-100 (table detection + extraction + validation + gleaning)
+       """
+       return cls(
+           # Chunking
+           enable_table_detection=True,
+           chunk_mode="semantic",
+           chunk_size=1200,
+           chunk_overlap=100,
+
+           # Extraction
+           enable_gleaning=True,
+           max_gleaning_iterations=2,
+           enable_table_fact_extraction=True,  # ✅ ADD THIS LINE (currently missing)
+           extraction_concurrency=16,
+
+           # Validation
+           enable_numeric_validation=True,
+           enable_entity_validation=True,
+           enable_relation_validation=True,
+           validation_strictness="MODERATE",  # Changed from STRICT to avoid BUET-like failures
+
+           # Merging
+           enable_entity_merging=True,
+           merge_strategy="fuzzy",
+
+           # Quality
+           enable_hitl=True,
+           enable_orphan_linking=True,
+           enable_quality_scoring=True,
+
+           # API Keys
+           openai_api_key=openai_api_key,
+           gemini_api_key=gemini_api_key,
+
+           pipeline_version="unified-v1.1"  # Bump version
+       )
+   ```
+
+**How to Test**:
+1. Instantiate quality preset: `features = PipelineFeatures.from_preset("quality")`
+2. Verify `features.enable_table_fact_extraction == True`
+3. Process KUET document with quality preset
+4. Verify tables are extracted via TableFactExtractor (after TODO 1.1 is done)
+
+**Success Criteria**:
+- Quality preset enables table fact extraction
+- Version bumped to v1.1
+- No breaking changes to other presets
+
+---
+
+### **PHASE 2: OPTIONAL ENHANCEMENTS** (Estimated: 1-2 hours)
+
+These features improve UX but are not critical for core functionality.
+
+---
+
+#### ✅ **TODO 2.1: Add Pipeline Selector** 🟢 **NICE-TO-HAVE**
+**Priority**: LOW (UX improvement)
+**Effort**: 1 hour
+**Status**: ❌ **NOT IMPLEMENTED**
+
+**What's Missing**:
+- No auto-recommendation system for preset selection
+- Users must manually choose preset (standard/quality/balanced)
+- Pipeline selector already exists but not integrated
+
+**Reference Code**:
+- `bigrag/pipeline_selector.py` (already exists - 300 lines)
+- Provides `quick_recommend(documents, corpus_size, performance_profile)` function
+
+**Files to Modify**:
+1. `bigrag/pipeline/base_pipeline.py` - Add static method:
+   ```python
+   # Add to UnifiedPipeline class (after __init__ method, around line 200)
+
+   @staticmethod
+   def recommend_config(
+       sample_documents: List[str],
+       corpus_size: int,
+       performance_profile: str = "balanced",
+       openai_api_key: Optional[str] = None,
+       gemini_api_key: Optional[str] = None
+   ) -> Dict:
+       """
+       Recommend optimal pipeline configuration based on corpus analysis.
+
+       Args:
+           sample_documents: Sample of documents (5-10 recommended)
+           corpus_size: Total document count
+           performance_profile: 'speed' | 'balanced' | 'accuracy'
+           openai_api_key: OpenAI API key
+           gemini_api_key: Gemini API key (optional)
+
+       Returns:
+           {
+               'preset': 'standard' | 'quality' | 'balanced',
+               'features': PipelineFeatures instance,
+               'reasoning': List[str],
+               'estimated_cost': str,
+               'estimated_time': str,
+               'expected_quality': str
+           }
+
+       Example:
+           >>> rec = UnifiedPipeline.recommend_config(
+           ...     sample_documents=docs[:10],
+           ...     corpus_size=1000,
+           ...     performance_profile='accuracy'
+           ... )
+           >>> pipeline = UnifiedPipeline(rec['features'])
+       """
+       from bigrag.pipeline_selector import quick_recommend
+
+       recommendation = quick_recommend(
+           documents=sample_documents,
+           corpus_size=corpus_size,
+           performance_profile=performance_profile
+       )
+
+       # Convert recommendation to PipelineFeatures
+       preset = recommendation.pipeline_type.value  # 'standard' | 'enhanced'
+       if preset == 'enhanced':
+           preset = 'quality'  # Map 'enhanced' to 'quality' preset
+
+       features = PipelineFeatures.from_preset(
+           preset=preset,
+           openai_api_key=openai_api_key,
+           gemini_api_key=gemini_api_key
+       )
+
+       return {
+           'preset': preset,
+           'features': features,
+           'reasoning': recommendation.reasoning,
+           'estimated_cost': recommendation.estimated_cost,
+           'estimated_time': recommendation.estimated_time,
+           'expected_quality': recommendation.expected_quality,
+           'confidence': recommendation.confidence
+       }
+   ```
+
+**How to Test**:
+```python
+# Test recommendation
+rec = UnifiedPipeline.recommend_config(
+    sample_documents=[kuet_doc],
+    corpus_size=100,
+    performance_profile='accuracy'
+)
+
+print(f"Recommended preset: {rec['preset']}")
+print(f"Reasoning: {rec['reasoning']}")
+print(f"Cost estimate: {rec['estimated_cost']}")
+
+# Use recommended features
+pipeline = UnifiedPipeline(rec['features'])
+```
+
+**Success Criteria**:
+- Recommendation works for all 3 performance profiles (speed/balanced/accuracy)
+- Returns correct preset based on document analysis
+- Provides cost/time/quality estimates
+
+---
+
+#### ✅ **TODO 2.2: Add Quality Scoring Function** 🟢 **OPTIONAL**
+**Priority**: VERY LOW (improves gleaning merge)
+**Effort**: 30 minutes
+**Status**: ✅ **ALREADY IMPLEMENTED**
+
+**Current State** (verified November 28, 2025):
+- ✅ `description_quality_score()` EXISTS in bigrag/utils.py (lines 407 and 1205)
+- ✅ Function is already used by gleaning merge logic
+- ✅ Implementation includes length, keyword density, and specificity scoring
+- ✅ This TODO is **COMPLETE** - no action needed
+
+**Reference Code**:
+- `MODULAR_PIPELINE_PLAN.md` lines 568-616 (full implementation)
+
+**Files to Create**:
+1. `bigrag/utils/quality_scoring.py` (NEW FILE):
+   ```python
+   """
+   Quality scoring algorithms for entity/relation validation.
+
+   Used during gleaning merge to select better descriptions.
+   """
+
+   import re
+
+   def description_quality_score(description: str) -> float:
+       """
+       Calculate quality score for entity description (used in gleaning merge).
+
+       Scoring factors:
+       - Length (40 points max): Longer descriptions are more detailed
+       - Keyword density (30 points max): Informative words (who, what, where, when)
+       - Specificity (30 points max): Numbers, dates, proper names
+
+       Returns: Score 0-100
+
+       Examples:
+           >>> description_quality_score("KUET has 18 departments established in 1967.")
+           85.0  # Good length, has numbers and dates
+
+           >>> description_quality_score("University")
+           10.0  # Too short, no details
+       """
+       if not description:
+           return 0.0
+
+       score = 0.0
+
+       # Factor 1: Length (up to 40 points)
+       length_score = min(len(description) / 5, 40)  # 200 chars = 40 points
+       score += length_score
+
+       # Factor 2: Keyword density (up to 30 points)
+       informative_words = ['who', 'what', 'when', 'where', 'why', 'how', 'which',
+                            'কে', 'কি', 'কোথায়', 'কেন']
+       keyword_count = sum(1 for word in informative_words if word in description.lower())
+       keyword_score = min(keyword_count * 10, 30)
+       score += keyword_score
+
+       # Factor 3: Specificity (up to 30 points)
+       has_numbers = bool(re.search(r'\d', description))
+       has_dates = bool(re.search(r'\d{4}|\d{1,2}/\d{1,2}', description))
+       has_names = bool(re.search(r'[A-Z][a-z]+|[অ-হ]{3,}', description))
+
+       specificity_score = (
+           (10 if has_numbers else 0) +
+           (10 if has_dates else 0) +
+           (10 if has_names else 0)
+       )
+       score += specificity_score
+
+       return score
+   ```
+
+**How to Test**:
+```python
+from bigrag.utils.quality_scoring import description_quality_score
+
+# Test cases
+assert description_quality_score("KUET has 18 departments established in 1967.") > 80
+assert description_quality_score("University") < 20
+assert description_quality_score("") == 0
+```
+
+**Success Criteria**:
+- Function works for English and Bangla text
+- Scores correlate with description quality
+- Used by gleaning merge (ConstrainedLLMExtractor already uses this if available)
+
+---
+
+### **PHASE 3: TESTING & VALIDATION** (Estimated: 2-3 hours)
+
+After implementing Phase 1-2, comprehensive testing is needed.
+
+---
+
+#### ✅ **TODO 3.1: Comprehensive Feature Tests**
+**Priority**: HIGH (verify everything works)
+**Effort**: 1 hour
+**Status**: ❌ **NOT IMPLEMENTED**
+
+**Test Cases to Create**:
+
+**File**: `test_scripts/test_unified_pipeline_comprehensive.py`
+
+```python
+"""
+Comprehensive tests for UnifiedPipeline with all 3 presets.
+
+Tests:
+1. Standard preset with KUET document
+2. Quality preset with KUET document
+3. Balanced preset with KUET document
+4. Feature flag toggling
+5. Mixed content (tables + paragraphs)
+"""
+
+import asyncio
+from bigrag import BiGRAG
+from bigrag.pipeline.features import PipelineFeatures
+
+async def test_all_presets():
+    """Test all 3 presets with KUET document."""
+
+    # Load KUET document
+    kuet_content = open("datasets/kuet_test/raw/corpus.jsonl").read()
+
+    # Test 1: Standard preset
+    print("\n[TEST 1] Standard preset...")
+    features = PipelineFeatures.from_preset("standard")
+    rag = BiGRAG(working_dir="./test_standard", pipeline_features=features)
+    await rag.ainsert([kuet_content])
+    print(f"  Entities: {len(rag.chunk_entity_relation_graph.nodes())}")
+
+    # Test 2: Quality preset
+    print("\n[TEST 2] Quality preset...")
+    features = PipelineFeatures.from_preset("quality")
+    rag = BiGRAG(working_dir="./test_quality", pipeline_features=features)
+    await rag.ainsert([kuet_content])
+    print(f"  Entities: {len(rag.chunk_entity_relation_graph.nodes())}")
+
+    # Test 3: Balanced preset
+    print("\n[TEST 3] Balanced preset...")
+    features = PipelineFeatures.from_preset("balanced")
+    rag = BiGRAG(working_dir="./test_balanced", pipeline_features=features)
+    await rag.ainsert([kuet_content])
+    print(f"  Entities: {len(rag.chunk_entity_relation_graph.nodes())}")
+
+    print("\n[PASS] All 3 presets completed successfully")
+
+if __name__ == "__main__":
+    asyncio.run(test_all_presets())
+```
+
+**Success Criteria**:
+- All 3 presets complete without errors
+- Entity counts reasonable (80-100 for standard, 90-110 for quality)
+- No crashes or exceptions
+
+---
+
+#### ✅ **TODO 3.2: Performance Benchmarks**
+**Priority**: MEDIUM (understand trade-offs)
+**Effort**: 1 hour
+**Status**: ❌ **NOT IMPLEMENTED**
+
+**Metrics to Measure**:
+- Processing time per preset
+- API calls per preset
+- Cost per preset
+- Entity/relation counts per preset
+- Accuracy (if ground truth available)
+
+**Output**: Markdown table for documentation
+
+---
+
+#### ✅ **TODO 3.3: Error Handling Tests**
+**Priority**: MEDIUM (verify graceful degradation)
+**Effort**: 1 hour
+**Status**: ❌ **NOT IMPLEMENTED**
+
+**Test Cases**:
+1. Table extraction failure → fallback to token chunking
+2. API timeout → skip chunk, continue processing
+3. Missing API key → feature disabled gracefully
+4. Invalid document → clear error message
+
+---
+
+### **PHASE 4: DOCUMENTATION** (Estimated: 1 hour)
+
+---
+
+#### ✅ **TODO 4.1: Update CLAUDE.md**
+**Priority**: MEDIUM (user guidance)
+**Effort**: 30 minutes
+**Status**: ❌ **NOT IMPLEMENTED**
+
+**Sections to Add**:
+- UnifiedPipeline usage examples
+- Feature flag reference table
+- Preset comparison table
+- Migration guide from old pipelines
+
+---
+
+#### ✅ **TODO 4.2: Update README.md**
+**Priority**: LOW (quick start guide)
+**Effort**: 30 minutes
+**Status**: ❌ **NOT IMPLEMENTED**
+
+**Example to Add**:
+```python
+from bigrag import BiGRAG
+from bigrag.pipeline.features import PipelineFeatures
+
+# Quick start with preset
+features = PipelineFeatures.from_preset("quality")
+rag = BiGRAG(working_dir="./expr/my_dataset", pipeline_features=features)
+```
+
+---
+
+## 📊 SUMMARY: Implementation Checklist (UPDATED November 28, 2025)
+
+### ✅ Already Complete (No Action Needed)
+- [x] **TODO 1.4**: Update Quality Preset ✅ **ALREADY DONE** (features.py:231)
+- [x] **TODO 2.2**: Add Quality Scoring ✅ **ALREADY DONE** (utils.py:407,1205)
+
+**Total Already Done**: 2 features (saved ~1 hour of work!)
+
+---
+
+### Critical Path (Must Do First)
+- [ ] **TODO 1.1**: Integrate TableFactExtractor (2-3 hours) 🔴 **CRITICAL**
+  - Status: Feature flag exists but not wired up in UnifiedPipeline
+  - Impact: Quality and balanced presets won't extract table facts
+
+- [ ] **TODO 1.2**: Integrate UnifiedEntityMerger (1 hour) 🟡 **IMPORTANT**
+  - Status: Basic/fuzzy work, hybrid strategy missing
+  - Impact: Can't use adaptive merging strategy
+
+- [ ] **TODO 1.3**: Complete Numeric Validation (2 hours) 🟡 **IMPORTANT**
+  - Status: NumericValidator imported but not called
+  - Impact: No validation of numeric consistency
+
+**Total Critical Path**: 5-6 hours (down from original 5.5-6.5 hours)
+
+### Optional Enhancements
+- [ ] **TODO 2.1**: Add Pipeline Selector (1 hour) 🟢 **NICE-TO-HAVE**
+  - Status: Not implemented
+  - Impact: Users must manually choose presets
+
+**Total Optional**: 1 hour (down from 1.5 hours)
+
+### Testing & Documentation
+- [ ] **TODO 3.1**: Comprehensive Tests (1 hour)
+- [ ] **TODO 3.2**: Performance Benchmarks (1 hour)
+- [ ] **TODO 3.3**: Error Handling Tests (1 hour)
+- [ ] **TODO 4.1**: Update CLAUDE.md (30 min)
+- [ ] **TODO 4.2**: Update README.md (30 min)
+
+**Total Testing/Docs**: 4 hours
+
+---
+
+### 🎯 TOTAL REMAINING EFFORT
+
+**Original Estimate**: 10-11 hours
+**Actual Remaining**: **10-11 hours** (3 critical + 1 optional + 4 testing = 8-9 hours core + 2 hours buffer)
+
+**Progress**: 58% complete (7/12 features done)
+
+---
+
+## 🎯 ESTIMATED TOTAL EFFORT
+
+| Phase | Tasks | Effort | Priority |
+|-------|-------|--------|----------|
+| **Phase 1: Critical** | TODO 1.1-1.4 | 5-6 hours | 🔴 **HIGH** |
+| **Phase 2: Optional** | TODO 2.1-2.2 | 1.5 hours | 🟢 LOW |
+| **Phase 3: Testing** | TODO 3.1-3.3 | 3 hours | 🟡 MEDIUM |
+| **Phase 4: Docs** | TODO 4.1-4.2 | 1 hour | 🟡 MEDIUM |
+| **TOTAL** | | **10-11 hours** | |
+
+**Recommendation**: Focus on Phase 1 (critical features) first. This gets quality preset working correctly. Phase 2-4 can be done later as time permits.
+
+---
+
+## 📖 Next Steps
+
+1. **Review this plan** - Confirm TODOs are clear and accurate
+2. **Prioritize implementation** - Start with TODO 1.1 (TableFactExtractor)
+3. **Implement Phase 1** - Complete all 4 critical TODOs (5-6 hours)
+4. **Test quality preset** - Verify KUET document works correctly
+5. **Optional enhancements** - Add Phase 2 features as needed
+
+---
+
+**Document Version**: 1.1
+**Last Updated**: November 28, 2025
+**Status**: Implementation Guide Complete
+**Estimated Effort**: 10-11 hours (5-6 hours for critical path)

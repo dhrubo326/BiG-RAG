@@ -335,6 +335,13 @@ class ProductionEntityLinker:
             if source_id:
                 source_ids.add(source_id)
 
+        # Collect hyper_relation (pick first non-empty one)
+        hyper_relation = None
+        for entity in group:
+            if entity.get('hyper_relation'):
+                hyper_relation = entity.get('hyper_relation')
+                break
+
         # Entity type (use most common)
         entity_types = [entity.get('entity_type', 'concept') for entity in group]
         most_common_type = max(set(entity_types), key=entity_types.count)
@@ -362,7 +369,9 @@ class ProductionEntityLinker:
             'entity_type': most_common_type,
             'description': '; '.join(descriptions) if descriptions else canonical_name,
             'weight': total_weight,
+            'source_id': list(source_ids)[0] if source_ids else '',  # Use singular for compatibility
             'source_ids': list(source_ids),
+            'hyper_relation': hyper_relation,  # Preserve hyper_relation from any entity in group
             'aliases': list(aliases),
             'merge_count': len(group),
             'metadata': {

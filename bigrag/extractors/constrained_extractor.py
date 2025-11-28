@@ -794,7 +794,9 @@ If no additional entities/relations found, return empty lists.
                 if glean_quality > base_quality:
                     # Gleaned version is better
                     base_entities[entity_key] = glean_entity
-                    print(f"    [MERGE] Entity '{entity_name}': Gleaned version is better (quality {base_quality:.0f} → {glean_quality:.0f})")
+                    # Use logger to avoid Windows Unicode encoding issues
+                    from bigrag.utils import logger
+                    logger.debug(f"[MERGE] Entity gleaned version better: {entity_name} (quality {base_quality:.0f} -> {glean_quality:.0f})")
                 elif glean_quality == base_quality:
                     # Tie on quality - use length as tiebreaker
                     if len(glean_desc) > len(base_desc):
@@ -814,7 +816,9 @@ If no additional entities/relations found, return empty lists.
             else:
                 # New entity from gleaning
                 base_entities[entity_key] = glean_entity
-                print(f"    [MERGE] Entity '{entity_name}': NEW from gleaning")
+                # Use logger to avoid Windows Unicode encoding issues
+                from bigrag.utils import logger
+                logger.debug(f"[MERGE] New entity from gleaning: {entity_name}")
 
         merged['entities'] = list(base_entities.values())
 

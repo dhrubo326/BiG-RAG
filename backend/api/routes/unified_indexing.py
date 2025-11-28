@@ -306,7 +306,7 @@ async def _process_with_bigrag(
         # Insert document (BiGRAG uses EnhancedPipeline internally)
         await rag.ainsert(
             [content],
-            metadatas=[{
+            metadata=[{
                 "title": title,
                 "document_id": document_id,
                 **metadata

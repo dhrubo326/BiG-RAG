@@ -157,9 +157,33 @@ pip3 install -r requirements-rl.txt
 
 ---
 
-## 🔄 Dual Pipeline System & Unified Subgraph Architecture
+## 🔄 Pipeline Architecture & Modular Unification (January 2025)
 
-BiG-RAG supports two distinct knowledge graph construction pipelines with a unified retrieval backend. Both pipelines produce **100% compatible** graph structures (as of January 2025).
+### Current Status: Transitioning to Modular Unified Pipeline
+
+**IMPORTANT**: BiG-RAG is currently transitioning from a dual-pipeline system (standard + production) to a **modular unified pipeline** with feature flags. This allows users to enable/disable specific features (table extraction, validation, entity linking, etc.) based on their needs.
+
+**Active Development Branch**: `feature/modular-unified-pipeline`
+
+**Planning Documents**:
+- **[MODULAR_PIPELINE_PLAN.md](MODULAR_PIPELINE_PLAN.md)** - Complete implementation plan with feature flags, presets, error handling, and HITL system
+- **[Production_pipeline_redesign_plan.md](Production_pipeline_redesign_plan.md)** - Previous unification plan (reference only)
+
+**Implementation Status**: Phase 0 - Planning Complete (98/100 readiness score)
+
+**Next Steps**:
+- Week 1: Implement `bigrag/pipeline/features.py` and `bigrag/pipeline/base_pipeline.py`
+- Week 2: Extract standard pipeline components into modular architecture
+- Week 3: Integration testing with different feature combinations
+- Week 4: API endpoint updates and documentation
+
+---
+
+### Legacy Dual Pipeline System (Current Implementation)
+
+BiG-RAG currently supports two distinct knowledge graph construction pipelines with a unified retrieval backend. Both pipelines produce **100% compatible** graph structures (as of January 2025).
+
+**Note**: This dual-pipeline system will be replaced by the modular unified pipeline, but remains functional during the transition.
 
 ### Two Pipeline Modes
 
@@ -259,6 +283,95 @@ curl -X POST "http://localhost:8001/datasets/create-and-index" \
 - Graphs built with standard pipeline can be queried using production pipeline endpoints (and vice versa)
 
 **Historical Note**: Prior to January 24, 2025, production pipeline used `"relation-abc123"` prefix (bug). This has been fixed to use the standard `"rel-abc123"` prefix via the `RELATION_PREFIX` constant.
+
+---
+
+### Future: Modular Unified Pipeline Architecture
+
+The new modular pipeline replaces the binary choice (standard vs production) with **15+ granular feature flags** organized into 5 categories:
+
+#### Feature Categories
+
+**1. Chunking Features**:
+- `enable_table_detection`: GPT-4 table extraction
+- `chunk_mode`: token | semantic | hybrid
+- `chunk_size`, `chunk_overlap`: Configurable parameters
+
+**2. Extraction Features**:
+- `enable_gleaning`: Multi-pass extraction with conversation history
+- `max_gleaning_iterations`: Default 2 passes
+- `enable_table_fact_extraction`: Rule-based table fact extraction
+- `extraction_concurrency`: Parallel LLM API calls (default: 16)
+
+**3. Validation Features**:
+- `enable_numeric_validation`: Gemini-based numeric consistency check
+- `enable_entity_validation`: Entity quality scoring and filtering
+- `enable_relation_validation`: Relation completeness validation
+- `validation_strictness`: STRICT (99%) | MODERATE (95%) | LENIENT (80%)
+
+**4. Merging Features**:
+- `enable_entity_merging`: Entity deduplication
+- `merge_strategy`: basic (fast) | fuzzy (accurate) | hybrid
+
+**5. Quality Features**:
+- `enable_hitl`: Save failed extractions for human review
+- `enable_orphan_linking`: Post-merge orphan entity linking
+- `enable_quality_scoring`: Track extraction quality metrics
+
+#### Three Presets
+
+**Standard Preset** (replaces current standard pipeline):
+```python
+features = PipelineFeatures.from_preset("standard")
+# Fast, reliable: 90-95% accuracy, ~$0.15/40K doc, 30-60s
+```
+
+**Quality Preset** (replaces current production pipeline):
+```python
+features = PipelineFeatures.from_preset("quality")
+# Slow, accurate: 95-99% accuracy, ~$0.40-0.60/40K doc, 2-5min
+```
+
+**Balanced Preset** (new):
+```python
+features = PipelineFeatures.from_preset("balanced")
+# Medium: 92-96% accuracy, ~$0.25-0.35/40K doc, 1-2min
+```
+
+#### Custom Configuration
+
+```python
+# Mix and match features as needed
+features = PipelineFeatures(
+    enable_table_detection=True,
+    chunk_mode="semantic",
+    enable_gleaning=True,
+    enable_numeric_validation=False,  # Disable if too strict
+    validation_strictness="MODERATE"
+)
+
+pipeline = UnifiedPipeline(features)
+result = await pipeline.process_document(markdown_text, metadata)
+```
+
+#### Key Benefits
+
+- **Flexibility**: Enable only needed features (reduce cost/time)
+- **Transparency**: Clear what each feature does
+- **Gradual Adoption**: Start with standard, add features incrementally
+- **Cost Control**: See exact cost per feature in plan
+- **Error Handling**: Graceful degradation if optional features fail
+
+#### Implementation Details
+
+See **[MODULAR_PIPELINE_PLAN.md](MODULAR_PIPELINE_PLAN.md)** for:
+- Complete feature flag definitions
+- Validation thresholds (STRICT/MODERATE/LENIENT)
+- Error handling strategy (graceful degradation)
+- HITL system (human-in-the-loop for failed extractions)
+- Semantic chunking algorithm (accumulation logic, overlap strategy)
+- Gleaning implementation (two-stage: retry + refinement)
+- Quality scoring formula (length + keywords + specificity)
 
 ---
 

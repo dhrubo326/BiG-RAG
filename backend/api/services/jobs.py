@@ -138,9 +138,19 @@ async def process_document_background(
 
         logger.info(f"[Job {job_id}] Starting processing for document: {title}")
 
-        # Detect pipeline mode from RAG instance
-        pipeline_mode = "ENHANCED (Phase 1)" if getattr(rag_instance, 'use_enhanced_pipeline', False) else "STANDARD"
-        logger.info(f"[Job {job_id}] Pipeline mode: {pipeline_mode}")
+        # Detect pipeline preset from pipeline_features
+        pipeline_features = getattr(rag_instance, 'pipeline_features', None)
+        if pipeline_features:
+            # Infer preset from feature flags
+            if pipeline_features.enable_gleaning and pipeline_features.enable_entity_validation:
+                pipeline_mode = "QUALITY"
+            elif pipeline_features.enable_gleaning or pipeline_features.enable_entity_validation:
+                pipeline_mode = "BALANCED"
+            else:
+                pipeline_mode = "STANDARD"
+        else:
+            pipeline_mode = "STANDARD (default)"
+        logger.info(f"[Job {job_id}] Pipeline preset: {pipeline_mode}")
 
         # Update to extraction stage
         job.update(

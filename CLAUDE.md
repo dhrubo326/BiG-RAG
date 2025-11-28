@@ -703,9 +703,9 @@ curl -X POST http://localhost:8001/search \
 
 **React UI Alternative (NEW - November 2025):**
 ```bash
-# Terminal 1: Start backend
+# Terminal 1: Start backend (unified mode)
 cd backend
-python server.py --data_source 2WikiMultiHopQA
+python server.py --unified
 
 # Terminal 2: Start frontend
 cd frontend
@@ -2030,9 +2030,9 @@ python script_process.py --data_source 2WikiMultiHopQA
 # 2. Build graph
 python script_build.py --data_source 2WikiMultiHopQA
 
-# 3. Start server (NEW: use backend/server.py)
+# 3. Start server (unified mode)
 cd backend
-python server.py --data_source 2WikiMultiHopQA &
+python server.py --unified &
 
 # 4. Train
 bash run_grpo.sh -p Qwen/Qwen2.5-3B-Instruct -m qwen3b -d 2WikiMultiHopQA
@@ -2051,9 +2051,9 @@ ray stop
 ### UI Development Commands (NEW)
 
 ```bash
-# Start backend
+# Start backend (unified mode)
 cd backend
-python server.py --data_source SingleTopic
+python server.py --unified
 
 # Start frontend (separate terminal)
 cd frontend
@@ -2122,11 +2122,11 @@ print("[FAIL] Test failed!")
 
 1. **Retrieval server not running**: Training will fail/hang if port 8001 is not responding
    - **Check**: `curl http://localhost:8001/docs`
-   - **Fix**: `cd backend && python server.py --data_source {dataset}`
+   - **Fix**: `cd backend && python server.py --unified`
 
-2. **Wrong server path**: Use `backend/server.py` NOT `script_api.py`
-   - **Old**: `python script_api.py` ❌
-   - **New**: `cd backend && python server.py` ✅
+2. **Wrong server path**: Use `backend/server.py` with `--unified` flag NOT `--data_source`
+   - **Old**: `python server.py --data_source {dataset}` ❌
+   - **New**: `cd backend && python server.py --unified` ✅
 
 3. **Test scripts moved**: All test files now in `test_scripts/`
    - **Old**: `python test_improvements.py` ❌

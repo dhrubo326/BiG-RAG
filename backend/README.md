@@ -23,11 +23,14 @@ pip install fastapi uvicorn python-multipart
 ### Running the Server
 
 ```bash
-# Start API server with default dataset
-python server.py --data_source SingleTopic
+# Start API server in unified mode (RECOMMENDED)
+python server.py --unified
 
 # With custom configuration
-python server.py --data_source SingleTopic --port 8002 --llm_provider anthropic
+python server.py --unified --port 8002 --llm_provider anthropic
+
+# Legacy mode (single dataset - NOT RECOMMENDED)
+python server.py --data_source SingleTopic
 ```
 
 **Server will be available at:**

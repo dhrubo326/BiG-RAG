@@ -97,9 +97,9 @@ python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 BiG-RAG includes a pre-built demo dataset (`demo_test`) for immediate testing:
 
 ```bash
-# Start the backend API server
+# Start the backend API server (unified mode)
 cd backend
-python server.py --data_source demo_test
+python server.py --unified
 
 # The server will run on http://localhost:8001
 # Visit http://localhost:8001/docs to see the API documentation
@@ -116,7 +116,7 @@ curl -X POST http://localhost:8001/ask \
 **Or use the Web UI:**
 ```bash
 # Terminal 1: Backend (already running from above)
-cd backend && python server.py --data_source demo_test
+cd backend && python server.py --unified
 
 # Terminal 2: Frontend
 cd frontend
@@ -190,14 +190,16 @@ Both pipelines will:
 
 **Time estimate:** 2-4 hours for ~10K documents with standard pipeline, 4-8 hours with production pipeline (depends on corpus size and OpenAI API rate limits)
 
-### Step 5: Start Server with Your Dataset
+### Step 5: Start Server in Unified Mode
 
 ```bash
 cd backend
-python server.py --data_source your_dataset
+python server.py --unified
 ```
 
 The API server runs on `http://localhost:8001/docs`
+
+**Note**: Unified mode enables multi-subgraph support and all advanced indexing features.
 
 ---
 
@@ -506,7 +508,7 @@ curl http://localhost:8001/
 # Should return: {"message": "BiG-RAG Unified API Server..."}
 
 # If not running:
-cd backend && python server.py --data_source demo_test
+cd backend && python server.py --unified
 ```
 
 **4. OpenAI API rate limit errors**

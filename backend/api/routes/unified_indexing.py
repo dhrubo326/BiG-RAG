@@ -181,7 +181,7 @@ def estimate_time_and_cost(features: PipelineFeatures, content_length: int) -> t
 
 
 async def process_document_with_unified_pipeline(
-    dataset_name: str,
+    working_dir: str,
     document_id: str,
     content: str,
     title: str,
@@ -197,7 +197,7 @@ async def process_document_with_unified_pipeline(
     - Must persist to: GraphML, vector DBs, KV stores (7 files total)
 
     Args:
-        dataset_name: Dataset name
+        working_dir: Absolute path to dataset directory (from ensure_dataset_exists)
         document_id: Document ID
         content: Document content
         title: Document title
@@ -216,8 +216,8 @@ async def process_document_with_unified_pipeline(
         logger.info(f"[UnifiedIndexing] Features: {_summarize_features(features)}")
 
         # Initialize BiGRAG with unified pipeline features
-        # This ensures BiGRAG.ainsert() uses UnifiedPipeline with our custom features
-        working_dir = f"expr/{dataset_name}"
+        # Working dir is already absolute path from ensure_dataset_exists()
+        # This follows the same pattern as /datasets/create-and-index endpoint
         rag = BiGRAG(
             working_dir=working_dir,
             llm_model_func=gpt_4o_mini_complete,
@@ -244,7 +244,8 @@ async def process_document_with_unified_pipeline(
         # 5. Store entities to vdb_entities vector DB
         # 6. Store relations to vdb_relations vector DB
         # 7. Save GraphML file
-        await rag.ainsert([content], metadatas=[doc_metadata])
+        # FIXED: Use 'metadata' not 'metadatas' (singular, accepts list internally)
+        await rag.ainsert([content], metadata=[doc_metadata])
 
         logger.info(f"[UnifiedIndexing] Document indexed successfully")
         logger.info(f"  - Graph files updated in: {working_dir}")
@@ -509,24 +510,28 @@ async def index_document_with_features(
 
         # Step 10: Process (sync or async)
         if process_async:
-            # Create job
+            # Create job (using correct ProcessingJob parameters)
             job = ProcessingJob(
                 job_id=job_id,
-                dataset_name=data_source,
+                dataset=data_source,  # FIXED: 'dataset' not 'dataset_name'
                 document_id=doc_id,
-                filename=file.filename,
-                title=doc_title,
-                content_length=len(content_text),
-                metadata=doc_metadata,
                 status=JobStatus.PENDING,
-                current_stage=ProcessingStage.QUEUED
+                stage=ProcessingStage.QUEUED
             )
+            # Store additional metadata in stats field
+            job.stats = {
+                "filename": file.filename,
+                "title": doc_title,
+                "content_length": len(content_text),
+                "metadata": doc_metadata,
+                "features_enabled": _summarize_features(features)
+            }
             processing_jobs[job_id] = job
 
             # Schedule background processing
             background_tasks.add_task(
                 process_document_with_unified_pipeline,
-                data_source,
+                dataset_info["expr_dir"],  # Pass absolute path from ensure_dataset_exists()
                 doc_id,
                 content_text,
                 doc_title,
@@ -539,7 +544,7 @@ async def index_document_with_features(
         else:
             # Process synchronously
             result = await process_document_with_unified_pipeline(
-                data_source,
+                dataset_info["expr_dir"],  # Pass absolute path from ensure_dataset_exists()
                 doc_id,
                 content_text,
                 doc_title,

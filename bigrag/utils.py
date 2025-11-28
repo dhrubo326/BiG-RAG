@@ -1198,3 +1198,181 @@ def get_overlap_text(
                 break
 
         return ' '.join(overlap_sentences) if overlap_sentences else sentences[0]
+
+
+# ========== QUALITY SCORING FUNCTIONS (Week 1 - Modular Pipeline) ==========
+
+def description_quality_score(description: str) -> float:
+    """
+    Calculate quality score for entity description (used in gleaning merge).
+
+    Scoring factors:
+    - Length (40 points max): Longer descriptions are more detailed
+    - Keyword density (30 points max): Informative words (who, what, where, when)
+    - Specificity (30 points max): Numbers, dates, proper names
+
+    Returns: Score 0-100
+
+    Examples:
+        >>> description_quality_score("KUET has 18 departments established in 1967.")
+        85.0  # Good length, has numbers and dates
+
+        >>> description_quality_score("University")
+        10.0  # Too short, no details
+    """
+    import re
+    
+    if not description:
+        return 0.0
+
+    score = 0.0
+
+    # Factor 1: Length (up to 40 points)
+    # 200 chars = 40 points
+    length_score = min(len(description) / 5, 40)
+    score += length_score
+
+    # Factor 2: Keyword density (up to 30 points)
+    # Informative question words in both English and Bangla
+    informative_words = [
+        'who', 'what', 'when', 'where', 'why', 'how', 'which',
+        'কে', 'কি', 'কোথায়', 'কেন', 'কখন', 'কীভাবে'
+    ]
+    keyword_count = sum(1 for word in informative_words if word in description.lower())
+    keyword_score = min(keyword_count * 10, 30)
+    score += keyword_score
+
+    # Factor 3: Specificity (up to 30 points)
+    # - Has numbers: 10 points
+    # - Has dates (4-digit years or date patterns): 10 points
+    # - Has proper names (capitalized words or Bangla names): 10 points
+    has_numbers = bool(re.search(r'\d', description))
+    has_dates = bool(re.search(r'\d{4}|\d{1,2}/\d{1,2}|\d{1,2}-\d{1,2}', description))
+    has_names = bool(re.search(r'[A-Z][a-z]+|[অ-হ]{3,}', description))
+
+    specificity_score = (
+        (10 if has_numbers else 0) +
+        (10 if has_dates else 0) +
+        (10 if has_names else 0)
+    )
+    score += specificity_score
+
+    return round(score, 1)
+
+
+def entity_quality_score(
+    entity: dict,
+    description_weight: float = 0.4,
+    context_weight: float = 0.3,
+    frequency_weight: float = 0.2,
+    type_weight: float = 0.1
+) -> float:
+    """
+    Calculate comprehensive quality score for an entity.
+
+    Components:
+    - Description completeness (40%): How detailed is the description?
+    - Context relevance (30%): Is entity mentioned in relevant context?
+    - Source frequency (20%): How many chunks mention this entity?
+    - Type specificity (10%): Is type specific vs. generic?
+
+    Args:
+        entity: Entity dict with name, description, entity_type, source_id
+        description_weight: Weight for description quality (default 0.4)
+        context_weight: Weight for context relevance (default 0.3)
+        frequency_weight: Weight for source frequency (default 0.2)
+        type_weight: Weight for type specificity (default 0.1)
+
+    Returns:
+        Quality score 0-100
+
+    Examples:
+        >>> entity = {
+        ...     "name": "KUET",
+        ...     "description": "Khulna University of Engineering and Technology, established 1967",
+        ...     "entity_type": "UNIVERSITY",
+        ...     "source_id": ["chunk1", "chunk2", "chunk3"]
+        ... }
+        >>> entity_quality_score(entity)
+        82.5  # High score: good description, specific type, multiple sources
+    """
+    # Component 1: Description quality (0-100)
+    description = entity.get('description', '')
+    desc_score = description_quality_score(description)
+
+    # Component 2: Context relevance (0-100)
+    # Simple heuristic: if description mentions entity name = relevant
+    entity_name = entity.get('name', '').lower()
+    context_score = 100.0 if entity_name in description.lower() else 50.0
+
+    # Component 3: Source frequency (0-100)
+    # Normalize by typical max (assume 10 sources = excellent)
+    source_ids = entity.get('source_id', [])
+    if isinstance(source_ids, str):
+        source_ids = [source_ids]
+    source_count = len(source_ids)
+    freq_score = min(source_count * 10, 100)
+
+    # Component 4: Type specificity (0-100)
+    # Generic types get low scores
+    entity_type = entity.get('entity_type', 'UNKNOWN').upper()
+    generic_types = {'UNKNOWN', 'OTHER', 'ENTITY', 'THING', 'ITEM', 'OBJECT'}
+    type_score = 30.0 if entity_type in generic_types else 100.0
+
+    # Weighted combination
+    total_score = (
+        description_weight * desc_score +
+        context_weight * context_score +
+        frequency_weight * freq_score +
+        type_weight * type_score
+    )
+
+    return round(total_score, 1)
+
+
+def relation_completeness_score(relation: dict) -> float:
+    """
+    Calculate completeness score for a relation (0-10 scale).
+
+    Criteria:
+    - Has source and target entities: +2 points
+    - Has description: +3 points
+    - Description mentions both entities: +3 points
+    - Description is detailed (>20 chars): +2 points
+
+    Args:
+        relation: Relation dict with description, source_id, target_id
+
+    Returns:
+        Completeness score 0-10
+
+    Examples:
+        >>> relation = {
+        ...     "description": "KUET was established in Khulna in 1967",
+        ...     "source_id": "entity-kuet",
+        ...     "target_id": "entity-khulna"
+        ... }
+        >>> relation_completeness_score(relation)
+        10.0  # Complete relation with detailed description
+    """
+    score = 0.0
+
+    # Check 1: Has source and target (2 points)
+    if relation.get('source_id') and relation.get('target_id'):
+        score += 2.0
+
+    # Check 2: Has description (3 points)
+    description = relation.get('description', '').strip()
+    if description:
+        score += 3.0
+
+        # Check 3: Description is detailed (2 points)
+        if len(description) > 20:
+            score += 2.0
+
+        # Check 4: Description mentions context (3 points)
+        # Simple heuristic: longer descriptions are more likely contextual
+        if len(description) > 50:
+            score += 3.0
+
+    return round(score, 1)

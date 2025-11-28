@@ -1,0 +1,2791 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d10" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d9" for="edge" attr.name="weight" attr.type="long" />
+  <key id="d8" for="node" attr.name="weight" attr.type="double" />
+  <key id="d7" for="node" attr.name="entity_type" attr.type="string" />
+  <key id="d6" for="node" attr.name="entity_name" attr.type="string" />
+  <key id="d5" for="node" attr.name="extraction_quality" attr.type="string" />
+  <key id="d4" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d3" for="node" attr.name="weight" attr.type="long" />
+  <key id="d2" for="node" attr.name="description" attr.type="string" />
+  <key id="d1" for="node" attr.name="content" attr.type="string" />
+  <key id="d0" for="node" attr.name="role" attr.type="string" />
+  <graph edgedefault="undirected">
+    <node id="rel-05c4ab9e672f3c308ce32583b08f80df">
+      <data key="d0">relation</data>
+      <data key="d1">: ০৪ জানুয়ারী ২০২৫ সকাল ১০:০০ মি.।</data>
+      <data key="d2">: ০৪ জানুয়ারী ২০২৫ সকাল ১০:০০ মি.।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-6bf7ba0975b898fd98dd07d43f6932dc">
+      <data key="d0">relation</data>
+      <data key="d1">: ১৪ জানুয়ারী ২০২৫ রাত ১১:৫৯ মি.।</data>
+      <data key="d2">: ১৪ জানুয়ারী ২০২৫ রাত ১১:৫৯ মি.।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-52cac3356e7a0b8ad82447abe9e988ec">
+      <data key="d0">relation</data>
+      <data key="d1">: ১৫ জানুয়ারী ২০২৫ বিকাল ০৫:০০ মি.।</data>
+      <data key="d2">: ১৫ জানুয়ারী ২০২৫ বিকাল ০৫:০০ মি.।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-fba0daeece9b97f7c580411c64c39904">
+      <data key="d0">relation</data>
+      <data key="d1">: ২৪ জানুয়ারী ২০২৫ রাত ১১:৫৯ মি.।</data>
+      <data key="d2">: ২৪ জানুয়ারী ২০২৫ রাত ১১:৫৯ মি.।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-4853223e83d582b47872f884ca895c1b">
+      <data key="d0">relation</data>
+      <data key="d1">: ২৫ জানুয়ারী ২০২৫।</data>
+      <data key="d2">: ২৫ জানুয়ারী ২০২৫।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-846c8649b35fc30841f95261d6aa94f0">
+      <data key="d0">relation</data>
+      <data key="d1">: ০৮ ফেব্রুয়ারী ২০২৫ (পরীক্ষার শিফট ও সময় পরবর্তীতে RUET এর ওয়েবসাইটে https://admission.ruet.ac.bd প্রকাশ করা হবে)।</data>
+      <data key="d2">: ০৮ ফেব্রুয়ারী ২০২৫ (পরীক্ষার শিফট ও সময় পরবর্তীতে RUET এর ওয়েবসাইটে https://admission.ruet.ac.bd প্রকাশ করা হবে)।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-3c468aa4b967f8eb795b2e8e694443bd">
+      <data key="d0">relation</data>
+      <data key="d1">: ১৩ ফেব্রুয়ারী ২০২৫।</data>
+      <data key="d2">: ১৩ ফেব্রুয়ারী ২০২৫।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-be4dd87afd827742e0800590166a9752">
+      <data key="d0">relation</data>
+      <data key="d1">: ১৬ ফেব্রুয়ারী ২০২৫।</data>
+      <data key="d2">: ১৬ ফেব্রুয়ারী ২০২৫।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-3678c4af3430d2a800d36d2e36272541">
+      <data key="d0">relation</data>
+      <data key="d1">: ২০ ফেব্রুয়ারী ২০২৫ সকাল ১০:০০ মি.।</data>
+      <data key="d2">: ২০ ফেব্রুয়ারী ২০২৫ সকাল ১০:০০ মি.।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-7e7665a04a9b3e07c0f61a27d4003b5d">
+      <data key="d0">relation</data>
+      <data key="d1">: ৮ মার্চ ২০২৫।</data>
+      <data key="d2">: ৮ মার্চ ২০২৫।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-5cc1f314ce48d44b2e878a86c9020990">
+      <data key="d0">relation</data>
+      <data key="d1">সিভিল ইঞ্জিনিয়ারিং বিভাগের কোড CE এবং আসন সংখ্যা ১৮০।</data>
+      <data key="d2">সিভিল ইঞ্জিনিয়ারিং বিভাগের কোড CE এবং আসন সংখ্যা ১৮০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-920a9ef0faf1d5bbd2c1a748f6e07071">
+      <data key="d0">relation</data>
+      <data key="d1">সিভিল ইঞ্জিনিয়ারিং is a department with code CE and ১৮০ seats.</data>
+      <data key="d2">সিভিল ইঞ্জিনিয়ারিং is a department with code CE and ১৮০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-2da825ceabca28716dbe110da9d2c9aa">
+      <data key="d0">relation</data>
+      <data key="d1">আরবান এন্ড রিজিওনাল প্লানিং বিভাগের কোড URP এবং আসন সংখ্যা ৬০।</data>
+      <data key="d2">আরবান এন্ড রিজিওনাল প্লানিং বিভাগের কোড URP এবং আসন সংখ্যা ৬০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-bcae54425aaa5b6ff6d4bc75c68c728a">
+      <data key="d0">relation</data>
+      <data key="d1">আরবান এন্ড রিজিওনাল প্লানিং is a department with code URP and ৬০ seats.</data>
+      <data key="d2">আরবান এন্ড রিজিওনাল প্লানিং is a department with code URP and ৬০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-02870a0c024ad6d8fe163cb0f37969d5">
+      <data key="d0">relation</data>
+      <data key="d1">আর্কিটেকচার বিভাগের কোড Arch এবং আসন সংখ্যা ৩০।</data>
+      <data key="d2">আর্কিটেকচার বিভাগের কোড Arch এবং আসন সংখ্যা ৩০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-1c11189128559d41a25a814763a73cf5">
+      <data key="d0">relation</data>
+      <data key="d1">আর্কিটেকচার is a department with code Arch and ৩০ seats.</data>
+      <data key="d2">আর্কিটেকচার is a department with code Arch and ৩০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-d5765b52ab7b103bccff7b0024fb2760">
+      <data key="d0">relation</data>
+      <data key="d1">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট বিভাগের কোড BECM এবং আসন সংখ্যা ৩০।</data>
+      <data key="d2">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট বিভাগের কোড BECM এবং আসন সংখ্যা ৩০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-a657380d52e7bd209e40afc936957848">
+      <data key="d0">relation</data>
+      <data key="d1">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট is a department with code BECM and ৩০ seats.</data>
+      <data key="d2">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট is a department with code BECM and ৩০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-96eb35c1b4c3d5fa44fd05e2b9c8a0ad">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক ইঞ্জিনিয়ারিং বিভাগের কোড EEE এবং আসন সংখ্যা ১৮০।</data>
+      <data key="d2">ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক ইঞ্জিনিয়ারিং বিভাগের কোড EEE এবং আসন সংখ্যা ১৮০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-c6621406049f8a8603718cdb88beb819">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক ইঞ্জিনিয়ারিং is a department with code EEE and ১৮০ seats.</data>
+      <data key="d2">ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক ইঞ্জিনিয়ারিং is a department with code EEE and ১৮০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-5eb76067201cd23e395bee04cdc73f43">
+      <data key="d0">relation</data>
+      <data key="d1">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের কোড CSE এবং আসন সংখ্যা ১৮০।</data>
+      <data key="d2">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের কোড CSE এবং আসন সংখ্যা ১৮০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-58369533d4aaa29344978fc3f4d6736c">
+      <data key="d0">relation</data>
+      <data key="d1">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং is a department with code CSE and ১৮০ seats.</data>
+      <data key="d2">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং is a department with code CSE and ১৮০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-70bf6da7927cab6ae981eb0e930aaa6b">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং বিভাগের কোড ETE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং বিভাগের কোড ETE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-15bce022dd4a612665a24767aa989337">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code ETE and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code ETE and ৬০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-55174a1859b5de4401cee3459fa32668">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রিক্যাল এন্ড কম্পিউটার ইঞ্জিনিয়ারিং বিভাগের কোড ECE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d2">ইলেকট্রিক্যাল এন্ড কম্পিউটার ইঞ্জিনিয়ারিং বিভাগের কোড ECE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-2e8ab4dae75c4c1f4679b9106469d90b">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রিক্যাল এন্ড কম্পিউটার ইঞ্জিনিয়ারিং is a department with code ECE and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রিক্যাল এন্ড কম্পিউটার ইঞ্জিনিয়ারিং is a department with code ECE and ৬০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-dc59b48ab6b7d2fda3e4a995feb5e983">
+      <data key="d0">relation</data>
+      <data key="d1">মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের কোড ME এবং আসন সংখ্যা ১৮০।</data>
+      <data key="d2">মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের কোড ME এবং আসন সংখ্যা ১৮০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-c573cfaa1123cbfdccf2e3acddfa3e13">
+      <data key="d0">relation</data>
+      <data key="d1">মেকানিক্যাল ইঞ্জিনিয়ারিং is a department with code ME and ১৮০ seats.</data>
+      <data key="d2">মেকানিক্যাল ইঞ্জিনিয়ারিং is a department with code ME and ১৮০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-fcfd25de36bf11d7e902f91ebc07ec01">
+      <data key="d0">relation</data>
+      <data key="d1">ইন্ডাষ্ট্রিয়াল এন্ড প্রডাকশন ইঞ্জিনিয়ারিং বিভাগের কোড IPE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d2">ইন্ডাষ্ট্রিয়াল এন্ড প্রডাকশন ইঞ্জিনিয়ারিং বিভাগের কোড IPE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-8b903a93b9f82196d1721366111d9c3f">
+      <data key="d0">relation</data>
+      <data key="d1">ইন্ডাষ্ট্রিয়াল এন্ড প্রডাকশন ইঞ্জিনিয়ারিং is a department with code IPE and ৬০ seats.</data>
+      <data key="d2">ইন্ডাষ্ট্রিয়াল এন্ড প্রডাকশন ইঞ্জিনিয়ারিং is a department with code IPE and ৬০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-dbed61b011dd33554da25675136f8b89">
+      <data key="d0">relation</data>
+      <data key="d1">গ্লাস এন্ড সিরামিক ইঞ্জিনিয়ারিং বিভাগের কোড GCE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d2">গ্লাস এন্ড সিরামিক ইঞ্জিনিয়ারিং বিভাগের কোড GCE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-27e5289e266a6c8ee3654fd7e5bf93f3">
+      <data key="d0">relation</data>
+      <data key="d1">গ্লাস এন্ড সিরামিক ইঞ্জিনিয়ারিং is a department with code GCE and ৬০ seats.</data>
+      <data key="d2">গ্লাস এন্ড সিরামিক ইঞ্জিনিয়ারিং is a department with code GCE and ৬০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-33b9b48323b0705d276013a335df1f57">
+      <data key="d0">relation</data>
+      <data key="d1">মেকাট্রনিক্স ইঞ্জিনিয়ারিং বিভাগের কোড MTE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d2">মেকাট্রনিক্স ইঞ্জিনিয়ারিং বিভাগের কোড MTE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-5c3de8c23b89aa31424cd59e87005f44">
+      <data key="d0">relation</data>
+      <data key="d1">মেকাট্রনিক্স ইঞ্জিনিয়ারিং is a department with code MTE and ৬০ seats.</data>
+      <data key="d2">মেকাট্রনিক্স ইঞ্জিনিয়ারিং is a department with code MTE and ৬০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-526ee57459fcd659e0e186de11f058af">
+      <data key="d0">relation</data>
+      <data key="d1">কেমিক্যাল ইঞ্জিনিয়ারিং বিভাগের কোড ChE এবং আসন সংখ্যা ৩০।</data>
+      <data key="d2">কেমিক্যাল ইঞ্জিনিয়ারিং বিভাগের কোড ChE এবং আসন সংখ্যা ৩০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-be0ae668fc8831cb9c84f7f0aea1a8ea">
+      <data key="d0">relation</data>
+      <data key="d1">কেমিক্যাল ইঞ্জিনিয়ারিং is a department with code ChE and ৩০ seats.</data>
+      <data key="d2">কেমিক্যাল ইঞ্জিনিয়ারিং is a department with code ChE and ৩০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-281ef76d52cea8b10f1beddb46e2301b">
+      <data key="d0">relation</data>
+      <data key="d1">ম্যাটেরিয়ালস সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের কোড MSE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d2">ম্যাটেরিয়ালস সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের কোড MSE এবং আসন সংখ্যা ৬০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-6c70c4d5aae4c8ccb9281c8bacd6c192">
+      <data key="d0">relation</data>
+      <data key="d1">ম্যাটেরিয়ালস সায়েন্স এন্ড ইঞ্জিনিয়ারিং is a department with code MSE and ৬০ seats.</data>
+      <data key="d2">ম্যাটেরিয়ালস সায়েন্স এন্ড ইঞ্জিনিয়ারিং is a department with code MSE and ৬০ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-0d5bb117734ba1dc11578cd72330ccbe">
+      <data key="d0">relation</data>
+      <data key="d1">আসন: ১২৩০।</data>
+      <data key="d2">আসন: ১২৩০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-b5a3559cd4c7cdec76629869a4b96d53">
+      <data key="d0">relation</data>
+      <data key="d1">সংরক্ষিত আসন (বান্দরবান জেলার অধিবাসী ০১ টি, পার্বত্য জেলাসমূহ ও অন্যান্য এলাকার উপজাতি/ক্ষুদ্র জাতিসত্বা/নৃ-গোষ্ঠী ০৪ টি) বিভাগের আসন সংখ্যা ০৫।</data>
+      <data key="d2">সংরক্ষিত আসন (বান্দরবান জেলার অধিবাসী ০১ টি, পার্বত্য জেলাসমূহ ও অন্যান্য এলাকার উপজাতি/ক্ষুদ্র জাতিসত্বা/নৃ-গোষ্ঠী ০৪ টি) বিভাগের আসন সংখ্যা ০৫।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-61f2d901335439f58ef78a85abe19690">
+      <data key="d0">relation</data>
+      <data key="d1">সংরক্ষিত আসন (বান্দরবান জেলার অধিবাসী ০১ টি, পার্বত্য জেলাসমূহ ও অন্যান্য এলাকার উপজাতি/ক্ষুদ্র জাতিসত্বা/নৃ-গোষ্ঠী ০৪ টি) is a department and ০৫ seats.</data>
+      <data key="d2">সংরক্ষিত আসন (বান্দরবান জেলার অধিবাসী ০১ টি, পার্বত্য জেলাসমূহ ও অন্যান্য এলাকার উপজাতি/ক্ষুদ্র জাতিসত্বা/নৃ-গোষ্ঠী ০৪ টি) is a department and ০৫ seats.</data>
+      <data key="d3">8</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-05f4b892a3b4dd5d69d16b29b150337c">
+      <data key="d0">relation</data>
+      <data key="d1">আসন: ১২৩৫।</data>
+      <data key="d2">আসন: ১২৩৫।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-d0d1456f3cb8359f593be60396faccbe">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক', বিভাগ: ইঞ্জিনিয়ারিং ও ইউআরপি, ভর্তি পরীক্ষা বাবদ প্রদেয় ফি (সার্ভিস চার্জ ব্যতীত): ১২৫০/- (এক হাজার দুইশত পঞ্চাশ) টাকা।</data>
+      <data key="d2">গ্রুপ: 'ক', বিভাগ: ইঞ্জিনিয়ারিং ও ইউআরপি, ভর্তি পরীক্ষা বাবদ প্রদেয় ফি (সার্ভিস চার্জ ব্যতীত): ১২৫০/- (এক হাজার দুইশত পঞ্চাশ) টাকা।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-2c489e32c7ea6fccd6318d8cab7ddb70">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'খ', বিভাগ: ইঞ্জিনিয়ারিং, ইউআরপি, ও আর্কিটেকচার, ভর্তি পরীক্ষা বাবদ প্রদেয় ফি (সার্ভিস চার্জ ব্যতীত): ১৪৫০/- (এক হাজার চারশত পঞ্চাশ) টাকা।</data>
+      <data key="d2">গ্রুপ: 'খ', বিভাগ: ইঞ্জিনিয়ারিং, ইউআরপি, ও আর্কিটেকচার, ভর্তি পরীক্ষা বাবদ প্রদেয় ফি (সার্ভিস চার্জ ব্যতীত): ১৪৫০/- (এক হাজার চারশত পঞ্চাশ) টাকা।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-f77e12582e7fc55199d41e8b8d8d3046">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: গণিত, পদার্থবিদ্যা, রসায়ন, ও ইংরেজী, পাঠ্যসূচী: ২০২৪ খ্রি. এর উচ্চ মাধ্যমিক বা সমমানের পাঠ্যসূচী।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: গণিত, পদার্থবিদ্যা, রসায়ন, ও ইংরেজী, পাঠ্যসূচী: ২০২৪ খ্রি. এর উচ্চ মাধ্যমিক বা সমমানের পাঠ্যসূচী।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-ca6b668f253e06d83f1244b7e392ad0c">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: গণিত, প্রশ্ন সংখ্যা: ৩০, মোট নম্বর (বিষয় ভিত্তিক): ৩০, সর্বমোট নম্বর: ১০০, সময়: ০১ ঘন্টা।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: গণিত, প্রশ্ন সংখ্যা: ৩০, মোট নম্বর (বিষয় ভিত্তিক): ৩০, সর্বমোট নম্বর: ১০০, সময়: ০১ ঘন্টা।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-3ff1f27df899ec8d649070ac42b8cf9e">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: পদার্থবিদ্যা, প্রশ্ন সংখ্যা: ৩০, মোট নম্বর (বিষয় ভিত্তিক): ৩০।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: পদার্থবিদ্যা, প্রশ্ন সংখ্যা: ৩০, মোট নম্বর (বিষয় ভিত্তিক): ৩০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-3691f9b4118eeb0479c7d02d354f375d">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: রসায়ন, প্রশ্ন সংখ্যা: ৩০, মোট নম্বর (বিষয় ভিত্তিক): ৩০।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: রসায়ন, প্রশ্ন সংখ্যা: ৩০, মোট নম্বর (বিষয় ভিত্তিক): ৩০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-a59e672a079531169e9bd5f8c6ba7534">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: ইংরেজী, প্রশ্ন সংখ্যা: ১০, মোট নম্বর (বিষয় ভিত্তিক): ১০।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: ইংরেজী, প্রশ্ন সংখ্যা: ১০, মোট নম্বর (বিষয় ভিত্তিক): ১০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-12e23ae49551e9d464ba35a4f9ced7ca">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: গণিত, প্রশ্ন সংখ্যা: ১০, মোট নম্বর, (বিষয় ভিত্তিক): ১০০, সর্বমোট নম্বর: ৩৫০, সময়: ০২ ঘন্টা ৩০ মিনিট।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: গণিত, প্রশ্ন সংখ্যা: ১০, মোট নম্বর, (বিষয় ভিত্তিক): ১০০, সর্বমোট নম্বর: ৩৫০, সময়: ০২ ঘন্টা ৩০ মিনিট।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-3dac4bac1da56e58817da7402122ca42">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: পদার্থবিদ্যা, প্রশ্ন সংখ্যা: ১০, মোট নম্বর, (বিষয় ভিত্তিক): ১০০।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: পদার্থবিদ্যা, প্রশ্ন সংখ্যা: ১০, মোট নম্বর, (বিষয় ভিত্তিক): ১০০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-a4d6c8538d4058cc78b5590cc94af1b1">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: রসায়ন, প্রশ্ন সংখ্যা: ১০, মোট নম্বর, (বিষয় ভিত্তিক): ১০০।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: রসায়ন, প্রশ্ন সংখ্যা: ১০, মোট নম্বর, (বিষয় ভিত্তিক): ১০০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-a02746af269c9c56d828aa462d2095c8">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'ক' ও 'খ', বিষয়: ইংরেজী, প্রশ্ন সংখ্যা: ৫, মোট নম্বর, (বিষয় ভিত্তিক): ৫০।</data>
+      <data key="d2">গ্রুপ: 'ক' ও 'খ', বিষয়: ইংরেজী, প্রশ্ন সংখ্যা: ৫, মোট নম্বর, (বিষয় ভিত্তিক): ৫০।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-4d35bcdcc353360b76bf2e65a1f719be">
+      <data key="d0">relation</data>
+      <data key="d1">গ্রুপ: 'খ', বিষয়: মুক্তহন্ত অংকন, প্রশ্ন সংখ্যা: ৪, মোট নম্বর, (বিষয় ভিত্তিক): ১০০, সর্বমোট নম্বর: ১০০, সময়: ০১ ঘন্টা।</data>
+      <data key="d2">গ্রুপ: 'খ', বিষয়: মুক্তহন্ত অংকন, প্রশ্ন সংখ্যা: ৪, মোট নম্বর, (বিষয় ভিত্তিক): ১০০, সর্বমোট নম্বর: ১০০, সময়: ০১ ঘন্টা।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-53a74948c1814d4e68d3fa0a9c07aecf">
+      <data key="d0">relation</data>
+      <data key="d1">রাজশাহী প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ২০২৪-২০২৫ শিক্ষাবর্ষে বি. এস-সি. ইঞ্জিনিয়ারিং, বিইউআরপি ও বিআর্ক কোর্সে ভর্তি হতে ইচ্ছুক প্রার্থীদের নিকট হতে ভর্তি পরীক্ষায় অংশগ্রহণের জন্য অনলাইনে আবেদনপত্র আহ্বান করা যাচ্ছে।</data>
+      <data key="d2">রাজশাহী প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ২০২৪-২০২৫ শিক্ষাবর্ষে বি. এস-সি. ইঞ্জিনিয়ারিং, বিইউআরপি ও বিআর্ক কোর্সে ভর্তি হতে ইচ্ছুক প্রার্থীদের নিকট হতে ভর্তি পরীক্ষায় অংশগ্রহণের জন্য অনলাইনে আবেদনপত্র আহ্বান করা যাচ্ছে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-85aefc2aa8d7876ec9812213690ef67c">
+      <data key="d0">relation</data>
+      <data key="d1">১২৩৫ (৫টি সংরক্ষিত আসনসহ) টি আসনে নিম্নবর্ণিত নিয়মানুযায়ী শিক্ষার্থী ভর্তি করা হবে।</data>
+      <data key="d2">১২৩৫ (৫টি সংরক্ষিত আসনসহ) টি আসনে নিম্নবর্ণিত নিয়মানুযায়ী শিক্ষার্থী ভর্তি করা হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-df59a8073ff9ec4b52304d20079992bc">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থীকে বাংলাদেশের যে কোন মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড/মাদ্রাসা শিক্ষা বোর্ড/কারিগরী শিক্ষা বোর্ড থেকে ২০২১ খ্রি. অথবা ২০২২ খ্রি. এর মাধ্যমিক বা সমমানের পরীক্ষায় কমপক্ষে জিপিএ ৪.০০ (চার) অথবা সমতুল্য গ্রেড পেয়ে উত্তীর্ণ হতে হবে।</data>
+      <data key="d2">প্রার্থীকে বাংলাদেশের যে কোন মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড/মাদ্রাসা শিক্ষা বোর্ড/কারিগরী শিক্ষা বোর্ড থেকে ২০২১ খ্রি. অথবা ২০২২ খ্রি. এর মাধ্যমিক বা সমমানের পরীক্ষায় কমপক্ষে জিপিএ ৪.০০ (চার) অথবা সমতুল্য গ্রেড পেয়ে উত্তীর্ণ হতে হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-fdfbb3b833e08e52823118c70e816e2f">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থীকে ২০২৪ খ্রি. এর উচ্চ মাধ্যমিক বা সমমানের পরীক্ষায় গণিত, পদার্থবিদ্যা, রসায়ন, ও ইংরেজী এ চার বিষয়ের প্রত্যেকটিতে ন্যূনতম জিপি ৪.০০ (চার) সহ মোট ন্যূনতম জিপি ১৮.০০ (আঠারো) পেতে হবে।</data>
+      <data key="d2">প্রার্থীকে ২০২৪ খ্রি. এর উচ্চ মাধ্যমিক বা সমমানের পরীক্ষায় গণিত, পদার্থবিদ্যা, রসায়ন, ও ইংরেজী এ চার বিষয়ের প্রত্যেকটিতে ন্যূনতম জিপি ৪.০০ (চার) সহ মোট ন্যূনতম জিপি ১৮.০০ (আঠারো) পেতে হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-367e3f676bb815c645d88b2a4df5e5c4">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থী GCE 'O' লেভেল এবং 'A' লেভেল পরীক্ষায় পাশ করে থাকলে তার ক্ষেত্রে ভর্তি পরীক্ষায় অংশগ্রহণের জন্য GCE 'O' লেভেল পরীক্ষায় কমপক্ষে পাঁচটি বিষয়ে ন্যূনতম 'B' গ্রেড পেয়ে পাশ করতে হবে।</data>
+      <data key="d2">প্রার্থী GCE 'O' লেভেল এবং 'A' লেভেল পরীক্ষায় পাশ করে থাকলে তার ক্ষেত্রে ভর্তি পরীক্ষায় অংশগ্রহণের জন্য GCE 'O' লেভেল পরীক্ষায় কমপক্ষে পাঁচটি বিষয়ে ন্যূনতম 'B' গ্রেড পেয়ে পাশ করতে হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-2b2a07683ce51682a27061121b8891d2">
+      <data key="d0">relation</data>
+      <data key="d1">নির্দিষ্ট সময়ের মধ্যে প্রাপ্ত সকল বৈধ আবেদনপত্রের মধ্য হতে উচ্চ মাধ্যমিক বা সমমানের পরীক্ষায় গণিত, পদার্থবিদ্যা, রসায়ন, ও ইংরেজী-এ চার বিষয়ে প্রাপ্ত মোট গ্রেড পয়েন্টের ভিত্তিতে একটি মেধা তালিকা তৈরী করা হবে।</data>
+      <data key="d2">নির্দিষ্ট সময়ের মধ্যে প্রাপ্ত সকল বৈধ আবেদনপত্রের মধ্য হতে উচ্চ মাধ্যমিক বা সমমানের পরীক্ষায় গণিত, পদার্থবিদ্যা, রসায়ন, ও ইংরেজী-এ চার বিষয়ে প্রাপ্ত মোট গ্রেড পয়েন্টের ভিত্তিতে একটি মেধা তালিকা তৈরী করা হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-0145998821ec35ff08881c3028a07777">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থী সংখ্যা বেশী হলে এ তালিকা থেকে প্রথম ২৪,০০০ (চব্বিশ হাজার) জন প্রার্থীকে প্রাক-নির্বাচনী (MCQ) পরীক্ষায় অংশগ্রহণের সুযোগ দেয়া হবে।</data>
+      <data key="d2">প্রার্থী সংখ্যা বেশী হলে এ তালিকা থেকে প্রথম ২৪,০০০ (চব্বিশ হাজার) জন প্রার্থীকে প্রাক-নির্বাচনী (MCQ) পরীক্ষায় অংশগ্রহণের সুযোগ দেয়া হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-9776ca2c9b58a961d2b22d7825cd58e2">
+      <data key="d0">relation</data>
+      <data key="d1">নির্বাচনী (লিখিত) পরীক্ষাতে অংশগ্রহণের জন্য যোগ্য বিবেচিত আবেদনকারীদের তালিকা বিশ্ববিদ্যালয়ের ওয়েব সাইটে প্রকাশ করা হবে।</data>
+      <data key="d2">নির্বাচনী (লিখিত) পরীক্ষাতে অংশগ্রহণের জন্য যোগ্য বিবেচিত আবেদনকারীদের তালিকা বিশ্ববিদ্যালয়ের ওয়েব সাইটে প্রকাশ করা হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-ce724c505cc105a2257f04a769bc8406">
+      <data key="d0">relation</data>
+      <data key="d1">নির্বাচনী (লিখিত) পরীক্ষায় 'ক' ও 'খ' উভয় গ্রুপের জন্য সর্বমোট ৩৫০ নম্বরের লিখিত পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d2">নির্বাচনী (লিখিত) পরীক্ষায় 'ক' ও 'খ' উভয় গ্রুপের জন্য সর্বমোট ৩৫০ নম্বরের লিখিত পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-03258676839ac4c9f76d894b8a02e19f">
+      <data key="d0">relation</data>
+      <data key="d1">প্রাক-নির্বাচনী (MCQ) পরীক্ষায় 'ক' ও 'খ' উভয় গ্রুপের জন্য সর্বমোট ১০০ নম্বরের MCQ পরীক্ষা অনুষ্ঠিত হবে এবং প্রতিটি ভুল উত্তরের জন্য ২৫ শতাংশ নম্বর কর্তন হবে।</data>
+      <data key="d2">প্রাক-নির্বাচনী (MCQ) পরীক্ষায় 'ক' ও 'খ' উভয় গ্রুপের জন্য সর্বমোট ১০০ নম্বরের MCQ পরীক্ষা অনুষ্ঠিত হবে এবং প্রতিটি ভুল উত্তরের জন্য ২৫ শতাংশ নম্বর কর্তন হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-db911c00799d4098189c4cc344797ec1">
+      <data key="d0">relation</data>
+      <data key="d1">রাজশাহী প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ২০২৪-২০২৫ শিক্ষাবর্ষে ১২৩৫ (৫টি সংরক্ষিত আসনসহ) টি আসনে ভর্তি হবে।</data>
+      <data key="d2">রাজশাহী প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ২০২৪-২০২৫ শিক্ষাবর্ষে ১২৩৫ (৫টি সংরক্ষিত আসনসহ) টি আসনে ভর্তি হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-559d521f5ed4372474c949ff2ba9ee05">
+      <data key="d0">relation</data>
+      <data key="d1">প্রাক-নির্বাচনী (MCQ) পরীক্ষায় 'ক' ও 'খ' গ্রুপের জন্য সর্বমোট ১০০ নম্বরের MCQ পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d2">প্রাক-নির্বাচনী (MCQ) পরীক্ষায় 'ক' ও 'খ' গ্রুপের জন্য সর্বমোট ১০০ নম্বরের MCQ পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-29a686e23e2650f87a78443ad09c7a44">
+      <data key="d0">relation</data>
+      <data key="d1">নির্বাচনী (লিখিত) পরীক্ষায় 'ক' ও 'খ' গ্রুপের জন্য সর্বমোট ৩৫০ নম্বরের লিখিত পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d2">নির্বাচনী (লিখিত) পরীক্ষায় 'ক' ও 'খ' গ্রুপের জন্য সর্বমোট ৩৫০ নম্বরের লিখিত পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-41bed6dedcc9b9638eec48e343121a9b">
+      <data key="d0">relation</data>
+      <data key="d1">প্রাক-নির্বাচনী (MCQ) পরীক্ষায় 'ক' ও 'খ' উভয় গ্রুপের জন্য সর্বমোট ১০০ নম্বরের MCQ পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d2">প্রাক-নির্বাচনী (MCQ) পরীক্ষায় 'ক' ও 'খ' উভয় গ্রুপের জন্য সর্বমোট ১০০ নম্বরের MCQ পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-4d60f2cebc8835d8f50ea1fa25e12137">
+      <data key="d0">relation</data>
+      <data key="d1">'খ' গ্রুপের ভর্তিচ্ছু প্রার্থীদেরকে অতিরিক্ত ১০০ নম্বরের মুক্তহন্ত অংকন পরীক্ষায় অংশগ্রহণ করতে হবে।</data>
+      <data key="d2">'খ' গ্রুপের ভর্তিচ্ছু প্রার্থীদেরকে অতিরিক্ত ১০০ নম্বরের মুক্তহন্ত অংকন পরীক্ষায় অংশগ্রহণ করতে হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-47e37c3c7c40276fa41a6856aa0a3a3a">
+      <data key="d0">relation</data>
+      <data key="d1">প্রাক-নির্বাচনী (MCQ) পরীক্ষায় প্রতিটি ভুল উত্তরের জন্য ২৫ শতাংশ নম্বর কর্তন হবে।</data>
+      <data key="d2">প্রাক-নির্বাচনী (MCQ) পরীক্ষায় প্রতিটি ভুল উত্তরের জন্য ২৫ শতাংশ নম্বর কর্তন হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-f616239ed4a7f2dc291332b9149c7e9e">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি সংক্রান্ত যে কোন তথ্য সহায়তায় ০১৩২৬৭৩৪৩৮৮, ০১৩২৬৭৭০৪৭৯ নম্বরে অফিস চলাকালীন সময়ে যোগাযোগ করা যাবে।</data>
+      <data key="d2">ভর্তি সংক্রান্ত যে কোন তথ্য সহায়তায় ০১৩২৬৭৩৪৩৮৮, ০১৩২৬৭৭০৪৭৯ নম্বরে অফিস চলাকালীন সময়ে যোগাযোগ করা যাবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-ca2ac2c07cd50c58e9edfded7e37417b">
+      <data key="d0">relation</data>
+      <data key="d1">অথবা প্রয়োজনে support.ugadmission@ruet.ac.bd-তে e-mail করা যাবে।</data>
+      <data key="d2">অথবা প্রয়োজনে support.ugadmission@ruet.ac.bd-তে e-mail করা যাবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-1ab13723603a303d52f0a4e311acd9d5">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি পরীক্ষার ওয়েবসাইট: https://admission.ruet.ac.bd</data>
+      <data key="d2">ভর্তি পরীক্ষার ওয়েবসাইট: https://admission.ruet.ac.bd</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-8ea9a5d2f0b1d83447666e54441dc2be">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি কমিটির সিদ্ধান্তই চুড়ান্ত বলে বিবেচিত হবে।</data>
+      <data key="d2">ভর্তি কমিটির সিদ্ধান্তই চুড়ান্ত বলে বিবেচিত হবে।</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-45cf5e534bc51fd6af57a0afe2876d1e">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code CIVIL ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code CIVIL ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-0c2b857dafa8bd486614d5f313081adc">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code URBAN AND REGIONAL PLANNING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code URBAN AND REGIONAL PLANNING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-12b8775ff975f1472c07568976b6ef64">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code ARCHITECTURE and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code ARCHITECTURE and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-c9dc045a7260e2f857cfc19fccd3f376">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code BUILDING ENGINEERING AND CONSTRUCTION MANAGEMENT and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code BUILDING ENGINEERING AND CONSTRUCTION MANAGEMENT and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-51db67fd9ff47533971e72132572abdd">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code ELECTRICAL AND ELECTRONIC ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code ELECTRICAL AND ELECTRONIC ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-b2674c70d9fc202ca2aa572ac102ec3c">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code COMPUTER SCIENCE AND ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code COMPUTER SCIENCE AND ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-a48b3036a929777f2cee669536fb9179">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code ELECTRONICS AND COMMUNICATION ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code ELECTRONICS AND COMMUNICATION ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-4fb07d39bf3881869e0b0a2b5e7abe36">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code MECHANICAL ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code MECHANICAL ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-ba291b2dc64617f44fcd2312d6c13b3f">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code INDUSTRIAL AND PRODUCTION ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code INDUSTRIAL AND PRODUCTION ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-af909d03218035732b1b530173dad338">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code GLASS AND CERAMIC ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code GLASS AND CERAMIC ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-f041421c4cc37d5745092077f34b0bd9">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code CHEMICAL ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code CHEMICAL ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-041ac949b929ab29c587ceff47154d3c">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code MATERIALS SCIENCE AND ENGINEERING and ৬০ seats.</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং is a department with code MATERIALS SCIENCE AND ENGINEERING and ৬০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-fbfffa0e390f70c0f1105760ee0f0256">
+      <data key="d0">relation</data>
+      <data key="d1">: MATHEMATICS।</data>
+      <data key="d2">: MATHEMATICS।</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-dda594f33793e71e6895f864df4166fc">
+      <data key="d0">relation</data>
+      <data key="d1">পুরকৌশল is a department with code CE and ১৮০ seats.</data>
+      <data key="d2">পুরকৌশল is a department with code CE and ১৮০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-53206ad8caf62a56b2f66b5cdd54b1cf">
+      <data key="d0">relation</data>
+      <data key="d1">তড়িৎ ও কম্পিউটার কৌশল is a department with code CE and ১৮০ seats.</data>
+      <data key="d2">তড়িৎ ও কম্পিউটার কৌশল is a department with code CE and ১৮০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-de8c799b9fb76c7573141315a9fb9104">
+      <data key="d0">relation</data>
+      <data key="d1">যন্ত্রকৌশল is a department with code CE and ১৮০ seats.</data>
+      <data key="d2">যন্ত্রকৌশল is a department with code CE and ১৮০ seats.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-915c2a1d2c957f79489774b43af2524e">
+      <data key="d0">relation</data>
+      <data key="d1">: ১৫ জানুয়ারী ২০২৫ বিকাল ০৯:০০ মি.।</data>
+      <data key="d2">: ১৫ জানুয়ারী ২০২৫ বিকাল ০৯:০০ মি.।</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-428e52e5232beade1b02afdd7ead0d9b">
+      <data key="d0">entity</data>
+      <data key="d6">০৪ জানুয়ারী ২০২৫ সকাল ১০:০০ মি.</data>
+      <data key="d7">concept</data>
+      <data key="d2">০৪ জানুয়ারী ২০২৫ সকাল ১০:০০ মি. হল  এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-dd3ca52b6d3f761b5a1135280a531eba">
+      <data key="d0">entity</data>
+      <data key="d6">১৪ জানুয়ারী ২০২৫ রাত ১১:৫৯ মি.</data>
+      <data key="d7">concept</data>
+      <data key="d2">২৪ জানুয়ারী ২০২৫ রাত ১১:৫৯ মি. হল  এর মান।; ১৪ জানুয়ারী ২০২৫ রাত ১১:৫৯ মি. হল  এর মান।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-eb1e7a54350e20e5cbbe5d3174095ce9">
+      <data key="d0">entity</data>
+      <data key="d6">১৫ জানুয়ারী ২০২৫ বিকাল ০৫:০০ মি.</data>
+      <data key="d7">concept</data>
+      <data key="d2">১৫ জানুয়ারী ২০২৫ বিকাল ০৫:০০ মি. হল  এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-bc93f98f24ce8303ef2a2002f20e04ed">
+      <data key="d0">entity</data>
+      <data key="d6">২৫ জানুয়ারী ২০২৫</data>
+      <data key="d7">concept</data>
+      <data key="d2">২৫ জানুয়ারী ২০২৫ হল  এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-7973dd0f77aa0ae37983a3d91ae28381">
+      <data key="d0">entity</data>
+      <data key="d6">০৮ ফেব্রুয়ারী ২০২৫ (পরীক্ষার শিফট ও সময় পরবর্তীতে RUET এর ওয়েবসাইটে https://admission.ruet.ac.bd প্রকাশ করা হবে)</data>
+      <data key="d7">concept</data>
+      <data key="d2">০৮ ফেব্রুয়ারী ২০২৫ (পরীক্ষার শিফট ও সময় পরবর্তীতে RUET এর ওয়েবসাইটে https://admission.ruet.ac.bd প্রকাশ করা হবে) হল  এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-2bb38f21abd6c23d5123c81fd8fe873c">
+      <data key="d0">entity</data>
+      <data key="d6">১৩ ফেব্রুয়ারী ২০২৫</data>
+      <data key="d7">concept</data>
+      <data key="d2">১৩ ফেব্রুয়ারী ২০২৫ হল  এর মান।; ১৬ ফেব্রুয়ারী ২০২৫ হল  এর মান।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-8b85f22124309e6dfd4a9adcfbd8763f">
+      <data key="d0">entity</data>
+      <data key="d6">২০ ফেব্রুয়ারী ২০২৫ সকাল ১০:০০ মি.</data>
+      <data key="d7">concept</data>
+      <data key="d2">২০ ফেব্রুয়ারী ২০২৫ সকাল ১০:০০ মি. হল  এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-0eed9365c2066ddd97e2a9d4a76f32db">
+      <data key="d0">entity</data>
+      <data key="d6">৮ মার্চ ২০২৫</data>
+      <data key="d7">concept</data>
+      <data key="d2">৮ মার্চ ২০২৫ হল  এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-ccaaa1e53b971656e5282ec0a737b00e">
+      <data key="d0">entity</data>
+      <data key="d6">সিভিল ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">সিভিল ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-7a86131338bf955e0a56311f264aa6aa">
+      <data key="d0">entity</data>
+      <data key="d6">CIVIL ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">CE হল সিভিল ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d0">entity</data>
+      <data key="d6">১৮০</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">১৮০ হল মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ১৮০ হল সিভিল ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ১৮০ হল ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ১৮০ হল কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।</data>
+      <data key="d8">380.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-e4257e6ad9690579d2f55d15a455a09b">
+      <data key="d0">entity</data>
+      <data key="d6">আরবান এন্ড রিজিওনাল প্লানিং</data>
+      <data key="d7">department</data>
+      <data key="d2">আরবান এন্ড রিজিওনাল প্লানিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-6143963d78df86bf1edf486811a57e4c">
+      <data key="d0">entity</data>
+      <data key="d6">URBAN AND REGIONAL PLANNING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">URP হল আরবান এন্ড রিজিওনাল প্লানিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d0">entity</data>
+      <data key="d6">৬০</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">৬০ হল ম্যাটেরিয়ালস সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ৬০ হল ইলেকট্রিক্যাল এন্ড কম্পিউটার ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ৬০ হল গ্লাস এন্ড সিরামিক ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ৬০ হল ইন্ডাষ্ট্রিয়াল এন্ড প্রডাকশন ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ৬০ হল আরবান এন্ড রিজিওনাল প্লানিং বিভাগের আসন সংখ্যা।; ৬০ হল মেকাট্রনিক্স ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ৬০ হল ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।</data>
+      <data key="d8">665.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-2fd3b463247e6248e9ef012fedd76437">
+      <data key="d0">entity</data>
+      <data key="d6">আর্কিটেকচার</data>
+      <data key="d7">department</data>
+      <data key="d2">আর্কিটেকচার হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-efd717440ab790091beef4a125935a73">
+      <data key="d0">entity</data>
+      <data key="d6">ARCHITECTURE</data>
+      <data key="d7">department_code</data>
+      <data key="d2">Arch হল আর্কিটেকচার বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d0">entity</data>
+      <data key="d6">৩০</data>
+      <data key="d7">number</data>
+      <data key="d2">৩০ হল বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট বিভাগের আসন সংখ্যা।; ৩০ হল মোট নম্বর (বিষয় ভিত্তিক) এর মান।; ৩০ হল কেমিক্যাল ইঞ্জিনিয়ারিং বিভাগের আসন সংখ্যা।; ৩০ হল প্রশ্ন সংখ্যা এর মান।; ৩০ হল আর্কিটেকচার বিভাগের আসন সংখ্যা।</data>
+      <data key="d8">1425.0</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-da8417539481aba9b139b89f8ead273c&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-ccffafeee85137a64f9cf3faded6684d">
+      <data key="d0">entity</data>
+      <data key="d6">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট</data>
+      <data key="d7">department</data>
+      <data key="d2">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-95a33bbde2be73f0395520798bc29c52">
+      <data key="d0">entity</data>
+      <data key="d6">BUILDING ENGINEERING AND CONSTRUCTION MANAGEMENT</data>
+      <data key="d7">department_code</data>
+      <data key="d2">BECM হল বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-828d30c3cc9b6026c56a84b151b37cca">
+      <data key="d0">entity</data>
+      <data key="d6">ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-e8d920ed9dcdfa798d5ddd0d2340e1ca">
+      <data key="d0">entity</data>
+      <data key="d6">ELECTRICAL AND ELECTRONIC ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">EEE হল ইলেকট্রিক্যাল এন্ড ইলেকট্রনিক ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-6c7ad6758337d42d60aa49deced0c4ff">
+      <data key="d0">entity</data>
+      <data key="d6">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-fcd0c398ba3c9bc0dbd90153ddb6d637">
+      <data key="d0">entity</data>
+      <data key="d6">COMPUTER SCIENCE AND ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">CSE হল কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-16515cf655331e6846ae564256de8bfe">
+      <data key="d0">entity</data>
+      <data key="d6">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-e046959d5e45d2b2930026271eaa484a">
+      <data key="d0">entity</data>
+      <data key="d6">ETE</data>
+      <data key="d7">department_code</data>
+      <data key="d2">ETE হল ইলেকট্রনিক্স এন্ড টেলিকমিউনিকেশন ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-8681a0d6b61a7938d50c66fc861a9bec">
+      <data key="d0">entity</data>
+      <data key="d6">ইলেকট্রিক্যাল এন্ড কম্পিউটার ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">ইলেকট্রিক্যাল এন্ড কম্পিউটার ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-411a9a1b1519ebd6c96cd25a5b2ecdd5">
+      <data key="d0">entity</data>
+      <data key="d6">ELECTRONICS AND COMMUNICATION ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">ECE হল ইলেকট্রিক্যাল এন্ড কম্পিউটার ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-46a1bab7dc52671eec49b4cb956d5f34">
+      <data key="d0">entity</data>
+      <data key="d6">মেকানিক্যাল ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">মেকানিক্যাল ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-9ee9d85a86f0118c40ba2385bb314fd7">
+      <data key="d0">entity</data>
+      <data key="d6">MECHANICAL ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">ME হল মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-dfa8810d91924bfb12187670e722a086">
+      <data key="d0">entity</data>
+      <data key="d6">ইন্ডাষ্ট্রিয়াল এন্ড প্রডাকশন ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">ইন্ডাষ্ট্রিয়াল এন্ড প্রডাকশন ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-065957dff2d3bb9f6ddfb16bc7be5db8">
+      <data key="d0">entity</data>
+      <data key="d6">INDUSTRIAL AND PRODUCTION ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">IPE হল ইন্ডাষ্ট্রিয়াল এন্ড প্রডাকশন ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-0f5c85c42cf88ba153bf8318e4787af6">
+      <data key="d0">entity</data>
+      <data key="d6">গ্লাস এন্ড সিরামিক ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">গ্লাস এন্ড সিরামিক ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-87b2eef0e2b3fcebb7ddaf7c311087e0">
+      <data key="d0">entity</data>
+      <data key="d6">GLASS AND CERAMIC ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">GCE হল গ্লাস এন্ড সিরামিক ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-e1b800fc6ac9c26af1a499205d5c6e6f">
+      <data key="d0">entity</data>
+      <data key="d6">মেকাট্রনিক্স ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">মেকাট্রনিক্স ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-bc4bec95d1116076e01f48ad36214594">
+      <data key="d0">entity</data>
+      <data key="d6">MTE</data>
+      <data key="d7">department_code</data>
+      <data key="d2">MTE হল মেকাট্রনিক্স ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-1e7bee798204b79bef8f99360d8a2a66">
+      <data key="d0">entity</data>
+      <data key="d6">কেমিক্যাল ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">কেমিক্যাল ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-cc69989ce5e729d2318315b817f45c7b">
+      <data key="d0">entity</data>
+      <data key="d6">CHEMICAL ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">ChE হল কেমিক্যাল ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-c9e4ad028a48599c1301e27b14e79534">
+      <data key="d0">entity</data>
+      <data key="d6">ম্যাটেরিয়ালস সায়েন্স এন্ড ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">ম্যাটেরিয়ালস সায়েন্স এন্ড ইঞ্জিনিয়ারিং হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-a9fc1a03386ae38b64e06c8172994963">
+      <data key="d0">entity</data>
+      <data key="d6">MATERIALS SCIENCE AND ENGINEERING</data>
+      <data key="d7">department_code</data>
+      <data key="d2">MSE হল ম্যাটেরিয়ালস সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের কোড।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-acb68cc684fbcac922a6f92f3e0b820e">
+      <data key="d0">entity</data>
+      <data key="d6">১২৩০</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">১২৩০ হল একটি আসন সংখ্যা।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-f3a1472a77f0693da8efbf9dbaafe137">
+      <data key="d0">entity</data>
+      <data key="d6">সংরক্ষিত আসন (বান্দরবান জেলার অধিবাসী ০১ টি, পার্বত্য জেলাসমূহ ও অন্যান্য এলাকার উপজাতি/ক্ষুদ্র জাতিসত্বা/নৃ-গোষ্ঠী ০৪ টি)</data>
+      <data key="d7">department</data>
+      <data key="d2">সংরক্ষিত আসন (বান্দরবান জেলার অধিবাসী ০১ টি, পার্বত্য জেলাসমূহ ও অন্যান্য এলাকার উপজাতি/ক্ষুদ্র জাতিসত্বা/নৃ-গোষ্ঠী ০৪ টি) হল একটি বিভাগের নাম।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-3837ddde7c47db7ce10001f04793e11e">
+      <data key="d0">entity</data>
+      <data key="d6">০৫</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">০৫ হল সংরক্ষিত আসন (বান্দরবান জেলার অধিবাসী ০১ টি, পার্বত্য জেলাসমূহ ও অন্যান্য এলাকার উপজাতি/ক্ষুদ্র জাতিসত্বা/নৃ-গোষ্ঠী ০৪ টি) বিভাগের আসন সংখ্যা।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-2a4b07ad7144c86fe10fd6e57558f322">
+      <data key="d0">entity</data>
+      <data key="d6">১২৩৫</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">১২৩৫ হল একটি আসন সংখ্যা।; Total number of seats available for admission.</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-da8417539481aba9b139b89f8ead273c&lt;SEP&gt;chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d0">entity</data>
+      <data key="d6">'ক'</data>
+      <data key="d7">concept</data>
+      <data key="d2">'ক' হল একটি ভর্তি পরীক্ষার গ্রুপ।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-897262f8ce1b8f8d35b3187ec4fdd86e&lt;SEP&gt;chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-a85c55c896e2c8e1e8cb4400dfb48843">
+      <data key="d0">entity</data>
+      <data key="d6">ইঞ্জিনিয়ারিং ও ইউআরপি</data>
+      <data key="d7">department</data>
+      <data key="d2">ইঞ্জিনিয়ারিং ও ইউআরপি হল বিভাগ এর মান।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-897262f8ce1b8f8d35b3187ec4fdd86e&lt;SEP&gt;chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-374703a37c9f6a0f31772d3113bd8a58">
+      <data key="d0">entity</data>
+      <data key="d6">১২৫০/- (এক হাজার দুইশত পঞ্চাশ) টাকা</data>
+      <data key="d7">fee</data>
+      <data key="d2">১২৫০/- (এক হাজার দুইশত পঞ্চাশ) টাকা হল 'ক' এর ভর্তি পরীক্ষার ফি।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-897262f8ce1b8f8d35b3187ec4fdd86e&lt;SEP&gt;chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d0">entity</data>
+      <data key="d6">'খ'</data>
+      <data key="d7">concept</data>
+      <data key="d2">'খ' হল গ্রুপ এর মান।; 'খ' হল একটি ভর্তি পরীক্ষার গ্রুপ।</data>
+      <data key="d8">285.0</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295&lt;SEP&gt;chunk-897262f8ce1b8f8d35b3187ec4fdd86e&lt;SEP&gt;chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-3f47b8ab8d4bc8df590375c0e4bc697d">
+      <data key="d0">entity</data>
+      <data key="d6">ইঞ্জিনিয়ারিং, ইউআরপি, ও আর্কিটেকচার</data>
+      <data key="d7">department</data>
+      <data key="d2">ইঞ্জিনিয়ারিং, ইউআরপি, ও আর্কিটেকচার হল বিভাগ এর মান।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-897262f8ce1b8f8d35b3187ec4fdd86e&lt;SEP&gt;chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-dd23bb22dc41f27ba003f857ee5efcaa">
+      <data key="d0">entity</data>
+      <data key="d6">১৪৫০/- (এক হাজার চারশত পঞ্চাশ) টাকা</data>
+      <data key="d7">fee</data>
+      <data key="d2">১৪৫০/- (এক হাজার চারশত পঞ্চাশ) টাকা হল 'খ' এর ভর্তি পরীক্ষার ফি।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-897262f8ce1b8f8d35b3187ec4fdd86e&lt;SEP&gt;chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d0">entity</data>
+      <data key="d6">'ক' ও 'খ'</data>
+      <data key="d7">concept</data>
+      <data key="d2">'ক' ও 'খ' হল গ্রুপ এর মান।</data>
+      <data key="d8">1330.0</data>
+      <data key="d4">chunk-f5abb98251789c0b9bec2b16d9c298c7&lt;SEP&gt;chunk-f5abb98251789c0b9bec2b16d9c298c7&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-874be4607fa1f36b20a9b0ef5aa6b295&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-9fe96d4835c2f5c113060553295b8237">
+      <data key="d0">entity</data>
+      <data key="d6">গণিত, পদার্থবিদ্যা, রসায়ন, ও ইংরেজী</data>
+      <data key="d7">concept</data>
+      <data key="d2">গণিত, পদার্থবিদ্যা, রসায়ন, ও ইংরেজী হল বিষয় এর মান।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-f5abb98251789c0b9bec2b16d9c298c7&lt;SEP&gt;chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-820179136b20810f6c2cb69c22db52ed">
+      <data key="d0">entity</data>
+      <data key="d6">২০২৪ খ্রি. এর উচ্চ মাধ্যমিক বা সমমানের পাঠ্যসূচী</data>
+      <data key="d7">concept</data>
+      <data key="d2">২০২৪ খ্রি. এর উচ্চ মাধ্যমিক বা সমমানের পাঠ্যসূচী হল পাঠ্যসূচী এর মান।</data>
+      <data key="d8">190.0</data>
+      <data key="d4">chunk-f5abb98251789c0b9bec2b16d9c298c7&lt;SEP&gt;chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-dfef1308046d1dc60802adefed68d726">
+      <data key="d0">entity</data>
+      <data key="d6">MATHEMATICS</data>
+      <data key="d7">concept</data>
+      <data key="d2">গণিত হল বিষয় এর মান।</data>
+      <data key="d8">285.0</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d0">entity</data>
+      <data key="d6">১০০</data>
+      <data key="d7">number</data>
+      <data key="d2">১০০ হল সর্বমোট নম্বর এর মান।; Additional score for the drawing test for group 'খ'.; Additional marks for drawing examination for group 'খ'; ১০০ হল মোট নম্বর, (বিষয় ভিত্তিক) এর মান।</data>
+      <data key="d8">665.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-874be4607fa1f36b20a9b0ef5aa6b295&lt;SEP&gt;chunk-37810bd9543af5e6cc6706f7f4bf9797&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-975b3a2f7d4fc05ca64633275562f3fc">
+      <data key="d0">entity</data>
+      <data key="d6">০১ ঘন্টা</data>
+      <data key="d7">concept</data>
+      <data key="d2">০১ ঘন্টা হল সময় এর মান।</data>
+      <data key="d8">285.0</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d0">entity</data>
+      <data key="d6">পদার্থবিদ্যা</data>
+      <data key="d7">concept</data>
+      <data key="d2">পদার্থবিদ্যা হল বিষয় এর মান।</data>
+      <data key="d8">285.0</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d0">entity</data>
+      <data key="d6">রসায়ন</data>
+      <data key="d7">concept</data>
+      <data key="d2">রসায়ন হল বিষয় এর মান।</data>
+      <data key="d8">285.0</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-c4d9490fc9a39ade4f491da6b14367bc">
+      <data key="d0">entity</data>
+      <data key="d6">ইংরেজী</data>
+      <data key="d7">concept</data>
+      <data key="d2">ইংরেজী হল বিষয় এর মান।</data>
+      <data key="d8">285.0</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d0">entity</data>
+      <data key="d6">১০</data>
+      <data key="d7">number</data>
+      <data key="d2">১০ হল প্রশ্ন সংখ্যা এর মান।; ১০ হল মোট নম্বর (বিষয় ভিত্তিক) এর মান।</data>
+      <data key="d8">665.0</data>
+      <data key="d4">chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-fc6ff8689da862d56b0d60e91eb09c7b&lt;SEP&gt;chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-c8cc31fa155f532b6c041f479feb82f3">
+      <data key="d0">entity</data>
+      <data key="d6">৩৫০</data>
+      <data key="d7">number</data>
+      <data key="d2">Total marks for written examination for both groups; ৩৫০ হল সর্বমোট নম্বর এর মান।; Total score for the written selection test.</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295&lt;SEP&gt;chunk-37810bd9543af5e6cc6706f7f4bf9797&lt;SEP&gt;chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-03ee674adcf2ba202fe420a4cca30a8e">
+      <data key="d0">entity</data>
+      <data key="d6">০২ ঘন্টা ৩০ মিনিট</data>
+      <data key="d7">concept</data>
+      <data key="d2">০২ ঘন্টা ৩০ মিনিট হল সময় এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d0">entity</data>
+      <data key="d6">৫</data>
+      <data key="d7">number_of_subjects</data>
+      <data key="d2">Minimum number of subjects required for GCE 'O' level.; ৫ হল প্রশ্ন সংখ্যা এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295&lt;SEP&gt;chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-df93d6d27552e22a4dfec2f2185151d1">
+      <data key="d0">entity</data>
+      <data key="d6">৫০</data>
+      <data key="d7">number</data>
+      <data key="d2">৫০ হল মোট নম্বর, (বিষয় ভিত্তিক) এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-d42bd46184127e6ae33c3944c1a4163c">
+      <data key="d0">entity</data>
+      <data key="d6">মুক্তহন্ত অংকন</data>
+      <data key="d7">concept</data>
+      <data key="d2">মুক্তহন্ত অংকন হল বিষয় এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d0">entity</data>
+      <data key="d6">৪</data>
+      <data key="d7">number</data>
+      <data key="d2">৪ হল প্রশ্ন সংখ্যা এর মান।</data>
+      <data key="d8">95.0</data>
+      <data key="d4">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-aaa91554bc835c7fcf12a3339d85c36a">
+      <data key="d0">entity</data>
+      <data key="d6">রাজশাহী প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়</data>
+      <data key="d7">university</data>
+      <data key="d2">Rajshahi University of Engineering &amp; Technology; A university in Bangladesh offering engineering courses.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797&lt;SEP&gt;chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-bb2079ab9c8f8bf303a339f9b2d48d09">
+      <data key="d0">entity</data>
+      <data key="d6">বি. এস-সি. ইঞ্জিনিয়ারিং</data>
+      <data key="d7">department</data>
+      <data key="d2">Bachelor of Science in Engineering program.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-b7bc6fff9def8a308f35ecc9c7a99d55">
+      <data key="d0">entity</data>
+      <data key="d6">বিইউআরপি</data>
+      <data key="d7">department</data>
+      <data key="d2">Bachelor of Urban and Regional Planning program.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-c460d9a501fdc74dcb2f7b81917bc939">
+      <data key="d0">entity</data>
+      <data key="d6">বিআর্ক</data>
+      <data key="d7">department</data>
+      <data key="d2">Bachelor of Architecture program.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-0c85a5e4a5c134e3b10e84247022104a">
+      <data key="d0">entity</data>
+      <data key="d6">২০২৪-২০২৫</data>
+      <data key="d7">academic_year</data>
+      <data key="d2">Academic year for the admission process; The academic year for admissions.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797&lt;SEP&gt;chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d0">entity</data>
+      <data key="d6">৪.০০</data>
+      <data key="d7">gpa_requirement</data>
+      <data key="d2">Minimum GPA required for admission.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-71c7ac6a9855f9df7eec3333dab3250a">
+      <data key="d0">entity</data>
+      <data key="d6">১৮.০০</data>
+      <data key="d7">gpa_requirement</data>
+      <data key="d2">Total minimum GPA required for specific subjects.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-6b75ce56b9ef31a35e8be2a0294fa75a">
+      <data key="d0">entity</data>
+      <data key="d6">২৪,০০০</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Number of candidates allowed to participate in the pre-selection test.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d0">entity</data>
+      <data key="d6">১২</data>
+      <data key="d7">study_years</data>
+      <data key="d2">Minimum years of study required for foreign candidates.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d0">entity</data>
+      <data key="d6">৮০</data>
+      <data key="d7">percentage_requirement</data>
+      <data key="d2">Minimum percentage required in specific subjects for foreign candidates.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-62c0d62f83070d2b956acf433e85a8b3">
+      <data key="d0">entity</data>
+      <data key="d6">৭০</data>
+      <data key="d7">percentage_requirement</data>
+      <data key="d2">Minimum average percentage required in secondary or equivalent exams.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-b2ea30cf609e0ff27fbac7f5c0f758b8">
+      <data key="d0">entity</data>
+      <data key="d6">পুরকৌশল</data>
+      <data key="d7">department</data>
+      <data key="d2">Department of Civil Engineering.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-c61ca0e85e93caaf6649f39da96337e6">
+      <data key="d0">entity</data>
+      <data key="d6">তড়িৎ ও কম্পিউটার কৌশল</data>
+      <data key="d7">department</data>
+      <data key="d2">Department of Electrical and Computer Engineering.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-1301c22fb7c91ee4c9943206ab05142d">
+      <data key="d0">entity</data>
+      <data key="d6">যন্ত্রকৌশল</data>
+      <data key="d7">department</data>
+      <data key="d2">Department of Mechanical Engineering.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-26074f0be42eec7d928e63e14c1be07d">
+      <data key="d0">entity</data>
+      <data key="d6">৫টি</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Number of reserved seats.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-27a4941c4f6dfc0b520548001c2c468f">
+      <data key="d0">entity</data>
+      <data key="d6">১৪</data>
+      <data key="d7">department_count</data>
+      <data key="d2">Total number of departments.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-8466994128685ee70b4fa9472b4019fd</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d0">entity</data>
+      <data key="d6">২৫</data>
+      <data key="d7">number</data>
+      <data key="d2">Percentage of marks deducted for each wrong answer in MCQ examination</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-f94580f3d202a412710c751216f8bb64">
+      <data key="d0">entity</data>
+      <data key="d6">০১৩২৬৭৩৪৩৮৮</data>
+      <data key="d7">contact_number</data>
+      <data key="d2">Contact number for admission-related inquiries</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-318c3e044983242342469cfb8b4bc1ec">
+      <data key="d0">entity</data>
+      <data key="d6">০১৩২৬৭৭০৪৭৯</data>
+      <data key="d7">contact_number</data>
+      <data key="d2">Contact number for admission-related inquiries</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-f7fa2b16f846ee469381596e9ba3bfc2">
+      <data key="d0">entity</data>
+      <data key="d6">৯:০০</data>
+      <data key="d7">time</data>
+      <data key="d2">Start time for office hours for inquiries</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-91b39523df0f4ce235475cae8c1660bf">
+      <data key="d0">entity</data>
+      <data key="d6">৫:০০</data>
+      <data key="d7">time</data>
+      <data key="d2">End time for office hours for inquiries</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d0">entity</data>
+      <data key="d6">৩</data>
+      <data key="d7">number</data>
+      <data key="d2">Maximum number of shifts for the MCQ examination in one day</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-8a7501a80e9cf8aaa276806597893285">
+      <data key="d0">entity</data>
+      <data key="d6">২৫/০২/২৫</data>
+      <data key="d7">date</data>
+      <data key="d2">Date of the document</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-e2ee5411db66c7160bb7c97e5fc28c09">
+      <data key="d0">entity</data>
+      <data key="d6">ড. মোঃ রবিউল ইসলাম</data>
+      <data key="d7">person</data>
+      <data key="d2">Chairman of the undergraduate admission test committee for the academic year ২০২৪-২০২৫</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-decabac978e10befeba03ffb20d4b8ed">
+      <data key="d0">entity</data>
+      <data key="d6">তড়িৎ ও কম্পিউটার কৌশল অনুষদ</data>
+      <data key="d7">faculty</data>
+      <data key="d2">Faculty of Electrical and Computer Engineering</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-18ea5cf14b3686e6ca2a1c2f3605a42a">
+      <data key="d0">entity</data>
+      <data key="d6">রাজশাহী-৬২০৪</data>
+      <data key="d7">location</data>
+      <data key="d2">Location of the university</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+      <data key="d5">PASS</data>
+    </node>
+    <edge source="rel-05c4ab9e672f3c308ce32583b08f80df" target="entity-428e52e5232beade1b02afdd7ead0d9b">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-05c4ab9e672f3c308ce32583b08f80df" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-05c4ab9e672f3c308ce32583b08f80df" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-05c4ab9e672f3c308ce32583b08f80df" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-05c4ab9e672f3c308ce32583b08f80df" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-6bf7ba0975b898fd98dd07d43f6932dc" target="entity-dd3ca52b6d3f761b5a1135280a531eba">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-6bf7ba0975b898fd98dd07d43f6932dc" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-6bf7ba0975b898fd98dd07d43f6932dc" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-6bf7ba0975b898fd98dd07d43f6932dc" target="entity-27a4941c4f6dfc0b520548001c2c468f">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-6bf7ba0975b898fd98dd07d43f6932dc" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-52cac3356e7a0b8ad82447abe9e988ec" target="entity-eb1e7a54350e20e5cbbe5d3174095ce9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-52cac3356e7a0b8ad82447abe9e988ec" target="entity-3837ddde7c47db7ce10001f04793e11e">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-52cac3356e7a0b8ad82447abe9e988ec" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-52cac3356e7a0b8ad82447abe9e988ec" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-52cac3356e7a0b8ad82447abe9e988ec" target="entity-91b39523df0f4ce235475cae8c1660bf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-fba0daeece9b97f7c580411c64c39904" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-fba0daeece9b97f7c580411c64c39904" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-fba0daeece9b97f7c580411c64c39904" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-4853223e83d582b47872f884ca895c1b" target="entity-bc93f98f24ce8303ef2a2002f20e04ed">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-4853223e83d582b47872f884ca895c1b" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-4853223e83d582b47872f884ca895c1b" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-846c8649b35fc30841f95261d6aa94f0" target="entity-7973dd0f77aa0ae37983a3d91ae28381">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-846c8649b35fc30841f95261d6aa94f0" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-846c8649b35fc30841f95261d6aa94f0" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-3c468aa4b967f8eb795b2e8e694443bd" target="entity-2bb38f21abd6c23d5123c81fd8fe873c">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-3c468aa4b967f8eb795b2e8e694443bd" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-3c468aa4b967f8eb795b2e8e694443bd" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-3c468aa4b967f8eb795b2e8e694443bd" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-be4dd87afd827742e0800590166a9752" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-be4dd87afd827742e0800590166a9752" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-3678c4af3430d2a800d36d2e36272541" target="entity-8b85f22124309e6dfd4a9adcfbd8763f">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-3678c4af3430d2a800d36d2e36272541" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-3678c4af3430d2a800d36d2e36272541" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-3678c4af3430d2a800d36d2e36272541" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-7e7665a04a9b3e07c0f61a27d4003b5d" target="entity-0eed9365c2066ddd97e2a9d4a76f32db">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-7e7665a04a9b3e07c0f61a27d4003b5d" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-7e7665a04a9b3e07c0f61a27d4003b5d" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-cb73b3e4c1e6e2c99630bc4916a564c7</data>
+    </edge>
+    <edge source="rel-5cc1f314ce48d44b2e878a86c9020990" target="entity-ccaaa1e53b971656e5282ec0a737b00e">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-5cc1f314ce48d44b2e878a86c9020990" target="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-5cc1f314ce48d44b2e878a86c9020990" target="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-920a9ef0faf1d5bbd2c1a748f6e07071" target="entity-ccaaa1e53b971656e5282ec0a737b00e">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-920a9ef0faf1d5bbd2c1a748f6e07071" target="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-920a9ef0faf1d5bbd2c1a748f6e07071" target="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-2da825ceabca28716dbe110da9d2c9aa" target="entity-e4257e6ad9690579d2f55d15a455a09b">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-2da825ceabca28716dbe110da9d2c9aa" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-bcae54425aaa5b6ff6d4bc75c68c728a" target="entity-e4257e6ad9690579d2f55d15a455a09b">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-bcae54425aaa5b6ff6d4bc75c68c728a" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-02870a0c024ad6d8fe163cb0f37969d5" target="entity-2fd3b463247e6248e9ef012fedd76437">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-02870a0c024ad6d8fe163cb0f37969d5" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-02870a0c024ad6d8fe163cb0f37969d5" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-1c11189128559d41a25a814763a73cf5" target="entity-2fd3b463247e6248e9ef012fedd76437">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-1c11189128559d41a25a814763a73cf5" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-1c11189128559d41a25a814763a73cf5" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-d5765b52ab7b103bccff7b0024fb2760" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-d5765b52ab7b103bccff7b0024fb2760" target="entity-ccffafeee85137a64f9cf3faded6684d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-d5765b52ab7b103bccff7b0024fb2760" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-a657380d52e7bd209e40afc936957848" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-a657380d52e7bd209e40afc936957848" target="entity-ccffafeee85137a64f9cf3faded6684d">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-a657380d52e7bd209e40afc936957848" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-96eb35c1b4c3d5fa44fd05e2b9c8a0ad" target="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-96eb35c1b4c3d5fa44fd05e2b9c8a0ad" target="entity-828d30c3cc9b6026c56a84b151b37cca">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-96eb35c1b4c3d5fa44fd05e2b9c8a0ad" target="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-c6621406049f8a8603718cdb88beb819" target="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-c6621406049f8a8603718cdb88beb819" target="entity-828d30c3cc9b6026c56a84b151b37cca">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-c6621406049f8a8603718cdb88beb819" target="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-5eb76067201cd23e395bee04cdc73f43" target="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-5eb76067201cd23e395bee04cdc73f43" target="entity-6c7ad6758337d42d60aa49deced0c4ff">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-5eb76067201cd23e395bee04cdc73f43" target="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-58369533d4aaa29344978fc3f4d6736c" target="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-58369533d4aaa29344978fc3f4d6736c" target="entity-6c7ad6758337d42d60aa49deced0c4ff">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-58369533d4aaa29344978fc3f4d6736c" target="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-70bf6da7927cab6ae981eb0e930aaa6b" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-70bf6da7927cab6ae981eb0e930aaa6b" target="entity-16515cf655331e6846ae564256de8bfe">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-70bf6da7927cab6ae981eb0e930aaa6b" target="entity-e046959d5e45d2b2930026271eaa484a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-15bce022dd4a612665a24767aa989337" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-15bce022dd4a612665a24767aa989337" target="entity-16515cf655331e6846ae564256de8bfe">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-15bce022dd4a612665a24767aa989337" target="entity-e046959d5e45d2b2930026271eaa484a">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-55174a1859b5de4401cee3459fa32668" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-55174a1859b5de4401cee3459fa32668" target="entity-8681a0d6b61a7938d50c66fc861a9bec">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-2e8ab4dae75c4c1f4679b9106469d90b" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-2e8ab4dae75c4c1f4679b9106469d90b" target="entity-8681a0d6b61a7938d50c66fc861a9bec">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-dc59b48ab6b7d2fda3e4a995feb5e983" target="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-dc59b48ab6b7d2fda3e4a995feb5e983" target="entity-46a1bab7dc52671eec49b4cb956d5f34">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-dc59b48ab6b7d2fda3e4a995feb5e983" target="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-c573cfaa1123cbfdccf2e3acddfa3e13" target="entity-d699fcf9a0701379b6078196f8d77a4c">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-c573cfaa1123cbfdccf2e3acddfa3e13" target="entity-46a1bab7dc52671eec49b4cb956d5f34">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-c573cfaa1123cbfdccf2e3acddfa3e13" target="entity-57bdb851cdaaa56a3a8373de39f86e16">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-fcfd25de36bf11d7e902f91ebc07ec01" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-fcfd25de36bf11d7e902f91ebc07ec01" target="entity-dfa8810d91924bfb12187670e722a086">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-8b903a93b9f82196d1721366111d9c3f" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-8b903a93b9f82196d1721366111d9c3f" target="entity-dfa8810d91924bfb12187670e722a086">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-dbed61b011dd33554da25675136f8b89" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-dbed61b011dd33554da25675136f8b89" target="entity-0f5c85c42cf88ba153bf8318e4787af6">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-27e5289e266a6c8ee3654fd7e5bf93f3" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-27e5289e266a6c8ee3654fd7e5bf93f3" target="entity-0f5c85c42cf88ba153bf8318e4787af6">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-33b9b48323b0705d276013a335df1f57" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-33b9b48323b0705d276013a335df1f57" target="entity-e1b800fc6ac9c26af1a499205d5c6e6f">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-33b9b48323b0705d276013a335df1f57" target="entity-bc4bec95d1116076e01f48ad36214594">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-5c3de8c23b89aa31424cd59e87005f44" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-5c3de8c23b89aa31424cd59e87005f44" target="entity-e1b800fc6ac9c26af1a499205d5c6e6f">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-5c3de8c23b89aa31424cd59e87005f44" target="entity-bc4bec95d1116076e01f48ad36214594">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-526ee57459fcd659e0e186de11f058af" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-526ee57459fcd659e0e186de11f058af" target="entity-1e7bee798204b79bef8f99360d8a2a66">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-526ee57459fcd659e0e186de11f058af" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-be0ae668fc8831cb9c84f7f0aea1a8ea" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-be0ae668fc8831cb9c84f7f0aea1a8ea" target="entity-1e7bee798204b79bef8f99360d8a2a66">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-be0ae668fc8831cb9c84f7f0aea1a8ea" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-281ef76d52cea8b10f1beddb46e2301b" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-281ef76d52cea8b10f1beddb46e2301b" target="entity-c9e4ad028a48599c1301e27b14e79534">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-6c70c4d5aae4c8ccb9281c8bacd6c192" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-6c70c4d5aae4c8ccb9281c8bacd6c192" target="entity-c9e4ad028a48599c1301e27b14e79534">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-0d5bb117734ba1dc11578cd72330ccbe" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-0d5bb117734ba1dc11578cd72330ccbe" target="entity-acb68cc684fbcac922a6f92f3e0b820e">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-0d5bb117734ba1dc11578cd72330ccbe" target="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-0d5bb117734ba1dc11578cd72330ccbe" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-b5a3559cd4c7cdec76629869a4b96d53" target="entity-f3a1472a77f0693da8efbf9dbaafe137">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-b5a3559cd4c7cdec76629869a4b96d53" target="entity-3837ddde7c47db7ce10001f04793e11e">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-b5a3559cd4c7cdec76629869a4b96d53" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-b5a3559cd4c7cdec76629869a4b96d53" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-61f2d901335439f58ef78a85abe19690" target="entity-f3a1472a77f0693da8efbf9dbaafe137">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-61f2d901335439f58ef78a85abe19690" target="entity-3837ddde7c47db7ce10001f04793e11e">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-61f2d901335439f58ef78a85abe19690" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-61f2d901335439f58ef78a85abe19690" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">8</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-05f4b892a3b4dd5d69d16b29b150337c" target="entity-2a4b07ad7144c86fe10fd6e57558f322">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-05f4b892a3b4dd5d69d16b29b150337c" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-05f4b892a3b4dd5d69d16b29b150337c" target="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-05f4b892a3b4dd5d69d16b29b150337c" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-da8417539481aba9b139b89f8ead273c</data>
+    </edge>
+    <edge source="rel-d0d1456f3cb8359f593be60396faccbe" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-d0d1456f3cb8359f593be60396faccbe" target="entity-a85c55c896e2c8e1e8cb4400dfb48843">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-d0d1456f3cb8359f593be60396faccbe" target="entity-374703a37c9f6a0f31772d3113bd8a58">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-d0d1456f3cb8359f593be60396faccbe" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-d0d1456f3cb8359f593be60396faccbe" target="entity-df93d6d27552e22a4dfec2f2185151d1">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-d0d1456f3cb8359f593be60396faccbe" target="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-d0d1456f3cb8359f593be60396faccbe" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-2c489e32c7ea6fccd6318d8cab7ddb70" target="entity-2fd3b463247e6248e9ef012fedd76437">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-2c489e32c7ea6fccd6318d8cab7ddb70" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-2c489e32c7ea6fccd6318d8cab7ddb70" target="entity-3f47b8ab8d4bc8df590375c0e4bc697d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-2c489e32c7ea6fccd6318d8cab7ddb70" target="entity-dd23bb22dc41f27ba003f857ee5efcaa">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-2c489e32c7ea6fccd6318d8cab7ddb70" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-2c489e32c7ea6fccd6318d8cab7ddb70" target="entity-df93d6d27552e22a4dfec2f2185151d1">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-2c489e32c7ea6fccd6318d8cab7ddb70" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-2c489e32c7ea6fccd6318d8cab7ddb70" target="entity-27a4941c4f6dfc0b520548001c2c468f">
+      <data key="d9">10</data>
+      <data key="d10">chunk-897262f8ce1b8f8d35b3187ec4fdd86e</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-9fe96d4835c2f5c113060553295b8237">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-820179136b20810f6c2cb69c22db52ed">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-c4d9490fc9a39ade4f491da6b14367bc">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-f77e12582e7fc55199d41e8b8d8d3046" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-f5abb98251789c0b9bec2b16d9c298c7</data>
+    </edge>
+    <edge source="rel-ca6b668f253e06d83f1244b7e392ad0c" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-ca6b668f253e06d83f1244b7e392ad0c" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-ca6b668f253e06d83f1244b7e392ad0c" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-ca6b668f253e06d83f1244b7e392ad0c" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-ca6b668f253e06d83f1244b7e392ad0c" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-ca6b668f253e06d83f1244b7e392ad0c" target="entity-975b3a2f7d4fc05ca64633275562f3fc">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-ca6b668f253e06d83f1244b7e392ad0c" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-ca6b668f253e06d83f1244b7e392ad0c" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3ff1f27df899ec8d649070ac42b8cf9e" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3ff1f27df899ec8d649070ac42b8cf9e" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3ff1f27df899ec8d649070ac42b8cf9e" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3ff1f27df899ec8d649070ac42b8cf9e" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3ff1f27df899ec8d649070ac42b8cf9e" target="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3ff1f27df899ec8d649070ac42b8cf9e" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3691f9b4118eeb0479c7d02d354f375d" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3691f9b4118eeb0479c7d02d354f375d" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3691f9b4118eeb0479c7d02d354f375d" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3691f9b4118eeb0479c7d02d354f375d" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3691f9b4118eeb0479c7d02d354f375d" target="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-3691f9b4118eeb0479c7d02d354f375d" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-a59e672a079531169e9bd5f8c6ba7534" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-a59e672a079531169e9bd5f8c6ba7534" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-a59e672a079531169e9bd5f8c6ba7534" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-a59e672a079531169e9bd5f8c6ba7534" target="entity-c4d9490fc9a39ade4f491da6b14367bc">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-a59e672a079531169e9bd5f8c6ba7534" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-fc6ff8689da862d56b0d60e91eb09c7b</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-c8cc31fa155f532b6c041f479feb82f3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-03ee674adcf2ba202fe420a4cca30a8e">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-df93d6d27552e22a4dfec2f2185151d1">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-12e23ae49551e9d464ba35a4f9ced7ca" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-3dac4bac1da56e58817da7402122ca42" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-3dac4bac1da56e58817da7402122ca42" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-3dac4bac1da56e58817da7402122ca42" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-3dac4bac1da56e58817da7402122ca42" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-3dac4bac1da56e58817da7402122ca42" target="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-3dac4bac1da56e58817da7402122ca42" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a4d6c8538d4058cc78b5590cc94af1b1" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a4d6c8538d4058cc78b5590cc94af1b1" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a4d6c8538d4058cc78b5590cc94af1b1" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a4d6c8538d4058cc78b5590cc94af1b1" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a4d6c8538d4058cc78b5590cc94af1b1" target="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a4d6c8538d4058cc78b5590cc94af1b1" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a02746af269c9c56d828aa462d2095c8" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a02746af269c9c56d828aa462d2095c8" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a02746af269c9c56d828aa462d2095c8" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a02746af269c9c56d828aa462d2095c8" target="entity-c4d9490fc9a39ade4f491da6b14367bc">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a02746af269c9c56d828aa462d2095c8" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-a02746af269c9c56d828aa462d2095c8" target="entity-df93d6d27552e22a4dfec2f2185151d1">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-4d35bcdcc353360b76bf2e65a1f719be" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-4d35bcdcc353360b76bf2e65a1f719be" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-4d35bcdcc353360b76bf2e65a1f719be" target="entity-975b3a2f7d4fc05ca64633275562f3fc">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-4d35bcdcc353360b76bf2e65a1f719be" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-4d35bcdcc353360b76bf2e65a1f719be" target="entity-d42bd46184127e6ae33c3944c1a4163c">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-4d35bcdcc353360b76bf2e65a1f719be" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-874be4607fa1f36b20a9b0ef5aa6b295</data>
+    </edge>
+    <edge source="rel-53a74948c1814d4e68d3fa0a9c07aecf" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-53a74948c1814d4e68d3fa0a9c07aecf" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-53a74948c1814d4e68d3fa0a9c07aecf" target="entity-aaa91554bc835c7fcf12a3339d85c36a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-53a74948c1814d4e68d3fa0a9c07aecf" target="entity-bb2079ab9c8f8bf303a339f9b2d48d09">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-53a74948c1814d4e68d3fa0a9c07aecf" target="entity-b7bc6fff9def8a308f35ecc9c7a99d55">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-53a74948c1814d4e68d3fa0a9c07aecf" target="entity-c460d9a501fdc74dcb2f7b81917bc939">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-53a74948c1814d4e68d3fa0a9c07aecf" target="entity-0c85a5e4a5c134e3b10e84247022104a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-53a74948c1814d4e68d3fa0a9c07aecf" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-85aefc2aa8d7876ec9812213690ef67c" target="entity-2a4b07ad7144c86fe10fd6e57558f322">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-85aefc2aa8d7876ec9812213690ef67c" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-85aefc2aa8d7876ec9812213690ef67c" target="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-85aefc2aa8d7876ec9812213690ef67c" target="entity-26074f0be42eec7d928e63e14c1be07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-85aefc2aa8d7876ec9812213690ef67c" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-df59a8073ff9ec4b52304d20079992bc" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-df59a8073ff9ec4b52304d20079992bc" target="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-fdfbb3b833e08e52823118c70e816e2f" target="entity-9fe96d4835c2f5c113060553295b8237">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-fdfbb3b833e08e52823118c70e816e2f" target="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-fdfbb3b833e08e52823118c70e816e2f" target="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-fdfbb3b833e08e52823118c70e816e2f" target="entity-c4d9490fc9a39ade4f491da6b14367bc">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-fdfbb3b833e08e52823118c70e816e2f" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-fdfbb3b833e08e52823118c70e816e2f" target="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-fdfbb3b833e08e52823118c70e816e2f" target="entity-71c7ac6a9855f9df7eec3333dab3250a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-2b2a07683ce51682a27061121b8891d2" target="entity-9fe96d4835c2f5c113060553295b8237">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-2b2a07683ce51682a27061121b8891d2" target="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-2b2a07683ce51682a27061121b8891d2" target="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-2b2a07683ce51682a27061121b8891d2" target="entity-c4d9490fc9a39ade4f491da6b14367bc">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-0145998821ec35ff08881c3028a07777" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-0145998821ec35ff08881c3028a07777" target="entity-6b75ce56b9ef31a35e8be2a0294fa75a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-ce724c505cc105a2257f04a769bc8406" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-ce724c505cc105a2257f04a769bc8406" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-ce724c505cc105a2257f04a769bc8406" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-ce724c505cc105a2257f04a769bc8406" target="entity-c8cc31fa155f532b6c041f479feb82f3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-ce724c505cc105a2257f04a769bc8406" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-ce724c505cc105a2257f04a769bc8406" target="entity-df93d6d27552e22a4dfec2f2185151d1">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-ce724c505cc105a2257f04a769bc8406" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-03258676839ac4c9f76d894b8a02e19f" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-03258676839ac4c9f76d894b8a02e19f" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-03258676839ac4c9f76d894b8a02e19f" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-03258676839ac4c9f76d894b8a02e19f" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-03258676839ac4c9f76d894b8a02e19f" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-03258676839ac4c9f76d894b8a02e19f" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-03258676839ac4c9f76d894b8a02e19f" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-2a4b07ad7144c86fe10fd6e57558f322">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-aaa91554bc835c7fcf12a3339d85c36a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-0c85a5e4a5c134e3b10e84247022104a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-26074f0be42eec7d928e63e14c1be07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-db911c00799d4098189c4cc344797ec1" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-559d521f5ed4372474c949ff2ba9ee05" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-559d521f5ed4372474c949ff2ba9ee05" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-559d521f5ed4372474c949ff2ba9ee05" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-559d521f5ed4372474c949ff2ba9ee05" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-559d521f5ed4372474c949ff2ba9ee05" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-29a686e23e2650f87a78443ad09c7a44" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-29a686e23e2650f87a78443ad09c7a44" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-29a686e23e2650f87a78443ad09c7a44" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-29a686e23e2650f87a78443ad09c7a44" target="entity-c8cc31fa155f532b6c041f479feb82f3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-29a686e23e2650f87a78443ad09c7a44" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-29a686e23e2650f87a78443ad09c7a44" target="entity-df93d6d27552e22a4dfec2f2185151d1">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-29a686e23e2650f87a78443ad09c7a44" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-8466994128685ee70b4fa9472b4019fd</data>
+    </edge>
+    <edge source="rel-41bed6dedcc9b9638eec48e343121a9b" target="entity-ab39e463714fba4c4d2c4001c0167deb">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-41bed6dedcc9b9638eec48e343121a9b" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-41bed6dedcc9b9638eec48e343121a9b" target="entity-8ab842e0e11e7eed596beb5386c32daf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-41bed6dedcc9b9638eec48e343121a9b" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-41bed6dedcc9b9638eec48e343121a9b" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-4d60f2cebc8835d8f50ea1fa25e12137" target="entity-36715f9115304f520c7b5e98d227a924">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-4d60f2cebc8835d8f50ea1fa25e12137" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-4d60f2cebc8835d8f50ea1fa25e12137" target="entity-b953a24d0dd7147f77bbf05880835578">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-4d60f2cebc8835d8f50ea1fa25e12137" target="entity-d42bd46184127e6ae33c3944c1a4163c">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-47e37c3c7c40276fa41a6856aa0a3a3a" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-47e37c3c7c40276fa41a6856aa0a3a3a" target="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-f616239ed4a7f2dc291332b9149c7e9e" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-f616239ed4a7f2dc291332b9149c7e9e" target="entity-62c0d62f83070d2b956acf433e85a8b3">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-f616239ed4a7f2dc291332b9149c7e9e" target="entity-f94580f3d202a412710c751216f8bb64">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-f616239ed4a7f2dc291332b9149c7e9e" target="entity-318c3e044983242342469cfb8b4bc1ec">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-f616239ed4a7f2dc291332b9149c7e9e" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-37810bd9543af5e6cc6706f7f4bf9797</data>
+    </edge>
+    <edge source="rel-45cf5e534bc51fd6af57a0afe2876d1e" target="entity-7a86131338bf955e0a56311f264aa6aa">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-0c2b857dafa8bd486614d5f313081adc" target="entity-6143963d78df86bf1edf486811a57e4c">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-12b8775ff975f1472c07568976b6ef64" target="entity-efd717440ab790091beef4a125935a73">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-c9dc045a7260e2f857cfc19fccd3f376" target="entity-95a33bbde2be73f0395520798bc29c52">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-51db67fd9ff47533971e72132572abdd" target="entity-e8d920ed9dcdfa798d5ddd0d2340e1ca">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-b2674c70d9fc202ca2aa572ac102ec3c" target="entity-fcd0c398ba3c9bc0dbd90153ddb6d637">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-a48b3036a929777f2cee669536fb9179" target="entity-411a9a1b1519ebd6c96cd25a5b2ecdd5">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-4fb07d39bf3881869e0b0a2b5e7abe36" target="entity-9ee9d85a86f0118c40ba2385bb314fd7">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-ba291b2dc64617f44fcd2312d6c13b3f" target="entity-065957dff2d3bb9f6ddfb16bc7be5db8">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-af909d03218035732b1b530173dad338" target="entity-87b2eef0e2b3fcebb7ddaf7c311087e0">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-f041421c4cc37d5745092077f34b0bd9" target="entity-cc69989ce5e729d2318315b817f45c7b">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-041ac949b929ab29c587ceff47154d3c" target="entity-a9fc1a03386ae38b64e06c8172994963">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-fbfffa0e390f70c0f1105760ee0f0256" target="entity-dfef1308046d1dc60802adefed68d726">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-dda594f33793e71e6895f864df4166fc" target="entity-b2ea30cf609e0ff27fbac7f5c0f758b8">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-53206ad8caf62a56b2f66b5cdd54b1cf" target="entity-c61ca0e85e93caaf6649f39da96337e6">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-de8c799b9fb76c7573141315a9fb9104" target="entity-1301c22fb7c91ee4c9943206ab05142d">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-915c2a1d2c957f79489774b43af2524e" target="entity-f7fa2b16f846ee469381596e9ba3bfc2">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+  </graph>
+</graphml>

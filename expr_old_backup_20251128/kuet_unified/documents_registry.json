@@ -1,0 +1,22 @@
+{
+  "doc-4029733f693051f6cff7dbe97096bac5": {
+    "document_id": "doc-4029733f693051f6cff7dbe97096bac5",
+    "filename": "KUET_Admission_info.md",
+    "title": "Khulna University of Engineering & Technology",
+    "content_length": 7339,
+    "upload_date": "2025-11-26T17:41:45.279634",
+    "indexed_date": null,
+    "last_modified": "2025-11-26T17:41:45.279637",
+    "status": "pending",
+    "dataset": "kuet_unified",
+    "metadata": {
+      "category": "education",
+      "tags": [
+        "KUET",
+        "admission"
+      ]
+    },
+    "job_id": "job--84623a1674029b12b69ec13e14572152",
+    "stats": {}
+  }
+}

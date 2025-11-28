@@ -1,0 +1,674 @@
+[
+  {
+    "extraction_id": "table_table_001_1764159594",
+    "type": "table",
+    "table_id": "table_001",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_001",
+      "table_type": "exam_schedule",
+      "headers": [
+        "অনলাইন আবেদনপত্র পূরণ ও জমা শুরু",
+        "৩০ নভেম্বর ২০২৪, শনিবার সকাল ১০:০০ টা"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "২০২৪"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "The extracted table contains no numbers, resulting in a failure to match any numbers from the source."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:54.996373",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_002_1764159594",
+    "type": "table",
+    "table_id": "table_002",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_002",
+      "table_type": "exam_schedule",
+      "headers": [
+        "অনলাইন আবেদনপত্র পূরণ ও জমা শেষ",
+        "১৪ ডিসেম্বর ২০২৪, শনিবার বিকাল ৩:০০ টা"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "৩৪",
+          "১০০",
+          "৬০",
+          "৩৩"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:54.997292",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_003_1764159594",
+    "type": "table",
+    "table_id": "table_003",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_003",
+      "table_type": "exam_schedule",
+      "headers": [
+        "মোবাইল/অনলাইন ব্যাংকিং-এর মাধ্যমে আবেদন ফি প্রদান শেষ",
+        "১৫ ডিসেম্বর ২০২৪, রবিবার বিকাল ৩:০০ টা"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "২০২৪"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "The extracted table is empty, resulting in no numbers being extracted. Ensure the extraction process captures all numbers from the source table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:54.998194",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_004_1764159594",
+    "type": "table",
+    "table_id": "table_004",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_004",
+      "table_type": "exam_schedule",
+      "headers": [
+        "E, T, S, R চিহ্নিত আবেদনপত্র সরাসরি রেজিস্ট্রার অফিসের ভর্তি শাখায় জমা দেয়া অথবা রেজিস্টার্ড ডাক যোগে/কুরিয়ারের মাধ্যমে রেজিস্ট্রার অফিসে প্রেরণ।",
+        "২ ডিসেম্বর ২০২৪ সোমবার থেকে ১৭ ডিসেম্বর ২০২৪ মঙ্গলবার (শুক্রবার ও সরকারী ছুটির দিন ব্যতীত) সকাল ১০:০০ টা - বিকাল ৩:০০ টা (সরাসরি জমা দেয়ার ক্ষেত্রে প্রযোজ্য)"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "১২০",
+          "৪০০",
+          "৯০",
+          "১৪",
+          "১৩",
+          "৩"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:54.999173",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_005_1764159595",
+    "type": "table",
+    "table_id": "table_005",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_005",
+      "table_type": "exam_schedule",
+      "headers": [
+        "প্রাক-নির্বাচনী পরীক্ষায় অংশগ্রহণের জন্য যোগ্য আবেদনকারীদের নামের তালিকা প্রকাশের সর্বশেষ তারিখ",
+        "২৬ ডিসেম্বর ২০২৪, বৃহস্পতিবার"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "১২০",
+          "৬০",
+          "৩০",
+          "১৯৫",
+          "১৮০",
+          "৫৫",
+          "৫০",
+          "১৩০৫"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table. Ensure the extraction process captures all numeric values."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.000064",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_006_1764159595",
+    "type": "table",
+    "table_id": "table_006",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_006",
+      "table_type": "exam_schedule",
+      "headers": [
+        "প্রাক-নির্বাচনী পরীক্ষা",
+        "২৩ জানুয়ারী ২০২৫, বৃহস্পতিবার (পরীক্ষার শিফট ও সময় পরবর্তীতে BUET- এর ওয়েবসাইটে (www.buet.ac.bd) জানানো হবে)"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were found in either the source or extracted tables."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.000959",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_007_1764159595",
+    "type": "table",
+    "table_id": "table_007",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_007",
+      "table_type": "exam_schedule",
+      "headers": [
+        "মূল ভর্তি পরীক্ষায় অংশগ্রহণের জন্য যোগ্য আবেদনকারীদের নামের তালিকা প্রকাশের সম্ভাব্য তারিখ",
+        "৪ ফেব্রুয়ারী ২০২৫, মঙ্গলবার"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "৫০০",
+          "৮০০",
+          "১০০০"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.001994",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_006_1764159595",
+    "type": "table",
+    "table_id": "table_006",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_006",
+      "table_type": "exam_schedule",
+      "headers": [
+        "প্রাক-নির্বাচনী পরীক্ষা",
+        "২৩ জানুয়ারী ২০২৫, বৃহস্পতিবার (পরীক্ষার শিফট ও সময় পরবর্তীতে BUET- এর ওয়েবসাইটে (www.buet.ac.bd) জানানো হবে)"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were found in either the source or extracted tables."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.002937",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_007_1764159595",
+    "type": "table",
+    "table_id": "table_007",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_007",
+      "table_type": "exam_schedule",
+      "headers": [
+        "মূল ভর্তি পরীক্ষায় অংশগ্রহণের জন্য যোগ্য আবেদনকারীদের নামের তালিকা প্রকাশের সম্ভাব্য তারিখ",
+        "৪ ফেব্রুয়ারী ২০২৫, মঙ্গলবার"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "৫০০",
+          "৮০০",
+          "১০০০"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.003959",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_008_1764159595",
+    "type": "table",
+    "table_id": "table_008",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_008",
+      "table_type": "exam_schedule",
+      "headers": [
+        "মূল ভর্তি পরীক্ষা",
+        "১৩ ফেব্রুয়ারী ২০২৫, বৃহস্পতিবার"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "১",
+          "৩০",
+          "১০",
+          "১৪",
+          "৩",
+          "১৫",
+          "২",
+          "১৭",
+          "২৬",
+          "২৩",
+          "৪",
+          "১৩",
+          "১২",
+          "৮"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.005072",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_009_1764159595",
+    "type": "table",
+    "table_id": "table_009",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_009",
+      "table_type": "exam_schedule",
+      "headers": [
+        "মডিউল A",
+        "“ক” গ্রুপ এবং “খ” গ্রুপ",
+        "উচ্চতর গণিত, পদার্থবিজ্ঞান এবং রসায়ন",
+        "সকাল ১০:০০ টা থেকে দুপুর ১২:০০ টা"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "200",
+          "401",
+          "402",
+          "500",
+          "501",
+          "502",
+          "601",
+          "602",
+          "604",
+          "612",
+          "720",
+          "82",
+          "100",
+          "115",
+          "570",
+          "911",
+          "991",
+          "992",
+          "506",
+          "509",
+          "510",
+          "520",
+          "531",
+          "546",
+          "553",
+          "556",
+          "25",
+          "30",
+          "32",
+          "34",
+          "35",
+          "36"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.006207",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_009_1764159595",
+    "type": "table",
+    "table_id": "table_009",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_009",
+      "table_type": "exam_schedule",
+      "headers": [
+        "মডিউল A",
+        "“ক” গ্রুপ এবং “খ” গ্রুপ",
+        "উচ্চতর গণিত, পদার্থবিজ্ঞান এবং রসায়ন",
+        "সকাল ১০:০০ টা থেকে দুপুর ১২:০০ টা"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "200",
+          "401",
+          "402",
+          "500",
+          "501",
+          "502",
+          "601",
+          "602",
+          "604",
+          "612",
+          "720",
+          "82",
+          "100",
+          "115",
+          "570",
+          "911",
+          "991",
+          "992",
+          "506",
+          "509",
+          "510",
+          "520",
+          "531",
+          "546",
+          "553",
+          "556",
+          "25",
+          "30",
+          "32",
+          "34",
+          "35",
+          "36"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.007380",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_010_1764159595",
+    "type": "table",
+    "table_id": "table_010",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_010",
+      "table_type": "exam_schedule",
+      "headers": [
+        "মডিউল B",
+        "“খ” গ্রুপ",
+        "মুক্তহস্ত অংকন (Freehand Drawing) এবং দৃষ্টিগত ও স্থানিক ধীশক্তি (Visual-Spatial Intelligence)",
+        "বিকাল ২:০০ টা থেকে বিকাল ৩:৩০ মিনিট"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "৫০০",
+          "৮০০",
+          "১০০০"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.008582",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_010_1764159595",
+    "type": "table",
+    "table_id": "table_010",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_010",
+      "table_type": "exam_schedule",
+      "headers": [
+        "মডিউল B",
+        "“খ” গ্রুপ",
+        "মুক্তহস্ত অংকন (Freehand Drawing) এবং দৃষ্টিগত ও স্থানিক ধীশক্তি (Visual-Spatial Intelligence)",
+        "বিকাল ২:০০ টা থেকে বিকাল ৩:৩০ মিনিট"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "৫০০",
+          "৮০০",
+          "১০০০"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.009830",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_011_1764159595",
+    "type": "table",
+    "table_id": "table_011",
+    "document_id": "unknown",
+    "table_data": {
+      "table_id": "table_011",
+      "table_type": "exam_schedule",
+      "headers": [
+        "ভর্তির জন্য নির্বাচিত ও অপেক্ষমান প্রার্থীদের নামের তালিকা প্রকাশের সম্ভাব্য তারিখ",
+        "৮ মার্চ ২০২৫, শনিবার"
+      ],
+      "rows": [],
+      "metadata": {
+        "source_location": "document",
+        "confidence": 1.0,
+        "extraction_method": "gpt4o_structured",
+        "token_count": 43004,
+        "validation_status": "FAIL",
+        "category": "BUET",
+        "tags": [
+          "admission"
+        ],
+        "title": "Bangladesh University of Engineering and Technology (BUET)",
+        "numeric_coverage": 0.0,
+        "missing_numbers": [
+          "১",
+          "৩০",
+          "১৪",
+          "১৫",
+          "২",
+          "১৭",
+          "২৬",
+          "২৩",
+          "৪",
+          "১৩",
+          "১০",
+          "১২",
+          "৮",
+          "৩",
+          "৩.০০",
+          "৩.৩০"
+        ],
+        "hallucinated_numbers": [],
+        "validation_feedback": "No numbers were extracted from the table."
+      }
+    },
+    "failure_reason": "LLM validation failed",
+    "metadata": {},
+    "timestamp": "2025-11-26T18:19:55.011090",
+    "status": "pending_review"
+  }
+]

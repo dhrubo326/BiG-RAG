@@ -1,0 +1,27 @@
+{
+  "doc-eab860ca815f66fdbfb3e754e411d89d": {
+    "document_id": "doc-eab860ca815f66fdbfb3e754e411d89d",
+    "filename": "BUET Prospectus-final 24-25.md",
+    "title": "Bangladesh University of Engineering and Technology (BUET)",
+    "content_length": 43513,
+    "upload_date": "2025-11-26T18:18:22.527371",
+    "indexed_date": "2025-11-26T18:25:57.133563",
+    "last_modified": "2025-11-26T18:25:57.133863",
+    "status": "indexed",
+    "dataset": "buet_unified",
+    "metadata": {
+      "category": "BUET",
+      "tags": [
+        "admission"
+      ]
+    },
+    "job_id": "job--aef94dc938869c0f044e01a16a261ef7",
+    "stats": {
+      "chunks": 20,
+      "entities": 29,
+      "edges": 5,
+      "tokens": 0,
+      "relations": 5
+    }
+  }
+}

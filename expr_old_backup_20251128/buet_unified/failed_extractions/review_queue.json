@@ -1,0 +1,234 @@
+[
+  {
+    "extraction_id": "table_table_001_1764159594",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:54.996373",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_002_1764159594",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:54.997292",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_003_1764159594",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:54.998194",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_004_1764159594",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:54.999173",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_005_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.000064",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_006_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.000959",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_007_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.001994",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_006_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.002937",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_007_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.003959",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_008_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.005072",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_009_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.006207",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_009_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.007380",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_010_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.008582",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_010_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.009830",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "table_table_011_1764159595",
+    "type": "table",
+    "document_id": "unknown",
+    "failure_reason": "LLM validation failed",
+    "timestamp": "2025-11-26T18:19:55.011090",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0000_1764159640",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:20:40.036767",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0005_1764159673",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:21:13.239916",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0009_1764159747",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:22:27.199062",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0012_1764159776",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:22:56.599033",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0015_1764159808",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:23:28.492758",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0017_1764159848",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:24:08.064177",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0018_1764159885",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:24:45.903422",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0000_1764159945",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:25:45.679441",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0005_1764159945",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:25:45.683161",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0009_1764159945",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:25:45.685246",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0012_1764159945",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:25:45.688041",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0015_1764159945",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:25:45.690002",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0017_1764159945",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:25:45.692117",
+    "status": "pending_review"
+  },
+  {
+    "extraction_id": "chunk_chunk_0018_1764159945",
+    "type": "chunk",
+    "document_id": "unknown",
+    "failure_reason": "All 3 validation attempts failed",
+    "timestamp": "2025-11-26T18:25:45.694228",
+    "status": "pending_review"
+  }
+]

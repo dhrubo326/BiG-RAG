@@ -1,0 +1,1661 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d8" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d7" for="edge" attr.name="weight" attr.type="double" />
+  <key id="d6" for="node" attr.name="description" attr.type="string" />
+  <key id="d5" for="node" attr.name="entity_type" attr.type="string" />
+  <key id="d4" for="node" attr.name="entity_name" attr.type="string" />
+  <key id="d3" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d2" for="node" attr.name="weight" attr.type="double" />
+  <key id="d1" for="node" attr.name="content" attr.type="string" />
+  <key id="d0" for="node" attr.name="role" attr.type="string" /> 
+    <node id="rel-d7fab257b768cacf4c6e79bc0b583908">
+      <data key="d0">relation</data>
+      <data key="d1">ম্যাটেরিয়ালস্ সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৬০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-dd928fa8e44b5da09c02f56043cf5ca2">
+      <data key="d0">relation</data>
+      <data key="d1">আরবান এন্ড রিজিওনাল প্লানিং বিভাগে আসনের সংখ্যা ৬০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-476b6ad8431159e0a61c29d897131321">
+      <data key="d0">relation</data>
+      <data key="d1">৩। ভর্তি সংক্রান্ত সময়সূচী প্রদান করা হয়েছে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-4324335fe0e4d8ba78b5d2431720308a">
+      <data key="d0">relation</data>
+      <data key="d1">নির্দিষ্ট সময়ের মধ্যে প্রাপ্ত সকল বৈধ আবেদনপত্রের মধ্য থেকে উচ্চ মাধ্যমিক পরীক্ষায় গণিত, পদার্থবিদ্যা, রসায়ন ও ইংরেজী-এ চার বিষয়ে প্রাপ্ত মোট গ্রেড পয়েন্টের ভিত্তিতে একটি মেধা তালিকা তৈরী করা হবে।</data>
+      <data key="d2">10.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-71a18fd4652be589186ffe757bed34a4">
+      <data key="d0">relation</data>
+      <data key="d1">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ের ভর্তি গাইড সম্পর্কে তথ্য প্রদান করা হয়েছে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-53707528f3cd7b9cd186749c4f0d6970">
+      <data key="d0">relation</data>
+      <data key="d1">তিনি ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং অনুষদের ডীন।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-d65eb841892b37dac8099a864fd57774">
+      <data key="d0">relation</data>
+      <data key="d1">বি.আর্ক কোর্সের প্রার্থীদের জন্য MCQ পরীক্ষা ছাড়াও ১০০ নম্বরের মুক্তহস্ত অংকন পরীক্ষায় অংশগ্রহণ করা বাধ্যতামূলক।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-e37193f87e680f7c41fc6911976e30ac">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থীকে ২০২৪ ইং সালে উচ্চ মাধ্যমিক বা তার সমমানের পরীক্ষায় পাশ হতে হবে অথবা ২০২৩ ইং সালের নভেম্বরা বা তারপরে 'A' লেভেল সার্টিফিকেট প্রাপ্ত হতে হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-aa40ae438e86b63e266365f950f052c0">
+      <data key="d0">relation</data>
+      <data key="d1">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং, বিইউআরপি ও বিআর্ক কোর্সের ভর্তি পরীক্ষা একই প্রশ্নপত্রে অনুষ্ঠিত হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-0d71130d25e9844bbdca1d6af502e596">
+      <data key="d0">relation</data>
+      <data key="d1">২০,০০০তম প্রার্থী একাধিক হলে গাণিতিক পদ্ধতিতে পরবর্তী প্রার্থী নির্বাচন করা হবে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-e4e659276ace8b1577540b6227eea765">
+      <data key="d0">relation</data>
+      <data key="d1">সিভিল ইঞ্জিনিয়ারিং, ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং এবং মেকানিক্যাল ইঞ্জিনিয়ারিং অনুষদসমূহে ১৬টি বিভাগে সর্বমোট ১০৬৫টি আসনে শিক্ষার্থী ভর্তি করা হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-d8a6c1e3dd85a8d25195d68a33b51f97">
+      <data key="d0">relation</data>
+      <data key="d1">মেকাট্রনিক্স ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৩০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-a6f1b26832e2a2a4d36c62ff70844efe">
+      <data key="d0">relation</data>
+      <data key="d1">মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ১২০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-13601642d9686ae278dd887ef48da2b3">
+      <data key="d0">relation</data>
+      <data key="d1">ক) আবেদনপত্র অনলাইনে পূরণ ও Submission শুরু হবে ০৪ ডিসেম্বর, ২০২৪ ইং বুধবার, সকাল ১০-০০ মি.।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-232fcd5cc5e416ab8132471671c07121">
+      <data key="d0">relation</data>
+      <data key="d1">আর্কিটেকচার বিভাগে আসনের সংখ্যা ৪০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-8c062e461bd17163bd70248dcd2c793b">
+      <data key="d0">relation</data>
+      <data key="d1">চ) ভর্তি পরীক্ষায় অংশগ্রহণকারী প্রার্থীদের মেধাক্রমের তালিকা প্রকাশ, বিভাগ পছন্দ প্রদানের নির্দেশনা, ভর্তির নিয়মাবলী ও ভর্তির তারিখ ঘোষণা ২৬ জানুয়ারী, ২০২৫ ইং রবিবার হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-2ddf9c3866310e000d71727bc0aec3f6">
+      <data key="d0">relation</data>
+      <data key="d1">আপনার তথ্যাবলি সরকারের সুনির্দিষ্ট সময়সূচী অনুযায়ী নিশ্চিত করতে হবে।</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-b1517082dfd83793321d6bbfbfe94898">
+      <data key="d0">relation</data>
+      <data key="d1">৬। ভর্তি পরীক্ষার বিষয়সমূহ ও নির্ধারিত নম্বর: ২০২৪ ইং সালের উচ্চ মাধ্যমিক পরীক্ষায় গণিত, পদার্থবিদ্যা ও রসায়নে যে পাঠ্যসূচী ছিল প্রধানতঃ তার উপর ভিত্তি করে ৩ ঘন্টা ব্যাপী সর্বমোট ৫০০ নম্বরের MCQ পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-c500085962e74c25af08f93ed8a923c9">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থী সংখ্যা বেশী হলে এ তালিকা থেকে প্রথম ২০,০০০ (বিশ হাজার) জন প্রার্থীকে ভর্তি পরীক্ষায় অংশগ্রহণের সুযোগ দেয়া হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-a324705d288153ab4d6b724174c61285">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থীকে বাংলাদেশের যে কোন মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড/মাদ্রাসা শিক্ষা বোর্ড/কারিগরী শিক্ষা বোর্ড থেকে মাধ্যমিক বা সমমানের পরীক্ষায় কমপক্ষে জিপিএ ৪.০০ পেয়ে পাশ হতে হবে অথবা সমমানের পরীক্ষায় কমপক্ষে সমতুল্য গ্রেড পেয়ে পাশ হতে হবে।</data>
+      <data key="d2">10.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-8b8d8f03302d97c68f0c4af1f03d4475">
+      <data key="d0">relation</data>
+      <data key="d1">কেমিক্যাল ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৩০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-1817a8492c9f16f362070caf57dc0810">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি পরীক্ষা সংক্রান্ত যে কোন প্রয়োজনে admission@kuet.ac.bd-তে e-mail করা যেতে পারে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-2dca889c2afd2dee8339346736743ef9">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থীকে বাংলাদেশে অথবা বিদেশী শিক্ষা বোর্ড থেকে মাধ্যমিক কিংবা উচ্চ মাধ্যমিক পরীক্ষায় কমপক্ষে সমতুল্য গ্রেড পেয়ে পাশ হতে হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-b950cac4787c88bb3cd4f5406aca23e0">
+      <data key="d0">relation</data>
+      <data key="d1">Functional English-এর উপর ভিত্তি করে পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-51b9f17dc52bd451d78a8239e61d147a">
+      <data key="d0">relation</data>
+      <data key="d1">খ) আবেদনপত্র অনলাইনে পূরণ ও Submission শেষ হবে ১৪ ডিসেম্বর, ২০২৪ ইং শনিবার, রাত ১১-৫৯ মি.।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-e8680d883c4b203cb4c2c5078a965e44">
+      <data key="d0">relation</data>
+      <data key="d1">অনলাইন ফর্ম পূরণের সময় যেকোনো সমস্যা হলে 01799273655 নম্বরে যোগাযোগ করতে বলা হয়েছে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-c461551f0d2b4220a0a9ecdb1d42c1e5">
+      <data key="d0">relation</data>
+      <data key="d1">৩। আর্কিটেকচার এ ৫ বছর মেয়াদী এবং অন্যান্য সকল বিষয়ে ৪ বছর মেয়াদী স্নাতক ডিগ্রী প্রদান করা হয়।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-533fc10c13eb82f057a3573e0672d0ec">
+      <data key="d0">relation</data>
+      <data key="d1">ইন্ডাস্ট্রিয়াল এন্ড প্রোডাকশন ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৬০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-e7daab84d90625d7d9e64f89678743c8">
+      <data key="d0">relation</data>
+      <data key="d1">এই ভর্তি পরীক্ষায় অংশগ্রহণের জন্য আবেদনপত্র আহবান করা হচ্ছে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-f1e251eabf23aa89efa83b6be68f1d4c">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ১২০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-198a5adf95f0faf6c6c68e64229a9d1c">
+      <data key="d0">relation</data>
+      <data key="d1">অবশ্যই সময়সূচীর সময়সীমার মধ্যে আবেদনপত্র পূরণ ও জমা দিতে হবে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-2a44f1074153292ce79b369114b55240">
+      <data key="d0">relation</data>
+      <data key="d1">তবে ২০,০০০তম প্রার্থী একাধিক হলে উচ্চ মাধ্যমিক পরীক্ষায় যথাক্রমে গণিত, পদার্থবিদ্যা, রসায়ন ও ইংরেজীতে প্রাপ্ত গ্রেডের ভিত্তিতে ২০,০০০তম প্রার্থীর মধ্য থেকে ন্যূনতম সংখ্যক প্রার্থীকে ভর্তি পরীক্ষায় অংশগ্রহণের সুযোগ দেয়া হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-91a093c2f4deb8419f5eaa24f2206ea1">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থী GCE 'O' লেভেল এবং 'A' লেভেল পাশ করে থাকলে তার ক্ষেত্রে ভর্তি পরীক্ষায় অংশগ্রহণের জন্য GCE 'O' লেভেল পরীক্ষায় কমপক্ষে পাঁচটি বিষয়ে ন্যূনতম 'B' গ্রেড পেয়ে পাশ হতে হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-979e08b31532f351ccb449f342dffb35">
+      <data key="d0">relation</data>
+      <data key="d1">বিষয় ভিত্তিক প্রশ্ন সংখ্যা ও নম্বরের বিন্যাস নিম্নরূপ।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-93b6f0825956e7070a76a4c91ab37379">
+      <data key="d0">relation</data>
+      <data key="d1">GCE 'O' লেভেল এবং 'A' লেভেল পাশ করে থাকলে তার জন্যও প্রবেশের সুযোগ থাকবে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-4720cd7e29f845349f8728bb158fcf56">
+      <data key="d0">relation</data>
+      <data key="d1">একই প্রশ্নপত্রে অনুষ্ঠিত হবে।</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-9a67c6e214f2a54fd0bb43a39e04bc8c">
+      <data key="d0">relation</data>
+      <data key="d1">গ) টাকা জমা দেয়ার শেষ সময় ১৫ ডিসেম্বর, ২০২৪ ইং রবিবার, বিকাল ৫-০০ মি।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-605b615c48c678b3efef01a790c10cdd">
+      <data key="d0">relation</data>
+      <data key="d1">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ২০২৪-২০২৫ শিক্ষাবর্ষে ১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং, বিইউআরপি ও বিআর্ক কোর্সে ভর্তি হতে ইচ্ছুক প্রার্থীদের নিকট হতে ভর্তি পরীক্ষায় অংশগ্রহণের জন্য অনলাইনে আবেদনপত্র আহবান করা যাচ্ছে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-8615f48f0cbee0a9c610170a7b601376">
+      <data key="d0">relation</data>
+      <data key="d1">অনুসারে ভর্তি পরীক্ষায় ১০৬৫টি আসনের মধ্যে সংরক্ষিত আসন রয়েছে ৫টি ।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-ca80741c92a84259925bde1435b6e224">
+      <data key="d0">relation</data>
+      <data key="d1">লেদার ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৬০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-8ffadd15608e78013c8b1284a381fd92">
+      <data key="d0">relation</data>
+      <data key="d1">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা ১২০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-305899922ee8d96eda00751d3c7d6d6e">
+      <data key="d0">relation</data>
+      <data key="d1">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ১২০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-27927bfc5fe5fc5e15d9fbec69c2f05c">
+      <data key="d0">relation</data>
+      <data key="d1">বেশী হলে এ তালিকা থেকে প্রথম ২০,০০০ (বিশ হাজার) জন প্রার্থীকে ভর্তি পরীক্ষায় অংশগ্রহণের সুযোগ দেয়া হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-58c4484b13e9576ae664d147f27c8e38">
+      <data key="d0">relation</data>
+      <data key="d1">GCE 'A' লেভেল পরীক্ষায় পদার্থবিদ্যা, রসায়ন ও গণিতে পৃথক পৃথকভাবে কমপক্ষে 'B' গ্রেড পেয়ে পাশ হতে হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-810aba8f1d38cb65923fef89e6517b7d">
+      <data key="d0">relation</data>
+      <data key="d1">গণিত, পদার্থবিদ্যা ও রসায়নে যে পাঠ্যসূচী ছিল প্রধানতঃ তার উপর ভিত্তি করে পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-928de3b1a75ae86c2476aa4056318ce4">
+      <data key="d0">relation</data>
+      <data key="d1">বিভিন্ন যোগ্যতা শর্ত পূরণের ভিত্তিতে ভর্তির জন্য নির্বাচনের প্রক্রিয়া সম্পন্ন হবে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-641f8b69e4019ff700e3a31a8971ff9c">
+      <data key="d0">relation</data>
+      <data key="d1">অফিস চলাকালীন সময়ে 01799273655 নম্বরে যোগাযোগ করা যাবে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-5847870850662ecbe282375da7a330c4">
+      <data key="d0">relation</data>
+      <data key="d1">এসব পরীক্ষায় অংশগ্রহণ করতে হবে।</data>
+      <data key="d2">6.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-7da3012a6dca6cd273db2feb97a89014">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি পরীক্ষায় মোট ৫০০ নম্বরের MCQ পরীক্ষা হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-b3f0f3caf35c333b9b92c771e5d29a91">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থী সংখ্যা বেশী হলে প্রথম ২০,০০০ জন প্রার্থীকে ভর্তি পরীক্ষায় অংশগ্রহণের সুযোগ দেয়া হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-919b1f4bdbff6b371e6d77605d9dd86b">
+      <data key="d0">relation</data>
+      <data key="d1">টেক্সটাইল ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৬০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-2e3e381aa2b3fa4d0cb2df888a404711">
+      <data key="d0">relation</data>
+      <data key="d1">বিদ্যুৎ ও কল্যাণ মন্ত্রণালয়ের অধীনে ভর্তি সকল প্রক্রিয়া সম্পন্ন করতে হবে।</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-988ec9a8aa54c0947c4ea361ae246bb3">
+      <data key="d0">relation</data>
+      <data key="d1">ইলেক্ট্রনিক্স এন্ড কমিউনিকেশন ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৬০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-b3ce54c0b082dd37aad2750db7df6a0c">
+      <data key="d0">relation</data>
+      <data key="d1">ঘ) ভর্তি পরীক্ষায় অংশগ্রহণের যোগ্য প্রার্থীদের নামের তালিকা প্রকাশ হবে ৩০ ডিসেম্বর, ২০২৪ ইং সোমবার।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-f664238f87102e113baf32cf50576fcc">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি পরীক্ষার বিষয়গুলোর উপর ভিত্তি করে ৩ ঘণ্টার জন্য ৫০০ নম্বরের MCQ পরীক্ষা অনুষ্ঠিত হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-4fecf4c824e91e26fbb5b5d80d624a42">
+      <data key="d0">relation</data>
+      <data key="d1">সিভিল ইঞ্জিনিয়ারিং বিভাগে ১২০ আসন রয়েছে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-5b51909db8883c3a3a7221d90ee3173e">
+      <data key="d0">relation</data>
+      <data key="d1">মেধাক্রমের তালিকা প্রকাশ এবং ভর্তি পরীক্ষার সময়সূচী প্রদান করা হচ্ছে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-f9d7e66eb0e0b9f9af2c8e57640b67a0">
+      <data key="d0">relation</data>
+      <data key="d1">তিনি খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ডীন হিসেবে কাজ করছেন।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-aa1fd20212b83ed66e6b61ca6a48a583">
+      <data key="d0">relation</data>
+      <data key="d1">বিদেশী শিক্ষা প্রতিষ্ঠান থেকে ২০২২ ইং সালের উচ্চ মাধ্যমিক/সমমানের পরীক্ষায় উত্তীর্ণ প্রার্থীর ক্ষেত্রে গণিত, পদার্থবিদ্যা, রসায়ন ও ইংরেজী বিষয়ের প্রত্যেকটিতে আলাদাভাবে কমপক্ষে ৮০% নম্বর বা সমমানের গ্রেড পেতে হবে।</data>
+      <data key="d2">10.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-95009ee04723b4b56f75cefc0f1443b7">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি পরীক্ষার বিষয়সমূহ ও নির্ধারিত নম্বর সম্পর্কে বিস্তারিত প্রদান করা হয়েছে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-2a84ff1b4b650d7c68d4b46f0d53a20e">
+      <data key="d0">relation</data>
+      <data key="d1">নির্দেশিত সময়ের মধ্যে প্রাপ্ত আবেদনপত্রের ভিত্তিতে আবেদনকারীদের মধ্য থেকে একটি মেধা তালিকা তৈরী করা হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-164d51344d68513795320447c1696642">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি সংক্রান্ত সকল তথ্যাবলী admission.kuet.ac.bd ওয়েবসাইটে পাওয়া যাবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-87d3733825043d421ca1d7a1cad56aa4">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থীকে অবশ্যই বাংলাদেশের নাগরিক হতে হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-016a2d85e7cc23130e6f0d6faf8832a3">
+      <data key="d0">relation</data>
+      <data key="d1">e-mail করার জন্য admission@kuet.ac.bd ঠিকানা উল্লেখ করা হয়েছে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-917231c5ed2620dd9000b146c50eca98">
+      <data key="d0">relation</data>
+      <data key="d1">এবং ভর্তি পরীক্ষার ফি প্রদান করে Submit করতে হবে।</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-8e9487b99da5682dd730eb3fb622aa5e">
+      <data key="d0">relation</data>
+      <data key="d1">এনার্জি সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৩০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-2a303aa87bec9e9b7e9e6864e83311fd">
+      <data key="d0">relation</data>
+      <data key="d1">ঙ) ভর্তি পরীক্ষার তারিখ ও সময় ১১ জানুয়ারী, ২০২৫ ইং, শনিবার সকাল ৯-৩০ মি. হতে দুপুর ১২-৩০ মি. পর্যন্ত।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-2ca601af7137483b52908bf83f939286">
+      <data key="d0">relation</data>
+      <data key="d1">বায়োমেডিকেল ইঞ্জিনিয়ারিং বিভাগে আসনের সংখ্যা ৩০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-95a5b0146c95e7f92b9ec34185068608">
+      <data key="d0">relation</data>
+      <data key="d1">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট বিভাগের আসনের সংখ্যা ৬০।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </node>
+    <node id="rel-b991b1d7aee501722c73c00be477cbe7">
+      <data key="d0">relation</data>
+      <data key="d1">সংশ্লিষ্ট প্রার্থীকে মাধ্যমিক/সমমানের পরীক্ষায় গড়ে কমপক্ষে ৭০% নম্বর বা সমতুল্য গ্রেড পেতে হবে।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-eaa7f5d697d4edd0fa76f59690840970">
+      <data key="d0">relation</data>
+      <data key="d1">প্রফেসর ড. মোঃ রফিকুল ইসলাম ভর্তি কমিটির সভাপতি।</data>
+      <data key="d2">9.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-182c081fb7b0500e40bc5e330f645a7a">
+      <data key="d0">relation</data>
+      <data key="d1">প্রার্থীকে বাংলাদেশের যে কোন মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড/মাদ্রাসা শিক্ষা বোর্ড/কারিগরী শিক্ষা বোর্ড থেকে ২০২১ ইং অথবা ২০২২ ইং সালের মাধ্যমিক বা সমমানের পরীক্ষায় কমপক্ষে জিপিএ ৪.০০ অথবা সমতুল্য গ্রেড পেয়ে উত্তীর্ণ হতে হবে।</data>
+      <data key="d2">10.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="rel-794cd120c88940df0bf3e85ce24d4e96">
+      <data key="d0">relation</data>
+      <data key="d1">ভর্তি পরীক্ষায় ৩ ঘণ্টা সময় allotted করা হয়েছে।</data>
+      <data key="d2">7.0</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </node>
+    <node id="rel-a5cff0de513de9d29cc7186b07a4e920">
+      <data key="d0">relation</data>
+      <data key="d1">বাংলাদেশী শিক্ষার্থীদের জন্য ভর্তি পরীক্ষায় অংশগ্রহণের যোগ্যতা নির্ধারণ করা হয়েছে।</data>
+      <data key="d2">8.0</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </node>
+    <node id="entity-776801471acb367950299d4171277dc9">
+      <data key="d0">entity</data>
+      <data key="d4">২০২৪ ইং</data>
+      <data key="d5">category</data>
+      <data key="d6">২০২৪ ইং হলো ভর্তি পরীক্ষার সময়সূচী।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-39b421e1be2fdccad37658baa5677fe4">
+      <data key="d0">entity</data>
+      <data key="d4">১২০</data>
+      <data key="d5">category</data>
+      <data key="d6">১২০ হল ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;১২০ হল কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;১২০ হল মেকানিক্যাল ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;১২০ হল সিভিল ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">450.0</data>
+    </node>
+    <node id="entity-e353792f13c5ff1680f8f46632021a42">
+      <data key="d0">entity</data>
+      <data key="d4">উচ্চ মাধ্যমিক</data>
+      <data key="d5">category</data>
+      <data key="d6">উচ্চ মাধ্যমিক হলো মাধ্যমিক শেষে শিক্ষার্থীদের পরবর্তী পর্যায়ের শিক্ষা।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-d24f9f3bbf6d21e82cc0a2cb1ef9e530">
+      <data key="d0">entity</data>
+      <data key="d4">১৪ ডিসেম্বর, ২০২৪</data>
+      <data key="d5">category</data>
+      <data key="d6">১৪ ডিসেম্বর, ২০২৪ হলো আবেদনপত্র পূরণের শেষ তারিখ।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-ed40b589029da215c0347834957d68be">
+      <data key="d0">entity</data>
+      <data key="d4">FUNCTIONAL ENGLISH</data>
+      <data key="d5">method</data>
+      <data key="d6">Functional English হলো ইংরেজী ভাষার ব্যবহারিক দিকগুলোকে বোঝানোর জন্য একটি পদ্ধতি।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-ccffafeee85137a64f9cf3faded6684d">
+      <data key="d0">entity</data>
+      <data key="d4">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট</data>
+      <data key="d5">organization</data>
+      <data key="d6">বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-438217684c5a26931ab5879fdbd05bc0">
+      <data key="d0">entity</data>
+      <data key="d4">MCQ পরীক্ষা</data>
+      <data key="d5">method</data>
+      <data key="d6">MCQ পরীক্ষা হলো মাল্টিপল চয়েস প্রশ্নপত্র পদ্ধতিতে পরীক্ষা নেওয়া।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-15ad984f9c964329af8bd27525d4ccb4">
+      <data key="d0">entity</data>
+      <data key="d4">সার্টিফিকেট</data>
+      <data key="d5">category</data>
+      <data key="d6">সার্টিফিকেট হলো একটি সরকারি কাগজপত্র যা শিক্ষার্থীর শিক্ষা অর্জনের সত্যতা নিশ্চিত করে।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-9cdf26edc2c074197384494783b724a6">
+      <data key="d0">entity</data>
+      <data key="d4">১৫ ডিসেম্বর, ২০২৪</data>
+      <data key="d5">category</data>
+      <data key="d6">১৫ ডিসেম্বর, ২০২৪ হলো টাকা জমা দেয়ার শেষ সময়।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-e0ba8bde40adbf13c54b2bc6de7c2260">
+      <data key="d0">entity</data>
+      <data key="d4">একই প্রশ্নপত্র</data>
+      <data key="d5">category</data>
+      <data key="d6">একই প্রশ্নপত্র বোঝায় একই পরীক্ষায় ব্যবহৃত প্রশ্নগুলোর সেট।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">75.0</data>
+    </node>
+    <node id="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d0">entity</data>
+      <data key="d4">৬০</data>
+      <data key="d5">category</data>
+      <data key="d6">৬০ হল আরবান এন্ড রিজিওনাল প্লানিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৬০ হল ইন্ডাস্ট্রিয়াল এন্ড প্রোডাকশন ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৬০ হল ইলেক্ট্রনিক্স এন্ড কমিউনিকেশন ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৬০ হল টেক্সটাইল ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৬০ হল বিল্ডিং ইঞ্জিনিয়ারিং এন্ড কনস্ট্রাকশন ম্যানেজমেন্ট বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৬০ হল ম্যাটেরিয়ালস্ সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৬০ হল লেদার ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">630.0</data>
+    </node>
+    <node id="entity-9bfc48f229fb5ef7cae34c971e084435">
+      <data key="d0">entity</data>
+      <data key="d4">বি. এস-সি. ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">বি. এস-সি. ইঞ্জিনিয়ারিং একটি ইঞ্জিনিয়ারিং প্রোগ্রাম।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-770b781852157ef478a965da436fafc9">
+      <data key="d0">entity</data>
+      <data key="d4">A লেভেল</data>
+      <data key="d5">category</data>
+      <data key="d6">A' লেভেল হলো একটি আন্তর্জাতিক শিক্ষাগত প্রোগ্রাম যা উচ্চ মাধ্যমিক স্তরে পরিচালিত হয়।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-adc247c1062871dd3d1ccc575960f0e2">
+      <data key="d0">entity</data>
+      <data key="d4">৩০ ডিসেম্বর, ২০২৪</data>
+      <data key="d5">category</data>
+      <data key="d6">৩০ ডিসেম্বর, ২০২৪ হলো যোগ্য প্রার্থীদের নামের তালিকা প্রকাশের তারিখ।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-2dea7c1202f786114ae7504bb8a09dce">
+      <data key="d0">entity</data>
+      <data key="d4">অংশগ্রহণ</data>
+      <data key="d5">category</data>
+      <data key="d6">অংশগ্রহণ হলো কোনো কার্যক্রমে সক্রিয়ভাবে অংশ নেওয়া।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-e4257e6ad9690579d2f55d15a455a09b">
+      <data key="d0">entity</data>
+      <data key="d4">আরবান এন্ড রিজিওনাল প্লানিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">আরবান এন্ড রিজিওনাল প্লানিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-b7bc6fff9def8a308f35ecc9c7a99d55">
+      <data key="d0">entity</data>
+      <data key="d4">বিইউআরপি</data>
+      <data key="d5">organization</data>
+      <data key="d6">বিইউআরপি হলো একটি আর্কিটেকচারাল প্রোগ্রাম।&lt;SEP&gt;বিইউআরপি হলো একটি বিশেষ শিক্ষাক্রম যা খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে পরিচালিত হয়।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">165.0</data>
+    </node>
+    <node id="entity-30ea4ede7ded9d34724961cf26faf8d6">
+      <data key="d0">entity</data>
+      <data key="d4">বিদেশী শিক্ষা বোর্ড</data>
+      <data key="d5">organization</data>
+      <data key="d6">বিদেশী শিক্ষা বোর্ড হলো অন্যান্য দেশে পরিচালিত শিক্ষার সংস্থা।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-4d132472403994dbba8f34c55afeb54b">
+      <data key="d0">entity</data>
+      <data key="d4">১১ জানুয়ারী, ২০২৫</data>
+      <data key="d5">category</data>
+      <data key="d6">১১ জানুয়ারী, ২০২৫ হলো ভর্তি পরীক্ষার তারিখ।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-68747e20740a0697a3debefd7f7ece18">
+      <data key="d0">entity</data>
+      <data key="d4">৩ ঘণ্টা</data>
+      <data key="d5">category</data>
+      <data key="d6">৩ ঘণ্টা হলো ভর্তি পরীক্ষার জন্য নির্ধারিত সময়ের মেয়াদ।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-2fd3b463247e6248e9ef012fedd76437">
+      <data key="d0">entity</data>
+      <data key="d4">আর্কিটেকচার</data>
+      <data key="d5">organization</data>
+      <data key="d6">আর্কিটেকচার একটি বিভাগের নাম।&lt;SEP&gt;আর্কিটেকচার একটি ৫ বছর মেয়াদী বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">180.0</data>
+    </node>
+    <node id="entity-eaea653394a00d4486ea89c89eca7df8">
+      <data key="d0">entity</data>
+      <data key="d4">বি.আর্ক</data>
+      <data key="d5">organization</data>
+      <data key="d6">বি.আর্ক হলো আর্কিটেকচার পড়ার জন্য একটি প্রোগ্রাম।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-24bb3f2ab889151d76b4460ed1f4ca6c">
+      <data key="d0">entity</data>
+      <data key="d4">সমতুল্য গ্রেড</data>
+      <data key="d5">category</data>
+      <data key="d6">সমতুল্য গ্রেড হলো বিভিন্ন শিক্ষা বোর্ডের মধ্যে তুলনার একটি পরিমাপ।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-b08e4eab2caa15db9d2349034f7bfa66">
+      <data key="d0">entity</data>
+      <data key="d4">২৬ জানুয়ারী, ২০২৫</data>
+      <data key="d5">category</data>
+      <data key="d6">২৬ জানুয়ারী, ২০২৫ হলো ভর্তির নিয়মাবলী ও তারিখ ঘোষণা করার তারিখ।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-79a707e946009ceff0002a759bfb8411">
+      <data key="d0">entity</data>
+      <data key="d4">৫০০ নম্বর</data>
+      <data key="d5">category</data>
+      <data key="d6">৫০০ নম্বর হলো ভর্তি পরীক্ষার জন্য মোট নম্বর।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-43fe76a3378cc6fe9300ec7c8b945fb4">
+      <data key="d0">entity</data>
+      <data key="d4">৪০</data>
+      <data key="d5">category</data>
+      <data key="d6">৪০ হল আর্কিটেকচার বিভাগের আসনের সংখ্যা।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-f21ea10c45a5aff98b75ffd82199ac30">
+      <data key="d0">entity</data>
+      <data key="d4">মুক্তহস্ত অংকন</data>
+      <data key="d5">method</data>
+      <data key="d6">মুক্তহস্ত অংকন হলো হাতে অঙ্কন করার পদ্ধতি।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-a3e29ff2190eb97d9e022e0f2ed7f4fd">
+      <data key="d0">entity</data>
+      <data key="d4">GCE O লেভেল</data>
+      <data key="d5">category</data>
+      <data key="d6">GCE 'O' লেভেল হলো একটি আন্তর্জাতিক শিক্ষা পরীক্ষার স্তর যা উচ্চ বিদ্যালয় শিক্ষার্থীদের জন্য।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-19662aa59aba85531d225c6fa9992d51">
+      <data key="d0">entity</data>
+      <data key="d4">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়</data>
+      <data key="d5">organization</data>
+      <data key="d6">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় হলো একটি প্রযুক্তি ভিত্তিক বিশ্ববিদ্যালয় যেখানে বিভিন্ন প্রকৌশল কোর্সের শিক্ষা প্রদান করা হয়।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">95.0</data>
+    </node>
+    <node id="entity-9d43a50b52bd00da2e889508fdb23086">
+      <data key="d0">entity</data>
+      <data key="d4">ইলেক্ট্রনিক্স এন্ড কমিউনিকেশন ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">ইলেক্ট্রনিক্স এন্ড কমিউনিকেশন ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d0">entity</data>
+      <data key="d4">১০০</data>
+      <data key="d5">category</data>
+      <data key="d6">১০০ হলো মুক্তহস্ত অংকন পরীক্ষার মোট নম্বর।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-637307c414ba5ef3f243dee99d94a87f">
+      <data key="d0">entity</data>
+      <data key="d4">GCE A লেভেল</data>
+      <data key="d5">category</data>
+      <data key="d6">GCE 'A' লেভেল হলো একটি আন্তর্জাতিক শিক্ষা পরীক্ষার স্তর যা বিশ্ববিদ্যালয়ে প্রবেশের জন্য ব্যবহৃত হয়।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-0c85a5e4a5c134e3b10e84247022104a">
+      <data key="d0">entity</data>
+      <data key="d4">২০২৪-২০২৫</data>
+      <data key="d5">category</data>
+      <data key="d6">২০২৪-২০২৫ শিক্ষাবর্ষ হলো আগামী শিক্ষাবর্ষ যেখানে এই ভর্তি কার্যক্রম অনুষ্ঠিত হবে।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-8756f7ee60e752d0cbe3a1b0ec758adb">
+      <data key="d0">entity</data>
+      <data key="d4">বায়োমেডিকেল ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">বায়োমেডিকেল ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-dfef1308046d1dc60802adefed68d726">
+      <data key="d0">entity</data>
+      <data key="d4">গণিত</data>
+      <data key="d5">category</data>
+      <data key="d6">গণিত হচ্ছে সংখ্যাসমূহের গাণিতিক সম্পর্ক ও গণনা বিষয়।&lt;SEP&gt;গণিত হলো একটি বিজ্ঞান যা সংখ্যা, পরিমাণ ও আকার অধ্যয়ন করে।&lt;SEP&gt;গণিত হলো সংখ্যাবিজ্ঞানের এক শাখা যা সংখ্যাগুলি, পরিমাণ এবং গাণিতিক সম্পর্ক বিশ্লেষণ করে।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">265.0</data>
+    </node>
+    <node id="entity-fba76b9e25a7a3e4fa13523bab5042c6">
+      <data key="d0">entity</data>
+      <data key="d4">যোগ্যতা শর্ত</data>
+      <data key="d5">category</data>
+      <data key="d6">যোগ্যতা শর্ত হলো সেই শর্তগুলি যেগুলোর ভিত্তিতে প্রার্থীদের নির্বাচন করা হয়।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-bb2079ab9c8f8bf303a339f9b2d48d09">
+      <data key="d0">entity</data>
+      <data key="d4">বি. এস-সি. ইঞ্জিনিয়ারিং</data>
+      <data key="d5">category</data>
+      <data key="d6">বি. এস-সি. ইঞ্জিনিয়ারিং হলো একটি স্নাতক শিক্ষাক্রম যা প্রকৌশল শিক্ষা প্রদান করে।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d0">entity</data>
+      <data key="d4">৩০</data>
+      <data key="d5">category</data>
+      <data key="d6">৩০ হল এনার্জি সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৩০ হল কেমিক্যাল ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৩০ হল বায়োমেডিকেল ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।&lt;SEP&gt;৩০ হল মেকাট্রনিক্স ইঞ্জিনিয়ারিং বিভাগের আসনের সংখ্যা।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">360.0</data>
+    </node>
+    <node id="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d0">entity</data>
+      <data key="d4">পদার্থবিদ্যা</data>
+      <data key="d5">category</data>
+      <data key="d6">পদার্থবিদ্যা হলো একটি মৌলিক বিজ্ঞান যা পদার্থ ও শক্তির আচরণ নিয়ে আলোচনা করে।&lt;SEP&gt;পদার্থবিদ্যা হলো পদার্থের প্রকৃতি এবং আচরণ নিয়ে গবেষণার একটি শাখা।&lt;SEP&gt;পদার্থবিদ্যা হলো প্রকৃতি ও পদার্থের বৈশিষ্ট্য ও আচরণ নিয়ে অধ্যয়নকারী বিজ্ঞান।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">265.0</data>
+    </node>
+    <node id="entity-3c284afcef8e3e2c338e2529d9bf167e">
+      <data key="d0">entity</data>
+      <data key="d4">আবেদনপত্র</data>
+      <data key="d5">category</data>
+      <data key="d6">আবেদনপত্র হলো একটি ফর্ম যা প্রার্থীদের ভর্তি পরীক্ষায় অংশগ্রহণের জন্য পূরণ করতে হয়।&lt;SEP&gt;আবেদনপত্র হলো ভর্তি পরীক্ষায় অংশগ্রহণের জন্য প্রার্থী তৈরি করা ফর্ম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">170.0</data>
+    </node>
+    <node id="entity-c460d9a501fdc74dcb2f7b81917bc939">
+      <data key="d0">entity</data>
+      <data key="d4">বিআর্ক</data>
+      <data key="d5">category</data>
+      <data key="d6">বিআর্ক হলো আরেকটি শিক্ষাক্রম যা বিশ্ববিদ্যালয়ে আর্কিটেকচার বা স্থাপত্যবিদ্যা নিয়ে পড়াশোনা করে।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-05bd3714f786122cf16d55d2f2efcdfb">
+      <data key="d0">entity</data>
+      <data key="d4">ইন্ডাস্ট্রিয়াল এন্ড প্রোডাকশন ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">ইন্ডাস্ট্রিয়াল এন্ড প্রোডাকশন ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d0">entity</data>
+      <data key="d4">রসায়ন</data>
+      <data key="d5">category</data>
+      <data key="d6">রসায়ন হলো পদার্থ ও তার শারীরবৃত্তীয় পরিবর্তনের অধ্যয়ন।&lt;SEP&gt;রসায়ন হলো পদার্থের গঠন ও বৈশিষ্ট্য অধ্যয়নকারী বিজ্ঞান।&lt;SEP&gt;রসায়ন হলো পদার্থের গঠন, গুণ, এবং রসায়নীয় পরিবর্তনগুলোর অধ্যয়ন।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">265.0</data>
+    </node>
+    <node id="entity-3b90156e4eab4232c4cdf058352b05d2">
+      <data key="d0">entity</data>
+      <data key="d4">মেধা তালিকা</data>
+      <data key="d5">category</data>
+      <data key="d6">মেধা তালিকা হলো আবেদনকারীদের মধ্যে নির্বাচনের জন্য অগ্রাধিকারভিত্তিক তালিকা।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-ccaaa1e53b971656e5282ec0a737b00e">
+      <data key="d0">entity</data>
+      <data key="d4">সিভিল ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">সিভিল ইঞ্জিনিয়ারিং একটি বিভাগের নাম।&lt;SEP&gt;সিভিল ইঞ্জিনিয়ারিং হলো একটি প্রকৌশল শাখা যা নির্মাণ, স্থাপত্য ও অবকাঠামোর ডিজাইন এবং রক্ষণাবেক্ষণে কার্যকর।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">180.0</data>
+    </node>
+    <node id="entity-4cdbd681fdf5d236dc9c32569b2d3da2">
+      <data key="d0">entity</data>
+      <data key="d4">লেদার ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">লেদার ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-c4d9490fc9a39ade4f491da6b14367bc">
+      <data key="d0">entity</data>
+      <data key="d4">ইংরেজী</data>
+      <data key="d5">category</data>
+      <data key="d6">ইংরেজী হলো এক ধরনের ভাষা।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-dc6a1ec7f53c5c762b03041d239c713f">
+      <data key="d0">entity</data>
+      <data key="d4">২০,০০০</data>
+      <data key="d5">category</data>
+      <data key="d6">২০,০০০ হল ভর্তি পরীক্ষায় অংশগ্রহণের সুযোগ পাওয়া প্রার্থীর সংখ্যা।&lt;SEP&gt;২০,০০০ হলো সেই প্রার্থী সংখ্যা যা ভর্তি পরীক্ষায় অংশগ্রহণ করে।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">175.0</data>
+    </node>
+    <node id="entity-46a1bab7dc52671eec49b4cb956d5f34">
+      <data key="d0">entity</data>
+      <data key="d4">মেকানিক্যাল ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">মেকানিক্যাল ইঞ্জিনিয়ারিং একটি বিভাগের নাম।&lt;SEP&gt;মেকানিক্যাল ইঞ্জিনিয়ারিং হলো একটি প্রকৌশল শাখা যা যান্ত্রিক সিস্টেম ও যন্ত্রপাতির ডিজাইন, উন্নয়ন এবং উৎপাদনে জড়িত।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">180.0</data>
+    </node>
+    <node id="entity-d7854637d823718390bd847da104c861">
+      <data key="d0">entity</data>
+      <data key="d4">টেক্সটাইল ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">টেক্সটাইল ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d0">entity</data>
+      <data key="d4">৪</data>
+      <data key="d5">category</data>
+      <data key="d6">৪ হলো মুক্তহস্ত অংকন বিষয়ের সংখ্যা।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-b70739d68802c522bc0dd146af25af0b">
+      <data key="d0">entity</data>
+      <data key="d4">২০,০০০তম প্রার্থী</data>
+      <data key="d5">person</data>
+      <data key="d6">২০,০০০তম প্রার্থী হলো সেই প্রার্থী যা ভর্তি পরীক্ষার জন্য বিশেষ গুরুত্ব পায়।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-040f1ced7f7bf452056da9a758dbb2e0">
+      <data key="d0">entity</data>
+      <data key="d4">০৪ ডিসেম্বর, ২০২৪</data>
+      <data key="d5">category</data>
+      <data key="d6">০৪ ডিসেম্বর, ২০২৪ হলো আবেদনপত্র পূরণের শুরু তারিখ।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-3da187da2cbbb0be8f06a1833cf9fe6e">
+      <data key="d0">entity</data>
+      <data key="d4">১৬</data>
+      <data key="d5">category</data>
+      <data key="d6">১৬টি বিভাগ হলো খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ের পরিবেশন করা বিভাগের সংখ্যা।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-7fe0b5f0224ec166660b4d3ec5ac5597">
+      <data key="d0">entity</data>
+      <data key="d4">এনার্জি সায়েন্স এন্ড ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">এনার্জি সায়েন্স এন্ড ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-b15b6f90761eceeafffc098e79f67bcc">
+      <data key="d0">entity</data>
+      <data key="d4">১৫</data>
+      <data key="d5">category</data>
+      <data key="d6">১৫ হলো গণিত, পদার্থবিদ্যা, ও রসায়ন বিষয়ের প্রশ্ন সংখ্যা।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-28810931572815430639ce85121100e9">
+      <data key="d0">entity</data>
+      <data key="d4">সাবেক মাধ্যমিক শিক্ষা বোর্ড</data>
+      <data key="d5">organization</data>
+      <data key="d6">সাবেক মাধ্যমিক শিক্ষা বোর্ড হলো বাংলাদেশের মাধ্যমিক পর্যায়ের শিক্ষার প্রতিষ্ঠান।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-5dc2436dfa70367d822a206ed89ff525">
+      <data key="d0">entity</data>
+      <data key="d4">১০৬৫</data>
+      <data key="d5">category</data>
+      <data key="d6">১০৬৫ হল ভর্তি পরীক্ষার আসনের মোট সংখ্যা।&lt;SEP&gt;১০৬৫টি আসন হলো খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ভর্তি হওয়ার জন্য উপলব্ধ মোট আসন সংখ্যা।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">175.0</data>
+    </node>
+    <node id="entity-1e7bee798204b79bef8f99360d8a2a66">
+      <data key="d0">entity</data>
+      <data key="d4">কেমিক্যাল ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">কেমিক্যাল ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-584edf5619a7194d4f145e265b28ae74">
+      <data key="d0">entity</data>
+      <data key="d4">ADMISSION.KUET.AC.BD</data>
+      <data key="d5">category</data>
+      <data key="d6">admission.kuet.ac.bd হলো খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ের অফিসিয়াল ভর্তি সম্পর্কিত ওয়েবসাইট।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-0ac3aef925bbae05a8e130d769c2ea79">
+      <data key="d0">entity</data>
+      <data key="d4">পাঁচটি বিষয়</data>
+      <data key="d5">category</data>
+      <data key="d6">পাঁচটি বিষয় হলো যেসব বিষয়ে GCE 'O' লেভেল পরীক্ষায় প্রার্থীদের পাশ করতে হবে।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-7b20bab4bd1ba067d9dd699fd46a7d46">
+      <data key="d0">entity</data>
+      <data key="d4">বাংলাদেশী শিক্ষার্থীদের</data>
+      <data key="d5">category</data>
+      <data key="d6">বাংলাদেশী শিক্ষার্থীরা হলেন যারা বাংলাদেশে জন্মগ্রহণ করেছেন এবং সেখানে পড়াশুনা করছেন।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-e1b800fc6ac9c26af1a499205d5c6e6f">
+      <data key="d0">entity</data>
+      <data key="d4">মেকাট্রনিক্স ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">মেকাট্রনিক্স ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-cc81ce5478e311d36cca224250ccc8a5">
+      <data key="d0">entity</data>
+      <data key="d4">01799273655</data>
+      <data key="d5">category</data>
+      <data key="d6">01799273655 হলো অফিসের যোগাযোগের জন্য একটি ফোন নম্বর।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-14c89eba739271bfa878f1baaeb5b91f">
+      <data key="d0">entity</data>
+      <data key="d4">৮০% নম্বর</data>
+      <data key="d5">category</data>
+      <data key="d6">৮০% নম্বর হলো গাণিতিক পরীক্ষায় প্রয়োজনীয় সর্বনিম্ন স্কোর।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-5565d9afc2ff5c444e576eb548d2769a">
+      <data key="d0">entity</data>
+      <data key="d4">৫০০</data>
+      <data key="d5">category</data>
+      <data key="d6">৫০০ নম্বর হলো পরীক্ষার মোট মান।&lt;SEP&gt;৫০০ হলো ভর্তি পরীক্ষার মোট নম্বর।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">175.0</data>
+    </node>
+    <node id="entity-c08b737fa84d6dfb637ccc6abc25170e">
+      <data key="d0">entity</data>
+      <data key="d4">বাংলাদেশ</data>
+      <data key="d5">geo</data>
+      <data key="d6">বাংলাদেশ হলো দক্ষিণ এশিয়ার একটি দেশ যেখানে খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় অবস্থিত।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-9f4f83d27e99a186ad19a1562890608c">
+      <data key="d0">entity</data>
+      <data key="d4">৫ বছর</data>
+      <data key="d5">category</data>
+      <data key="d6">৫ বছর হলো আর্কিটেকচার বিভাগের মেয়াদ।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-91bce1bdee0df6eaa4afac67aaa8f87c">
+      <data key="d0">entity</data>
+      <data key="d4">৭০% নম্বর</data>
+      <data key="d5">category</data>
+      <data key="d6">৭০% নম্বর হলো গাণিতিক পরীক্ষায় গড় প্রয়োজনীয় স্কোর।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-bb6ba637233a6d6aa1dc5f4276a0a756">
+      <data key="d0">entity</data>
+      <data key="d4">ADMISSION@KUET.AC.BD</data>
+      <data key="d5">category</data>
+      <data key="d6">admission@kuet.ac.bd হলো খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ের ভর্তি পরীক্ষার জন্য যোগাযোগের ইমেইল ঠিকানা।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-0cedd45daa38f1835a1948ed5e35219f">
+      <data key="d0">entity</data>
+      <data key="d4">মাধ্যমিক শিক্ষা বোর্ড</data>
+      <data key="d5">organization</data>
+      <data key="d6">মাধ্যমিক শিক্ষা বোর্ড হলো বাংলাদেশের শিক্ষামণ্ডলীর একটি অংশ যা মাধ্যমিক পর্যায়ের শিক্ষা নিয়ন্ত্রণ করে।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d0">entity</data>
+      <data key="d4">৫</data>
+      <data key="d5">category</data>
+      <data key="d6">৫টি আসন সংরক্ষিত।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-d91b3ebbcfaf92d95acbaa165ec2b189">
+      <data key="d0">entity</data>
+      <data key="d4">প্রফেসর ড. মোঃ রফিকুল ইসলাম</data>
+      <data key="d5">person</data>
+      <data key="d6">প্রফেসর ড. মোঃ রফিকুল ইসলাম খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ের ভর্তি কমিটির সভাপতি।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-0acb36245635f1bf1ae5b9d9f704c165">
+      <data key="d0">entity</data>
+      <data key="d4">মোট গ্রেড পয়েন্ট</data>
+      <data key="d5">category</data>
+      <data key="d6">মোট গ্রেড পয়েন্ট হলো প্রার্থীদের বরাবরের পরীক্ষার ফলাফলের মাধ্যমে নির্ধারিত পয়েন্ট।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-b2c5694f21ee4f298ec0ed5ee1240421">
+      <data key="d0">entity</data>
+      <data key="d4">(মাদ্রাসা শিক্ষা বোর্ড</data>
+      <data key="d5">organization</data>
+      <data key="d6">মাদ্রাসা শিক্ষা বোর্ড হলো বাংলাদেশের মাদ্রাসা সংক্রান্ত শিক্ষা নিয়ন্ত্রণকারী সংস্থা।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-7a1b18a02e5b501e768ed3a895880eee">
+      <data key="d0">entity</data>
+      <data key="d4">৩ ঘন্টা</data>
+      <data key="d5">category</data>
+      <data key="d6">৩ ঘন্টা হলো পরীক্ষা পরিচালনার সময়কাল।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-ce89319edf3cd16abadaea700ef6452d">
+      <data key="d0">entity</data>
+      <data key="d4">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং একটি প্রকৌশল বিষয়ক বিভাগ।&lt;SEP&gt;ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং একটি বিভাগের নাম।&lt;SEP&gt;ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং হলো বৈদ্যুতিক সিস্টেম ও যন্ত্রপাতি নিয়ে সম্পর্কিত প্রকৌশল।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8&lt;SEP&gt;chunk-041ecccae37dd64c6c3ac2273f0e5cd1&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">265.0</data>
+    </node>
+    <node id="entity-57c87901ec0a63f66b3c539585572a84">
+      <data key="d0">entity</data>
+      <data key="d4">বিশ হাজার</data>
+      <data key="d5">category</data>
+      <data key="d6">বিশ হাজার হলো ভর্তি পরীক্ষায় অংশগ্রহণকারী প্রার্থীদের সংখ্যার সীমা।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-697c94ddfd1b4deabc575c6358837682">
+      <data key="d0">entity</data>
+      <data key="d4">কারিগরী শিক্ষা বোর্ড</data>
+      <data key="d5">organization</data>
+      <data key="d6">কারিগরী শিক্ষা বোর্ড হলো বাংলাদেশের কারিগরি শিক্ষার মান নিয়ন্ত্রণকারী সংস্থা।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-c4e4629c11e1617b4dcf346f0e395ef8">
+      <data key="d0">entity</data>
+      <data key="d4">MCQ</data>
+      <data key="d5">category</data>
+      <data key="d6">MCQ হলো পরীক্ষা ফরম্যাট যেখানে অনেকগুলি প্রশ্ন থাকে এবং প্রতিটি প্রশ্নের জন্য একাধিক উত্তর থাকে।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-7880e25efe0d47ee77e7bf24a745ad6e">
+      <data key="d0">entity</data>
+      <data key="d4">ডীন</data>
+      <data key="d5">category</data>
+      <data key="d6">ডীন হলো বিশ্ববিদ্যালয়ে নির্দিষ্ট বিভাগ বা অনুষদের প্রধান।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-61d8077290b262cee884957ff183cd59">
+      <data key="d0">entity</data>
+      <data key="d4">গ্রেড</data>
+      <data key="d5">category</data>
+      <data key="d6">গ্রেড হলো পরীক্ষার ফলাফলের ফলস্বরূপ একটি কৌতুকাযোগ্য সংখ্যা বা অক্ষরস্বরূপ।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-fe863629536d19bdaf50142ccf27dead">
+      <data key="d0">entity</data>
+      <data key="d4">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়</data>
+      <data key="d5">organization</data>
+      <data key="d6">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় হল একটি সরকারি প্রযুক্তি বিশ্ববিদ্যালয় যা ইঞ্জিনিয়ারিং ও প্রযুক্তি বিষয়ে শিক্ষা প্রদান করে।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-95ee71fcd5b0bdf562912c1afa24984c">
+      <data key="d0">entity</data>
+      <data key="d4">জিপিএ</data>
+      <data key="d5">category</data>
+      <data key="d6">জিপিএ হলো শিক্ষার্থীদের অর্জিত গ্রেডের একটি প্রথাগত পরিমাপ।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">80.0</data>
+    </node>
+    <node id="entity-d6cb8617bf27dd2242a4140f4593ec04">
+      <data key="d0">entity</data>
+      <data key="d4">মেধাক্রম</data>
+      <data key="d5">category</data>
+      <data key="d6">মেধাক্রম হলো ভর্তি পরীক্ষায় সফল প্রার্থীদের নামের তালিকা।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-1604fae4b959b343c5e0d6960b4c3483">
+      <data key="d0">entity</data>
+      <data key="d4">ভর্তি পরীক্ষা</data>
+      <data key="d5">event</data>
+      <data key="d6">ভর্তি পরীক্ষা হলো শিক্ষাপ্রতিষ্ঠানে ভর্তি হতে প্রার্থীদের জন্য গ্রহণ করা একটা পরীক্ষামূলক কার্যক্রম।&lt;SEP&gt;ভর্তি পরীক্ষা হলো সেই পরীক্ষাটি যা মাধ্যমে শিক্ষার্থীরা বিশ্ববিদ্যালয়ে ভর্তি হওয়ার সুযোগ পায়।</data>
+      <data key="d3">chunk-041ecccae37dd64c6c3ac2273f0e5cd1&lt;SEP&gt;chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">180.0</data>
+    </node>
+    <node id="entity-6c7ad6758337d42d60aa49deced0c4ff">
+      <data key="d0">entity</data>
+      <data key="d4">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং</data>
+      <data key="d5">organization</data>
+      <data key="d6">কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং একটি বিভাগের নাম।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">180.0</data>
+    </node>
+    <node id="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d0">entity</data>
+      <data key="d4">৪.০০</data>
+      <data key="d5">category</data>
+      <data key="d6">৪.০০ হলো গ্রেড পয়েন্টের সর্বোচ্চ মান যা শিক্ষার্থীরা অর্জন করতে পারে।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <node id="entity-ce586f8f994750b88e391c429e61b732">
+      <data key="d0">entity</data>
+      <data key="d4">ভর্তি পরীক্ষার সময়সূচী</data>
+      <data key="d5">category</data>
+      <data key="d6">ভর্তি পরীক্ষার সময়সূচী হলো পরীক্ষার তারিখ ও সময়ের তালিকা।</data>
+      <data key="d3">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+      <data key="d2">90.0</data>
+    </node>
+    <node id="entity-875e339be32235f918da8a75e02e9e05">
+      <data key="d0">entity</data>
+      <data key="d4">২০২৪</data>
+      <data key="d5">category</data>
+      <data key="d6">২০২৪ বছর হলো সেই সময় যখন প্রার্থীদের উচ্চ মাধ্যমিক বা সমমানের পরীক্ষায় অংশ নিতে হবে।</data>
+      <data key="d3">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+      <data key="d2">85.0</data>
+    </node>
+    <edge source="rel-d7fab257b768cacf4c6e79bc0b583908" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-dd928fa8e44b5da09c02f56043cf5ca2" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-dd928fa8e44b5da09c02f56043cf5ca2" target="entity-e4257e6ad9690579d2f55d15a455a09b">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-4324335fe0e4d8ba78b5d2431720308a" target="entity-0acb36245635f1bf1ae5b9d9f704c165">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-71a18fd4652be589186ffe757bed34a4" target="entity-fe863629536d19bdaf50142ccf27dead">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-53707528f3cd7b9cd186749c4f0d6970" target="entity-ce89319edf3cd16abadaea700ef6452d">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-d65eb841892b37dac8099a864fd57774" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-d65eb841892b37dac8099a864fd57774" target="entity-f21ea10c45a5aff98b75ffd82199ac30">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-e37193f87e680f7c41fc6911976e30ac" target="entity-875e339be32235f918da8a75e02e9e05">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-e37193f87e680f7c41fc6911976e30ac" target="entity-e353792f13c5ff1680f8f46632021a42">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-e37193f87e680f7c41fc6911976e30ac" target="entity-15ad984f9c964329af8bd27525d4ccb4">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-e37193f87e680f7c41fc6911976e30ac" target="entity-770b781852157ef478a965da436fafc9">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-aa40ae438e86b63e266365f950f052c0" target="entity-9bfc48f229fb5ef7cae34c971e084435">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-aa40ae438e86b63e266365f950f052c0" target="entity-b7bc6fff9def8a308f35ecc9c7a99d55">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-aa40ae438e86b63e266365f950f052c0" target="entity-eaea653394a00d4486ea89c89eca7df8">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-0d71130d25e9844bbdca1d6af502e596" target="entity-b70739d68802c522bc0dd146af25af0b">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-e4e659276ace8b1577540b6227eea765" target="entity-5dc2436dfa70367d822a206ed89ff525">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-e4e659276ace8b1577540b6227eea765" target="entity-ce89319edf3cd16abadaea700ef6452d">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-e4e659276ace8b1577540b6227eea765" target="entity-ccaaa1e53b971656e5282ec0a737b00e">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-e4e659276ace8b1577540b6227eea765" target="entity-46a1bab7dc52671eec49b4cb956d5f34">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-e4e659276ace8b1577540b6227eea765" target="entity-3da187da2cbbb0be8f06a1833cf9fe6e">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-d8a6c1e3dd85a8d25195d68a33b51f97" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-d8a6c1e3dd85a8d25195d68a33b51f97" target="entity-e1b800fc6ac9c26af1a499205d5c6e6f">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-a6f1b26832e2a2a4d36c62ff70844efe" target="entity-39b421e1be2fdccad37658baa5677fe4">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-a6f1b26832e2a2a4d36c62ff70844efe" target="entity-46a1bab7dc52671eec49b4cb956d5f34">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-13601642d9686ae278dd887ef48da2b3" target="entity-040f1ced7f7bf452056da9a758dbb2e0">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-232fcd5cc5e416ab8132471671c07121" target="entity-2fd3b463247e6248e9ef012fedd76437">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-232fcd5cc5e416ab8132471671c07121" target="entity-43fe76a3378cc6fe9300ec7c8b945fb4">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-8c062e461bd17163bd70248dcd2c793b" target="entity-b08e4eab2caa15db9d2349034f7bfa66">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b1517082dfd83793321d6bbfbfe94898" target="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b1517082dfd83793321d6bbfbfe94898" target="entity-7a1b18a02e5b501e768ed3a895880eee">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b1517082dfd83793321d6bbfbfe94898" target="entity-c4e4629c11e1617b4dcf346f0e395ef8">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b1517082dfd83793321d6bbfbfe94898" target="entity-dfef1308046d1dc60802adefed68d726">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b1517082dfd83793321d6bbfbfe94898" target="entity-5565d9afc2ff5c444e576eb548d2769a">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b1517082dfd83793321d6bbfbfe94898" target="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-c500085962e74c25af08f93ed8a923c9" target="entity-57c87901ec0a63f66b3c539585572a84">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-a324705d288153ab4d6b724174c61285" target="entity-28810931572815430639ce85121100e9">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8b8d8f03302d97c68f0c4af1f03d4475" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-8b8d8f03302d97c68f0c4af1f03d4475" target="entity-1e7bee798204b79bef8f99360d8a2a66">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-1817a8492c9f16f362070caf57dc0810" target="entity-bb6ba637233a6d6aa1dc5f4276a0a756">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-2dca889c2afd2dee8339346736743ef9" target="entity-30ea4ede7ded9d34724961cf26faf8d6">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-2dca889c2afd2dee8339346736743ef9" target="entity-24bb3f2ab889151d76b4460ed1f4ca6c">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-b950cac4787c88bb3cd4f5406aca23e0" target="entity-ed40b589029da215c0347834957d68be">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-51b9f17dc52bd451d78a8239e61d147a" target="entity-d24f9f3bbf6d21e82cc0a2cb1ef9e530">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-c461551f0d2b4220a0a9ecdb1d42c1e5" target="entity-2fd3b463247e6248e9ef012fedd76437">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-c461551f0d2b4220a0a9ecdb1d42c1e5" target="entity-9f4f83d27e99a186ad19a1562890608c">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-533fc10c13eb82f057a3573e0672d0ec" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-533fc10c13eb82f057a3573e0672d0ec" target="entity-05bd3714f786122cf16d55d2f2efcdfb">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-e7daab84d90625d7d9e64f89678743c8" target="entity-1604fae4b959b343c5e0d6960b4c3483">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-f1e251eabf23aa89efa83b6be68f1d4c" target="entity-39b421e1be2fdccad37658baa5677fe4">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-f1e251eabf23aa89efa83b6be68f1d4c" target="entity-ce89319edf3cd16abadaea700ef6452d">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-198a5adf95f0faf6c6c68e64229a9d1c" target="entity-3c284afcef8e3e2c338e2529d9bf167e">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-2a44f1074153292ce79b369114b55240" target="entity-61d8077290b262cee884957ff183cd59">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-91a093c2f4deb8419f5eaa24f2206ea1" target="entity-0ac3aef925bbae05a8e130d769c2ea79">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-979e08b31532f351ccb449f342dffb35" target="entity-c4d9490fc9a39ade4f491da6b14367bc">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-979e08b31532f351ccb449f342dffb35" target="entity-f208ccc376c5c8abf5b9861acae743d9">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-979e08b31532f351ccb449f342dffb35" target="entity-b15b6f90761eceeafffc098e79f67bcc">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-93b6f0825956e7070a76a4c91ab37379" target="entity-a3e29ff2190eb97d9e022e0f2ed7f4fd">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-93b6f0825956e7070a76a4c91ab37379" target="entity-637307c414ba5ef3f243dee99d94a87f">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-4720cd7e29f845349f8728bb158fcf56" target="entity-e0ba8bde40adbf13c54b2bc6de7c2260">
+      <data key="d7">75.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-9a67c6e214f2a54fd0bb43a39e04bc8c" target="entity-9cdf26edc2c074197384494783b724a6">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-605b615c48c678b3efef01a790c10cdd" target="entity-19662aa59aba85531d225c6fa9992d51">
+      <data key="d7">95.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-605b615c48c678b3efef01a790c10cdd" target="entity-0c85a5e4a5c134e3b10e84247022104a">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-605b615c48c678b3efef01a790c10cdd" target="entity-bb2079ab9c8f8bf303a339f9b2d48d09">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-605b615c48c678b3efef01a790c10cdd" target="entity-b7bc6fff9def8a308f35ecc9c7a99d55">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-605b615c48c678b3efef01a790c10cdd" target="entity-c460d9a501fdc74dcb2f7b81917bc939">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8615f48f0cbee0a9c610170a7b601376" target="entity-5dc2436dfa70367d822a206ed89ff525">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-8615f48f0cbee0a9c610170a7b601376" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-ca80741c92a84259925bde1435b6e224" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-ca80741c92a84259925bde1435b6e224" target="entity-4cdbd681fdf5d236dc9c32569b2d3da2">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-8ffadd15608e78013c8b1284a381fd92" target="entity-6c7ad6758337d42d60aa49deced0c4ff">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-8ffadd15608e78013c8b1284a381fd92" target="entity-39b421e1be2fdccad37658baa5677fe4">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-305899922ee8d96eda00751d3c7d6d6e" target="entity-6c7ad6758337d42d60aa49deced0c4ff">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-305899922ee8d96eda00751d3c7d6d6e" target="entity-39b421e1be2fdccad37658baa5677fe4">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-27927bfc5fe5fc5e15d9fbec69c2f05c" target="entity-dc6a1ec7f53c5c762b03041d239c713f">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-58c4484b13e9576ae664d147f27c8e38" target="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-58c4484b13e9576ae664d147f27c8e38" target="entity-dfef1308046d1dc60802adefed68d726">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-58c4484b13e9576ae664d147f27c8e38" target="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-810aba8f1d38cb65923fef89e6517b7d" target="entity-455643fac1af8b1e4c4dc58c366582f3">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-810aba8f1d38cb65923fef89e6517b7d" target="entity-dfef1308046d1dc60802adefed68d726">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-810aba8f1d38cb65923fef89e6517b7d" target="entity-130774993d09b2051d57890d6e2e0d79">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-928de3b1a75ae86c2476aa4056318ce4" target="entity-fba76b9e25a7a3e4fa13523bab5042c6">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-641f8b69e4019ff700e3a31a8971ff9c" target="entity-cc81ce5478e311d36cca224250ccc8a5">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-5847870850662ecbe282375da7a330c4" target="entity-2dea7c1202f786114ae7504bb8a09dce">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-7da3012a6dca6cd273db2feb97a89014" target="entity-79a707e946009ceff0002a759bfb8411">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-b3f0f3caf35c333b9b92c771e5d29a91" target="entity-dc6a1ec7f53c5c762b03041d239c713f">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-919b1f4bdbff6b371e6d77605d9dd86b" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-919b1f4bdbff6b371e6d77605d9dd86b" target="entity-d7854637d823718390bd847da104c861">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-988ec9a8aa54c0947c4ea361ae246bb3" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-988ec9a8aa54c0947c4ea361ae246bb3" target="entity-9d43a50b52bd00da2e889508fdb23086">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b3ce54c0b082dd37aad2750db7df6a0c" target="entity-adc247c1062871dd3d1ccc575960f0e2">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-f664238f87102e113baf32cf50576fcc" target="entity-438217684c5a26931ab5879fdbd05bc0">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-f664238f87102e113baf32cf50576fcc" target="entity-5565d9afc2ff5c444e576eb548d2769a">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-4fecf4c824e91e26fbb5b5d80d624a42" target="entity-39b421e1be2fdccad37658baa5677fe4">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-4fecf4c824e91e26fbb5b5d80d624a42" target="entity-ccaaa1e53b971656e5282ec0a737b00e">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-5b51909db8883c3a3a7221d90ee3173e" target="entity-d6cb8617bf27dd2242a4140f4593ec04">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-5b51909db8883c3a3a7221d90ee3173e" target="entity-ce586f8f994750b88e391c429e61b732">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-f9d7e66eb0e0b9f9af2c8e57640b67a0" target="entity-7880e25efe0d47ee77e7bf24a745ad6e">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-aa1fd20212b83ed66e6b61ca6a48a583" target="entity-14c89eba739271bfa878f1baaeb5b91f">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-95009ee04723b4b56f75cefc0f1443b7" target="entity-1604fae4b959b343c5e0d6960b4c3483">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-95009ee04723b4b56f75cefc0f1443b7" target="entity-776801471acb367950299d4171277dc9">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-2a84ff1b4b650d7c68d4b46f0d53a20e" target="entity-3c284afcef8e3e2c338e2529d9bf167e">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-2a84ff1b4b650d7c68d4b46f0d53a20e" target="entity-3b90156e4eab4232c4cdf058352b05d2">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-164d51344d68513795320447c1696642" target="entity-584edf5619a7194d4f145e265b28ae74">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-87d3733825043d421ca1d7a1cad56aa4" target="entity-c08b737fa84d6dfb637ccc6abc25170e">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-8e9487b99da5682dd730eb3fb622aa5e" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-8e9487b99da5682dd730eb3fb622aa5e" target="entity-7fe0b5f0224ec166660b4d3ec5ac5597">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-2a303aa87bec9e9b7e9e6864e83311fd" target="entity-4d132472403994dbba8f34c55afeb54b">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-2ca601af7137483b52908bf83f939286" target="entity-8756f7ee60e752d0cbe3a1b0ec758adb">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-2ca601af7137483b52908bf83f939286" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-95a5b0146c95e7f92b9ec34185068608" target="entity-ccffafeee85137a64f9cf3faded6684d">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-95a5b0146c95e7f92b9ec34185068608" target="entity-69586f168b182cb3600cc5ffb16ff722">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e0ff6f831d864cc8f70bbba28cdbdfa8</data>
+    </edge>
+    <edge source="rel-b991b1d7aee501722c73c00be477cbe7" target="entity-91bce1bdee0df6eaa4afac67aaa8f87c">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-eaa7f5d697d4edd0fa76f59690840970" target="entity-d91b3ebbcfaf92d95acbaa165ec2b189">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-182c081fb7b0500e40bc5e330f645a7a" target="entity-0cedd45daa38f1835a1948ed5e35219f">
+      <data key="d7">90.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-182c081fb7b0500e40bc5e330f645a7a" target="entity-b2c5694f21ee4f298ec0ed5ee1240421">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-182c081fb7b0500e40bc5e330f645a7a" target="entity-697c94ddfd1b4deabc575c6358837682">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-182c081fb7b0500e40bc5e330f645a7a" target="entity-95ee71fcd5b0bdf562912c1afa24984c">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-182c081fb7b0500e40bc5e330f645a7a" target="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d7">85.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+    <edge source="rel-794cd120c88940df0bf3e85ce24d4e96" target="entity-68747e20740a0697a3debefd7f7ece18">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-041ecccae37dd64c6c3ac2273f0e5cd1</data>
+    </edge>
+    <edge source="rel-a5cff0de513de9d29cc7186b07a4e920" target="entity-7b20bab4bd1ba067d9dd699fd46a7d46">
+      <data key="d7">80.0</data>
+      <data key="d8">chunk-e9348fb5834e8827d57a5989580f68a4</data>
+    </edge>
+  </graph>
+</graphml>

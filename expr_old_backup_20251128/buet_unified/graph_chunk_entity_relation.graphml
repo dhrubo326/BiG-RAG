@@ -1,0 +1,425 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d10" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d9" for="edge" attr.name="weight" attr.type="long" />
+  <key id="d8" for="node" attr.name="weight" attr.type="double" />
+  <key id="d7" for="node" attr.name="entity_type" attr.type="string" />
+  <key id="d6" for="node" attr.name="entity_name" attr.type="string" />
+  <key id="d5" for="node" attr.name="extraction_quality" attr.type="string" />
+  <key id="d4" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d3" for="node" attr.name="weight" attr.type="long" />
+  <key id="d2" for="node" attr.name="description" attr.type="string" />
+  <key id="d1" for="node" attr.name="content" attr.type="string" />
+  <key id="d0" for="node" attr.name="role" attr.type="string" />
+  <graph edgedefault="undirected">
+    <node id="rel-ec1e4b36ff882ef484cdddbf45553d92">
+      <data key="d0">relation</data>
+      <data key="d1">Total number of seats available is ১৩০৯.</data>
+      <data key="d2">Total number of seats available is ১৩০৯.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-132b76a34b10844d8023842592121120">
+      <data key="d0">relation</data>
+      <data key="d1">Minimum GPA required in secondary school certificate examination is ৪.০০.</data>
+      <data key="d2">Minimum GPA required in secondary school certificate examination is ৪.০০.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-6207caafcb45016039a39b0c970e031c">
+      <data key="d0">relation</data>
+      <data key="d1">Initial application fee is ৫০০.</data>
+      <data key="d2">Initial application fee is ৫০০.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-7ec59074d5be1f5f4d4af3d76a607ad3">
+      <data key="d0">relation</data>
+      <data key="d1">Number of applicants allowed to participate in the pre-selection test is ২৪,০০০.</data>
+      <data key="d2">Number of applicants allowed to participate in the pre-selection test is ২৪,০০০.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-de6ed781343c516fd2cca7310781065f">
+      <data key="d0">relation</data>
+      <data key="d1">Minimum number of candidates from indigenous communities allowed to participate in the main admission test is ১২.</data>
+      <data key="d2">Minimum number of candidates from indigenous communities allowed to participate in the main admission test is ১২.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-7410131a1592567c256a98dfd388640c">
+      <data key="d0">relation</data>
+      <data key="d1">Minimum GPA required in secondary school certificate examination is ৫.০০.</data>
+      <data key="d2">Minimum GPA required in secondary school certificate examination is ৫.০০.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-f057f8cc7f0ce269a5c1d2b5a2ab9d8e">
+      <data key="d0">relation</data>
+      <data key="d1">Minimum GPA required in secondary school certificate examination is ৫.00.</data>
+      <data key="d2">Minimum GPA required in secondary school certificate examination is ৫.00.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-8003043871925188622a94d04a2511e1">
+      <data key="d0">relation</data>
+      <data key="d1">Number of applicants allowed to participate in the pre-selection test is ৪০০.</data>
+      <data key="d2">Number of applicants allowed to participate in the pre-selection test is ৪০০.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-518fb29de7239e91b018174f71b4d628">
+      <data key="d0">relation</data>
+      <data key="d1">Initial application fee is ৮০০.</data>
+      <data key="d2">Initial application fee is ৮০০.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-14075cd7f1160659cd8ed4121b8f635d">
+      <data key="d0">relation</data>
+      <data key="d1">Initial application fee is ১০০০.</data>
+      <data key="d2">Initial application fee is ১০০০.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-e3c107deadfe0681580ea3849e7af9c8">
+      <data key="d0">relation</data>
+      <data key="d1">Total number of seats available is ১১৫৯.</data>
+      <data key="d2">Total number of seats available is ১১৫৯.</data>
+      <data key="d3">7</data>
+      <data key="d4">unknown</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d0">entity</data>
+      <data key="d6">৪.০০</data>
+      <data key="d7">gpa_requirement</data>
+      <data key="d2">Minimum GPA required in secondary school certificate examination.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-6e5e2f95ab3dfb511461c15809c57828">
+      <data key="d0">entity</data>
+      <data key="d6">৫.০০</data>
+      <data key="d7">gpa_requirement</data>
+      <data key="d2">Scale for GPA in secondary and higher secondary education.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-58e93066468bea2257b7f6662b70cc62">
+      <data key="d0">entity</data>
+      <data key="d6">৫.00</data>
+      <data key="d7">gpa_requirement</data>
+      <data key="d2">Minimum GPA required in higher secondary examination.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-4399f730ae3a9d31ca6ae98d7bca609d">
+      <data key="d0">entity</data>
+      <data key="d6">২০২১</data>
+      <data key="d7">event</data>
+      <data key="d2">Year of secondary examination.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-ae6279b5e0ee7186d91ed9207c1345fa">
+      <data key="d0">entity</data>
+      <data key="d6">২০২৩</data>
+      <data key="d7">event</data>
+      <data key="d2">Year of higher secondary examination.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-a02c63c65a7a90df5415c85b76356563">
+      <data key="d0">entity</data>
+      <data key="d6">৫ই ফেব্রুয়ারী, ২০২৪</data>
+      <data key="d7">date</data>
+      <data key="d2">Date after which results must be received.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-6b75ce56b9ef31a35e8be2a0294fa75a">
+      <data key="d0">entity</data>
+      <data key="d6">২৪,০০০</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Number of applicants allowed to participate in the pre-selection test.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-3e709a6121b9044314891486f8f6fe16">
+      <data key="d0">entity</data>
+      <data key="d6">৪০০</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Number of applicants allowed to participate in the pre-selection test for GCE candidates.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d0">entity</data>
+      <data key="d6">১২</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Minimum number of candidates from indigenous communities allowed to participate in the main admission test.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-b888f83d45248f930655c8da107d57de">
+      <data key="d0">entity</data>
+      <data key="d6">১৩০৯</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Total number of seats available.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-5565d9afc2ff5c444e576eb548d2769a">
+      <data key="d0">entity</data>
+      <data key="d6">৫০০</data>
+      <data key="d7">fee</data>
+      <data key="d2">Initial application fee to be paid online.; প্রাথমিক আবেদন ফি</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f&lt;SEP&gt;chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-bed3bbcac585fd8fac14c9fa23943f9b">
+      <data key="d0">entity</data>
+      <data key="d6">৮০০</data>
+      <data key="d7">fee</data>
+      <data key="d2">Fee for group 'ক' for pre-selection test.; 'ক' গ্রুপের জন্য প্রাক-নির্বাচনী পরীক্ষার ফি</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f&lt;SEP&gt;chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-38ddbe530c91c3a2a6d0280c5b2a52c2">
+      <data key="d0">entity</data>
+      <data key="d6">১০০০</data>
+      <data key="d7">fee</data>
+      <data key="d2">'খ' গ্রুপের জন্য প্রাক-নির্বাচনী পরীক্ষার ফি; Fee for group 'খ' for pre-selection test.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f&lt;SEP&gt;chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d0">entity</data>
+      <data key="d6">৩</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Total reserved seats for indigenous candidates in engineering and urban planning departments.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-f93ac519a3330436c7c41316ff420b77">
+      <data key="d0">entity</data>
+      <data key="d6">১</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Total reserved seat for indigenous candidates in architecture department.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d0">entity</data>
+      <data key="d6">১০০</data>
+      <data key="d7">score</data>
+      <data key="d2">প্রাক-নির্বাচনী পরীক্ষার মোট নম্বর</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-64aef61fd453d4872dd1a770dc3a11a4">
+      <data key="d0">entity</data>
+      <data key="d6">২৫</data>
+      <data key="d7">percentage</data>
+      <data key="d2">প্রতি ভুল উত্তরের জন্য কাটা নম্বরের শতাংশ</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-55ff5e81a3092daf3a6d252d188f9bc3">
+      <data key="d0">entity</data>
+      <data key="d6">১৪ ডিসেম্বর ২০২৪</data>
+      <data key="d7">date</data>
+      <data key="d2">অনলাইনে আবেদনপত্র পূরণের শেষ তারিখ</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-2af7374960c39b7e7bd94a52b0a2bfba">
+      <data key="d0">entity</data>
+      <data key="d6">৩:০০</data>
+      <data key="d7">time</data>
+      <data key="d2">অনলাইনে আবেদনপত্র পূরণ বন্ধের সময়</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-18c8e0a62cbf38d4efdf08e3eb0f409b">
+      <data key="d0">entity</data>
+      <data key="d6">৫:৩০</data>
+      <data key="d7">time</data>
+      <data key="d2">অনলাইনে আবেদনের সার্ভার বন্ধের সময়</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-b15b6f90761eceeafffc098e79f67bcc">
+      <data key="d0">entity</data>
+      <data key="d6">১৫</data>
+      <data key="d7">minutes</data>
+      <data key="d2">প্রাক-নির্বাচনী পরীক্ষার শুরু হওয়ার ১৫ মিনিট পরে প্রবেশ নিষেধ</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d0">entity</data>
+      <data key="d6">৩০</data>
+      <data key="d7">minutes</data>
+      <data key="d2">মূল ভর্তি পরীক্ষার শুরু হওয়ার ৩০ মিনিট পরে প্রবেশ নিষেধ</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-bf6939d329bc791dae629df2f481b538">
+      <data key="d0">entity</data>
+      <data key="d6">Application Serial No.</data>
+      <data key="d7">identifier</data>
+      <data key="d2">A unique number provided after submitting the application.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-d84a29accd15684bce910f95b90221f9">
+      <data key="d0">entity</data>
+      <data key="d6">১৫ মিনিট</data>
+      <data key="d7">time</data>
+      <data key="d2">Time after which candidates are not allowed to enter the exam hall for the preliminary exam.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-36cdaf289bafec4b87e1e3f1c4db5f8b">
+      <data key="d0">entity</data>
+      <data key="d6">৩০ মিনিট</data>
+      <data key="d7">time</data>
+      <data key="d2">Time after which candidates are not allowed to enter the exam hall for the main admission test.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-60b70d93daf0d6b0aadb5e8d3280b6f6">
+      <data key="d0">entity</data>
+      <data key="d6">১০০ নম্বর</data>
+      <data key="d7">score</data>
+      <data key="d2">Total marks for the MCQ Type exam for groups 'ক' and 'খ'.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-1e1ed2022cdda01595a55b342c6c8425">
+      <data key="d0">entity</data>
+      <data key="d6">২৫%</data>
+      <data key="d7">percentage</data>
+      <data key="d2">Percentage deducted for each incorrect answer in the preliminary exam.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-57582f156839ef71b2fe66e60a752146">
+      <data key="d0">entity</data>
+      <data key="d6">মডিউল A</data>
+      <data key="d7">module</data>
+      <data key="d2">One of the modules in the main admission test.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-675d09134b6b95ba28b644a99c576927">
+      <data key="d0">entity</data>
+      <data key="d6">মডিউল B</data>
+      <data key="d7">module</data>
+      <data key="d2">Another module in the main admission test.</data>
+      <data key="d8">0.0</data>
+      <data key="d4">chunk-fd6c33805e81b79d1c591bc81e2fe09f</data>
+      <data key="d5">PASS</data>
+    </node>
+    <edge source="rel-ec1e4b36ff882ef484cdddbf45553d92" target="entity-b888f83d45248f930655c8da107d57de">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-ec1e4b36ff882ef484cdddbf45553d92" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-ec1e4b36ff882ef484cdddbf45553d92" target="entity-f93ac519a3330436c7c41316ff420b77">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-ec1e4b36ff882ef484cdddbf45553d92" target="entity-dae37fb732703a8e692a4193ee991a3d">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-132b76a34b10844d8023842592121120" target="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-6207caafcb45016039a39b0c970e031c" target="entity-5565d9afc2ff5c444e576eb548d2769a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-7ec59074d5be1f5f4d4af3d76a607ad3" target="entity-6b75ce56b9ef31a35e8be2a0294fa75a">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-de6ed781343c516fd2cca7310781065f" target="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-de6ed781343c516fd2cca7310781065f" target="entity-f93ac519a3330436c7c41316ff420b77">
+      <data key="d9">10</data>
+      <data key="d10">chunk-85f44a2e3f76df2a33e96c3080679ed1</data>
+    </edge>
+    <edge source="rel-7410131a1592567c256a98dfd388640c" target="entity-6e5e2f95ab3dfb511461c15809c57828">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-f057f8cc7f0ce269a5c1d2b5a2ab9d8e" target="entity-58e93066468bea2257b7f6662b70cc62">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-8003043871925188622a94d04a2511e1" target="entity-3e709a6121b9044314891486f8f6fe16">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-518fb29de7239e91b018174f71b4d628" target="entity-bed3bbcac585fd8fac14c9fa23943f9b">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-14075cd7f1160659cd8ed4121b8f635d" target="entity-38ddbe530c91c3a2a6d0280c5b2a52c2">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+    <edge source="rel-e3c107deadfe0681580ea3849e7af9c8" target="entity-b15b6f90761eceeafffc098e79f67bcc">
+      <data key="d9">7</data>
+      <data key="d10">unknown</data>
+    </edge>
+  </graph>
+</graphml>

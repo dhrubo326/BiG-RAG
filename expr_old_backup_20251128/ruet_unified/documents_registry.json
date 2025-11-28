@@ -1,0 +1,27 @@
+{
+  "doc-867a35200a92f74405059f7f4cf11bf8": {
+    "document_id": "doc-867a35200a92f74405059f7f4cf11bf8",
+    "filename": "RUET_Admission.md",
+    "title": "Rajshahi University of Engineering & Technology(RUET)",
+    "content_length": 8186,
+    "upload_date": "2025-11-26T17:59:20.371925",
+    "indexed_date": "2025-11-26T18:02:30.421409",
+    "last_modified": "2025-11-26T18:02:30.422793",
+    "status": "indexed",
+    "dataset": "ruet_unified",
+    "metadata": {
+      "category": "ruet",
+      "tags": [
+        "admission"
+      ]
+    },
+    "job_id": "job--560c1bb990a2abca6f016db5c375656c",
+    "stats": {
+      "chunks": 8,
+      "entities": 91,
+      "edges": 74,
+      "tokens": 0,
+      "relations": 74
+    }
+  }
+}

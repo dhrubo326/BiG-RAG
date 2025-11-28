@@ -189,7 +189,12 @@ async def process_document_with_unified_pipeline(
     features: PipelineFeatures
 ) -> Dict[str, Any]:
     """
-    Process document using unified pipeline with given features.
+    Process document using BiGRAG which handles full graph persistence.
+
+    CRITICAL: Uses BiGRAG.ainsert() instead of UnifiedPipeline directly because:
+    - BiGRAG.ainsert() handles extraction + graph building + storage
+    - UnifiedPipeline only extracts entities/relations (no persistence)
+    - Must persist to: GraphML, vector DBs, KV stores (7 files total)
 
     Args:
         dataset_name: Dataset name
@@ -200,41 +205,61 @@ async def process_document_with_unified_pipeline(
         features: Pipeline feature configuration
 
     Returns:
-        Processing result with entities, relations, validation report
+        Processing result dict
     """
+    from bigrag import BiGRAG
+    from bigrag.llm import gpt_4o_mini_complete
+    from bigrag.config import config
+
     try:
         logger.info(f"[UnifiedIndexing] Processing {document_id} with unified pipeline")
         logger.info(f"[UnifiedIndexing] Features: {_summarize_features(features)}")
 
-        # Initialize unified pipeline
-        pipeline = UnifiedPipeline(
-            features=features,
-            dataset_path=f"expr/{dataset_name}"
+        # Initialize BiGRAG with unified pipeline features
+        # This ensures BiGRAG.ainsert() uses UnifiedPipeline with our custom features
+        working_dir = f"expr/{dataset_name}"
+        rag = BiGRAG(
+            working_dir=working_dir,
+            llm_model_func=gpt_4o_mini_complete,
+            chunk_token_size=config.chunk_size,
+            chunk_overlap_token_size=config.chunk_overlap_size,
+            enable_llm_cache=config.enable_llm_cache,
+            addon_params={"language": config.default_language},
+            pipeline_features=features  # Custom features from endpoint
         )
 
-        # Add title and metadata to document metadata
+        # Prepare metadata
         doc_metadata = {
             "title": title,
             "document_id": document_id,
             **metadata
         }
 
-        # Process document
-        result = await pipeline.process_document(
-            content=content,
-            metadata=doc_metadata
-        )
+        # Insert document (handles: extraction + graph building + storage)
+        # This will:
+        # 1. Call UnifiedPipeline.process_document()
+        # 2. Remap chunk IDs to hash-based IDs
+        # 3. Call build_bipartite_graph_from_pipeline()
+        # 4. Store chunks to text_chunks KV store
+        # 5. Store entities to vdb_entities vector DB
+        # 6. Store relations to vdb_relations vector DB
+        # 7. Save GraphML file
+        await rag.ainsert([content], metadatas=[doc_metadata])
 
-        logger.info(f"[UnifiedIndexing] Processing complete:")
-        logger.info(f"  - Chunks: {len(result['chunks'])}")
-        logger.info(f"  - Entities: {len(result['entities'])}")
-        logger.info(f"  - Relations: {len(result['relations'])}")
-        logger.info(f"  - Validation: {result['validation'].get('status', 'UNKNOWN')}")
+        logger.info(f"[UnifiedIndexing] Document indexed successfully")
+        logger.info(f"  - Graph files updated in: {working_dir}")
+        logger.info(f"  - Knowledge graph ready for queries")
 
-        return result
+        return {
+            "success": True,
+            "message": "Document indexed successfully with full graph persistence",
+            "dataset": dataset_name,
+            "document_id": document_id,
+            "working_dir": working_dir
+        }
 
     except Exception as e:
-        logger.error(f"[UnifiedIndexing] Processing failed: {e}")
+        logger.error(f"[UnifiedIndexing] Indexing failed: {e}")
         import traceback
         traceback.print_exc()
         raise

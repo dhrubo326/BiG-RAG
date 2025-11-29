@@ -38,7 +38,8 @@ class ConstrainedLLMExtractor:
         extraction_mode: str = "semi_structured",
         enable_gleaning: bool = False,  # NEW: Enhanced Pipeline support
         max_gleaning_iterations: int = 2,  # NEW: Enhanced Pipeline support
-        hitl_store=None  # NEW (Phase 1 Step 6): HITL store for failed extractions
+        hitl_store=None,  # NEW (Phase 1 Step 6): HITL store for failed extractions
+        enable_numeric_validation: bool = True  # NEW: Allow disabling internal numeric validation
     ):
         """
         Initialize constrained extractor.
@@ -53,6 +54,9 @@ class ConstrainedLLMExtractor:
             enable_gleaning: NEW - Enable multi-pass gleaning for better recall (Phase 1 Step 3)
             max_gleaning_iterations: NEW - Number of gleaning passes (default: 2)
             hitl_store: NEW (Phase 1 Step 6) - FailedExtractionStore instance for HITL
+            enable_numeric_validation: NEW - Enable/disable internal numeric validation checks
+                - True: Validate that LLM extracted all numbers from source (default, strict)
+                - False: Skip numeric coverage validation (faster, may miss numbers)
         """
         self.client = AsyncOpenAI(api_key=api_key)
         self.model = model
@@ -60,6 +64,7 @@ class ConstrainedLLMExtractor:
         self.enable_gleaning = enable_gleaning  # NEW
         self.max_gleaning_iterations = max_gleaning_iterations  # NEW
         self.hitl_store = hitl_store  # NEW (Phase 1 Step 6)
+        self.enable_numeric_validation = enable_numeric_validation  # NEW: Store parameter
         self.normalizer = BanglaNumeralNormalizer()
 
     async def extract_from_paragraph(
@@ -178,15 +183,28 @@ class ConstrainedLLMExtractor:
                 print(f"[WARN] Gleaning pass {gleaning_pass + 1} failed: {e}")
                 continue  # Skip this gleaning pass
 
-            # Validate gleaned extraction with RELAXED thresholds
-            # (skip numeric coverage, focus on hallucination prevention)
-            glean_validation = self._validate_extraction(
-                source_text=paragraph_text,
-                source_numbers=source_numbers,
-                source_facts=source_facts,
-                extraction=glean_extraction,
-                is_gleaning=True  # ← CRITICAL: Use relaxed validation for incremental extraction
-            )
+            # Validate gleaned extraction (skip if disabled)
+            if self.enable_numeric_validation:
+                # Validate gleaned extraction with RELAXED thresholds
+                # (skip numeric coverage, focus on hallucination prevention)
+                glean_validation = self._validate_extraction(
+                    source_text=paragraph_text,
+                    source_numbers=source_numbers,
+                    source_facts=source_facts,
+                    extraction=glean_extraction,
+                    is_gleaning=True  # ← CRITICAL: Use relaxed validation for incremental extraction
+                )
+            else:
+                # Skip validation during gleaning
+                glean_validation = {
+                    'status': 'PASS',
+                    'numeric_coverage': 1.0,
+                    'hallucination_score': 0.0,
+                    'semantic_validity': 1.0,
+                    'skipped': True,
+                    'reason': 'Numeric validation disabled via enable_numeric_validation=False'
+                }
+                print(f"[GLEANING] Pass {gleaning_pass + 1}: Validation skipped (numeric validation disabled)")
 
             # SMART MERGE: Compare quality and merge (IDENTICAL to standard pipeline)
             if glean_validation['status'] in ['PASS', 'WARNING']:
@@ -198,13 +216,25 @@ class ConstrainedLLMExtractor:
             else:
                 print(f"[GLEANING] Pass {gleaning_pass + 1}: Validation FAILED (hallucination or nonsense), skipping")
 
-        # Final validation of merged result
-        final_validation = self._validate_extraction(
-            source_text=paragraph_text,
-            source_numbers=source_numbers,
-            source_facts=source_facts,
-            extraction=merged_extraction
-        )
+        # Final validation of merged result (skip if disabled)
+        if self.enable_numeric_validation:
+            final_validation = self._validate_extraction(
+                source_text=paragraph_text,
+                source_numbers=source_numbers,
+                source_facts=source_facts,
+                extraction=merged_extraction
+            )
+        else:
+            # Skip final validation
+            final_validation = {
+                'status': 'PASS',
+                'numeric_coverage': 1.0,
+                'hallucination_score': 0.0,
+                'semantic_validity': 1.0,
+                'skipped': True,
+                'reason': 'Numeric validation disabled via enable_numeric_validation=False'
+            }
+            print(f"[GLEANING] Final validation skipped (numeric validation disabled)")
 
         merged_extraction['validation'] = final_validation
         merged_extraction['metadata'] = {
@@ -272,13 +302,25 @@ class ConstrainedLLMExtractor:
                     return None
                 continue
 
-            # Validate extraction
-            validation_result = self._validate_extraction(
-                source_text=paragraph_text,
-                source_numbers=source_numbers,
-                source_facts=source_facts,
-                extraction=extraction
-            )
+            # Validate extraction (skip if disabled)
+            if self.enable_numeric_validation:
+                validation_result = self._validate_extraction(
+                    source_text=paragraph_text,
+                    source_numbers=source_numbers,
+                    source_facts=source_facts,
+                    extraction=extraction
+                )
+            else:
+                # Skip numeric validation - accept extraction without checking
+                validation_result = {
+                    'status': 'PASS',
+                    'numeric_coverage': 1.0,  # Assume complete (not validated)
+                    'hallucination_score': 0.0,  # Not checked
+                    'semantic_validity': 1.0,  # Not checked
+                    'skipped': True,
+                    'reason': 'Numeric validation disabled via enable_numeric_validation=False'
+                }
+                print(f"[INFO] Validation skipped (numeric validation disabled)")
 
             # Check if validation passed or warning (accept both)
             status = validation_result['status']

@@ -185,7 +185,8 @@ class EnhancedKGPipeline:
             extraction_mode=extraction_mode,
             enable_gleaning=False,  # Will be set dynamically per chunk
             max_gleaning_iterations=2,  # Standard pipeline default
-            hitl_store=self.hitl_store  # NEW (Phase 1 Step 6): Pass HITL store
+            hitl_store=self.hitl_store,  # NEW (Phase 1 Step 6): Pass HITL store
+            enable_numeric_validation=self.features.enable_numeric_validation if self.features else True  # NEW: Pass from features
         )
         self.batch_extractor = BatchConstrainedExtractor(self.paragraph_extractor)
 

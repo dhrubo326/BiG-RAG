@@ -221,6 +221,16 @@ class ProductionKGPipeline:
                         entity['metadata'] = {}
                     entity['metadata']['extraction_method'] = 'constrained_llm'
 
+                    # FIX: Map key_score to weight for entity linker compatibility
+                    # ConstrainedLLMExtractor returns entities with 'key_score' field,
+                    # but entity linker expects 'weight' field. This ensures paragraph
+                    # entities have same weight semantics as table entities.
+                    if 'key_score' in entity and 'weight' not in entity:
+                        entity['weight'] = entity['key_score']
+                    elif 'weight' not in entity:
+                        # Fallback: default weight if no key_score (should not happen)
+                        entity['weight'] = 50.0
+
                     # UNIFIED: Generate stable entity ID if not present (consistent with standard pipeline)
                     if 'entity_id' not in entity:
                         entity_id = compute_mdhash_id(entity['entity_name'], prefix=ENTITY_PREFIX)  # UNIFIED: Use name, not description

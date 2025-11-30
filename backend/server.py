@@ -83,7 +83,8 @@ api_logger = setup_logger(
     log_file="api.log",
     level=os.getenv('LOG_LEVEL', 'INFO'),
     json_format=os.getenv('LOG_JSON_FORMAT', 'false').lower() == 'true',
-    rotation='time',  # Daily rotation
+    rotation='size',  # Size-based rotation (avoids Windows file locking issue)
+    max_bytes=10 * 1024 * 1024,  # 10MB per file
     backup_count=7,
     console_output=True,
     error_separate=True

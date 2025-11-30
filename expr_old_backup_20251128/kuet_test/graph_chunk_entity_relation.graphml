@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d6" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d5" for="edge" attr.name="keywords" attr.type="string" />
+  <key id="d4" for="edge" attr.name="description" attr.type="string" />
+  <key id="d3" for="edge" attr.name="weight" attr.type="long" />
+  <key id="d2" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d1" for="node" attr.name="description" attr.type="string" />
+  <key id="d0" for="node" attr.name="entity_type" attr.type="string" />
+  <graph edgedefault="undirected">
+    <node id="&quot;ড. মোঃ রফিকুল ইসলাম&quot;">
+      <data key="d0">person</data>
+      <data key="d1">Chairman of the Admission Committee for 1st Year B.Sc. Engineering, BEURP and BArch courses</data>
+      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    </node>
+    <node id="&quot;১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং&quot;">
+      <data key="d0">category</data>
+      <data key="d1">First Year B.Sc. Engineering course</data>
+      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    </node>
+    <node id="&quot;বিইউআরপি&quot;">
+      <data key="d0">category</data>
+      <data key="d1">BEURP course</data>
+      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    </node>
+    <node id="&quot;বিআর্ক&quot;">
+      <data key="d0">category</data>
+      <data key="d1">BArch course</data>
+      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    </node>
+    <node id="&quot;ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং&quot;">
+      <data key="d0">category</data>
+      <data key="d1">Faculty of Electrical and Electronic Engineering</data>
+      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    </node>
+    <node id="&quot;খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়&quot;">
+      <data key="d0">category</data>
+      <data key="d1">Khulna University of Engineering and Technology</data>
+      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    </node>
+    <node id="&quot;REL-BFA5A544D46E2BC39E3946D5EEE6403A&quot;">
+      <data key="d0">category</data>
+      <data key="d1">ড. মোঃ রফিকুল ইসলাম is mentioned as a person.</data>
+      <data key="d2">UNKNOWN</data>
+    </node>
+    <node id="&quot;REL-45CA2C162DF6906CE0D109DD721DF82F&quot;">
+      <data key="d0">category</data>
+      <data key="d1">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং is mentioned as a course.</data>
+      <data key="d2">UNKNOWN</data>
+    </node>
+    <node id="&quot;REL-B1D83E9F3AF6B975063A84A369F6472F&quot;">
+      <data key="d0">category</data>
+      <data key="d1">বিইউআরপি is mentioned as a course.</data>
+      <data key="d2">UNKNOWN</data>
+    </node>
+    <node id="&quot;REL-3A6FB09CB7897B062342C22BDD99F0CC&quot;">
+      <data key="d0">category</data>
+      <data key="d1">বিআর্ক is mentioned as a course.</data>
+      <data key="d2">UNKNOWN</data>
+    </node>
+    <node id="&quot;REL-732C57851E0626352D5BC3B0695FECDD&quot;">
+      <data key="d0">category</data>
+      <data key="d1">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং is mentioned as a faculty.</data>
+      <data key="d2">UNKNOWN</data>
+    </node>
+    <node id="&quot;REL-523C46316338B139AD2AAD41863DE96D&quot;">
+      <data key="d0">category</data>
+      <data key="d1">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় is mentioned as a university.</data>
+      <data key="d2">UNKNOWN</data>
+    </node>
+    <node id="&quot;ENTITY-591F1622D226D5673FD89F386C76135B&quot;">
+      <data key="d2">UNKNOWN</data>
+      <data key="d1">UNKNOWN</data>
+      <data key="d0">category</data>
+    </node>
+    <node id="&quot;ENTITY-BA4230D70D84AE9EFC0B13193C9C5C30&quot;">
+      <data key="d2">UNKNOWN</data>
+      <data key="d1">UNKNOWN</data>
+      <data key="d0">category</data>
+    </node>
+    <node id="&quot;ENTITY-B7BC6FFF9DEF8A308F35ECC9C7A99D55&quot;">
+      <data key="d2">UNKNOWN</data>
+      <data key="d1">UNKNOWN</data>
+      <data key="d0">category</data>
+    </node>
+    <node id="&quot;ENTITY-C460D9A501FDC74DCB2F7B81917BC939&quot;">
+      <data key="d2">UNKNOWN</data>
+      <data key="d1">UNKNOWN</data>
+      <data key="d0">category</data>
+    </node>
+    <node id="&quot;ENTITY-CE89319EDF3CD16ABADAEA700EF6452D&quot;">
+      <data key="d2">UNKNOWN</data>
+      <data key="d1">UNKNOWN</data>
+      <data key="d0">category</data>
+    </node>
+    <node id="&quot;ENTITY-19662AA59ABA85531D225C6FA9992D51&quot;">
+      <data key="d2">UNKNOWN</data>
+      <data key="d1">UNKNOWN</data>
+      <data key="d0">category</data>
+    </node>
+    <edge source="&quot;REL-BFA5A544D46E2BC39E3946D5EEE6403A&quot;" target="&quot;ENTITY-591F1622D226D5673FD89F386C76135B&quot;">
+      <data key="d3">5</data>
+      <data key="d4">ড. মোঃ রফিকুল ইসলাম is mentioned as a person.</data>
+      <data key="d5">ড. মোঃ রফিকুল ইসলাম is mentioned as a person.</data>
+      <data key="d6">UNKNOWN</data>
+    </edge>
+    <edge source="&quot;REL-45CA2C162DF6906CE0D109DD721DF82F&quot;" target="&quot;ENTITY-BA4230D70D84AE9EFC0B13193C9C5C30&quot;">
+      <data key="d3">5</data>
+      <data key="d4">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং is mentioned as a course.</data>
+      <data key="d5">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং is mentioned as a course.</data>
+      <data key="d6">UNKNOWN</data>
+    </edge>
+    <edge source="&quot;REL-B1D83E9F3AF6B975063A84A369F6472F&quot;" target="&quot;ENTITY-B7BC6FFF9DEF8A308F35ECC9C7A99D55&quot;">
+      <data key="d3">5</data>
+      <data key="d4">বিইউআরপি is mentioned as a course.</data>
+      <data key="d5">বিইউআরপি is mentioned as a course.</data>
+      <data key="d6">UNKNOWN</data>
+    </edge>
+    <edge source="&quot;REL-3A6FB09CB7897B062342C22BDD99F0CC&quot;" target="&quot;ENTITY-C460D9A501FDC74DCB2F7B81917BC939&quot;">
+      <data key="d3">5</data>
+      <data key="d4">বিআর্ক is mentioned as a course.</data>
+      <data key="d5">বিআর্ক is mentioned as a course.</data>
+      <data key="d6">UNKNOWN</data>
+    </edge>
+    <edge source="&quot;REL-732C57851E0626352D5BC3B0695FECDD&quot;" target="&quot;ENTITY-CE89319EDF3CD16ABADAEA700EF6452D&quot;">
+      <data key="d3">5</data>
+      <data key="d4">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং is mentioned as a faculty.</data>
+      <data key="d5">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং is mentioned as a faculty.</data>
+      <data key="d6">UNKNOWN</data>
+    </edge>
+    <edge source="&quot;REL-523C46316338B139AD2AAD41863DE96D&quot;" target="&quot;ENTITY-19662AA59ABA85531D225C6FA9992D51&quot;">
+      <data key="d3">5</data>
+      <data key="d4">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় is mentioned as a university.</data>
+      <data key="d5">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় is mentioned as a university.</data>
+      <data key="d6">UNKNOWN</data>
+    </edge>
+  </graph>
+</graphml>

@@ -1,0 +1,22 @@
+{
+  "doc-4029733f693051f6cff7dbe97096bac5": {
+    "document_id": "doc-4029733f693051f6cff7dbe97096bac5",
+    "filename": "KUET_Admission_info.md",
+    "title": "KUET admission info",
+    "content_length": 7339,
+    "upload_date": "2025-11-30T11:07:41.602933",
+    "indexed_date": null,
+    "last_modified": "2025-11-30T11:07:41.602937",
+    "status": "pending",
+    "dataset": "kuet_test",
+    "metadata": {
+      "category": "education",
+      "tags": [
+        "KUET",
+        "admission"
+      ]
+    },
+    "job_id": "job--9fcc60aef857043ddcf326d3c16076df",
+    "stats": {}
+  }
+}

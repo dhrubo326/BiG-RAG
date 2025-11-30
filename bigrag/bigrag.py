@@ -1536,6 +1536,45 @@ class BiGRAG:
         merged_entities = await self.merger.merge(validated['entities'])
         logger.info(f"  → Merged to {len(merged_entities)} unique entities")
 
+        # Step 5.5: Remap entity IDs in relations (CRITICAL for merge correctness)
+        # When entities are merged, old entity IDs become invalid.
+        # We must remap all entity references in relations to use primary IDs.
+        logger.info(f"[5.5/9] Remapping entity IDs in relations after merge...")
+        entity_id_mapping = {}
+
+        # Build mapping: old IDs → primary ID
+        for merged in merged_entities:
+            primary_id = merged.get('entity_id')
+            if not primary_id:
+                continue
+
+            # Map primary ID to itself
+            entity_id_mapping[primary_id] = primary_id
+
+            # Map all old IDs that were merged into this entity
+            for old_id in merged.get('entity_ids_merged', []):
+                entity_id_mapping[old_id] = primary_id
+
+        # Remap linked_entities in all relations
+        remapped_count = 0
+        for relation in validated['relations']:
+            old_links = relation.get('metadata', {}).get('linked_entities', [])
+            new_links = []
+
+            for old_id in old_links:
+                # Replace old ID with primary ID
+                primary_id = entity_id_mapping.get(old_id, old_id)
+                new_links.append(primary_id)
+                if primary_id != old_id:
+                    remapped_count += 1
+
+            # Update relation metadata with remapped IDs
+            if 'metadata' not in relation:
+                relation['metadata'] = {}
+            relation['metadata']['linked_entities'] = new_links
+
+        logger.info(f"  → Remapped {remapped_count} entity ID references in {len(validated['relations'])} relations")
+
         # Step 6: Link orphan entities
         logger.info(f"[6/7] Linking orphan entities...")
         linked_entities, synthetic_relations = await self.orphan_linker.link(
@@ -1545,16 +1584,64 @@ class BiGRAG:
         all_relations = validated['relations'] + synthetic_relations
         logger.info(f"  → Created {len(synthetic_relations)} synthetic relations")
 
-        # Step 7: Build graph using existing BiGRAG storage methods
-        logger.info(f"[7/7] Building and persisting graph...")
+        # Step 6.5: Post-merge entity-relation linking (CRITICAL - creates linked_entities)
+        logger.info(f"[6.5/9] Linking entities to relations...")
+        entities_linked = 0
+        for relation in all_relations:
+            relation_content = relation.get('content', '')
+            linked_entity_ids = []
 
-        # CRITICAL: Normalize source_id field for compatibility with ainsert_custom_kg
-        # The merger produces 'source_ids' (plural list), but ainsert_custom_kg expects 'source_id' (singular string)
-        # This matches the same normalization done in _process_document_with_enhanced_pipeline (line 1035)
+            # Link entities mentioned in relation content
+            for entity in linked_entities:
+                entity_name = entity.get('entity_name', '')
+                # Simple substring match (works for both English and Bangla)
+                if entity_name and entity_name in relation_content:
+                    linked_entity_ids.append(entity.get('entity_id'))
+                    entities_linked += 1
+
+            # Update relation metadata with linked entities
+            if 'metadata' not in relation:
+                relation['metadata'] = {}
+            relation['metadata']['linked_entities'] = linked_entity_ids
+
+        logger.info(f"  → Linked {entities_linked} entity references across {len(all_relations)} relations")
+
+        # Step 7: Add hyper_relation to entities (bidirectional linking)
+        logger.info(f"[7/9] Adding hyper_relation to entities...")
+        entity_lookup = {e['entity_id']: e for e in linked_entities if e.get('entity_id')}
+        hyper_relation_added = 0
+
+        for relation in all_relations:
+            relation_id = relation.get('relation_id')
+            if not relation_id:
+                continue
+
+            # Add hyper_relation to each linked entity
+            for entity_id in relation.get('metadata', {}).get('linked_entities', []):
+                if entity_id in entity_lookup:
+                    entity_lookup[entity_id]['hyper_relation'] = relation_id
+                    hyper_relation_added += 1
+
+        logger.info(f"  → Added hyper_relation to {hyper_relation_added} entities")
+
+        # Check for remaining orphans
+        remaining_orphans = [e for e in linked_entities if not e.get('hyper_relation')]
+        if remaining_orphans:
+            logger.warning(f"  → {len(remaining_orphans)} orphan entities remain (no hyper_relation)")
+        else:
+            logger.info(f"  → All entities successfully linked!")
+
+        # Step 8: Build bipartite graph using BipartiteGraphBuilder (matches enhanced pipeline)
+        logger.info(f"[8/9] Building bipartite graph with BipartiteGraphBuilder...")
+
+        # Import the builder function
+        from bigrag.builders.bipartite_graph_builder import build_bipartite_graph_from_pipeline
         from bigrag.constants import GRAPH_FIELD_SEP
 
+        # CRITICAL: Normalize source_id field for BipartiteGraphBuilder
+        # The merger produces 'source_ids' (plural list), but BipartiteGraphBuilder expects 'source_id' (singular string)
         for entity in linked_entities:
-            # CRITICAL: Handle both source_id (BasicMerger) and source_ids (FuzzyMerger) formats
+            # Handle both source_id (BasicMerger) and source_ids (FuzzyMerger) formats
             if 'source_id' in entity and isinstance(entity.get('source_id'), list):
                 # CASE 1: BasicMerger produces source_id as list - join it
                 entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_id']) if entity['source_id'] else 'unknown'
@@ -1566,7 +1653,7 @@ class BiGRAG:
                 entity['source_id'] = 'unknown'
 
         for relation in all_relations:
-            # CRITICAL: Handle both source_id (list) and source_ids (list) formats
+            # Handle both source_id (list) and source_ids (list) formats
             if 'source_id' in relation and isinstance(relation.get('source_id'), list):
                 # CASE 1: source_id is already a list - join it
                 relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_id']) if relation['source_id'] else 'unknown'
@@ -1577,34 +1664,78 @@ class BiGRAG:
                 # CASE 3: No source information
                 relation['source_id'] = 'unknown'
 
-        # Use the existing ainsert_custom_kg method to store everything
-        custom_kg = {
-            'chunks': [
-                {
-                    'content': chunk['content'],
-                    'source_id': chunk['chunk_id'],
-                    'full_doc_id': chunk.get('metadata', {}).get('title', ''),
-                    'doc_title': chunk.get('metadata', {}).get('title', ''),
-                    'doc_metadata': chunk.get('metadata', {})
-                }
-                for chunk in chunks
-            ],
+        # Prepare pipeline result format for BipartiteGraphBuilder
+        pipeline_result = {
             'entities': linked_entities,
-            'relations': all_relations
+            'relations': all_relations,
+            'chunks': validated.get('chunks', [])  # Include chunks from validation step
         }
 
-        await self.ainsert_custom_kg(custom_kg)
+        # Build bipartite graph (creates hash-based node IDs and proper edges)
+        try:
+            graph_stats = await build_bipartite_graph_from_pipeline(
+                pipeline_result=pipeline_result,
+                knowledge_graph_inst=self.chunk_entity_relation_graph,
+                vdb_entities=self.vdb_entities,
+                vdb_relations=self.vdb_relations
+            )
 
-        logger.info(f"  → Graph built successfully!")
+            logger.info(f"  → Graph nodes: {graph_stats['entity_nodes']} entities + {graph_stats['relation_nodes']} relations")
+            logger.info(f"  → Graph edges: {graph_stats['bipartite_edges']} relation→entity connections")
+        except Exception as e:
+            error_msg = f"Graph building failed: {e}"
+            logger.error(error_msg)
+            import traceback
+            logger.error(f"Traceback:\n{traceback.format_exc()}")
+            raise RuntimeError(error_msg) from e
 
-        # Compute statistics
+        # Step 9: Store chunks to KV storage with hash-based IDs (matches enhanced pipeline)
+        logger.info(f"[9/9] Storing chunks with hash-based IDs...")
+
+        from bigrag.utils import compute_mdhash_id
+
+        bigrag_chunks = {}
+        for chunk in chunks:
+            # Generate hash-based chunk ID (consistent with BipartiteGraphBuilder)
+            chunk_id = compute_mdhash_id(chunk['content'].strip(), prefix="chunk-")
+            bigrag_chunks[chunk_id] = {
+                "content": chunk['content'],
+                "tokens": chunk.get('tokens', 0),
+                "chunk_order_index": chunk.get('chunk_order_index', 0),
+                "full_doc_id": doc_id,
+                "doc_title": metadata.get("title", ""),
+                "doc_metadata": metadata,
+            }
+
+        await self.text_chunks.upsert(bigrag_chunks)
+        logger.info(f"  → Stored {len(bigrag_chunks)} chunks to KV storage")
+
+        # Index chunks to vdb_chunks for Path C retrieval
+        if self.vdb_chunks is not None:
+            doc_title = metadata.get("title", "")
+            chunks_for_vdb = {
+                chunk_id: {
+                    "content": chunk_data["content"],
+                    "title": doc_title
+                }
+                for chunk_id, chunk_data in bigrag_chunks.items()
+            }
+            await self.vdb_chunks.upsert(chunks_for_vdb)
+            logger.info(f"  → Indexed {len(chunks_for_vdb)} chunks to vdb_chunks for Path C retrieval")
+
+        logger.info(f"  → Graph and chunks stored successfully!")
+
+        # Compute statistics (includes graph stats from BipartiteGraphBuilder)
         statistics = {
             'total_chunks': len(chunks),
             'total_entities': len(linked_entities),
             'total_relations': len(all_relations),
             'synthetic_relations': len(synthetic_relations),
             'orphan_entities': len([e for e in linked_entities if not e.get('hyper_relation')]),
-            'validation_status': validated['summary']['status']
+            'validation_status': validated['summary']['status'],
+            'graph_entity_nodes': graph_stats.get('entity_nodes', 0),
+            'graph_relation_nodes': graph_stats.get('relation_nodes', 0),
+            'graph_bipartite_edges': graph_stats.get('bipartite_edges', 0)
         }
 
         return {

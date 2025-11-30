@@ -37,15 +37,38 @@ class GleaningExtractor(ExtractorInterface):
             chunk_entities = []
             chunk_relations = []
 
-            # Add source_id to each entity
+            # Add source_id AND entity_id to each entity
             for entity in extraction.get('entities', []):
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import ENTITY_PREFIX
+
                 entity['source_id'] = chunk_id
+
+                # CRITICAL: Generate entity_id using hash of entity_name (required for BipartiteGraphBuilder)
+                if 'entity_id' not in entity:
+                    entity_id = compute_mdhash_id(entity.get('entity_name', ''), prefix=ENTITY_PREFIX)
+                    entity['entity_id'] = entity_id
+
                 all_entities.append(entity)
                 chunk_entities.append(entity)
 
-            # Add source_id to each relation
+            # Add source_id, relation_id, and initialize metadata for each relation
             for relation in extraction.get('relations', []):
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import RELATION_PREFIX
+
                 relation['source_id'] = chunk_id
+
+                # CRITICAL: Generate relation_id (required for hyper_relation linking)
+                if 'relation_id' not in relation:
+                    relation_id = compute_mdhash_id(relation.get('content', '').strip(), prefix=RELATION_PREFIX)
+                    relation['relation_id'] = relation_id
+
+                # CRITICAL: Initialize linked_entities (will be populated in post-merge linking)
+                if 'metadata' not in relation:
+                    relation['metadata'] = {}
+                relation['metadata']['linked_entities'] = []
+
                 all_relations.append(relation)
                 chunk_relations.append(relation)
 

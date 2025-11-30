@@ -38,12 +38,32 @@ class HybridExtractor(ExtractorInterface):
             chunk_table_relations = []
 
             try:
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import RELATION_PREFIX
+
                 result = self.table_extractor.extract_facts_from_table(
                     chunk.get("structured_data", {}),
                     chunk_id
                 )
                 chunk_table_entities = result.get("entities", [])
                 chunk_table_relations = result.get("relations", [])
+
+                # CRITICAL: Add entity_id to table entities (required for BipartiteGraphBuilder)
+                from bigrag.constants import ENTITY_PREFIX
+                for entity in chunk_table_entities:
+                    if 'entity_id' not in entity:
+                        entity_id = compute_mdhash_id(entity.get('entity_name', ''), prefix=ENTITY_PREFIX)
+                        entity['entity_id'] = entity_id
+
+                # CRITICAL: Add relation_id and linked_entities to table relations
+                for relation in chunk_table_relations:
+                    if 'relation_id' not in relation:
+                        relation_id = compute_mdhash_id(relation.get('content', '').strip(), prefix=RELATION_PREFIX)
+                        relation['relation_id'] = relation_id
+                    if 'metadata' not in relation:
+                        relation['metadata'] = {}
+                    relation['metadata']['linked_entities'] = []
+
                 table_entities.extend(chunk_table_entities)
                 table_relations.extend(chunk_table_relations)
             except:
@@ -69,15 +89,38 @@ class HybridExtractor(ExtractorInterface):
             chunk_para_entities = []
             chunk_para_relations = []
 
-            # Add source_id to each entity
+            # Add source_id AND entity_id to each entity
             for entity in extraction.get('entities', []):
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import ENTITY_PREFIX
+
                 entity['source_id'] = chunk_id
+
+                # CRITICAL: Generate entity_id using hash of entity_name (required for BipartiteGraphBuilder)
+                if 'entity_id' not in entity:
+                    entity_id = compute_mdhash_id(entity.get('entity_name', ''), prefix=ENTITY_PREFIX)
+                    entity['entity_id'] = entity_id
+
                 para_entities.append(entity)
                 chunk_para_entities.append(entity)
 
-            # Add source_id to each relation
+            # Add source_id, relation_id, and initialize metadata for each relation
             for relation in extraction.get('relations', []):
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import RELATION_PREFIX
+
                 relation['source_id'] = chunk_id
+
+                # CRITICAL: Generate relation_id (required for hyper_relation linking)
+                if 'relation_id' not in relation:
+                    relation_id = compute_mdhash_id(relation.get('content', '').strip(), prefix=RELATION_PREFIX)
+                    relation['relation_id'] = relation_id
+
+                # CRITICAL: Initialize linked_entities (will be populated in post-merge linking)
+                if 'metadata' not in relation:
+                    relation['metadata'] = {}
+                relation['metadata']['linked_entities'] = []
+
                 para_relations.append(relation)
                 chunk_para_relations.append(relation)
 

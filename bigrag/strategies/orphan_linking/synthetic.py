@@ -119,6 +119,7 @@ class SyntheticOrphanLinker(OrphanLinkerInterface):
                             'weight': 7.0,
                             'source_id': orphan.get('source_id', 'unknown'),
                             'relation_id': synthetic_relation_id,
+                            'keywords': f"{orphan_name} {match_name}",  # CRITICAL: Required for ainsert_custom_kg
                             'metadata': {
                                 'extraction_method': 'synthetic_orphan_linking',
                                 'linked_entities': [orphan_id],

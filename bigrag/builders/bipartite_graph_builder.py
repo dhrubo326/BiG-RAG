@@ -165,10 +165,13 @@ class BipartiteGraphBuilder:
 
         # Step 1: Create graph nodes (sequential for data consistency)
         for relation in relations:
-            # Generate relation ID (hash of content for uniqueness)
-            # UNIFIED: Use RELATION_PREFIX constant (rel-) for compatibility with standard pipeline
-            # FIX: Use .strip() for consistent relation ID generation (matches retrieval logic)
-            relation_id = compute_mdhash_id(relation['content'].strip(), prefix=RELATION_PREFIX)
+            # CRITICAL: Use existing relation_id from extractor (not regenerate!)
+            # Extractors generate relation_id which is used in hyper_relation linking
+            # Regenerating would create orphan hyper_relation references
+            relation_id = relation.get('relation_id')
+            if not relation_id:
+                # Fallback: Generate if not present (backward compatibility)
+                relation_id = compute_mdhash_id(relation['content'].strip(), prefix=RELATION_PREFIX)
 
             # Create node data (compatible with BiG-RAG storage format)
             node_data = {
@@ -184,12 +187,16 @@ class BipartiteGraphBuilder:
             await graph.upsert_node(relation_id, node_data=node_data)
 
         # Step 2: Batch collect vector data (graphr1 pattern)
-        vdb_batch_data = {
-            compute_mdhash_id(rel['content'].strip(), prefix=RELATION_PREFIX): {
+        # CRITICAL: Use existing relation_id (not regenerate!)
+        vdb_batch_data = {}
+        for rel in relations:
+            relation_id = rel.get('relation_id')
+            if not relation_id:
+                # Fallback: Generate if not present (backward compatibility)
+                relation_id = compute_mdhash_id(rel['content'].strip(), prefix=RELATION_PREFIX)
+            vdb_batch_data[relation_id] = {
                 'content': rel['content']
             }
-            for rel in relations
-        }
 
         # Step 3: Single batch insert to vector DB (huge performance gain)
         if vdb_batch_data:
@@ -297,9 +304,12 @@ class BipartiteGraphBuilder:
         orphan_count = 0
 
         for relation in relations:
-            # UNIFIED: Use RELATION_PREFIX constant (rel-) for compatibility with standard pipeline
-            # FIX: Use .strip() for consistent relation ID generation (matches line 167)
-            relation_id = compute_mdhash_id(relation['content'].strip(), prefix=RELATION_PREFIX)
+            # CRITICAL: Use existing relation_id from extractor (not regenerate!)
+            # This MUST match the relation_id used in hyper_relation field
+            relation_id = relation.get('relation_id')
+            if not relation_id:
+                # Fallback: Generate if not present (backward compatibility)
+                relation_id = compute_mdhash_id(relation['content'].strip(), prefix=RELATION_PREFIX)
 
             # Option B3: Extract linked entity IDs from metadata (now stores IDs, not names)
             linked_entity_ids = relation.get('metadata', {}).get('linked_entities', [])

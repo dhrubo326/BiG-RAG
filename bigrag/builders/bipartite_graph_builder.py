@@ -235,9 +235,11 @@ class BipartiteGraphBuilder:
             entity_id = entity.get('entity_id')
             entity_name = entity['entity_name']
 
-            # Fallback: Use normalized name if no entity_id (backward compatibility)
+            # Fallback: Generate hash-based ID if missing (matches enhanced pipeline approach)
             if not entity_id:
-                entity_id = f'"{entity_name.upper()}"'
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import ENTITY_PREFIX
+                entity_id = compute_mdhash_id(entity_name, prefix=ENTITY_PREFIX)
 
             # Create node data (compatible with BiG-RAG storage format)
             # Note: After entity merging, source_id may be a list or missing
@@ -265,9 +267,11 @@ class BipartiteGraphBuilder:
             entity_id = entity.get('entity_id')
             entity_name = entity['entity_name']
 
-            # Fallback: Use normalized name if no entity_id (backward compatibility)
+            # Fallback: Generate hash-based ID if missing (matches enhanced pipeline approach)
             if not entity_id:
-                entity_id = f'"{entity_name.upper()}"'
+                from bigrag.utils import compute_mdhash_id
+                from bigrag.constants import ENTITY_PREFIX
+                entity_id = compute_mdhash_id(entity_name, prefix=ENTITY_PREFIX)
 
             vdb_batch_data[entity_id] = {
                 'content': entity['description'],

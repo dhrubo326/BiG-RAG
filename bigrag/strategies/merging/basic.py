@@ -18,5 +18,10 @@ class BasicMerger(MergerInterface):
                 for sid in (e.get('source_id') if isinstance(e.get('source_id'), list) else [e.get('source_id')])
                 if sid
             ))
+
+            # CRITICAL: Collect all entity_ids that were merged (required for entity ID remapping in Step 5.5)
+            # Without this, relations may reference old entity_ids that no longer exist after merge
+            m['entity_ids_merged'] = [e.get('entity_id') for e in group if e.get('entity_id')]
+
             merged.append(m)
         return merged

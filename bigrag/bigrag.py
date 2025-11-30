@@ -1694,6 +1694,11 @@ class BiGRAG:
 
         from bigrag.utils import compute_mdhash_id
 
+        # Generate document ID from content hash or use from metadata
+        doc_id = metadata.get('document_id') if metadata else None
+        if not doc_id:
+            doc_id = compute_mdhash_id(text.strip(), prefix="doc-")
+
         bigrag_chunks = {}
         for chunk in chunks:
             # Generate hash-based chunk ID (consistent with BipartiteGraphBuilder)
@@ -1703,8 +1708,8 @@ class BiGRAG:
                 "tokens": chunk.get('tokens', 0),
                 "chunk_order_index": chunk.get('chunk_order_index', 0),
                 "full_doc_id": doc_id,
-                "doc_title": metadata.get("title", ""),
-                "doc_metadata": metadata,
+                "doc_title": metadata.get("title", "") if metadata else "",
+                "doc_metadata": metadata if metadata else {},
             }
 
         await self.text_chunks.upsert(bigrag_chunks)
@@ -1712,7 +1717,7 @@ class BiGRAG:
 
         # Index chunks to vdb_chunks for Path C retrieval
         if self.vdb_chunks is not None:
-            doc_title = metadata.get("title", "")
+            doc_title = metadata.get("title", "") if metadata else ""
             chunks_for_vdb = {
                 chunk_id: {
                     "content": chunk_data["content"],
@@ -1724,6 +1729,10 @@ class BiGRAG:
             logger.info(f"  → Indexed {len(chunks_for_vdb)} chunks to vdb_chunks for Path C retrieval")
 
         logger.info(f"  → Graph and chunks stored successfully!")
+
+        # CRITICAL: Persist all storage to disk (GraphML + VDBs + KV stores)
+        await self._insert_done()
+        logger.info(f"  → Persisted graph and storage to disk")
 
         # Compute statistics (includes graph stats from BipartiteGraphBuilder)
         statistics = {

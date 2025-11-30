@@ -38,21 +38,46 @@ class SemanticChunker(ChunkerInterface):
         # Detect tables if extractor available
         if self.table_extractor:
             try:
-                table_result = await self.table_extractor.extract_tables_from_document(text)
+                # FIXED: extract_tables_from_document returns List[Dict], not Dict!
+                # This was causing "'list' object has no attribute 'get'" error
+                tables = await self.table_extractor.extract_tables_from_document(
+                    text,
+                    document_metadata=metadata
+                )
 
-                # Add table chunks
-                for table in table_result.get('tables', []):
+                # Import utilities from TableAwareChunker (don't reinvent the wheel)
+                from bigrag.preprocessors.smart_chunker import TableAwareChunker
+                from bigrag.preprocessors.table_extractor import BilingualDetector
+                import re
+
+                # Add table chunks (using same approach as TableAwareChunker)
+                for table in tables:
+                    # Convert table to natural language (CRITICAL for embedding quality)
+                    nl_content = TableAwareChunker._table_to_natural_language(table)
+
+                    # Detect language
+                    lang_info = BilingualDetector.detect_languages(nl_content)
+
                     chunk_id = hashlib.md5(str(table).encode()).hexdigest()[:16]
                     chunks.append({
                         'chunk_id': f'chunk-{chunk_id}',
                         'type': 'table',
-                        'content': table['markdown'],
-                        'structured_data': table.get('data', {}),
-                        'metadata': metadata or {}
+                        'content': nl_content,  # Natural language, not markdown
+                        'structured_data': table,  # Full table dict
+                        'metadata': {
+                            **(metadata or {}),
+                            'table_id': table.get('table_id'),
+                            'table_type': table.get('table_type'),
+                            'extraction_confidence': table.get('metadata', {}).get('confidence'),
+                            'validation_status': table.get('metadata', {}).get('validation_status'),
+                            'language_info': lang_info
+                        }
                     })
 
-                # Get text without tables
-                text = table_result.get('text_without_tables', text)
+                # Remove table markdown from text for paragraph chunking
+                table_pattern = r'\|[^\n]+\|(?:\n\|[^\n]+\|)+'
+                text = re.sub(table_pattern, '', text)
+
             except Exception as e:
                 print(f"[WARNING] Table extraction failed: {e}. Falling back to paragraph chunking.")
 

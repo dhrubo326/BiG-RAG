@@ -38,37 +38,35 @@ class HybridExtractor(ExtractorInterface):
             chunk_table_entities = []
             chunk_table_relations = []
 
-            try:
-                from bigrag.utils import compute_mdhash_id
-                from bigrag.constants import RELATION_PREFIX
+            # CRITICAL: No try/except - fail-fast if table extraction fails
+            # User explicitly requested: "I do not want table extraction silently fails"
+            from bigrag.utils import compute_mdhash_id
+            from bigrag.constants import RELATION_PREFIX, ENTITY_PREFIX
 
-                result = self.table_extractor.extract_facts_from_table(
-                    chunk.get("structured_data", {}),
-                    chunk_id
-                )
-                chunk_table_entities = result.get("entities", [])
-                chunk_table_relations = result.get("relations", [])
+            result = self.table_extractor.extract_facts_from_table(
+                chunk.get("structured_data", {}),
+                chunk_id
+            )
+            chunk_table_entities = result.get("entities", [])
+            chunk_table_relations = result.get("relations", [])
 
-                # CRITICAL: Add entity_id to table entities (required for BipartiteGraphBuilder)
-                from bigrag.constants import ENTITY_PREFIX
-                for entity in chunk_table_entities:
-                    if 'entity_id' not in entity:
-                        entity_id = compute_mdhash_id(entity.get('entity_name', ''), prefix=ENTITY_PREFIX)
-                        entity['entity_id'] = entity_id
+            # CRITICAL: Add entity_id to table entities (required for BipartiteGraphBuilder)
+            for entity in chunk_table_entities:
+                if 'entity_id' not in entity:
+                    entity_id = compute_mdhash_id(entity.get('entity_name', ''), prefix=ENTITY_PREFIX)
+                    entity['entity_id'] = entity_id
 
-                # CRITICAL: Add relation_id and linked_entities to table relations
-                for relation in chunk_table_relations:
-                    if 'relation_id' not in relation:
-                        relation_id = compute_mdhash_id(relation.get('content', '').strip(), prefix=RELATION_PREFIX)
-                        relation['relation_id'] = relation_id
-                    if 'metadata' not in relation:
-                        relation['metadata'] = {}
-                    relation['metadata']['linked_entities'] = []
+            # CRITICAL: Add relation_id and linked_entities to table relations
+            for relation in chunk_table_relations:
+                if 'relation_id' not in relation:
+                    relation_id = compute_mdhash_id(relation.get('content', '').strip(), prefix=RELATION_PREFIX)
+                    relation['relation_id'] = relation_id
+                if 'metadata' not in relation:
+                    relation['metadata'] = {}
+                relation['metadata']['linked_entities'] = []
 
-                table_entities.extend(chunk_table_entities)
-                table_relations.extend(chunk_table_relations)
-            except:
-                pass
+            table_entities.extend(chunk_table_entities)
+            table_relations.extend(chunk_table_relations)
 
             # Build chunk with extractions for numeric validation
             chunks_with_extractions.append({

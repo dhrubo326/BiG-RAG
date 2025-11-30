@@ -78,14 +78,16 @@ class StrategyFactory:
             return SemanticChunker(
                 api_key=config.openai_api_key,
                 chunk_size=config.chunk_size,
-                overlap=config.chunk_overlap
+                overlap=config.chunk_overlap,
+                enable_table_detection=config.enable_table_detection
             )
         elif config.chunker == "hybrid":
             from bigrag.strategies.chunking.hybrid import HybridChunker
             return HybridChunker(
                 api_key=config.openai_api_key,
                 chunk_size=config.chunk_size,
-                overlap=config.chunk_overlap
+                overlap=config.chunk_overlap,
+                enable_table_detection=config.enable_table_detection
             )
         else:
             raise ValueError(f"Unknown chunker: {config.chunker}. Register custom chunkers using StrategyRegistry.")

@@ -655,6 +655,8 @@ class IndexingConfig:
     # Chunking
     chunk_size: int = 1200
     chunk_overlap: int = 100
+    enable_table_detection: bool = True
+    """Enable GPT-4 table extraction (used with semantic/hybrid chunking)"""
 
     # Extraction
     gleaning_iterations: int = 2
@@ -678,6 +680,9 @@ class IndexingConfig:
 
     def __post_init__(self):
         """Validate configuration."""
+        import logging
+        logger = logging.getLogger(__name__)
+
         # Validate strategy choices
         valid_chunkers = ['token', 'semantic', 'hybrid']
         if self.chunker not in valid_chunkers:
@@ -704,9 +709,30 @@ class IndexingConfig:
         if self.orphan_linker not in valid_orphan_linkers:
             raise ValueError(f"orphan_linker must be one of {valid_orphan_linkers}")
 
+        # NEW: Validate table detection configuration (FAIL-FAST - no silent fallback)
+        if self.enable_table_detection and self.chunker in ['semantic', 'hybrid']:
+            if not self.openai_api_key:
+                raise ValueError(
+                    f"[IndexingConfig] chunker='{self.chunker}' with enable_table_detection=True "
+                    "requires openai_api_key. Either:\n"
+                    "  1. Provide openai_api_key parameter, OR\n"
+                    "  2. Set enable_table_detection=False to disable table extraction"
+                )
+
     @classmethod
     def preset_fast(cls, **kwargs) -> 'IndexingConfig':
-        """Fast preset: token chunking, strict extraction, basic merging."""
+        """
+        Fast preset: token chunking, strict extraction, basic merging.
+
+        Chunking: Token-based (no table detection)
+        Extraction: Strict schema (single-pass, no gleaning)
+        Validation: None
+        Merging: Basic (exact match)
+        HITL: Disabled
+        Orphan Linking: Disabled
+
+        Use for: Large corpora, speed-critical applications, simple text documents
+        """
         return cls(
             chunker="token",
             extractor="strict",
@@ -719,7 +745,19 @@ class IndexingConfig:
 
     @classmethod
     def preset_balanced(cls, **kwargs) -> 'IndexingConfig':
-        """Balanced preset: semantic chunking, gleaning, fuzzy merging."""
+        """
+        Balanced preset: semantic chunking, gleaning, fuzzy merging.
+
+        Chunking: Semantic boundaries (includes table detection - REQUIRES openai_api_key)
+        Extraction: Gleaning (multi-pass with refinement)
+        Validation: Semantic entity validation
+        Merging: Fuzzy matching
+        HITL: File-based review queue
+        Orphan Linking: Synthetic relation generation
+
+        Use for: General-purpose knowledge graphs, educational content, mixed documents
+        Note: Set enable_table_detection=False to disable table extraction
+        """
         return cls(
             chunker="semantic",
             extractor="gleaning",
@@ -733,7 +771,20 @@ class IndexingConfig:
 
     @classmethod
     def preset_quality(cls, **kwargs) -> 'IndexingConfig':
-        """Quality preset: all features enabled, strict validation."""
+        """
+        Quality preset: all features enabled, strict validation.
+
+        Chunking: Semantic boundaries (includes table detection - REQUIRES openai_api_key)
+        Extraction: Hybrid (tables via table_fact_extractor + paragraphs via gleaning)
+        Validation: Numeric + Semantic validation
+        Merging: Fuzzy matching
+        HITL: File-based review queue
+        Orphan Linking: Synthetic relation generation
+        Quality Scoring: Enabled
+
+        Use for: High-value content, academic papers, technical documentation with tables
+        Note: Highest accuracy but slower and more expensive (multi-pass extraction + validation)
+        """
         return cls(
             chunker="semantic",
             extractor="hybrid",

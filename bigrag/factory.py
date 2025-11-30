@@ -48,7 +48,25 @@ class StrategyFactory:
 
     @staticmethod
     def create_chunker(config: IndexingConfig) -> ChunkerInterface:
-        """Create chunker strategy from config."""
+        """
+        Create chunker strategy from config.
+
+        Checks registry first for custom strategies, falls back to built-in strategies.
+        """
+        # Check registry for custom strategies
+        from bigrag.registry import StrategyRegistry
+        try:
+            custom_class = StrategyRegistry.get_chunker(config.chunker)
+            # Instantiate custom strategy (pass config for flexibility)
+            return custom_class(
+                chunk_size=config.chunk_size,
+                overlap=config.chunk_overlap,
+                api_key=config.openai_api_key
+            )
+        except KeyError:
+            pass  # Not in registry, try built-in strategies
+
+        # Built-in strategies
         if config.chunker == "token":
             from bigrag.strategies.chunking.token import TokenChunker
             return TokenChunker(
@@ -70,7 +88,7 @@ class StrategyFactory:
                 overlap=config.chunk_overlap
             )
         else:
-            raise ValueError(f"Unknown chunker: {config.chunker}")
+            raise ValueError(f"Unknown chunker: {config.chunker}. Register custom chunkers using StrategyRegistry.")
 
     @staticmethod
     def create_extractor(config: IndexingConfig) -> ExtractorInterface:
@@ -165,10 +183,12 @@ class StrategyFactory:
             from bigrag.strategies.hitl.file import FileHITL
             return FileHITL(dataset_path=config.dataset_path)
         elif config.hitl == "database":
-            from bigrag.strategies.hitl.database import DatabaseHITL
-            return DatabaseHITL()  # Connection string would come from config
+            # TODO: DatabaseHITL not yet implemented - fallback to FileHITL
+            # Future: Add bigrag/strategies/hitl/database.py with PostgreSQL/MongoDB support
+            from bigrag.strategies.hitl.file import FileHITL
+            return FileHITL(dataset_path=config.dataset_path)
         else:
-            raise ValueError(f"Unknown hitl: {config.hitl}")
+            raise ValueError(f"Unknown hitl: {config.hitl}. Valid options: noop, file, database (not yet implemented)")
 
     @staticmethod
     def create_orphan_linker(config: IndexingConfig) -> OrphanLinkerInterface:

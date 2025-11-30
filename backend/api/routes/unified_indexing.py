@@ -14,8 +14,9 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Background
 from pydantic import BaseModel
 
 from bigrag.utils import logger
-from bigrag.pipeline.features import PipelineFeatures
-from bigrag.enhanced_pipeline import EnhancedKGPipeline
+from bigrag.pipeline.features import PipelineFeatures  # OLD: For backward compatibility
+from bigrag.migration import migrate_pipeline_features  # NEW: Migration helper
+from bigrag.config import IndexingConfig  # NEW: Modular system
 from bigrag import BiGRAG
 from ..services.utils import process_markdown, validate_file_upload, truncate_text
 from ..services.kg_utils import compute_doc_id, add_document_to_corpus
@@ -284,10 +285,13 @@ async def _process_with_bigrag(
     content: str,
     title: str,
     metadata: Dict[str, Any],
-    features: PipelineFeatures
+    features: PipelineFeatures  # OLD: Still accepts PipelineFeatures for backward compatibility
 ) -> Dict[str, Any]:
     """
-    Process document using BiGRAG with EnhancedPipeline.
+    Process document using BiGRAG with NEW modular indexing system.
+
+    UPDATED (January 2025): Now uses IndexingConfig + modular strategies instead of
+    the old EnhancedKGPipeline. Old PipelineFeatures are automatically migrated.
 
     Args:
         working_dir: Absolute path to dataset directory (e.g., D:/BiG-RAG/expr/kuet_test)
@@ -296,42 +300,59 @@ async def _process_with_bigrag(
         content: Document content (markdown text)
         title: Document title
         metadata: Document metadata dict
-        features: Pipeline feature configuration
+        features: Pipeline feature configuration (OLD - will be migrated to IndexingConfig)
 
     Returns:
         Dict with processing result
 
-    Note:
-        This function uses dependency injection pattern (working_dir as parameter)
-        to match the architecture of /datasets/create-and-index endpoint.
-        The caller computes the absolute path once and passes it here.
+    Architecture:
+        1. Migrate PipelineFeatures → IndexingConfig (automatic)
+        2. Initialize BiGRAG with modular system
+        3. Use index_document() method (new modular pipeline)
+        4. Return success
     """
     try:
-        logger.info(f"[Indexing] Processing {document_id}")
+        logger.info(f"[Indexing] Processing {document_id} with NEW modular system")
         logger.debug(f"[Indexing] Working directory: {working_dir}")
 
-        # Initialize BiGRAG with absolute path
-        # Path is pre-computed by caller using PROJECT_ROOT, ensuring correct location
+        # STEP 1: Migrate old features to new config
+        logger.debug("[Indexing] Migrating PipelineFeatures → IndexingConfig")
+        config = migrate_pipeline_features(features)
+        config.dataset_path = working_dir  # Ensure dataset path is set
+
+        logger.info(f"[Indexing] Modular config: chunker={config.chunker}, extractor={config.extractor}, validators={config.validators}")
+
+        # STEP 2: Initialize BiGRAG with NEW modular system
         rag = BiGRAG(
-            working_dir=working_dir,  # Use absolute path directly (not relative)
-            pipeline_features=features
+            working_dir=working_dir,
+            indexing_config=config  # NEW: Use IndexingConfig (not pipeline_features)
         )
 
-        # Insert document (BiGRAG uses EnhancedPipeline internally)
-        await rag.ainsert(
-            [content],
-            metadata=[{
+        # STEP 3: Index document using NEW modular pipeline
+        result = await rag.index_document(
+            text=content,
+            metadata={
                 "title": title,
                 "document_id": document_id,
                 **metadata
-            }]
+            }
         )
 
         logger.info(f"[Indexing] Completed: {document_id}")
-        return {"success": True, "document_id": document_id}
+        logger.info(f"[Indexing] Statistics: {result.get('statistics', {})}")
+        logger.info(f"[Indexing] Validation: {result.get('validation', {})}")
+
+        return {
+            "success": True,
+            "document_id": document_id,
+            "statistics": result.get('statistics', {}),
+            "validation": result.get('validation', {})
+        }
 
     except Exception as e:
         logger.error(f"[Indexing] Failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         raise
 
 

@@ -661,6 +661,8 @@ class IndexingConfig:
     # Extraction
     gleaning_iterations: int = 2
     extraction_concurrency: int = 16
+    enable_table_fact_extraction: bool = True  # NEW: Issue #4 - explicit control
+    """Enable rule-based table fact extraction (used with hybrid extractor)"""
 
     # Validation
     validation_strictness: str = "MODERATE"  # STRICT | MODERATE | LENIENT

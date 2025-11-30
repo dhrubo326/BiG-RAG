@@ -9,12 +9,22 @@ from typing import List, Dict, Optional
 class HybridChunker(ChunkerInterface):
     """Hybrid: detect tables first, then chunk remaining text."""
 
-    def __init__(self, api_key: str, chunk_size: int = 1200, overlap: int = 100, enable_table_detection: bool = True):
+    def __init__(
+        self,
+        api_key: str,
+        chunk_size: int = 1200,
+        overlap: int = 100,
+        enable_table_detection: bool = True,
+        hitl_handler: Optional[any] = None  # NEW: Issue #3
+    ):
         # Use semantic for tables, token for paragraphs
         from bigrag.strategies.chunking.semantic import SemanticChunker
         from bigrag.strategies.chunking.token import TokenChunker
 
-        self.semantic_chunker = SemanticChunker(api_key, chunk_size, overlap, enable_table_detection)
+        self.semantic_chunker = SemanticChunker(
+            api_key, chunk_size, overlap, enable_table_detection,
+            hitl_handler=hitl_handler  # NEW: Pass through to SemanticChunker
+        )
         self.token_chunker = TokenChunker(chunk_size, overlap)
 
     async def chunk(self, text: str, metadata: Optional[Dict] = None) -> List[Dict]:

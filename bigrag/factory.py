@@ -75,19 +75,25 @@ class StrategyFactory:
             )
         elif config.chunker == "semantic":
             from bigrag.strategies.chunking.semantic import SemanticChunker
+            # NEW: Pass HITL handler if available
+            hitl_handler = StrategyFactory.create_hitl(config) if config.hitl != "noop" else None
             return SemanticChunker(
                 api_key=config.openai_api_key,
                 chunk_size=config.chunk_size,
                 overlap=config.chunk_overlap,
-                enable_table_detection=config.enable_table_detection
+                enable_table_detection=config.enable_table_detection,
+                hitl_handler=hitl_handler  # NEW: Issue #3
             )
         elif config.chunker == "hybrid":
             from bigrag.strategies.chunking.hybrid import HybridChunker
+            # NEW: Pass HITL handler if available
+            hitl_handler = StrategyFactory.create_hitl(config) if config.hitl != "noop" else None
             return HybridChunker(
                 api_key=config.openai_api_key,
                 chunk_size=config.chunk_size,
                 overlap=config.chunk_overlap,
-                enable_table_detection=config.enable_table_detection
+                enable_table_detection=config.enable_table_detection,
+                hitl_handler=hitl_handler  # NEW: Issue #3
             )
         else:
             raise ValueError(f"Unknown chunker: {config.chunker}. Register custom chunkers using StrategyRegistry.")
@@ -112,11 +118,15 @@ class StrategyFactory:
             )
         elif config.extractor == "hybrid":
             from bigrag.strategies.extraction.hybrid import HybridExtractor
+            # NEW: Pass HITL handler and enable_table_fact_extraction
+            hitl_handler = StrategyFactory.create_hitl(config) if config.hitl != "noop" else None
             return HybridExtractor(
                 api_key=config.openai_api_key,
                 gleaning_iterations=config.gleaning_iterations,
                 concurrency=config.extraction_concurrency,
-                enable_validation='numeric' in config.validators
+                enable_validation='numeric' in config.validators,
+                enable_table_fact_extraction=config.enable_table_fact_extraction,  # NEW: Issue #4
+                hitl_handler=hitl_handler  # NEW: Issue #7
             )
         else:
             raise ValueError(f"Unknown extractor: {config.extractor}")

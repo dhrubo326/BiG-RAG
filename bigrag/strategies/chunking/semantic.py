@@ -1,10 +1,7 @@
 """
 SemanticChunker - Table-aware semantic chunking strategy.
 
-COPIED FROM: bigrag/preprocessors/smart_chunker.py::TableAwareChunker
-This implementation uses the PROVEN semantic chunking logic from the old production pipeline.
-
-Key features (all copied from tested production code):
+Fully modular implementation with:
 - Table detection with GPT-4 (preserves table structure)
 - Semantic boundary chunking (respects paragraphs)
 - 3-case accumulation logic (under/overflow/hard-limit)
@@ -12,6 +9,8 @@ Key features (all copied from tested production code):
 - Asymmetric overlap (position-dependent)
 - Bilingual sentence detection (English + Bengali)
 - Sentence-level fallback for large paragraphs
+- HITL integration for failed table detection
+- No dependencies on archived code (uses utility modules)
 """
 
 from bigrag.interfaces.chunker import ChunkerInterface
@@ -27,14 +26,22 @@ class SemanticChunker(ChunkerInterface):
     """
     Table-aware semantic chunking (slow, accurate).
 
-    Copied from TableAwareChunker (smart_chunker.py) - tested in production.
+    Fully modular with no dependencies on archived code.
     """
 
-    def __init__(self, api_key: str, chunk_size: int = 1200, overlap: int = 100, enable_table_detection: bool = True):
+    def __init__(
+        self,
+        api_key: str,
+        chunk_size: int = 1200,
+        overlap: int = 100,
+        enable_table_detection: bool = True,
+        hitl_handler: Optional[any] = None  # NEW: HITL integration (Issue #3)
+    ):
         self.api_key = api_key
         self.chunk_size = chunk_size
         self.overlap = overlap
         self.enable_table_detection = enable_table_detection
+        self.hitl_handler = hitl_handler  # NEW: For failed table detection
 
         # Import table extractor (only if enabled)
         if self.enable_table_detection:
@@ -99,11 +106,37 @@ class SemanticChunker(ChunkerInterface):
 
             logger.info(f"[SemanticChunker] Detected {len(tables)} tables")
 
-            # Add table chunks (using same approach as TableAwareChunker)
+            # Add table chunks with HITL support (NEW: Issue #3)
             for table in tables:
+                # NEW: Check validation status (if available) and save failed tables to HITL
+                validation_status = table.get('metadata', {}).get('validation_status', 'PASS')
+
+                if validation_status == 'FAIL' and self.hitl_handler:
+                    # Save failed table to HITL for human review with rich metadata
+                    try:
+                        # FIX: Use correct interface signature (matches HITLInterface)
+                        # COPIED FROM production_pipeline.py approach (rich validation metadata)
+                        await self.hitl_handler.save_failed_table(
+                            chunk_id=f'chunk-table-{table.get("table_id", "unknown")}',  # Generate chunk_id
+                            table_id=table.get('table_id', 'unknown'),
+                            reason='GPT-4 table validation failed',  # Correct parameter name
+                            validation_feedback=table.get('metadata', {}).get('validation_feedback', ''),
+                            missing_numbers=table.get('metadata', {}).get('missing_numbers', []),
+                            hallucinated_numbers=table.get('metadata', {}).get('hallucinated_numbers', []),
+                            numeric_coverage=table.get('metadata', {}).get('numeric_coverage', 0.0),
+                            source_markdown='',  # Not available at chunking stage
+                            extracted_data=table
+                        )
+                        logger.warning(f"[SemanticChunker] Table {table.get('table_id')} failed validation - saved to HITL with rich metadata")
+                    except Exception as hitl_error:
+                        logger.error(f"[SemanticChunker] HITL save failed: {hitl_error}")
+                    # Skip failed table (graceful degradation)
+                    continue
+
                 # Convert table to natural language (CRITICAL for embedding quality)
-                # NOTE: Using local method (copied from smart_chunker.py) - no dependency on archived code
-                nl_content = SemanticChunker._table_to_natural_language(table)
+                # NEW: Use utility module (Issue #1, #9 fix)
+                from bigrag.utils.table_formatting import TableFormatter
+                nl_content = TableFormatter.table_to_natural_language(table)
 
                 chunk_id = hashlib.md5(nl_content.encode()).hexdigest()[:16]
 
@@ -118,7 +151,8 @@ class SemanticChunker(ChunkerInterface):
                     'metadata': {
                         **(metadata or {}),
                         'language_info': lang_info,
-                        'chunk_method': 'semantic'  # Track method
+                        'chunk_method': 'semantic',  # Track method
+                        'validation_status': validation_status  # NEW: Track validation result
                     }
                 })
 
@@ -128,8 +162,9 @@ class SemanticChunker(ChunkerInterface):
             logger.info(f"[SemanticChunker] Text length after table removal: {len(text)} chars")
 
         # Step 2: Chunk remaining text with FULL semantic boundaries logic
-        # COPIED FROM smart_chunker.py::_chunk_with_semantic_boundaries()
-        text_chunks = self._chunk_with_semantic_boundaries(
+        # NEW: Use utility module (Issue #2 fix)
+        from bigrag.utils.semantic_chunking import SemanticChunkingEngine
+        text_chunks = SemanticChunkingEngine.chunk_with_semantic_boundaries(
             text,
             chunk_size=self.chunk_size,
             overlap=self.overlap,

@@ -1536,29 +1536,52 @@ class BiGRAG:
         merged_entities = await self.merger.merge(extractions['entities'])
         logger.info(f"  → Merged to {len(merged_entities)} unique entities")
 
-        # Step 3.5: Link orphan entities (MOVED BEFORE VALIDATION - Issue #4 fix)
-        # REASON: Orphan synthetic relations should be validated
-        # - Matches old pipeline architecture (Phase 3.5)
-        # - Synthetic relations participate in numeric validation
-        # - Incorrect orphan matches can be caught by validation
-        # - Orphan entities included in document-level validation
-        logger.info(f"[3.5/7] Linking orphan entities...")
-        linked_entities, synthetic_relations = await self.orphan_linker.link(
-            entities=merged_entities,
-            relations=extractions['relations']
-        )
-        all_relations = extractions['relations'] + synthetic_relations
-        logger.info(f"  → Created {len(synthetic_relations)} synthetic relations for orphans")
+        # Step 3.25: Normalize source_id field (FIX Issue #3)
+        # Mergers may produce 'source_id' (list) or 'source_ids' (list)
+        # Normalize to 'source_id' (string with GRAPH_FIELD_SEP) for consistency
+        from bigrag.constants import GRAPH_FIELD_SEP
+        logger.info(f"[3.25/7] Normalizing source_id fields...")
 
-        # Step 3.75: Remap entity IDs in relations (MOVED BEFORE VALIDATION - Issue #4 fix)
+        for entity in merged_entities:
+            # Handle both source_id (BasicMerger) and source_ids (FuzzyMerger) formats
+            if 'source_id' in entity and isinstance(entity.get('source_id'), list):
+                # CASE 1: BasicMerger produces source_id as list - join it
+                entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_id']) if entity['source_id'] else 'unknown'
+            elif 'source_ids' in entity and isinstance(entity['source_ids'], list):
+                # CASE 2: FuzzyMerger produces source_ids (plural) - convert to source_id (singular)
+                entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_ids']) if entity['source_ids'] else 'unknown'
+                # Remove source_ids field for consistency
+                del entity['source_ids']
+            elif 'source_id' not in entity:
+                # CASE 3: No source information at all
+                entity['source_id'] = 'unknown'
+
+        for relation in extractions['relations']:
+            # Handle both source_id (list) and source_ids (list) formats
+            if 'source_id' in relation and isinstance(relation.get('source_id'), list):
+                # CASE 1: source_id is already a list - join it
+                relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_id']) if relation['source_id'] else 'unknown'
+            elif 'source_ids' in relation and isinstance(relation['source_ids'], list):
+                # CASE 2: source_ids (plural) - convert to source_id (singular)
+                relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_ids']) if relation['source_ids'] else 'unknown'
+                del relation['source_ids']
+            elif 'source_id' not in relation:
+                # CASE 3: No source information
+                relation['source_id'] = 'unknown'
+
+        logger.info(f"  → Normalized {len(merged_entities)} entities, {len(extractions['relations'])} relations")
+
+        # Step 3.5: Remap entity IDs in relations (MOVED BEFORE VALIDATION - Issue #4 fix)
+        # FIX (Issue #1): Orphan linking moved to Step 7.5 (after hyper_relation is set)
         # When entities are merged, old entity IDs become invalid.
         # We must remap all entity references in relations to use primary IDs.
         # CRITICAL: Must happen BEFORE validation so validator sees correct entity IDs
-        logger.info(f"[3.75/7] Remapping entity IDs in relations after merge...")
+        logger.info(f"[3.5/7] Remapping entity IDs in relations after merge...")
         entity_id_mapping = {}
+        all_relations = extractions['relations']  # Will add synthetic relations in Step 7.5
 
         # Build mapping: old IDs → primary ID
-        for merged in linked_entities:
+        for merged in merged_entities:
             primary_id = merged.get('entity_id')
             if not primary_id:
                 continue
@@ -1590,12 +1613,13 @@ class BiGRAG:
 
         logger.info(f"  → Remapped {remapped_count} entity ID references in {len(all_relations)} relations")
 
-        # Step 4: Validate (NOW INCLUDES ORPHAN SYNTHETIC RELATIONS - Issue #4 fix)
-        # CRITICAL: Now validates merged entities + orphan entities + synthetic relations
-        logger.info(f"[4/7] Validating merged extractions (including orphan synthetic relations)...")
+        # Step 4: Validate
+        # FIX (Issue #1): Orphan synthetic relations will be validated in next indexing cycle
+        # Current cycle validates only extractor-generated entities and relations
+        logger.info(f"[4/7] Validating merged extractions...")
         validation_input = {
-            'entities': linked_entities,  # Now includes orphans
-            'relations': all_relations,   # Now includes synthetic relations
+            'entities': merged_entities,  # Merged entities
+            'relations': all_relations,   # Extractor relations (no synthetics yet)
             'failed_chunks': extractions.get('failed_chunks', []),
             'chunks': extractions.get('chunks', []),
             'source_document': text,  # For document-level validation (Issue #2 fix)
@@ -1619,26 +1643,56 @@ class BiGRAG:
         all_relations = validated['relations']
 
         # Step 6.5: Post-merge entity-relation linking (CRITICAL - creates linked_entities)
-        logger.info(f"[6.5/7] Linking entities to relations...")
+        # FIX (Issue #2): Only re-link if extractor didn't provide links
+        # Extractors (TableFactExtractor, ConstrainedLLMExtractor) already provide accurate linking
+        # We only need to re-link for synthetic relations or if extractor failed to link
+        logger.info(f"[6.5/7] Verifying/fixing entity-relation links after merge...")
         entities_linked = 0
+        relations_relinked = 0
+
         for relation in all_relations:
+            existing_links = relation.get('metadata', {}).get('linked_entities', [])
+
+            # FIX: Only re-link if extractor didn't provide links (empty or missing)
+            if existing_links:
+                # Extractor provided links - verify they still exist after merge
+                # (Entity IDs may have changed due to merging)
+                entity_id_set = {e['entity_id'] for e in linked_entities}
+                valid_links = [eid for eid in existing_links if eid in entity_id_set]
+
+                if len(valid_links) != len(existing_links):
+                    logger.debug(f"  → Relation {relation.get('relation_id')}: {len(existing_links) - len(valid_links)} invalid entity IDs after merge")
+
+                # Keep existing links (already remapped in Step 3.75)
+                entities_linked += len(valid_links)
+                continue
+
+            # No existing links - need to create them (e.g., synthetic relations)
             relation_content = relation.get('content', '')
             linked_entity_ids = []
 
-            # Link entities mentioned in relation content
+            # FIX: Use entity aliases for better matching (handles merged entities)
             for entity in linked_entities:
                 entity_name = entity.get('entity_name', '')
-                # Simple substring match (works for both English and Bangla)
-                if entity_name and entity_name in relation_content:
-                    linked_entity_ids.append(entity.get('entity_id'))
-                    entities_linked += 1
+                aliases = entity.get('aliases', [])
+                all_names = [entity_name] + aliases if aliases else [entity_name]
+
+                # Check if any name/alias appears in relation content
+                for name in all_names:
+                    if name and name in relation_content:
+                        entity_id = entity.get('entity_id')
+                        if entity_id and entity_id not in linked_entity_ids:
+                            linked_entity_ids.append(entity_id)
+                            entities_linked += 1
+                        break  # Found match, move to next entity
 
             # Update relation metadata with linked entities
             if 'metadata' not in relation:
                 relation['metadata'] = {}
             relation['metadata']['linked_entities'] = linked_entity_ids
+            relations_relinked += 1
 
-        logger.info(f"  → Linked {entities_linked} entity references across {len(all_relations)} relations")
+        logger.info(f"  → Verified {len(all_relations)} relations: {entities_linked} entity links, {relations_relinked} relations relinked")
 
         # Step 7: Add hyper_relation to entities (bidirectional linking)
         logger.info(f"[7/9] Adding hyper_relation to entities...")
@@ -1658,10 +1712,62 @@ class BiGRAG:
 
         logger.info(f"  → Added hyper_relation to {hyper_relation_added} entities")
 
-        # Check for remaining orphans
+        # Step 7.5: Link orphan entities (FIX Issue #1 - MOVED HERE from Step 3.5)
+        # NOW orphan detection works correctly because hyper_relation field exists
+        # Orphans = entities without hyper_relation field
+        logger.info(f"[7.5/9] Linking orphan entities...")
+        orphan_entities = [e for e in linked_entities if not e.get('hyper_relation')]
+
+        if orphan_entities:
+            logger.info(f"  → Found {len(orphan_entities)} orphan entities (no hyper_relation)")
+
+            # Create synthetic relations for orphans
+            # Pass all entities (not just orphans) so orphan linker can find matches
+            orphan_linked_entities, synthetic_relations = await self.orphan_linker.link(
+                entities=linked_entities,
+                relations=all_relations
+            )
+
+            # Update entity lookup with orphan links
+            for entity in orphan_linked_entities:
+                entity_id = entity.get('entity_id')
+                if entity_id and entity_id in entity_lookup:
+                    entity_lookup[entity_id].update(entity)
+
+            # Add synthetic relations to all_relations
+            if synthetic_relations:
+                logger.info(f"  → Created {len(synthetic_relations)} synthetic relations for orphans")
+
+                # Normalize source_id for synthetic relations (FIX Issue #3)
+                for relation in synthetic_relations:
+                    if 'source_id' in relation and isinstance(relation.get('source_id'), list):
+                        relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_id']) if relation['source_id'] else 'synthetic'
+                    elif 'source_ids' in relation and isinstance(relation['source_ids'], list):
+                        relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_ids']) if relation['source_ids'] else 'synthetic'
+                        del relation['source_ids']
+                    elif 'source_id' not in relation:
+                        relation['source_id'] = 'synthetic'
+
+                all_relations.extend(synthetic_relations)
+
+                # Add hyper_relation to orphan entities from synthetic relations
+                for relation in synthetic_relations:
+                    relation_id = relation.get('relation_id')
+                    if not relation_id:
+                        continue
+
+                    for entity_id in relation.get('metadata', {}).get('linked_entities', []):
+                        if entity_id in entity_lookup:
+                            entity_lookup[entity_id]['hyper_relation'] = relation_id
+            else:
+                logger.warning(f"  → No synthetic relations created (orphans remain)")
+        else:
+            logger.info(f"  → No orphan entities found - all entities linked!")
+
+        # Final orphan check
         remaining_orphans = [e for e in linked_entities if not e.get('hyper_relation')]
         if remaining_orphans:
-            logger.warning(f"  → {len(remaining_orphans)} orphan entities remain (no hyper_relation)")
+            logger.warning(f"  → {len(remaining_orphans)} orphan entities remain after synthetic linking")
         else:
             logger.info(f"  → All entities successfully linked!")
 
@@ -1670,33 +1776,9 @@ class BiGRAG:
 
         # Import the builder function
         from bigrag.builders.bipartite_graph_builder import build_bipartite_graph_from_pipeline
-        from bigrag.constants import GRAPH_FIELD_SEP
 
-        # CRITICAL: Normalize source_id field for BipartiteGraphBuilder
-        # The merger produces 'source_ids' (plural list), but BipartiteGraphBuilder expects 'source_id' (singular string)
-        for entity in linked_entities:
-            # Handle both source_id (BasicMerger) and source_ids (FuzzyMerger) formats
-            if 'source_id' in entity and isinstance(entity.get('source_id'), list):
-                # CASE 1: BasicMerger produces source_id as list - join it
-                entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_id']) if entity['source_id'] else 'unknown'
-            elif 'source_ids' in entity and isinstance(entity['source_ids'], list):
-                # CASE 2: FuzzyMerger produces source_ids (plural) - convert to source_id (singular)
-                entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_ids']) if entity['source_ids'] else 'unknown'
-            elif 'source_id' not in entity:
-                # CASE 3: No source information at all
-                entity['source_id'] = 'unknown'
-
-        for relation in all_relations:
-            # Handle both source_id (list) and source_ids (list) formats
-            if 'source_id' in relation and isinstance(relation.get('source_id'), list):
-                # CASE 1: source_id is already a list - join it
-                relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_id']) if relation['source_id'] else 'unknown'
-            elif 'source_ids' in relation and isinstance(relation['source_ids'], list):
-                # CASE 2: source_ids (plural) - convert to source_id (singular)
-                relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_ids']) if relation['source_ids'] else 'unknown'
-            elif 'source_id' not in relation:
-                # CASE 3: No source information
-                relation['source_id'] = 'unknown'
+        # FIX (Issue #3): source_id normalization now happens in Step 3.25
+        # All entities and relations already have source_id as string (not list)
 
         # Prepare pipeline result format for BipartiteGraphBuilder
         pipeline_result = {

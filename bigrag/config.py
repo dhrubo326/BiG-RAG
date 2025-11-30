@@ -640,7 +640,14 @@ class IndexingConfig:
     """Extraction strategy: 'strict' | 'gleaning' | 'hybrid'"""
 
     validators: List[str] = field(default_factory=list)
-    """Validation strategies: [] | ['numeric'] | ['semantic'] | ['numeric', 'semantic']"""
+    """Validation strategies: [] | ['numeric'] | ['entity'] | ['relation'] | ['numeric', 'entity', 'relation']
+
+    Available validators:
+    - 'numeric': Gemini-based numeric consistency validation (document-level or chunk-level)
+    - 'entity': Entity quality validation (name length, description, generic type filtering)
+    - 'relation': Relation completeness validation (description length, completeness score)
+    - 'semantic': Legacy - validates BOTH entity AND relation (use 'entity' + 'relation' for granular control)
+    """
 
     merger: str = "fuzzy"
     """Merging strategy: 'basic' | 'fuzzy' | 'hybrid'"""
@@ -666,6 +673,8 @@ class IndexingConfig:
 
     # Validation
     validation_strictness: str = "MODERATE"  # STRICT | MODERATE | LENIENT
+    validation_mode: str = "document"  # NEW (Issue #2): "chunk" | "document" | "hybrid"
+    """Numeric validation mode: 'chunk' (fast, less accurate) | 'document' (slow, more accurate) | 'hybrid' (fallback)"""
 
     # Quality
     enable_quality_scoring: bool = True
@@ -763,7 +772,7 @@ class IndexingConfig:
         return cls(
             chunker="semantic",
             extractor="gleaning",
-            validators=["semantic"],
+            validators=["entity"],  # NEW (Issue #3): Granular entity-only validation
             merger="fuzzy",
             hitl="file",
             orphan_linker="synthetic",
@@ -790,11 +799,12 @@ class IndexingConfig:
         return cls(
             chunker="semantic",
             extractor="hybrid",
-            validators=["numeric", "semantic"],
+            validators=["numeric", "entity", "relation"],  # NEW (Issue #3): All three validators
             merger="fuzzy",
             hitl="file",
             orphan_linker="synthetic",
             validation_strictness="MODERATE",
+            validation_mode="document",  # NEW (Issue #2): Use document-level numeric validation
             enable_quality_scoring=True,
             **kwargs
         )

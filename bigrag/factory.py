@@ -144,29 +144,40 @@ class StrategyFactory:
                 from bigrag.strategies.validation.numeric import NumericValidator
                 return NumericValidator(
                     api_key=config.gemini_api_key,
-                    strictness=config.validation_strictness
+                    strictness=config.validation_strictness,
+                    validation_mode=config.validation_mode  # NEW (Issue #2): Document-level validation
                 )
-            else:  # semantic
+            elif 'entity' in config.validators:
+                from bigrag.strategies.validation.entity import EntityValidator
+                return EntityValidator(strictness=config.validation_strictness)
+            elif 'relation' in config.validators:
+                from bigrag.strategies.validation.relation import RelationValidator
+                return RelationValidator(strictness=config.validation_strictness)
+            else:  # semantic (legacy)
                 from bigrag.strategies.validation.semantic import SemanticValidator
-                return SemanticValidator(
-                    strictness=config.validation_strictness
-                )
+                return SemanticValidator(strictness=config.validation_strictness)
         else:
             # Multiple validators - use composite
             from bigrag.strategies.validation.composite import CompositeValidator
-            from bigrag.strategies.validation.numeric import NumericValidator
-            from bigrag.strategies.validation.semantic import SemanticValidator
 
             validators = []
             if 'numeric' in config.validators:
+                from bigrag.strategies.validation.numeric import NumericValidator
                 validators.append(NumericValidator(
                     api_key=config.gemini_api_key,
-                    strictness=config.validation_strictness
+                    strictness=config.validation_strictness,
+                    validation_mode=config.validation_mode  # NEW (Issue #2): Document-level validation
                 ))
+            if 'entity' in config.validators:
+                from bigrag.strategies.validation.entity import EntityValidator
+                validators.append(EntityValidator(strictness=config.validation_strictness))
+            if 'relation' in config.validators:
+                from bigrag.strategies.validation.relation import RelationValidator
+                validators.append(RelationValidator(strictness=config.validation_strictness))
             if 'semantic' in config.validators:
-                validators.append(SemanticValidator(
-                    strictness=config.validation_strictness
-                ))
+                # Legacy: semantic validates both entity and relation
+                from bigrag.strategies.validation.semantic import SemanticValidator
+                validators.append(SemanticValidator(strictness=config.validation_strictness))
 
             return CompositeValidator(validators)
 

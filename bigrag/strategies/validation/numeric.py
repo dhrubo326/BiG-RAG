@@ -18,7 +18,13 @@ from bigrag.interfaces.validator import ValidatorInterface
 from typing import Dict, List
 
 class NumericValidator(ValidatorInterface):
-    def __init__(self, api_key: str = None, strictness: str = "MODERATE", use_llm_validation: bool = True):
+    def __init__(
+        self,
+        api_key: str = None,
+        strictness: str = "MODERATE",
+        use_llm_validation: bool = True,
+        validation_mode: str = "document"  # NEW: "chunk" | "document" | "hybrid"
+    ):
         """
         Initialize comprehensive numeric validator.
 
@@ -26,9 +32,14 @@ class NumericValidator(ValidatorInterface):
             api_key: Gemini API key (required if use_llm_validation=True)
             strictness: Validation level - "STRICT" (95%), "MODERATE" (90%), "LENIENT" (80%)
             use_llm_validation: Whether to use LLM-based validation (default: True)
+            validation_mode: NEW (Issue #2 fix)
+                - "chunk": Validate each chunk separately (faster, less accurate)
+                - "document": Validate entire document at once (slower, more accurate - matches old pipeline)
+                - "hybrid": Try document-level, fallback to chunk-level on error
         """
         self.strictness = strictness
         self.use_llm_validation = use_llm_validation
+        self.validation_mode = validation_mode  # NEW: Issue #2 fix
 
         if use_llm_validation:
             try:
@@ -50,40 +61,36 @@ class NumericValidator(ValidatorInterface):
 
     async def validate(self, extractions: Dict) -> Dict:
         """
-        Validate numeric accuracy of extractions at chunk level.
+        Validate numeric accuracy of extractions.
 
-        ARCHITECTURE DESIGN:
-        - Extractions Dict now includes 'chunks' field with source text
-        - We validate EACH chunk's entities/relations against its source text
-        - Failed chunks are flagged and can be sent to HITL for manual review
+        UPDATED ARCHITECTURE (Issue #1 & #2 fixes):
+        - Now supports TWO validation modes: chunk-level and document-level
+        - Document-level (NEW): Validates entire document against ALL entities/relations
+          * Matches old production pipeline behavior
+          * More accurate (eliminates cross-chunk duplicate issues)
+          * Requires 'source_document' field in extractions
+        - Chunk-level (legacy): Validates each chunk separately
+          * Faster but less accurate
+          * Requires 'chunks' field in extractions
 
         Args:
             extractions: {
-                'entities': [...],
-                'relations': [...],
+                'entities': [...],      # ALL entities (merged)
+                'relations': [...],     # ALL relations
                 'failed_chunks': [...],
-                'chunks': [  # NEW: Required for numeric validation
-                    {
-                        'chunk_id': 'chunk-abc',
-                        'content': 'source text...',
-                        'entities': [...],  # Entities from this chunk
-                        'relations': [...]  # Relations from this chunk
-                    }
-                ]
+                'source_document': str,  # NEW: Full document text (for document-level validation)
+                'chunks': [...]          # Optional: For chunk-level validation
             }
 
         Returns:
             {
-                'entities': [...],      # Valid entities only
-                'relations': [...],     # Valid relations only
-                'failed_chunks': [...], # Chunks that failed numeric validation
+                'entities': [...],
+                'relations': [...],
+                'failed_chunks': [...],
                 'summary': {
                     'status': 'PASS' | 'WARNING' | 'FAIL',
                     'numeric_coverage': 0.95,
-                    'chunks_validated': 10,
-                    'chunks_passed': 9,
-                    'chunks_failed': 1,
-                    'validation_method': 'gemini-hybrid'
+                    'validation_method': 'document-level' | 'chunk-level'
                 }
             }
         """
@@ -99,6 +106,105 @@ class NumericValidator(ValidatorInterface):
                     'validation_method': 'none (Gemini not configured)'
                 }
             }
+
+        # NEW: Document-level validation (Issue #2 fix - matches old pipeline)
+        if self.validation_mode == "document" and extractions.get('source_document'):
+            return await self._validate_document_level(extractions)
+        # Hybrid mode: try document-level, fallback to chunk-level
+        elif self.validation_mode == "hybrid":
+            if extractions.get('source_document'):
+                try:
+                    return await self._validate_document_level(extractions)
+                except Exception as e:
+                    print(f"[WARNING] Document-level validation failed: {e}. Falling back to chunk-level.")
+                    return await self._validate_chunk_level(extractions)
+            else:
+                return await self._validate_chunk_level(extractions)
+        # Chunk-level validation (legacy)
+        else:
+            return await self._validate_chunk_level(extractions)
+
+    async def _validate_document_level(self, extractions: Dict) -> Dict:
+        """
+        Validate entire document at once (matches old production pipeline).
+
+        COPIED FROM enhanced_pipeline.py:684-689
+        This is the CORRECT way to validate numerics:
+        - Single call with full document text
+        - Validates ALL entities and relations together
+        - No cross-chunk duplication issues
+        """
+        source_document = extractions.get('source_document', '')
+        all_entities = extractions.get('entities', [])
+        all_relations = extractions.get('relations', [])
+
+        if not source_document:
+            print("[WARNING] Document-level validation requires 'source_document' field. Skipping.")
+            return {
+                'entities': all_entities,
+                'relations': all_relations,
+                'failed_chunks': extractions.get('failed_chunks', []),
+                'summary': {
+                    'status': 'WARNING',
+                    'numeric_coverage': None,
+                    'validation_method': 'skipped (no source_document provided)'
+                }
+            }
+
+        try:
+            # Single comprehensive validation call (matches old pipeline)
+            validation_result = await self.validator.validate_extraction(
+                source_document=source_document,
+                entities=all_entities,
+                relations=all_relations,
+                validation_level=self.strictness
+            )
+
+            coverage = validation_result.get('numeric_coverage', 1.0)
+            status = validation_result.get('status', 'PASS')
+
+            # Determine overall status based on strictness
+            if self.strictness == "STRICT":
+                final_status = 'PASS' if coverage >= 0.95 else 'WARNING' if coverage >= 0.90 else 'FAIL'
+            elif self.strictness == "MODERATE":
+                final_status = 'PASS' if coverage >= 0.90 else 'WARNING' if coverage >= 0.85 else 'FAIL'
+            else:  # LENIENT
+                final_status = 'PASS' if coverage >= 0.80 else 'WARNING' if coverage >= 0.75 else 'FAIL'
+
+            return {
+                'entities': all_entities,  # Return all entities (document-level doesn't filter)
+                'relations': all_relations,
+                'failed_chunks': extractions.get('failed_chunks', []),
+                'summary': {
+                    'status': final_status,
+                    'numeric_coverage': coverage,
+                    'hallucination_rate': validation_result.get('hallucination_rate', 0.0),
+                    'validation_method': f'document-level (strictness={self.strictness})',
+                    'note': 'Validates entire document at once (matches old production pipeline)'
+                }
+            }
+
+        except Exception as e:
+            print(f"[ERROR] Document-level numeric validation failed: {e}")
+            # Permissive fallback: return entities/relations unchanged
+            return {
+                'entities': all_entities,
+                'relations': all_relations,
+                'failed_chunks': extractions.get('failed_chunks', []),
+                'summary': {
+                    'status': 'WARNING',
+                    'numeric_coverage': None,
+                    'validation_method': 'error (fallback to pass-through)',
+                    'error': str(e)
+                }
+            }
+
+    async def _validate_chunk_level(self, extractions: Dict) -> Dict:
+        """
+        Validate each chunk separately (legacy mode).
+
+        Original implementation preserved for backward compatibility.
+        """
 
         # Check if chunks with source text are provided
         chunks = extractions.get('chunks', [])

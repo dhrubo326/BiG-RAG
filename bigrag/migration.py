@@ -45,10 +45,11 @@ def migrate_pipeline_features(features) -> IndexingConfig:
         table_facts=getattr(features, 'enable_table_fact_extraction', False)
     )
 
-    # Map validators
+    # Map validators (Issue #3 fix: now supports 3 separate flags)
     validators = _build_validator_list(
         numeric=getattr(features, 'enable_numeric_validation', False),
-        semantic=getattr(features, 'enable_entity_validation', False)
+        entity=getattr(features, 'enable_entity_validation', False),
+        relation=getattr(features, 'enable_relation_validation', False)
     )
 
     # Map merger strategy
@@ -123,22 +124,30 @@ def _map_extractor(gleaning: bool, table_facts: bool) -> str:
         return "strict"  # Single-pass
 
 
-def _build_validator_list(numeric: bool, semantic: bool) -> List[str]:
+def _build_validator_list(numeric: bool, entity: bool, relation: bool) -> List[str]:
     """
     Map old validation flags to new validator list.
 
     Args:
         numeric: enable_numeric_validation flag
-        semantic: enable_entity_validation flag (maps to semantic validator)
+        entity: enable_entity_validation flag
+        relation: enable_relation_validation flag
 
     Returns:
-        List of validator names (e.g., ["numeric", "semantic"])
+        List of validator names (e.g., ["numeric", "entity", "relation"])
+
+    NOTE (Issue #3 fix):
+    - Old system had 3 separate flags: numeric, entity, relation
+    - New system supports granular validators: 'numeric', 'entity', 'relation'
+    - This mapping preserves the original separation for backward compatibility
     """
     validators = []
     if numeric:
         validators.append('numeric')
-    if semantic:
-        validators.append('semantic')
+    if entity:
+        validators.append('entity')  # NEW: Separate entity validation
+    if relation:
+        validators.append('relation')  # NEW: Separate relation validation
     return validators
 
 

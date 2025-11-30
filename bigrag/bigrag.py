@@ -1527,30 +1527,46 @@ class BiGRAG:
         extractions = await self.extractor.extract(chunks, language=final_language)
         logger.info(f"  → Extracted {len(extractions.get('entities', []))} entities, {len(extractions.get('relations', []))} relations")
 
-        # Step 3: Validate
-        logger.info(f"[3/7] Validating extractions...")
-        validated = await self.validator.validate(extractions)
+        # Step 3: Merge entities (MOVED BEFORE VALIDATION - Issue #1 fix)
+        # REASON: Validation should operate on merged entities for better accuracy
+        # - Eliminates duplicate entity issues during validation
+        # - Provides full entity context for numeric validation
+        # - Matches old production pipeline architecture
+        logger.info(f"[3/7] Merging duplicate entities...")
+        merged_entities = await self.merger.merge(extractions['entities'])
+        logger.info(f"  → Merged to {len(merged_entities)} unique entities")
+
+        # Step 4: Validate (MOVED AFTER MERGING - Issue #1 fix)
+        # CRITICAL: Now validates merged entities instead of raw extractions
+        logger.info(f"[4/7] Validating merged extractions...")
+        validation_input = {
+            'entities': merged_entities,
+            'relations': extractions['relations'],
+            'failed_chunks': extractions.get('failed_chunks', []),
+            'chunks': extractions.get('chunks', []),
+            'source_document': text,  # NEW: For document-level validation (Issue #2 fix)
+            'metadata': metadata
+        }
+        validated = await self.validator.validate(validation_input)
         logger.info(f"  → Validation status: {validated['summary']['status']}")
 
-        # Step 4: Handle HITL failures
+        # Step 5: Handle HITL failures
         if validated.get('failed_chunks'):
-            logger.info(f"[4/7] Saving {len(validated['failed_chunks'])} failed chunks to HITL...")
+            logger.info(f"[5/7] Saving {len(validated['failed_chunks'])} failed chunks to HITL...")
             await self.hitl.save_failures(
                 validated['failed_chunks'],
                 metadata=metadata
             )
         else:
-            logger.info(f"[4/7] No failed chunks (skipping HITL)")
+            logger.info(f"[5/7] No failed chunks (skipping HITL)")
 
-        # Step 5: Merge entities
-        logger.info(f"[5/7] Merging duplicate entities...")
-        merged_entities = await self.merger.merge(validated['entities'])
-        logger.info(f"  → Merged to {len(merged_entities)} unique entities")
+        # Use validated entities and relations from here on
+        merged_entities = validated['entities']
 
         # Step 5.5: Remap entity IDs in relations (CRITICAL for merge correctness)
         # When entities are merged, old entity IDs become invalid.
         # We must remap all entity references in relations to use primary IDs.
-        logger.info(f"[5.5/9] Remapping entity IDs in relations after merge...")
+        logger.info(f"[5.5/7] Remapping entity IDs in relations after merge...")
         entity_id_mapping = {}
 
         # Build mapping: old IDs → primary ID
@@ -1596,7 +1612,7 @@ class BiGRAG:
         logger.info(f"  → Created {len(synthetic_relations)} synthetic relations")
 
         # Step 6.5: Post-merge entity-relation linking (CRITICAL - creates linked_entities)
-        logger.info(f"[6.5/9] Linking entities to relations...")
+        logger.info(f"[6.5/7] Linking entities to relations...")
         entities_linked = 0
         for relation in all_relations:
             relation_content = relation.get('content', '')

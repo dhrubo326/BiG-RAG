@@ -83,7 +83,10 @@ async def index_document_with_features(
     enable_quality_scoring: bool = Form(False, description="Track quality metrics")
 ):
     """
-    Index document with explicit feature control.
+    Index document with explicit feature control (13 granular flags).
+
+    **Architecture**: Uses NEW modular indexing system under the hood (IndexingConfig + BiGRAG).
+    Old PipelineFeatures are automatically migrated to IndexingConfig during processing.
 
     **No presets needed** - just enable features you want!
 

@@ -104,7 +104,7 @@ async def process_document_background(
     metadata: Optional[Dict[str, Any]] = None
 ):
     """
-    Background task for document processing
+    Background task for document processing with MODULAR indexing system
 
     Updates job status throughout processing
 
@@ -113,13 +113,17 @@ async def process_document_background(
         content: Document content (plain text)
         title: Document title
         dataset: Dataset/data_source name
-        rag_instance: BiGRAG instance (with pipeline mode pre-configured)
+        rag_instance: BiGRAG instance (MUST have indexing_config set)
         registry_instance: DocumentRegistry instance
-        metadata: Optional document metadata (Phase 1: metadata preservation)
+        metadata: Optional document metadata (title, category, tags, etc.)
+
+    Raises:
+        ValueError: If rag_instance missing indexing_config (old system deprecated)
 
     Note:
-        Pipeline mode (standard/enhanced) is configured during BiGRAG initialization.
-        No need to override pipeline settings here.
+        - Uses modular strategy pattern (chunker/extractor/validator/merger)
+        - NO fallback to old ainsert() - fails fast if config missing
+        - Indexing config is set during BiGRAG initialization in calling endpoint
     """
     job = processing_jobs.get(job_id)
 
@@ -138,9 +142,21 @@ async def process_document_background(
 
         logger.info(f"[Job {job_id}] Starting processing for document: {title}")
 
-        # Detect pipeline mode from RAG instance
-        pipeline_mode = "ENHANCED (Phase 1)" if getattr(rag_instance, 'use_enhanced_pipeline', False) else "STANDARD"
-        logger.info(f"[Job {job_id}] Pipeline mode: {pipeline_mode}")
+        # Detect modular indexing system (REQUIRED - no fallback to old system)
+        has_indexing_config = hasattr(rag_instance, 'indexing_config') and rag_instance.indexing_config is not None
+        if not has_indexing_config:
+            raise ValueError(
+                f"[Job {job_id}] CRITICAL: RAG instance missing indexing_config. "
+                "Modular system required - old pipeline system is deprecated. "
+                "Please ensure BiGRAG is initialized with IndexingConfig."
+            )
+
+        config = rag_instance.indexing_config
+        logger.info(
+            f"[Job {job_id}] Using MODULAR indexing system: "
+            f"chunker={config.chunker}, extractor={config.extractor}, "
+            f"validators={config.validators}, merger={config.merger}"
+        )
 
         # Update to extraction stage
         job.update(
@@ -148,15 +164,15 @@ async def process_document_background(
             progress=STAGE_PROGRESS[ProcessingStage.EXTRACTING]
         )
 
-        # Process document with BiGRAG
-        # This handles: chunking, entity extraction, graph building, embedding, indexing
-        # Phase 1: Pass metadata to improve entity extraction (+2-3 F1 points)
+        # Process document with MODULAR SYSTEM (strategy pattern)
+        # This handles: chunking, extraction, validation, merging, orphan linking, graph building
         doc_metadata = metadata or {}
         if title and "title" not in doc_metadata:
             doc_metadata["title"] = title
 
-        # Process with pre-configured pipeline (no override needed)
-        await rag_instance.ainsert(content, metadata=doc_metadata)
+        # Use modular index_document() method (NO fallback to old ainsert)
+        result = await rag_instance.index_document(text=content, metadata=doc_metadata)
+        logger.info(f"[Job {job_id}] Modular indexing complete: {result.get('statistics', {})}")
 
         # Update progress through remaining stages
         job.update(

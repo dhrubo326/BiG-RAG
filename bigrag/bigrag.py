@@ -1527,7 +1527,7 @@ class BiGRAG:
         extractions = await self.extractor.extract(chunks, language=final_language)
         logger.info(f"  → Extracted {len(extractions.get('entities', []))} entities, {len(extractions.get('relations', []))} relations")
 
-        # Step 3: Merge entities (MOVED BEFORE VALIDATION - Issue #1 fix)
+        # Step 3: Merge entities (Issue #1 fix - done before validation)
         # REASON: Validation should operate on merged entities for better accuracy
         # - Eliminates duplicate entity issues during validation
         # - Provides full entity context for numeric validation
@@ -1536,15 +1536,69 @@ class BiGRAG:
         merged_entities = await self.merger.merge(extractions['entities'])
         logger.info(f"  → Merged to {len(merged_entities)} unique entities")
 
-        # Step 4: Validate (MOVED AFTER MERGING - Issue #1 fix)
-        # CRITICAL: Now validates merged entities instead of raw extractions
-        logger.info(f"[4/7] Validating merged extractions...")
+        # Step 3.5: Link orphan entities (MOVED BEFORE VALIDATION - Issue #4 fix)
+        # REASON: Orphan synthetic relations should be validated
+        # - Matches old pipeline architecture (Phase 3.5)
+        # - Synthetic relations participate in numeric validation
+        # - Incorrect orphan matches can be caught by validation
+        # - Orphan entities included in document-level validation
+        logger.info(f"[3.5/7] Linking orphan entities...")
+        linked_entities, synthetic_relations = await self.orphan_linker.link(
+            entities=merged_entities,
+            relations=extractions['relations']
+        )
+        all_relations = extractions['relations'] + synthetic_relations
+        logger.info(f"  → Created {len(synthetic_relations)} synthetic relations for orphans")
+
+        # Step 3.75: Remap entity IDs in relations (MOVED BEFORE VALIDATION - Issue #4 fix)
+        # When entities are merged, old entity IDs become invalid.
+        # We must remap all entity references in relations to use primary IDs.
+        # CRITICAL: Must happen BEFORE validation so validator sees correct entity IDs
+        logger.info(f"[3.75/7] Remapping entity IDs in relations after merge...")
+        entity_id_mapping = {}
+
+        # Build mapping: old IDs → primary ID
+        for merged in linked_entities:
+            primary_id = merged.get('entity_id')
+            if not primary_id:
+                continue
+
+            # Map primary ID to itself
+            entity_id_mapping[primary_id] = primary_id
+
+            # Map all old IDs that were merged into this entity
+            for old_id in merged.get('entity_ids_merged', []):
+                entity_id_mapping[old_id] = primary_id
+
+        # Remap linked_entities in all relations (including synthetic ones)
+        remapped_count = 0
+        for relation in all_relations:
+            old_links = relation.get('metadata', {}).get('linked_entities', [])
+            new_links = []
+
+            for old_id in old_links:
+                # Replace old ID with primary ID
+                primary_id = entity_id_mapping.get(old_id, old_id)
+                new_links.append(primary_id)
+                if primary_id != old_id:
+                    remapped_count += 1
+
+            # Update relation metadata with remapped IDs
+            if 'metadata' not in relation:
+                relation['metadata'] = {}
+            relation['metadata']['linked_entities'] = new_links
+
+        logger.info(f"  → Remapped {remapped_count} entity ID references in {len(all_relations)} relations")
+
+        # Step 4: Validate (NOW INCLUDES ORPHAN SYNTHETIC RELATIONS - Issue #4 fix)
+        # CRITICAL: Now validates merged entities + orphan entities + synthetic relations
+        logger.info(f"[4/7] Validating merged extractions (including orphan synthetic relations)...")
         validation_input = {
-            'entities': merged_entities,
-            'relations': extractions['relations'],
+            'entities': linked_entities,  # Now includes orphans
+            'relations': all_relations,   # Now includes synthetic relations
             'failed_chunks': extractions.get('failed_chunks', []),
             'chunks': extractions.get('chunks', []),
-            'source_document': text,  # NEW: For document-level validation (Issue #2 fix)
+            'source_document': text,  # For document-level validation (Issue #2 fix)
             'metadata': metadata
         }
         validated = await self.validator.validate(validation_input)
@@ -1561,55 +1615,8 @@ class BiGRAG:
             logger.info(f"[5/7] No failed chunks (skipping HITL)")
 
         # Use validated entities and relations from here on
-        merged_entities = validated['entities']
-
-        # Step 5.5: Remap entity IDs in relations (CRITICAL for merge correctness)
-        # When entities are merged, old entity IDs become invalid.
-        # We must remap all entity references in relations to use primary IDs.
-        logger.info(f"[5.5/7] Remapping entity IDs in relations after merge...")
-        entity_id_mapping = {}
-
-        # Build mapping: old IDs → primary ID
-        for merged in merged_entities:
-            primary_id = merged.get('entity_id')
-            if not primary_id:
-                continue
-
-            # Map primary ID to itself
-            entity_id_mapping[primary_id] = primary_id
-
-            # Map all old IDs that were merged into this entity
-            for old_id in merged.get('entity_ids_merged', []):
-                entity_id_mapping[old_id] = primary_id
-
-        # Remap linked_entities in all relations
-        remapped_count = 0
-        for relation in validated['relations']:
-            old_links = relation.get('metadata', {}).get('linked_entities', [])
-            new_links = []
-
-            for old_id in old_links:
-                # Replace old ID with primary ID
-                primary_id = entity_id_mapping.get(old_id, old_id)
-                new_links.append(primary_id)
-                if primary_id != old_id:
-                    remapped_count += 1
-
-            # Update relation metadata with remapped IDs
-            if 'metadata' not in relation:
-                relation['metadata'] = {}
-            relation['metadata']['linked_entities'] = new_links
-
-        logger.info(f"  → Remapped {remapped_count} entity ID references in {len(validated['relations'])} relations")
-
-        # Step 6: Link orphan entities
-        logger.info(f"[6/7] Linking orphan entities...")
-        linked_entities, synthetic_relations = await self.orphan_linker.link(
-            entities=merged_entities,
-            relations=validated['relations']
-        )
-        all_relations = validated['relations'] + synthetic_relations
-        logger.info(f"  → Created {len(synthetic_relations)} synthetic relations")
+        linked_entities = validated['entities']
+        all_relations = validated['relations']
 
         # Step 6.5: Post-merge entity-relation linking (CRITICAL - creates linked_entities)
         logger.info(f"[6.5/7] Linking entities to relations...")

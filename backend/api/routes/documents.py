@@ -48,7 +48,8 @@ async def upload_document(
     data_source: str = Form(None, description="Dataset name (defaults to current dataset)"),
     process_async: bool = Form(True, description="Process in background (recommended for large files)"),
     metadata: str = Form(None, description="Optional JSON metadata: {\"category\": \"research\", \"tags\": [...]}"),
-    use_production_pipeline: bool = Form(False, description="Use ProductionKGPipeline (table-aware, higher accuracy for educational content)")
+    use_production_pipeline: bool = Form(False, description="Use ProductionKGPipeline (table-aware, higher accuracy for educational content)"),
+    language: str = Form(None, description="Language for entity extraction (auto-detected if not specified)")
 ):
     """
     Upload a document (.txt or .md) and add it to the knowledge graph.
@@ -233,9 +234,9 @@ async def upload_document(
                 rag_instance=rag,
                 registry_instance=registry,
                 metadata=doc_metadata,
-                use_production_pipeline=use_production_pipeline
+                language=language
             )
-            message = f"Document queued for processing ({'production' if use_production_pipeline else 'standard'} pipeline)"
+            message = f"Document queued for processing (language: {language})"
         else:
             # Synchronous processing
             await process_document_background(
@@ -246,9 +247,9 @@ async def upload_document(
                 rag_instance=rag,
                 registry_instance=registry,
                 metadata=doc_metadata,
-                use_production_pipeline=use_production_pipeline
+                language=language
             )
-            message = f"Document processed successfully ({'production' if use_production_pipeline else 'standard'} pipeline)"
+            message = f"Document processed successfully (language: {language})"
 
         # Reload registry in unified executor if dataset was just added
         if unified_executor and dataset_info.get('registry_updated', False):

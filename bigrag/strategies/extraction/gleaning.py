@@ -6,12 +6,13 @@ class GleaningExtractor(ExtractorInterface):
         from bigrag.extractors.constrained_extractor import ConstrainedLLMExtractor, BatchConstrainedExtractor
         self.llm_extractor = ConstrainedLLMExtractor(api_key=api_key, enable_gleaning=True, max_gleaning_iterations=max_iterations, enable_numeric_validation=enable_validation)
         self.batch_extractor = BatchConstrainedExtractor(self.llm_extractor)
-    async def extract(self, chunks: List[Dict]) -> Dict:
+    async def extract(self, chunks: List[Dict], language: str = "English") -> Dict:
         """
         Extract entities and relations using multi-pass gleaning.
 
         Args:
             chunks: List of chunk dicts from chunker
+            language: Language for extraction (default: "English")
 
         Returns:
             {
@@ -21,7 +22,7 @@ class GleaningExtractor(ExtractorInterface):
                 'chunks': [...]  # NEW: For numeric validation support
             }
         """
-        result = await self.batch_extractor.extract_from_chunks(chunks)
+        result = await self.batch_extractor.extract_from_chunks(chunks, language=language)
 
         # Build chunk index for quick lookup
         chunk_index = {chunk['chunk_id']: chunk for chunk in chunks}

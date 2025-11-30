@@ -163,7 +163,8 @@ async def create_and_index_document(
     # Metadata
     title: str = Form(None, description="Document title (defaults to filename)"),
     metadata: str = Form(None, description="Optional JSON metadata"),
-    process_async: bool = Form(True, description="Process in background (recommended)")
+    process_async: bool = Form(True, description="Process in background (recommended)"),
+    language: str = Form(None, description="Language for entity extraction (auto-detected if not specified)")
 ):
     """
     **Production-Ready Endpoint: Create Dataset & Index Document with Presets**
@@ -376,9 +377,10 @@ async def create_and_index_document(
                 dataset=data_source,
                 rag_instance=rag,
                 registry_instance=registry,
-                metadata=doc_metadata
+                metadata=doc_metadata,
+                language=language
             )
-            message = f"Document queued for indexing in dataset '{data_source}' (preset: {preset}, chunker: {indexing_config.chunker}, extractor: {indexing_config.extractor})"
+            message = f"Document queued for indexing in dataset '{data_source}' (preset: {preset}, chunker: {indexing_config.chunker}, extractor: {indexing_config.extractor}, language: {language})"
         else:
             await process_document_background(
                 job_id=job_id,
@@ -387,9 +389,10 @@ async def create_and_index_document(
                 dataset=data_source,
                 rag_instance=rag,
                 registry_instance=registry,
-                metadata=doc_metadata
+                metadata=doc_metadata,
+                language=language
             )
-            message = f"Document indexed in dataset '{data_source}' (preset: {preset}, chunker: {indexing_config.chunker}, extractor: {indexing_config.extractor})"
+            message = f"Document indexed in dataset '{data_source}' (preset: {preset}, chunker: {indexing_config.chunker}, extractor: {indexing_config.extractor}, language: {language})"
 
         # Step 12: Reload registry in unified executor (if dataset was just added)
         if dataset_info["registry_updated"]:

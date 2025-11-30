@@ -1457,7 +1457,8 @@ class BiGRAG:
     async def index_document(
         self,
         text: str,
-        metadata: Optional[dict] = None
+        metadata: Optional[dict] = None,
+        language: Optional[str] = None
     ) -> dict:
         """
         Index a single document using modular strategy pattern.
@@ -1477,6 +1478,7 @@ class BiGRAG:
         Args:
             text: Document content (markdown)
             metadata: Optional metadata (title, category, tags)
+            language: Language for entity extraction (auto-detected if None)
 
         Returns:
             {
@@ -1506,6 +1508,15 @@ class BiGRAG:
 
         logger.info(f"[index_document] Starting modular indexing pipeline")
 
+        # Step 0: Language Detection (NEW - Cascading fallback)
+        from bigrag.utils.language_detection import get_language_with_fallback
+        final_language = get_language_with_fallback(
+            explicit_language=language,
+            document_text=text,
+            env_default=True
+        )
+        logger.info(f"[0/7] Language detection: {final_language} (explicit={language is not None})")
+
         # Step 1: Chunk
         logger.info(f"[1/7] Chunking document...")
         chunks = await self.chunker.chunk(text, metadata)
@@ -1513,7 +1524,7 @@ class BiGRAG:
 
         # Step 2: Extract
         logger.info(f"[2/7] Extracting entities and relations...")
-        extractions = await self.extractor.extract(chunks)
+        extractions = await self.extractor.extract(chunks, language=final_language)
         logger.info(f"  → Extracted {len(extractions.get('entities', []))} entities, {len(extractions.get('relations', []))} relations")
 
         # Step 3: Validate

@@ -8,12 +8,13 @@ class HybridExtractor(ExtractorInterface):
         self.table_extractor = TableFactExtractor()  # FIX: Instantiate class (was missing parentheses)
         self.paragraph_extractor = ConstrainedLLMExtractor(api_key=api_key, enable_gleaning=True, max_gleaning_iterations=gleaning_iterations, enable_numeric_validation=enable_validation)
         self.batch_extractor = BatchConstrainedExtractor(self.paragraph_extractor)
-    async def extract(self, chunks: List[Dict]) -> Dict:
+    async def extract(self, chunks: List[Dict], language: str = "English") -> Dict:
         """
         Extract using both table-specific and paragraph extraction.
 
         Args:
             chunks: List of chunk dicts from chunker
+            language: Language for extraction (default: "English")
 
         Returns:
             {
@@ -78,7 +79,7 @@ class HybridExtractor(ExtractorInterface):
             })
 
         # Extract from paragraphs
-        para_result = await self.batch_extractor.extract_from_chunks(para_chunks)
+        para_result = await self.batch_extractor.extract_from_chunks(para_chunks, language=language)
 
         # Flatten paragraph extractions
         # IMPORTANT: Add source_id (chunk_id) to each entity/relation

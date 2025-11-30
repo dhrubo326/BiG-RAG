@@ -101,7 +101,8 @@ async def process_document_background(
     dataset: str,
     rag_instance,
     registry_instance,
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None,
+    language: Optional[str] = None
 ):
     """
     Background task for document processing with MODULAR indexing system
@@ -116,6 +117,7 @@ async def process_document_background(
         rag_instance: BiGRAG instance (MUST have indexing_config set)
         registry_instance: DocumentRegistry instance
         metadata: Optional document metadata (title, category, tags, etc.)
+        language: Language for entity extraction (auto-detected if None)
 
     Raises:
         ValueError: If rag_instance missing indexing_config (old system deprecated)
@@ -171,7 +173,7 @@ async def process_document_background(
             doc_metadata["title"] = title
 
         # Use modular index_document() method (NO fallback to old ainsert)
-        result = await rag_instance.index_document(text=content, metadata=doc_metadata)
+        result = await rag_instance.index_document(text=content, metadata=doc_metadata, language=language)
         logger.info(f"[Job {job_id}] Modular indexing complete: {result.get('statistics', {})}")
 
         # Update progress through remaining stages

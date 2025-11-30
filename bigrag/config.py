@@ -617,3 +617,131 @@ def get_registered_domains() -> Dict[str, int]:
         2
     """
     return DOMAIN_HOP_CONFIG.copy()
+
+
+# ========================
+# Indexing Configuration (Strategy Pattern)
+# ========================
+
+@dataclass
+class IndexingConfig:
+    """
+    Configuration for BiG-RAG indexing system using strategy pattern.
+
+    Replaces PipelineFeatures with cleaner, strategy-focused configuration.
+    Maps to 13 original pipeline features.
+    """
+
+    # ========== STRATEGIES ==========
+    chunker: str = "semantic"
+    """Chunking strategy: 'token' | 'semantic' | 'hybrid'"""
+
+    extractor: str = "gleaning"
+    """Extraction strategy: 'strict' | 'gleaning' | 'hybrid'"""
+
+    validators: List[str] = field(default_factory=list)
+    """Validation strategies: [] | ['numeric'] | ['semantic'] | ['numeric', 'semantic']"""
+
+    merger: str = "fuzzy"
+    """Merging strategy: 'basic' | 'fuzzy' | 'hybrid'"""
+
+    hitl: str = "file"
+    """HITL strategy: 'file' | 'database' | 'noop'"""
+
+    orphan_linker: str = "synthetic"
+    """Orphan linking strategy: 'synthetic' | 'noop'"""
+
+    # ========== PARAMETERS ==========
+    # Chunking
+    chunk_size: int = 1200
+    chunk_overlap: int = 100
+
+    # Extraction
+    gleaning_iterations: int = 2
+    extraction_concurrency: int = 16
+
+    # Validation
+    validation_strictness: str = "MODERATE"  # STRICT | MODERATE | LENIENT
+
+    # Quality
+    enable_quality_scoring: bool = True
+
+    # LLM Cache
+    enable_llm_cache: bool = True
+
+    # API Keys
+    openai_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
+
+    # Dataset path (for HITL)
+    dataset_path: Optional[str] = None
+
+    def __post_init__(self):
+        """Validate configuration."""
+        # Validate strategy choices
+        valid_chunkers = ['token', 'semantic', 'hybrid']
+        if self.chunker not in valid_chunkers:
+            raise ValueError(f"chunker must be one of {valid_chunkers}")
+
+        valid_extractors = ['strict', 'gleaning', 'hybrid']
+        if self.extractor not in valid_extractors:
+            raise ValueError(f"extractor must be one of {valid_extractors}")
+
+        valid_validators = ['numeric', 'semantic']
+        for v in self.validators:
+            if v not in valid_validators:
+                raise ValueError(f"validator '{v}' invalid. Choose from {valid_validators}")
+
+        valid_mergers = ['basic', 'fuzzy', 'hybrid']
+        if self.merger not in valid_mergers:
+            raise ValueError(f"merger must be one of {valid_mergers}")
+
+        valid_hitl = ['file', 'database', 'noop']
+        if self.hitl not in valid_hitl:
+            raise ValueError(f"hitl must be one of {valid_hitl}")
+
+        valid_orphan_linkers = ['synthetic', 'noop']
+        if self.orphan_linker not in valid_orphan_linkers:
+            raise ValueError(f"orphan_linker must be one of {valid_orphan_linkers}")
+
+    @classmethod
+    def preset_fast(cls, **kwargs) -> 'IndexingConfig':
+        """Fast preset: token chunking, strict extraction, basic merging."""
+        return cls(
+            chunker="token",
+            extractor="strict",
+            validators=[],
+            merger="basic",
+            hitl="noop",
+            orphan_linker="noop",
+            **kwargs
+        )
+
+    @classmethod
+    def preset_balanced(cls, **kwargs) -> 'IndexingConfig':
+        """Balanced preset: semantic chunking, gleaning, fuzzy merging."""
+        return cls(
+            chunker="semantic",
+            extractor="gleaning",
+            validators=["semantic"],
+            merger="fuzzy",
+            hitl="file",
+            orphan_linker="synthetic",
+            validation_strictness="LENIENT",
+            **kwargs
+        )
+
+    @classmethod
+    def preset_quality(cls, **kwargs) -> 'IndexingConfig':
+        """Quality preset: all features enabled, strict validation."""
+        return cls(
+            chunker="semantic",
+            extractor="hybrid",
+            validators=["numeric", "semantic"],
+            merger="fuzzy",
+            hitl="file",
+            orphan_linker="synthetic",
+            validation_strictness="MODERATE",
+            enable_quality_scoring=True,
+            **kwargs
+        )

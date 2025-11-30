@@ -4,7 +4,7 @@ from tqdm.asyncio import tqdm as tqdm_async
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from functools import partial
-from typing import Type, cast
+from typing import Type, cast, Optional
 
 from .llm import (
     gpt_4o_mini_complete,
@@ -186,6 +186,9 @@ class BiGRAG:
     # NEW: PipelineFeatures interface (Phase 2 - replaces enhanced_pipeline_config)
     pipeline_features: 'PipelineFeatures' = None  # If set, overrides use_enhanced_pipeline
 
+    # NEW: IndexingConfig for modular strategy pattern (Phase 3 - FINAL)
+    indexing_config: 'IndexingConfig' = None  # If set, enables modular indexing system
+
     # extension
     addon_params: dict = field(default_factory=dict)
     convert_response_to_json_func: callable = convert_response_to_json
@@ -342,6 +345,28 @@ class BiGRAG:
                 **self.llm_model_kwargs,
             )
         )
+
+        # NEW: Initialize strategy pattern (modular indexing system)
+        if self.indexing_config:
+            logger.info("[BiGRAG] IndexingConfig provided - initializing modular indexing system")
+            from bigrag.factory import StrategyFactory
+
+            strategies = StrategyFactory.build(self.indexing_config)
+            self.chunker = strategies['chunker']
+            self.extractor = strategies['extractor']
+            self.validator = strategies['validator']
+            self.merger = strategies['merger']
+            self.hitl = strategies['hitl']
+            self.orphan_linker = strategies['orphan_linker']
+            logger.info(f"[BiGRAG] Strategies initialized: chunker={self.indexing_config.chunker}, extractor={self.indexing_config.extractor}, validators={self.indexing_config.validators}")
+        else:
+            # Legacy mode: no strategies (backward compatible)
+            self.chunker = None
+            self.extractor = None
+            self.validator = None
+            self.merger = None
+            self.hitl = None
+            self.orphan_linker = None
 
     @staticmethod
     def recommend_config(
@@ -1428,6 +1453,166 @@ class BiGRAG:
         finally:
             if update_storage:
                 await self._insert_done()
+
+    async def index_document(
+        self,
+        text: str,
+        metadata: Optional[dict] = None
+    ) -> dict:
+        """
+        Index a single document using modular strategy pattern.
+
+        This method provides a clean, modular indexing pipeline using the strategy pattern.
+        It replaces the monolithic pipeline classes with composable strategies.
+
+        Pipeline:
+        1. Chunk document (strategy: token/semantic/hybrid)
+        2. Extract entities + relations (strategy: strict/gleaning/hybrid)
+        3. Validate extractions (strategy: numeric/semantic/composite/noop)
+        4. Merge entities (strategy: basic/fuzzy/hybrid)
+        5. Link orphan entities (strategy: synthetic/noop)
+        6. Build bipartite graph
+        7. Store to disk
+
+        Args:
+            text: Document content (markdown)
+            metadata: Optional metadata (title, category, tags)
+
+        Returns:
+            {
+                'entities': [...],
+                'relations': [...],
+                'statistics': {...},
+                'validation': {...}
+            }
+
+        Raises:
+            ValueError: If BiGRAG not initialized with IndexingConfig
+
+        Example:
+            >>> from bigrag import BiGRAG
+            >>> from bigrag.config import IndexingConfig
+            >>>
+            >>> config = IndexingConfig.preset_balanced()
+            >>> rag = BiGRAG(indexing_config=config, working_dir="./expr/my_dataset")
+            >>> result = await rag.index_document(document_text, {"title": "My Doc"})
+        """
+        if not self.indexing_config:
+            raise ValueError(
+                "BiGRAG not initialized with IndexingConfig. "
+                "To use the modular indexing system, initialize BiGRAG with indexing_config parameter:\n"
+                "  rag = BiGRAG(indexing_config=IndexingConfig(...), working_dir=...)"
+            )
+
+        logger.info(f"[index_document] Starting modular indexing pipeline")
+
+        # Step 1: Chunk
+        logger.info(f"[1/7] Chunking document...")
+        chunks = await self.chunker.chunk(text, metadata)
+        logger.info(f"  → Created {len(chunks)} chunks")
+
+        # Step 2: Extract
+        logger.info(f"[2/7] Extracting entities and relations...")
+        extractions = await self.extractor.extract(chunks)
+        logger.info(f"  → Extracted {len(extractions.get('entities', []))} entities, {len(extractions.get('relations', []))} relations")
+
+        # Step 3: Validate
+        logger.info(f"[3/7] Validating extractions...")
+        validated = await self.validator.validate(extractions)
+        logger.info(f"  → Validation status: {validated['summary']['status']}")
+
+        # Step 4: Handle HITL failures
+        if validated.get('failed_chunks'):
+            logger.info(f"[4/7] Saving {len(validated['failed_chunks'])} failed chunks to HITL...")
+            await self.hitl.save_failures(
+                validated['failed_chunks'],
+                metadata=metadata
+            )
+        else:
+            logger.info(f"[4/7] No failed chunks (skipping HITL)")
+
+        # Step 5: Merge entities
+        logger.info(f"[5/7] Merging duplicate entities...")
+        merged_entities = await self.merger.merge(validated['entities'])
+        logger.info(f"  → Merged to {len(merged_entities)} unique entities")
+
+        # Step 6: Link orphan entities
+        logger.info(f"[6/7] Linking orphan entities...")
+        linked_entities, synthetic_relations = await self.orphan_linker.link(
+            entities=merged_entities,
+            relations=validated['relations']
+        )
+        all_relations = validated['relations'] + synthetic_relations
+        logger.info(f"  → Created {len(synthetic_relations)} synthetic relations")
+
+        # Step 7: Build graph using existing BiGRAG storage methods
+        logger.info(f"[7/7] Building and persisting graph...")
+
+        # CRITICAL: Normalize source_id field for compatibility with ainsert_custom_kg
+        # The merger produces 'source_ids' (plural list), but ainsert_custom_kg expects 'source_id' (singular string)
+        # This matches the same normalization done in _process_document_with_enhanced_pipeline (line 1035)
+        from bigrag.constants import GRAPH_FIELD_SEP
+
+        for entity in linked_entities:
+            # CRITICAL: Handle both source_id (BasicMerger) and source_ids (FuzzyMerger) formats
+            if 'source_id' in entity and isinstance(entity.get('source_id'), list):
+                # CASE 1: BasicMerger produces source_id as list - join it
+                entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_id']) if entity['source_id'] else 'unknown'
+            elif 'source_ids' in entity and isinstance(entity['source_ids'], list):
+                # CASE 2: FuzzyMerger produces source_ids (plural) - convert to source_id (singular)
+                entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_ids']) if entity['source_ids'] else 'unknown'
+            elif 'source_id' not in entity:
+                # CASE 3: No source information at all
+                entity['source_id'] = 'unknown'
+
+        for relation in all_relations:
+            # CRITICAL: Handle both source_id (list) and source_ids (list) formats
+            if 'source_id' in relation and isinstance(relation.get('source_id'), list):
+                # CASE 1: source_id is already a list - join it
+                relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_id']) if relation['source_id'] else 'unknown'
+            elif 'source_ids' in relation and isinstance(relation['source_ids'], list):
+                # CASE 2: source_ids (plural) - convert to source_id (singular)
+                relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_ids']) if relation['source_ids'] else 'unknown'
+            elif 'source_id' not in relation:
+                # CASE 3: No source information
+                relation['source_id'] = 'unknown'
+
+        # Use the existing ainsert_custom_kg method to store everything
+        custom_kg = {
+            'chunks': [
+                {
+                    'content': chunk['content'],
+                    'source_id': chunk['chunk_id'],
+                    'full_doc_id': chunk.get('metadata', {}).get('title', ''),
+                    'doc_title': chunk.get('metadata', {}).get('title', ''),
+                    'doc_metadata': chunk.get('metadata', {})
+                }
+                for chunk in chunks
+            ],
+            'entities': linked_entities,
+            'relations': all_relations
+        }
+
+        await self.ainsert_custom_kg(custom_kg)
+
+        logger.info(f"  → Graph built successfully!")
+
+        # Compute statistics
+        statistics = {
+            'total_chunks': len(chunks),
+            'total_entities': len(linked_entities),
+            'total_relations': len(all_relations),
+            'synthetic_relations': len(synthetic_relations),
+            'orphan_entities': len([e for e in linked_entities if not e.get('hyper_relation')]),
+            'validation_status': validated['summary']['status']
+        }
+
+        return {
+            'entities': linked_entities,
+            'relations': all_relations,
+            'statistics': statistics,
+            'validation': validated['summary']
+        }
 
     def query(self, query: str, param: QueryParam = QueryParam(), entity_match=None, relation_match=None):
         loop = always_get_an_event_loop()

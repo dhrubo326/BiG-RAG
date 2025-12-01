@@ -1640,13 +1640,16 @@ class BiGRAG:
         linked_entities = validated['entities']
         all_relations = validated['relations']
 
-        # Step 6.5: Post-merge entity-relation linking (CRITICAL - creates linked_entities)
-        # NEW: Convert entity_names from LLM to entity_ids after merge
-        # LLM outputs entity_names in linked_entities, we need to convert to entity_ids
-        logger.info(f"[6.5/7] Converting entity-name links to entity-ID links after merge...")
+        # Step 6.5: Unified entity-relation linking (CRITICAL - creates linked_entities)
+        # UNIFIED: Handles BOTH entity name conversion AND entity ID remapping in ONE step
+        # - Converts entity_names (from LLM) → entity_ids
+        # - Remaps old entity_ids (from merge) → primary entity_ids
+        # - Handles mixed formats (table facts use IDs, paragraph uses names)
+        logger.info(f"[6.5/7] Unified entity linking: converting names + remapping IDs...")
         entities_linked = 0
         relations_relinked = 0
         relations_llm_linked = 0
+        relations_id_remapped = 0
 
         # Build entity_name → entity_id lookup (handles merged entities)
         entity_name_to_id = {}
@@ -1664,45 +1667,72 @@ class BiGRAG:
                     alias_normalized = alias.lower() if alias.isascii() else alias
                     entity_name_to_id[alias_normalized] = entity_id
 
+        # Build entity_id → primary_id mapping (handles entity merging)
+        entity_id_mapping = {}
+        for merged in merged_entities:
+            primary_id = merged.get('entity_id')
+            if not primary_id:
+                continue
+
+            # Map primary ID to itself
+            entity_id_mapping[primary_id] = primary_id
+
+            # Map all old IDs that were merged into this entity
+            for old_id in merged.get('entity_ids_merged', []):
+                entity_id_mapping[old_id] = primary_id
+
         for relation in all_relations:
             existing_links = relation.get('metadata', {}).get('linked_entities', [])
 
-            # Check if LLM provided entity-name-based links (NEW format)
-            # Distinguish between entity_names (from LLM) and entity_ids (from old format)
-            # entity_id format: "entity-abc123..." (starts with "entity-")
-            # entity_name format: actual names like "CSE", "কম্পিউটার সায়েন্স", "180"
+            # CASE 1: Entity names from LLM (paragraph extraction)
+            # Format: ["CSE", "180", "কম্পিউটার সায়েন্স"]
             if existing_links and isinstance(existing_links[0], str) and not existing_links[0].startswith('entity-'):
-                # LLM provided entity_names - convert to entity_ids
+                # Convert entity_names → entity_ids
                 linked_entity_ids = []
                 for entity_name in existing_links:
                     entity_name_normalized = entity_name.strip().lower() if entity_name.strip().isascii() else entity_name.strip()
                     entity_id = entity_name_to_id.get(entity_name_normalized)
                     if entity_id:
-                        linked_entity_ids.append(entity_id)
-                        entities_linked += 1
+                        # Remap to primary ID (in case entity was merged)
+                        primary_id = entity_id_mapping.get(entity_id, entity_id)
+                        if primary_id not in linked_entity_ids:  # Prevent duplicates
+                            linked_entity_ids.append(primary_id)
+                            entities_linked += 1
                     else:
                         logger.debug(f"  → Entity name '{entity_name}' not found in merged entities (may have been filtered or merged)")
 
-                # Update metadata with converted entity_ids
+                # Update metadata with converted + remapped entity_ids
                 relation['metadata']['linked_entities'] = linked_entity_ids
                 relation['metadata']['linking_source'] = 'llm_extraction_converted'
                 relations_llm_linked += 1
                 continue
 
-            # Check if extractor provided entity-id-based links (OLD format - backward compatible)
+            # CASE 2: Entity IDs from extractors (table fact extraction)
+            # Format: ["entity-abc123", "entity-def456"]
             if existing_links:
+                # Remap old entity IDs → primary entity IDs
+                linked_entity_ids = []
+                for old_id in existing_links:
+                    primary_id = entity_id_mapping.get(old_id, old_id)
+                    if primary_id not in linked_entity_ids:  # Prevent duplicates
+                        linked_entity_ids.append(primary_id)
+                        if primary_id != old_id:
+                            relations_id_remapped += 1
+
                 # Verify entity IDs still exist after merge
                 entity_id_set = {e['entity_id'] for e in linked_entities}
-                valid_links = [eid for eid in existing_links if eid in entity_id_set]
+                valid_links = [eid for eid in linked_entity_ids if eid in entity_id_set]
 
-                if len(valid_links) != len(existing_links):
-                    logger.debug(f"  → Relation {relation.get('relation_id')}: {len(existing_links) - len(valid_links)} invalid entity IDs after merge")
+                if len(valid_links) != len(linked_entity_ids):
+                    logger.debug(f"  → Relation {relation.get('relation_id')}: {len(linked_entity_ids) - len(valid_links)} invalid entity IDs after merge")
 
-                # Keep existing links
+                # Update metadata with remapped entity_ids
+                relation['metadata']['linked_entities'] = valid_links
+                relation['metadata']['linking_source'] = 'entity_id_remapped'
                 entities_linked += len(valid_links)
                 continue
 
-            # No existing links - fallback to substring matching (e.g., synthetic relations)
+            # CASE 3: No existing links - fallback to substring matching (e.g., synthetic relations)
             relation_content = relation.get('content', '')
             linked_entity_ids = []
 
@@ -1728,7 +1758,7 @@ class BiGRAG:
             relation['metadata']['linking_source'] = 'post_merge_substring_fallback'
             relations_relinked += 1
 
-        logger.info(f"  → Verified {len(all_relations)} relations: {relations_llm_linked} LLM-linked, {relations_relinked} fallback-linked, {entities_linked} total entity links")
+        logger.info(f"  → Processed {len(all_relations)} relations: {relations_llm_linked} LLM-converted, {relations_id_remapped} ID-remapped, {relations_relinked} fallback-linked, {entities_linked} total links")
 
         # Step 7: Add hyper_relation to entities (bidirectional linking)
         logger.info(f"[7/9] Adding hyper_relation to entities...")

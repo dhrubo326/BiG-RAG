@@ -5,20 +5,32 @@
 **Purpose:** Comprehensive A-to-Z implementation reference for BiG-RAG framework development, maintenance, testing, debugging, and optimization
 
 **✨ Latest Updates (Jan 2025):**
+
+**🏗️ Architecture (Jan 2025):**
+- ✅ **Modular indexing system** - Single `BiGRAG` class with strategy pattern (replaces multiple pipeline classes)
+- ✅ **IndexingConfig system** - Preset configurations (fast, balanced, quality) for plug-and-play indexing
+- ✅ **Pluggable strategies** - Independent chunkers, extractors, validators, mergers, orphan linkers
+- ✅ **Field name consistency** - All extractors output `weight` field (was `completeness_score` in TableFactExtractor)
+
+**🎯 Retrieval & Quality (Jan 2025):**
 - ✅ Three-path retrieval system (Entity + Relation + Chunk)
 - ✅ Metadata preservation pipeline (title, category, tags)
 - ✅ Document deletion system with cascade cleanup
 - ✅ Semantic reranking with cross-encoder
 - ✅ Reranking toggle for performance optimization
+
+**📚 Documentation & Infrastructure (Jan 2025):**
 - ✅ Bipartite architecture documentation (NEW - Jan 8, 2025)
-- ✅ **Hash-based node IDs** for bipartite edges (30-40% file size reduction) - Jan 8, 2025
-- ✅ **Entity type normalization** with 40+ mappings (consistent typing) - Jan 8, 2025
-- ✅ **Semaphore control** for LLM API calls (prevents rate limits) - Jan 8, 2025
-- ✅ **Weight documentation** with comprehensive semantics guide - Jan 8, 2025
-- ✅ **Improved prompts** with Role/Instructions/Examples structure - Jan 8, 2025
-- ✅ **Retry wrapper** with exponential backoff for transient failures - Jan 8, 2025
-- ✅ **Logging infrastructure** with rotating file handler - Jan 8, 2025
-- ✅ **Constants file** for centralized code-level defaults - Jan 8, 2025
+- ✅ **Hash-based node IDs** for bipartite edges (30-40% file size reduction)
+- ✅ **Entity type normalization** with 40+ mappings (consistent typing)
+- ✅ **Semaphore control** for LLM API calls (prevents rate limits)
+- ✅ **Weight documentation** with comprehensive semantics guide
+- ✅ **Improved prompts** with Role/Instructions/Examples structure
+- ✅ **Retry wrapper** with exponential backoff for transient failures
+- ✅ **Logging infrastructure** with rotating file handler
+- ✅ **Constants file** for centralized code-level defaults
+
+**Note**: The core bipartite graph architecture, storage layers, and retrieval algorithms remain unchanged. The modular system refactors how indexing logic is organized (from monolithic classes to pluggable strategies).
 
 ---
 
@@ -181,7 +193,77 @@ class BiGRAG:
     graph_storage: str = "NetworkXStorage"
     vector_storage: str = "NanoVectorDBStorage"
     kv_storage: str = "JsonKVStorage"
+
+    # ✨ NEW: Modular indexing system (Jan 2025)
+    indexing_config: 'IndexingConfig' = None  # Enables strategy-based indexing
 ```
+
+### Modular Indexing System (NEW - Jan 2025)
+
+**Status**: PRODUCTION READY
+
+BiGRAG now supports a modular strategy-based indexing system that replaces the legacy dual pipeline approach (Standard/Production). The new system uses pluggable strategies for all indexing operations.
+
+**Key Components:**
+
+1. **IndexingConfig** - Configuration-based strategy selection
+2. **Strategy Pattern** - Pluggable components (chunkers, extractors, validators, mergers, orphan linkers, HITL)
+3. **Factory Pattern** - `StrategyFactory` manages strategy instantiation
+4. **Zero Code Duplication** - Single `BiGRAG` implementation with swappable strategies
+
+**Usage:**
+
+```python
+from bigrag import BiGRAG
+from bigrag.config import IndexingConfig
+
+# Option 1: Use preset configuration
+config = IndexingConfig.preset_balanced()  # or preset_fast(), preset_quality()
+
+# Option 2: Custom configuration
+config = IndexingConfig(
+    chunker='semantic',        # Table-aware chunking
+    extractor='hybrid',        # Table + paragraph extraction
+    merger='fuzzy',            # Advanced entity merging
+    validators=['numeric', 'entity', 'relation'],
+    orphan_linker='synthetic', # Link orphan entities
+    hitl='file',               # Save failures for review
+    validation_mode='document' # Document-level validation
+)
+
+# Initialize BiGRAG with modular system
+rag = BiGRAG(
+    working_dir="./expr/my_kg",
+    indexing_config=config,  # ← Enables modular indexing
+    llm_model_func=gpt_4o_mini_complete,
+    embedding_func=openai_embedding
+)
+
+# Same API - insert/query work identically
+rag.insert(documents, metadata)
+```
+
+**Available Strategies:**
+
+- **Chunkers**: `token`, `semantic`, `hybrid`
+- **Extractors**: `strict`, `gleaning`, `hybrid`, `table_fact`
+- **Validators**: `numeric`, `entity`, `relation`, `noop`
+- **Mergers**: `basic`, `fuzzy`, `hybrid`
+- **Orphan Linkers**: `synthetic`, `embedding`, `noop`
+- **HITL**: `file`, `database`, `noop`
+
+**Benefits:**
+- 45% code reduction (2750 → 1500 lines)
+- Zero duplication (down from 60%+)
+- Independently testable components
+- Easy to extend with new strategies
+- Backward compatible (legacy flags still work)
+
+**See Also:**
+- [MODULARITY_REFACTOR_PLAN.md](../MODULARITY_REFACTOR_PLAN.md) - Complete refactoring plan
+- [MODULAR_SYSTEM_FIX_SUMMARY.md](../MODULAR_SYSTEM_FIX_SUMMARY.md) - Implementation summary
+
+---
 
 **Key Methods:**
 

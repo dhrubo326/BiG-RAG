@@ -358,7 +358,11 @@ class BiGRAG:
             self.merger = strategies['merger']
             self.hitl = strategies['hitl']
             self.orphan_linker = strategies['orphan_linker']
-            logger.info(f"[BiGRAG] Strategies initialized: chunker={self.indexing_config.chunker}, extractor={self.indexing_config.extractor}, validators={self.indexing_config.validators}")
+            logger.info(f"[BiGRAG] Strategies initialized: chunking={self.indexing_config.chunking_strategy}, "
+                       f"extraction={self.indexing_config.extraction_strategy}, "
+                       f"numeric_val={self.indexing_config.enable_numeric_validation}, "
+                       f"entity_val={self.indexing_config.enable_entity_validation}, "
+                       f"relation_val={self.indexing_config.enable_relation_validation}")
         else:
             # Legacy mode: no strategies (backward compatible)
             self.chunker = None
@@ -523,10 +527,10 @@ class BiGRAG:
             # PRIORITY 1: Route to modular system if IndexingConfig provided
             if self.indexing_config:
                 logger.info(f"[Modular System] Using index_document() with IndexingConfig")
-                logger.info(f"[Modular System] Config: chunker={self.indexing_config.chunker}, "
-                           f"extractor={self.indexing_config.extractor}, "
-                           f"merger={self.indexing_config.merger}, "
-                           f"validators={self.indexing_config.validators}")
+                logger.info(f"[Modular System] Config: chunking={self.indexing_config.chunking_strategy}, "
+                           f"extraction={self.indexing_config.extraction_strategy}, "
+                           f"merging={self.indexing_config.enable_entity_merging}, "
+                           f"fuzzy={self.indexing_config.enable_fuzzy_matching}")
 
                 # Process each document through modular pipeline
                 for doc_key, doc in new_docs.items():
@@ -1561,6 +1565,17 @@ class BiGRAG:
         extractions = await self.extractor.extract(chunks, language=final_language)
         logger.info(f"  → Extracted {len(extractions.get('entities', []))} entities, {len(extractions.get('relations', []))} relations")
 
+        # DIAGNOSTIC: Check linked_entities after extraction
+        if extractions.get('relations'):
+            sample_relation = extractions['relations'][0]
+            sample_linked = sample_relation.get('metadata', {}).get('linked_entities', 'MISSING')
+            sample_source = sample_relation.get('metadata', {}).get('linking_source', 'MISSING')
+            logger.info(f"  → [DIAGNOSTIC] Sample relation after extraction:")
+            logger.info(f"     - relation_id: {sample_relation.get('relation_id', 'MISSING')}")
+            logger.info(f"     - content: {sample_relation.get('content', 'MISSING')[:50]}...")
+            logger.info(f"     - linked_entities: {sample_linked if isinstance(sample_linked, str) else sample_linked[:3] if sample_linked else 'EMPTY'}")
+            logger.info(f"     - linking_source: {sample_source}")
+
         # Step 3: Merge entities (Issue #1 fix - done before validation)
         # REASON: Validation should operate on merged entities for better accuracy
         # - Eliminates duplicate entity issues during validation
@@ -1626,6 +1641,18 @@ class BiGRAG:
         validated = await self.validator.validate(validation_input)
         logger.info(f"  → Validation status: {validated['summary']['status']}")
 
+        # DIAGNOSTIC: Check linked_entities after validation
+        if validated.get('relations'):
+            sample_relation = validated['relations'][0]
+            sample_linked = sample_relation.get('metadata', {}).get('linked_entities', 'MISSING')
+            sample_source = sample_relation.get('metadata', {}).get('linking_source', 'MISSING')
+            logger.info(f"  → [DIAGNOSTIC] Sample relation after validation:")
+            logger.info(f"     - relation_id: {sample_relation.get('relation_id', 'MISSING')}")
+            logger.info(f"     - content: {sample_relation.get('content', 'MISSING')[:50]}...")
+            logger.info(f"     - linked_entities: {sample_linked if isinstance(sample_linked, str) else sample_linked[:3] if sample_linked else 'EMPTY'}")
+            logger.info(f"     - linking_source: {sample_source}")
+            logger.info(f"  → [DIAGNOSTIC] Relations before validation: {len(all_relations)}, after validation: {len(validated['relations'])}")
+
         # Step 5: Handle HITL failures
         if validated.get('failed_chunks'):
             logger.info(f"[5/7] Saving {len(validated['failed_chunks'])} failed chunks to HITL...")
@@ -1681,8 +1708,20 @@ class BiGRAG:
             for old_id in merged.get('entity_ids_merged', []):
                 entity_id_mapping[old_id] = primary_id
 
+        # DIAGNOSTIC: Track CASE distribution
+        case1_count = 0
+        case2_count = 0
+        case3_count = 0
+
         for relation in all_relations:
             existing_links = relation.get('metadata', {}).get('linked_entities', [])
+
+            # DIAGNOSTIC: Log first few relations
+            if len(all_relations) <= 5 or relations_llm_linked + relations_id_remapped + case3_count < 3:
+                logger.info(f"  → [DIAGNOSTIC] Processing relation {relation.get('relation_id', 'UNKNOWN')[:16]}:")
+                logger.info(f"     - existing_links: {existing_links[:3] if existing_links else 'EMPTY'} (len={len(existing_links)})")
+                logger.info(f"     - first element type: {type(existing_links[0]).__name__ if existing_links else 'N/A'}")
+                logger.info(f"     - starts with 'entity-': {existing_links[0].startswith('entity-') if existing_links and isinstance(existing_links[0], str) else 'N/A'}")
 
             # CASE 1: Entity names from LLM (paragraph extraction)
             # Format: ["CSE", "180", "কম্পিউটার সায়েন্স"]
@@ -1705,6 +1744,8 @@ class BiGRAG:
                 relation['metadata']['linked_entities'] = linked_entity_ids
                 relation['metadata']['linking_source'] = 'llm_extraction_converted'
                 relations_llm_linked += 1
+                case1_count += 1
+                logger.debug(f"  → CASE 1: Converted {len(existing_links)} entity names to {len(linked_entity_ids)} entity IDs")
                 continue
 
             # CASE 2: Entity IDs from extractors (table fact extraction)
@@ -1730,6 +1771,8 @@ class BiGRAG:
                 relation['metadata']['linked_entities'] = valid_links
                 relation['metadata']['linking_source'] = 'entity_id_remapped'
                 entities_linked += len(valid_links)
+                case2_count += 1
+                logger.debug(f"  → CASE 2: Remapped {len(existing_links)} entity IDs to {len(valid_links)} valid IDs ({relations_id_remapped} remapped)")
                 continue
 
             # CASE 3: No existing links - fallback to substring matching (e.g., synthetic relations)
@@ -1757,7 +1800,12 @@ class BiGRAG:
             relation['metadata']['linked_entities'] = linked_entity_ids
             relation['metadata']['linking_source'] = 'post_merge_substring_fallback'
             relations_relinked += 1
+            case3_count += 1
+            logger.debug(f"  → CASE 3: Substring matched {len(linked_entity_ids)} entities for relation {relation.get('relation_id', 'UNKNOWN')[:16]}")
 
+        # DIAGNOSTIC: Verify counter correctness
+        logger.info(f"  → [DIAGNOSTIC] CASE distribution: CASE1={case1_count}, CASE2={case2_count}, CASE3={case3_count}, Total={len(all_relations)}")
+        logger.info(f"  → [DIAGNOSTIC] Counter verification: relations_llm_linked={relations_llm_linked}, relations_id_remapped={relations_id_remapped}, relations_relinked={relations_relinked}")
         logger.info(f"  → Processed {len(all_relations)} relations: {relations_llm_linked} LLM-converted, {relations_id_remapped} ID-remapped, {relations_relinked} fallback-linked, {entities_linked} total links")
 
         # Step 7: Add hyper_relation to entities (bidirectional linking)

@@ -56,7 +56,7 @@ class StrategyFactory:
         # Check registry for custom strategies
         from bigrag.registry import StrategyRegistry
         try:
-            custom_class = StrategyRegistry.get_chunker(config.chunker)
+            custom_class = StrategyRegistry.get_chunker(config.chunking_strategy)
             # Instantiate custom strategy (pass config for flexibility)
             return custom_class(
                 chunk_size=config.chunk_size,
@@ -67,16 +67,16 @@ class StrategyFactory:
             pass  # Not in registry, try built-in strategies
 
         # Built-in strategies
-        if config.chunker == "token":
+        if config.chunking_strategy == "token":
             from bigrag.strategies.chunking.token import TokenChunker
             return TokenChunker(
                 chunk_size=config.chunk_size,
                 overlap=config.chunk_overlap
             )
-        elif config.chunker == "semantic":
+        elif config.chunking_strategy == "semantic":
             from bigrag.strategies.chunking.semantic import SemanticChunker
             # NEW: Pass HITL handler if available
-            hitl_handler = StrategyFactory.create_hitl(config) if config.hitl != "noop" else None
+            hitl_handler = StrategyFactory.create_hitl(config) if config.enable_hitl else None
             return SemanticChunker(
                 api_key=config.openai_api_key,
                 chunk_size=config.chunk_size,
@@ -84,10 +84,10 @@ class StrategyFactory:
                 enable_table_detection=config.enable_table_detection,
                 hitl_handler=hitl_handler  # NEW: Issue #3
             )
-        elif config.chunker == "hybrid":
+        elif config.chunking_strategy == "hybrid":
             from bigrag.strategies.chunking.hybrid import HybridChunker
             # NEW: Pass HITL handler if available
-            hitl_handler = StrategyFactory.create_hitl(config) if config.hitl != "noop" else None
+            hitl_handler = StrategyFactory.create_hitl(config) if config.enable_hitl else None
             return HybridChunker(
                 api_key=config.openai_api_key,
                 chunk_size=config.chunk_size,
@@ -96,131 +96,102 @@ class StrategyFactory:
                 hitl_handler=hitl_handler  # NEW: Issue #3
             )
         else:
-            raise ValueError(f"Unknown chunker: {config.chunker}. Register custom chunkers using StrategyRegistry.")
+            raise ValueError(f"Unknown chunking_strategy: {config.chunking_strategy}. Register custom chunkers using StrategyRegistry.")
 
     @staticmethod
     def create_extractor(config: IndexingConfig) -> ExtractorInterface:
         """Create extractor strategy from config."""
-        if config.extractor == "strict":
+        if config.extraction_strategy == "strict":
             from bigrag.strategies.extraction.strict import StrictExtractor
             return StrictExtractor(
                 api_key=config.openai_api_key,
                 concurrency=config.extraction_concurrency,
-                enable_validation='numeric' in config.validators
+                enable_validation=config.enable_numeric_validation
             )
-        elif config.extractor == "gleaning":
+        elif config.extraction_strategy == "gleaning":
             from bigrag.strategies.extraction.gleaning import GleaningExtractor
             return GleaningExtractor(
                 api_key=config.openai_api_key,
                 max_iterations=config.gleaning_iterations,
                 concurrency=config.extraction_concurrency,
-                enable_validation='numeric' in config.validators
+                enable_validation=config.enable_numeric_validation
             )
-        elif config.extractor == "hybrid":
+        elif config.extraction_strategy == "hybrid":
             from bigrag.strategies.extraction.hybrid import HybridExtractor
             # NEW: Pass HITL handler and enable_table_fact_extraction
-            hitl_handler = StrategyFactory.create_hitl(config) if config.hitl != "noop" else None
+            hitl_handler = StrategyFactory.create_hitl(config) if config.enable_hitl else None
             return HybridExtractor(
                 api_key=config.openai_api_key,
                 gleaning_iterations=config.gleaning_iterations,
                 concurrency=config.extraction_concurrency,
-                enable_validation='numeric' in config.validators,
+                enable_validation=config.enable_numeric_validation,
                 enable_table_fact_extraction=config.enable_table_fact_extraction,  # NEW: Issue #4
                 hitl_handler=hitl_handler  # NEW: Issue #7
             )
         else:
-            raise ValueError(f"Unknown extractor: {config.extractor}")
+            raise ValueError(f"Unknown extraction_strategy: {config.extraction_strategy}")
 
     @staticmethod
     def create_validator(config: IndexingConfig) -> ValidatorInterface:
-        """Create validator strategy from config."""
-        if not config.validators:
+        """Create validator strategy from config (NEW: uses boolean flags)."""
+        # Build list of validators based on boolean flags
+        validators = []
+
+        if config.enable_numeric_validation:
+            from bigrag.strategies.validation.numeric import NumericValidator
+            validators.append(NumericValidator(
+                api_key=config.gemini_api_key,
+                strictness=config.validation_strictness,
+                validation_mode=config.numeric_validation_mode
+            ))
+
+        if config.enable_entity_validation:
+            from bigrag.strategies.validation.entity import EntityValidator
+            validators.append(EntityValidator(strictness=config.validation_strictness))
+
+        if config.enable_relation_validation:
+            from bigrag.strategies.validation.relation import RelationValidator
+            validators.append(RelationValidator(strictness=config.validation_strictness))
+
+        # Return appropriate validator based on count
+        if not validators:
             from bigrag.strategies.validation.noop import NoOpValidator
             return NoOpValidator()
-
-        if len(config.validators) == 1:
-            # Single validator
-            if 'numeric' in config.validators:
-                from bigrag.strategies.validation.numeric import NumericValidator
-                return NumericValidator(
-                    api_key=config.gemini_api_key,
-                    strictness=config.validation_strictness,
-                    validation_mode=config.validation_mode  # NEW (Issue #2): Document-level validation
-                )
-            elif 'entity' in config.validators:
-                from bigrag.strategies.validation.entity import EntityValidator
-                return EntityValidator(strictness=config.validation_strictness)
-            elif 'relation' in config.validators:
-                from bigrag.strategies.validation.relation import RelationValidator
-                return RelationValidator(strictness=config.validation_strictness)
-            else:  # semantic (legacy)
-                from bigrag.strategies.validation.semantic import SemanticValidator
-                return SemanticValidator(strictness=config.validation_strictness)
+        elif len(validators) == 1:
+            return validators[0]
         else:
-            # Multiple validators - use composite
             from bigrag.strategies.validation.composite import CompositeValidator
-
-            validators = []
-            if 'numeric' in config.validators:
-                from bigrag.strategies.validation.numeric import NumericValidator
-                validators.append(NumericValidator(
-                    api_key=config.gemini_api_key,
-                    strictness=config.validation_strictness,
-                    validation_mode=config.validation_mode  # NEW (Issue #2): Document-level validation
-                ))
-            if 'entity' in config.validators:
-                from bigrag.strategies.validation.entity import EntityValidator
-                validators.append(EntityValidator(strictness=config.validation_strictness))
-            if 'relation' in config.validators:
-                from bigrag.strategies.validation.relation import RelationValidator
-                validators.append(RelationValidator(strictness=config.validation_strictness))
-            if 'semantic' in config.validators:
-                # Legacy: semantic validates both entity and relation
-                from bigrag.strategies.validation.semantic import SemanticValidator
-                validators.append(SemanticValidator(strictness=config.validation_strictness))
-
             return CompositeValidator(validators)
 
     @staticmethod
     def create_merger(config: IndexingConfig) -> MergerInterface:
-        """Create merger strategy from config."""
-        if config.merger == "basic":
+        """Create merger strategy from config (NEW: uses boolean flags)."""
+        if not config.enable_entity_merging:
+            from bigrag.strategies.merging.noop import NoOpMerger
+            return NoOpMerger()
+        elif config.enable_fuzzy_matching:
+            from bigrag.strategies.merging.fuzzy import FuzzyMerger
+            return FuzzyMerger(fuzzy_threshold=config.fuzzy_similarity_threshold)
+        else:
             from bigrag.strategies.merging.basic import BasicMerger
             return BasicMerger()
-        elif config.merger == "fuzzy":
-            from bigrag.strategies.merging.fuzzy import FuzzyMerger
-            return FuzzyMerger()
-        elif config.merger == "hybrid":
-            from bigrag.strategies.merging.hybrid import HybridMerger
-            return HybridMerger()
-        else:
-            raise ValueError(f"Unknown merger: {config.merger}")
 
     @staticmethod
     def create_hitl(config: IndexingConfig) -> HITLInterface:
-        """Create HITL strategy from config."""
-        if config.hitl == "noop":
+        """Create HITL strategy from config (NEW: uses boolean flag)."""
+        if not config.enable_hitl:
             from bigrag.strategies.hitl.noop import NoOpHITL
             return NoOpHITL()
-        elif config.hitl == "file":
-            from bigrag.strategies.hitl.file import FileHITL
-            return FileHITL(dataset_path=config.dataset_path)
-        elif config.hitl == "database":
-            # TODO: DatabaseHITL not yet implemented - fallback to FileHITL
-            # Future: Add bigrag/strategies/hitl/database.py with PostgreSQL/MongoDB support
-            from bigrag.strategies.hitl.file import FileHITL
-            return FileHITL(dataset_path=config.dataset_path)
         else:
-            raise ValueError(f"Unknown hitl: {config.hitl}. Valid options: noop, file, database (not yet implemented)")
+            from bigrag.strategies.hitl.file import FileHITL
+            return FileHITL(dataset_path=config.dataset_path)
 
     @staticmethod
     def create_orphan_linker(config: IndexingConfig) -> OrphanLinkerInterface:
-        """Create orphan linker strategy from config."""
-        if config.orphan_linker == "noop":
+        """Create orphan linker strategy from config (NEW: uses boolean flag)."""
+        if not config.enable_orphan_linking:
             from bigrag.strategies.orphan_linking.noop import NoOpOrphanLinker
             return NoOpOrphanLinker()
-        elif config.orphan_linker == "synthetic":
+        else:
             from bigrag.strategies.orphan_linking.synthetic import SyntheticOrphanLinker
             return SyntheticOrphanLinker()
-        else:
-            raise ValueError(f"Unknown orphan_linker: {config.orphan_linker}")

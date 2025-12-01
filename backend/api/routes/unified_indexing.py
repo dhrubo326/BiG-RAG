@@ -14,9 +14,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Background
 from pydantic import BaseModel
 
 from bigrag.utils import logger
-from bigrag.pipeline.features import PipelineFeatures  # OLD: For backward compatibility
-from bigrag.migration import migrate_pipeline_features  # NEW: Migration helper
-from bigrag.config import IndexingConfig  # NEW: Modular system
+from bigrag.config import IndexingConfig  # NEW: 16 independent features
 from bigrag import BiGRAG
 from ..services.utils import process_markdown, validate_file_upload, truncate_text
 from ..services.kg_utils import compute_doc_id, add_document_to_corpus
@@ -59,54 +57,103 @@ async def index_document_with_features(
     metadata: str = Form(None, description="JSON metadata"),
     process_async: bool = Form(True, description="Process in background"),
 
-    # Chunking features
-    need_table_extraction: bool = Form(False, description="Extract tables with GPT-4"),
-    need_dynamic_chunking: bool = Form(False, description="Semantic vs token chunking"),
+    # ========================================
+    # GROUP A: CHUNKING FEATURES (2 features)
+    # ========================================
+    chunking_strategy: str = Form("semantic", description="Chunking: 'token' (fast) | 'semantic' (accurate)"),
+    enable_table_detection: bool = Form(True, description="GPT-4 table extraction (requires API key)"),
 
-    # Extraction features
-    need_gleaning: bool = Form(False, description="Multi-pass extraction"),
-    gleaning_iterations: int = Form(2, description="Gleaning passes"),
-    need_table_fact_extraction: bool = Form(False, description="Rule-based table facts"),
-    extraction_concurrency: int = Form(16, description="Parallel LLM calls"),
+    # ========================================
+    # GROUP B: EXTRACTION FEATURES (4 features)
+    # ========================================
+    extraction_strategy: str = Form("gleaning", description="Extraction: 'strict' (single-pass) | 'gleaning' (multi-pass)"),
+    enable_table_fact_extraction: bool = Form(False, description="Rule-based table→facts (requires table detection)"),
+    enable_multilingual: bool = Form(True, description="Multilingual extraction support"),
 
-    # Validation features
-    need_numeric_validation: bool = Form(False, description="Validate numeric accuracy"),
-    need_semantic_validation: bool = Form(False, description="Filter low-quality entities"),
-    validation_strictness: str = Form("MODERATE", description="STRICT|MODERATE|LENIENT"),
+    # ========================================
+    # GROUP C: VALIDATION FEATURES (3 features)
+    # ========================================
+    enable_numeric_validation: bool = Form(False, description="Gemini numeric validation (expensive)"),
+    enable_entity_validation: bool = Form(True, description="Entity quality validation (cheap)"),
+    enable_relation_validation: bool = Form(True, description="Relation validation (cheap)"),
 
-    # Merging features
-    merge_strategy: str = Form("basic", description="basic|fuzzy|hybrid"),
+    # ========================================
+    # GROUP D: MERGING FEATURES (2 features)
+    # ========================================
+    enable_entity_merging: bool = Form(True, description="Enable entity deduplication"),
+    enable_fuzzy_matching: bool = Form(True, description="Fuzzy string matching for merging"),
 
-    # Quality features
-    enable_hitl: bool = Form(False, description="Human-in-the-loop"),
-    enable_orphan_linking: bool = Form(False, description="Link orphan entities"),
-    enable_quality_scoring: bool = Form(False, description="Track quality metrics")
+    # ========================================
+    # GROUP E: QUALITY FEATURES (3 features)
+    # ========================================
+    enable_hitl: bool = Form(True, description="Human-in-the-loop failure tracking"),
+    enable_orphan_linking: bool = Form(True, description="Link orphan entities"),
+    enable_quality_scoring: bool = Form(True, description="Track quality metrics"),
+
+    # ========================================
+    # PARAMETERS (not features)
+    # ========================================
+    # Chunking parameters
+    chunk_size: int = Form(1200, description="Chunk size in tokens"),
+    chunk_overlap: int = Form(100, description="Overlap between chunks"),
+
+    # Extraction parameters
+    gleaning_iterations: int = Form(2, description="Gleaning passes (if extraction_strategy='gleaning')"),
+    extraction_concurrency: int = Form(16, description="Max concurrent LLM calls"),
+
+    # Validation parameters
+    validation_strictness: str = Form("MODERATE", description="STRICT (99%) | MODERATE (95%) | LENIENT (80%)"),
+    numeric_validation_mode: str = Form("document", description="chunk | document (if numeric validation enabled)"),
+
+    # Merging parameters
+    fuzzy_similarity_threshold: float = Form(0.9, description="Fuzzy match threshold 0-1 (if fuzzy matching enabled)")
 ):
     """
-    Index document with explicit feature control (13 granular flags).
+    Index document with explicit feature control (16 independent features).
 
-    **Architecture**: Uses NEW modular indexing system under the hood (IndexingConfig + BiGRAG).
-    Old PipelineFeatures are automatically migrated to IndexingConfig during processing.
+    **NEW (January 2025)**: Updated to 16 independent boolean features with clear
+    separation from configuration parameters.
 
-    **No presets needed** - just enable features you want!
+    **Architecture**: Uses modular indexing system (IndexingConfig + BiGRAG).
+    All features are independent with explicit dependency validation.
 
-    Example (Fast & Cheap):
+    **Feature Groups**:
+    - Group A: Chunking (2 features) - How documents are split
+    - Group B: Extraction (4 features) - How entities/relations are extracted
+    - Group C: Validation (3 features) - What validations are applied
+    - Group D: Merging (2 features) - How duplicates are merged
+    - Group E: Quality (3 features) - Quality tracking and HITL
+
+    Example 1 (Fast & Cheap - Default):
     ```bash
     curl -X POST "http://localhost:8001/indexing/index-document" \\
       -F "file=@doc.md" \\
       -F "data_source=my_data"
-      # All defaults = fast, basic extraction
+      # Defaults: semantic chunking + table detection + gleaning + entity/relation validation
     ```
 
-    Example (High Quality):
+    Example 2 (Maximum Speed - Token Chunking):
     ```bash
     curl -X POST "http://localhost:8001/indexing/index-document" \\
       -F "file=@doc.md" \\
       -F "data_source=my_data" \\
-      -F "need_table_extraction=true" \\
-      -F "need_gleaning=true" \\
-      -F "need_numeric_validation=true" \\
-      -F "merge_strategy=fuzzy"
+      -F "chunking_strategy=token" \\
+      -F "enable_table_detection=false" \\
+      -F "extraction_strategy=strict" \\
+      -F "enable_fuzzy_matching=false"
+    ```
+
+    Example 3 (Maximum Quality - All Features):
+    ```bash
+    curl -X POST "http://localhost:8001/indexing/index-document" \\
+      -F "file=@doc.md" \\
+      -F "data_source=my_data" \\
+      -F "chunking_strategy=semantic" \\
+      -F "enable_table_detection=true" \\
+      -F "extraction_strategy=gleaning" \\
+      -F "enable_table_fact_extraction=true" \\
+      -F "enable_numeric_validation=true" \\
+      -F "enable_fuzzy_matching=true"
     ```
     """
     try:
@@ -143,44 +190,48 @@ async def index_document_with_features(
             except json.JSONDecodeError:
                 raise HTTPException(status_code=400, detail="Invalid JSON metadata")
 
-        # Step 4: Build PipelineFeatures from form parameters
-        features = PipelineFeatures(
-            # Chunking
-            enable_table_detection=need_table_extraction,
-            chunk_mode="semantic" if need_dynamic_chunking else "token",
-            chunk_size=1200,
-            chunk_overlap=100,
+        # Step 4: Build IndexingConfig directly from form parameters (NEW - 16 independent features)
+        indexing_config = IndexingConfig(
+            # Group A: Chunking
+            chunking_strategy=chunking_strategy,
+            enable_table_detection=enable_table_detection,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
 
-            # Extraction
-            enable_gleaning=need_gleaning,
-            max_gleaning_iterations=gleaning_iterations if need_gleaning else 1,
-            enable_table_fact_extraction=need_table_fact_extraction,
+            # Group B: Extraction
+            extraction_strategy=extraction_strategy,
+            enable_table_fact_extraction=enable_table_fact_extraction,
+            enable_multilingual=enable_multilingual,
+            gleaning_iterations=gleaning_iterations,
             extraction_concurrency=extraction_concurrency,
 
-            # Validation
-            enable_numeric_validation=need_numeric_validation,
-            enable_entity_validation=need_semantic_validation,
-            enable_relation_validation=need_semantic_validation,
+            # Group C: Validation
+            enable_numeric_validation=enable_numeric_validation,
+            enable_entity_validation=enable_entity_validation,
+            enable_relation_validation=enable_relation_validation,
             validation_strictness=validation_strictness,
+            numeric_validation_mode=numeric_validation_mode,
 
-            # Merging
-            merge_strategy=merge_strategy,
-            enable_entity_merging=True,  # Always merge
+            # Group D: Merging
+            enable_entity_merging=enable_entity_merging,
+            enable_fuzzy_matching=enable_fuzzy_matching,
+            fuzzy_similarity_threshold=fuzzy_similarity_threshold,
 
-            # Quality
+            # Group E: Quality
             enable_hitl=enable_hitl,
             enable_orphan_linking=enable_orphan_linking,
             enable_quality_scoring=enable_quality_scoring,
 
             # API Keys
             openai_api_key=os.getenv('OPENAI_API_KEY'),
-            gemini_api_key=os.getenv('GEMINI_API_KEY')
+            gemini_api_key=os.getenv('GEMINI_API_KEY'),
+
+            # Dataset path (for HITL)
+            dataset_path=os.path.join(os.getenv('WORKING_DIR', './expr'), data_source)
         )
 
-        # Validate features
-        warnings = features.validate()
-        if warnings:
-            logger.warning(f"[Indexing] Feature warnings: {warnings}")
+        # Validation happens in IndexingConfig.__post_init__() automatically
+        # Any dependency errors will raise ValueError with clear message
 
         # Step 5: Ensure dataset exists
         PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
@@ -216,7 +267,7 @@ async def index_document_with_features(
         )
 
         # Step 9: Estimate time and cost
-        estimated_time, estimated_cost = _estimate_time_cost(features, len(content_text))
+        estimated_time, estimated_cost = _estimate_time_cost(indexing_config, len(content_text))
 
         # Step 10: Process document
         if process_async:
@@ -228,7 +279,7 @@ async def index_document_with_features(
                 content_text,
                 doc_title,
                 doc_metadata,
-                features
+                indexing_config
             )
             status = "processing"
             logger.info(f"[Indexing] Queued job: {job_id}")
@@ -240,7 +291,7 @@ async def index_document_with_features(
                 content_text,
                 doc_title,
                 doc_metadata,
-                features
+                indexing_config
             )
             status = "completed"
             logger.info(f"[Indexing] Completed synchronously")
@@ -260,14 +311,24 @@ async def index_document_with_features(
             metadata=doc_metadata,
             upload_date=datetime.now().isoformat(),
             features_enabled={
-                "table_extraction": need_table_extraction,
-                "dynamic_chunking": need_dynamic_chunking,
-                "gleaning": need_gleaning,
-                "table_fact_extraction": need_table_fact_extraction,
-                "numeric_validation": need_numeric_validation,
-                "semantic_validation": need_semantic_validation,
-                "merge_strategy": merge_strategy,
-                "hitl": enable_hitl
+                # Group A: Chunking
+                "chunking_strategy": chunking_strategy,
+                "table_detection": enable_table_detection,
+                # Group B: Extraction
+                "extraction_strategy": extraction_strategy,
+                "table_fact_extraction": enable_table_fact_extraction,
+                "multilingual": enable_multilingual,
+                # Group C: Validation
+                "numeric_validation": enable_numeric_validation,
+                "entity_validation": enable_entity_validation,
+                "relation_validation": enable_relation_validation,
+                # Group D: Merging
+                "entity_merging": enable_entity_merging,
+                "fuzzy_matching": enable_fuzzy_matching,
+                # Group E: Quality
+                "hitl": enable_hitl,
+                "orphan_linking": enable_orphan_linking,
+                "quality_scoring": enable_quality_scoring
             },
             estimated_time=estimated_time,
             estimated_cost=estimated_cost
@@ -288,13 +349,12 @@ async def _process_with_bigrag(
     content: str,
     title: str,
     metadata: Dict[str, Any],
-    features: PipelineFeatures  # OLD: Still accepts PipelineFeatures for backward compatibility
+    config: IndexingConfig  # NEW: Accepts IndexingConfig directly
 ) -> Dict[str, Any]:
     """
-    Process document using BiGRAG with NEW modular indexing system.
+    Process document using BiGRAG with modular indexing system.
 
-    UPDATED (January 2025): Now uses IndexingConfig + modular strategies instead of
-    the old EnhancedKGPipeline. Old PipelineFeatures are automatically migrated.
+    UPDATED (January 2025): Now uses IndexingConfig directly with 16 independent features.
 
     Args:
         working_dir: Absolute path to dataset directory (e.g., D:/BiG-RAG/expr/kuet_test)
@@ -303,35 +363,36 @@ async def _process_with_bigrag(
         content: Document content (markdown text)
         title: Document title
         metadata: Document metadata dict
-        features: Pipeline feature configuration (OLD - will be migrated to IndexingConfig)
+        config: IndexingConfig with 16 independent features
 
     Returns:
         Dict with processing result
 
     Architecture:
-        1. Migrate PipelineFeatures → IndexingConfig (automatic)
+        1. Ensure dataset path is set in config
         2. Initialize BiGRAG with modular system
-        3. Use index_document() method (new modular pipeline)
+        3. Use index_document() method (modular pipeline)
         4. Return success
     """
     try:
-        logger.info(f"[Indexing] Processing {document_id} with NEW modular system")
+        logger.info(f"[Indexing] Processing {document_id} with modular system (16 features)")
         logger.debug(f"[Indexing] Working directory: {working_dir}")
 
-        # STEP 1: Migrate old features to new config
-        logger.debug("[Indexing] Migrating PipelineFeatures → IndexingConfig")
-        config = migrate_pipeline_features(features)
-        config.dataset_path = working_dir  # Ensure dataset path is set
+        # STEP 1: Ensure dataset path is set
+        config.dataset_path = working_dir
 
-        logger.info(f"[Indexing] Modular config: chunker={config.chunker}, extractor={config.extractor}, validators={config.validators}")
+        logger.info(f"[Indexing] Config: chunking={config.chunking_strategy}, extraction={config.extraction_strategy}")
+        logger.info(f"[Indexing] Features: table_detect={config.enable_table_detection}, "
+                   f"numeric_val={config.enable_numeric_validation}, "
+                   f"fuzzy={config.enable_fuzzy_matching}")
 
-        # STEP 2: Initialize BiGRAG with NEW modular system
+        # STEP 2: Initialize BiGRAG with modular system
         rag = BiGRAG(
             working_dir=working_dir,
-            indexing_config=config  # NEW: Use IndexingConfig (not pipeline_features)
+            indexing_config=config
         )
 
-        # STEP 3: Index document using NEW modular pipeline
+        # STEP 3: Index document using modular pipeline
         result = await rag.index_document(
             text=content,
             metadata={
@@ -359,22 +420,39 @@ async def _process_with_bigrag(
         raise
 
 
-def _estimate_time_cost(features: PipelineFeatures, content_length: int) -> tuple:
-    """Estimate processing time and cost."""
+def _estimate_time_cost(config: IndexingConfig, content_length: int) -> tuple:
+    """
+    Estimate processing time and cost based on enabled features.
+
+    Args:
+        config: IndexingConfig with 16 independent features
+        content_length: Document length in characters
+
+    Returns:
+        Tuple of (time_str, cost_str)
+    """
     base_time = 30  # seconds
     base_cost = 0.05  # USD
 
-    if features.enable_table_detection:
+    # Table detection (if enabled)
+    if config.enable_table_detection:
         base_time += 30
         base_cost += 0.05
 
-    if features.enable_gleaning:
-        base_time += 60 * features.max_gleaning_iterations
-        base_cost += 0.10 * features.max_gleaning_iterations
+    # Gleaning extraction (if multi-pass)
+    if config.extraction_strategy == "gleaning":
+        base_time += 60 * config.gleaning_iterations
+        base_cost += 0.10 * config.gleaning_iterations
 
-    if features.enable_numeric_validation:
+    # Numeric validation (expensive)
+    if config.enable_numeric_validation:
         base_time += 20
         base_cost += 0.05
+
+    # Fuzzy matching (adds processing time)
+    if config.enable_fuzzy_matching:
+        base_time += 10
+        base_cost += 0.02
 
     # Scale by document size
     scale = content_length / 40000

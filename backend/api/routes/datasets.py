@@ -303,7 +303,7 @@ async def create_and_index_document(
             status="pending"
         )
 
-        # Step 9: Build IndexingConfig from preset + overrides
+        # Step 9: Build IndexingConfig from preset + overrides (NEW: 16-feature system)
         import os
         from bigrag import BiGRAG
         from bigrag.config import IndexingConfig
@@ -331,18 +331,25 @@ async def create_and_index_document(
                 dataset_path=working_dir
             )
 
-        # Apply overrides (if provided)
+        # Apply overrides (if provided) - Map old names to new 16-feature system
         if chunker:
-            indexing_config.chunker = chunker
-            logger.info(f"[Create-and-Index] Override: chunker={chunker}")
+            # OLD: chunker="semantic" → NEW: chunking_strategy="semantic"
+            indexing_config.chunking_strategy = chunker
+            logger.info(f"[Create-and-Index] Override: chunking_strategy={chunker}")
         if extractor:
-            indexing_config.extractor = extractor
-            logger.info(f"[Create-and-Index] Override: extractor={extractor}")
+            # OLD: extractor="gleaning" → NEW: extraction_strategy="gleaning"
+            indexing_config.extraction_strategy = extractor
+            logger.info(f"[Create-and-Index] Override: extraction_strategy={extractor}")
         if validators is not None:  # Allow empty string to disable
-            indexing_config.validators = validators.split(',') if validators else []
-            logger.info(f"[Create-and-Index] Override: validators={indexing_config.validators}")
+            # OLD: validators=["numeric","semantic"] → NEW: enable_numeric_validation, enable_entity_validation
+            validator_list = validators.split(',') if validators else []
+            indexing_config.enable_numeric_validation = 'numeric' in validator_list
+            indexing_config.enable_entity_validation = 'semantic' in validator_list or 'entity' in validator_list
+            indexing_config.enable_relation_validation = 'semantic' in validator_list or 'relation' in validator_list
+            logger.info(f"[Create-and-Index] Override: validators={validator_list}")
         if merger:
-            indexing_config.merger = merger
+            # OLD: merger="fuzzy" → NEW: enable_fuzzy_matching=True
+            indexing_config.enable_fuzzy_matching = (merger in ['fuzzy', 'hybrid'])
             logger.info(f"[Create-and-Index] Override: merger={merger}")
         if validation_strictness:
             indexing_config.validation_strictness = validation_strictness
@@ -353,7 +360,9 @@ async def create_and_index_document(
             working_dir=working_dir,
             indexing_config=indexing_config
         )
-        logger.info(f"[Create-and-Index] Modular system initialized: chunker={indexing_config.chunker}, extractor={indexing_config.extractor}, validators={indexing_config.validators}")
+        logger.info(f"[Create-and-Index] Initialized (16 features): chunking={indexing_config.chunking_strategy}, "
+                   f"extraction={indexing_config.extraction_strategy}, "
+                   f"numeric_val={indexing_config.enable_numeric_validation}")
 
         # Step 10: Create processing job
         job = ProcessingJob(
@@ -380,7 +389,7 @@ async def create_and_index_document(
                 metadata=doc_metadata,
                 language=language
             )
-            message = f"Document queued for indexing in dataset '{data_source}' (preset: {preset}, chunker: {indexing_config.chunker}, extractor: {indexing_config.extractor}, language: {language})"
+            message = f"Document queued for indexing in dataset '{data_source}' (preset: {preset}, chunking: {indexing_config.chunking_strategy}, extraction: {indexing_config.extraction_strategy}, language: {language})"
         else:
             await process_document_background(
                 job_id=job_id,
@@ -392,7 +401,7 @@ async def create_and_index_document(
                 metadata=doc_metadata,
                 language=language
             )
-            message = f"Document indexed in dataset '{data_source}' (preset: {preset}, chunker: {indexing_config.chunker}, extractor: {indexing_config.extractor}, language: {language})"
+            message = f"Document indexed in dataset '{data_source}' (preset: {preset}, chunking: {indexing_config.chunking_strategy}, extraction: {indexing_config.extraction_strategy}, language: {language})"
 
         # Step 12: Reload registry in unified executor (if dataset was just added)
         if dataset_info["registry_updated"]:

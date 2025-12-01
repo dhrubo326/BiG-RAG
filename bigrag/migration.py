@@ -68,15 +68,28 @@ def migrate_pipeline_features(features) -> IndexingConfig:
         enable_orphan_linking=getattr(features, 'enable_orphan_linking', True)
     )
 
-    # Create IndexingConfig with mapped settings
+    # Create IndexingConfig with NEW field names (16 features)
     return IndexingConfig(
-        chunker=chunker,
-        extractor=extractor,
-        validators=validators,
-        merger=merger,
-        hitl=hitl,
-        orphan_linker=orphan_linker,
-        # Parameters
+        # NEW: Map old strategy strings to new field names
+        chunking_strategy=chunker,
+        extraction_strategy=extractor,
+
+        # NEW: Map old validators list to 3 boolean flags
+        enable_numeric_validation=('numeric' in validators),
+        enable_entity_validation=('entity' in validators or 'semantic' in validators),
+        enable_relation_validation=('relation' in validators or 'semantic' in validators),
+
+        # NEW: Map old merger string to 2 boolean flags
+        enable_entity_merging=(merger != "noop"),
+        enable_fuzzy_matching=(merger in ['fuzzy', 'hybrid']),
+
+        # NEW: Map old HITL string to boolean flag
+        enable_hitl=(hitl != "noop"),
+
+        # NEW: Map old orphan_linker string to boolean flag
+        enable_orphan_linking=(orphan_linker != "noop"),
+
+        # Parameters (unchanged)
         chunk_size=getattr(features, 'chunk_size', 1200),
         chunk_overlap=getattr(features, 'chunk_overlap', 100),
         gleaning_iterations=getattr(features, 'gleaning_iterations', 2),
@@ -224,14 +237,18 @@ def config_to_features_dict(config: IndexingConfig) -> dict:
     Convert IndexingConfig back to feature flag dict (for comparison).
 
     Useful for testing migration correctness.
+    NEW: Uses new 16-feature field names.
     """
     return {
-        'chunker': config.chunker,
-        'extractor': config.extractor,
-        'validators': config.validators,
-        'merger': config.merger,
-        'hitl': config.hitl,
-        'orphan_linker': config.orphan_linker,
+        'chunking_strategy': config.chunking_strategy,
+        'extraction_strategy': config.extraction_strategy,
+        'enable_numeric_validation': config.enable_numeric_validation,
+        'enable_entity_validation': config.enable_entity_validation,
+        'enable_relation_validation': config.enable_relation_validation,
+        'enable_entity_merging': config.enable_entity_merging,
+        'enable_fuzzy_matching': config.enable_fuzzy_matching,
+        'enable_hitl': config.enable_hitl,
+        'enable_orphan_linking': config.enable_orphan_linking,
         'chunk_size': config.chunk_size,
         'chunk_overlap': config.chunk_overlap,
         'gleaning_iterations': config.gleaning_iterations,

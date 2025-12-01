@@ -406,7 +406,29 @@ class ConstrainedLLMExtractor:
 
         prompt = f"""You are an ULTRA-PRECISE entity and relation extractor for academic admission documents.
 
-TASK: Extract entities and knowledge segments from this paragraph with EXPLICIT ENTITY-RELATION LINKS.
+TASK: Extract entities and knowledge segments from this TEXT with EXPLICIT ENTITY-RELATION LINKS.
+
+CONTENT TYPE DETECTION - READ THIS FIRST:
+╔══════════════════════════════════════════════════════════════════════╗
+║ If text contains TABLES: Extract each row as a separate relation    ║
+║ If text is NARRATIVE/PARAGRAPH: Focus on extracting RELATIONSHIPS   ║
+║                                                                      ║
+║ For PARAGRAPHS (CRITICAL):                                          ║
+║ ✅ GOOD: "KUET requires candidates to have 4.00 GPA in SSC and HSC" ║
+║ ❌ BAD: "৪.০০" alone (entity mention without relationship context)  ║
+║                                                                      ║
+║ Extract complete knowledge segments describing RELATIONSHIPS/FACTS  ║
+║ NOT just entity mentions!                                           ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+CRITICAL EXTRACTION RULE (MANDATORY):
+1. Extract ONE relation (knowledge segment with relationships)
+2. IMMEDIATELY identify ALL entities mentioned in that relation
+3. Add those entity_names to "linked_entities" array for that relation
+4. Move to next relation
+
+DO NOT extract all relations first then entities later!
+Each relation MUST have complete entity coverage in linked_entities.
 
 CRITICAL CONSTRAINTS (ZERO TOLERANCE):
 1. Extract ONLY what is EXPLICITLY mentioned in text (no inference)
@@ -416,11 +438,15 @@ CRITICAL CONSTRAINTS (ZERO TOLERANCE):
    - DO NOT convert Bangla to English
    - DO NOT round or approximate
 3. Output language: {language}
-4. Completeness score (0-10):
-   - 10: Complete, self-contained knowledge
+4. Completeness score (0-10) - REVISED FOR RELATIONSHIPS:
+   - 10: Complete knowledge segment with RELATIONSHIPS (e.g., "X requires Y", "A has B")
    - 7-9: Mostly complete, minor context missing
-   - 5-6: Partial information
-   - 0-4: Fragment or unclear
+   - 5-6: Partial information OR entity mention without clear relationship
+   - 0-4: Fragment, unclear, or entity-only mention
+
+   IMPORTANT: Single entity mentions without relationships should score ≤6
+   Example: "৪.০০ is a GPA value" → score 5 (entity mention, no relationship)
+   Example: "KUET requires ৪.০০ GPA in SSC" → score 10 (complete relationship)
 
 {context_info}
 
@@ -452,10 +478,41 @@ OUTPUT FORMAT (JSON only):
   ]
 }}
 
+EXAMPLE - Dense Paragraph (Admission Requirements):
+Input (Bengali):
+"খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ২০২৪-২০২৫ শিক্ষাবর্ষে ভর্তির জন্য প্রার্থীদের এস.এস.সি এবং এইচ.এস.সি পরীক্ষায় ন্যূনতম ৪.০০ GPA থাকতে হবে। মোট GPA ১৮.০০ এর কম হলে আবেদন করা যাবে না।"
+
+Output:
+{{
+  "entities": [
+    {{"entity_name": "খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়", "entity_type": "university", "description": "একটি প্রকৌশল বিশ্ববিদ্যালয়", "key_score": 95}},
+    {{"entity_name": "২০২৪-২০২৫", "entity_type": "academic_year", "description": "শিক্ষাবর্ষ", "key_score": 80}},
+    {{"entity_name": "৪.০০", "entity_type": "gpa_requirement", "description": "ন্যূনতম GPA প্রয়োজন", "key_score": 90}},
+    {{"entity_name": "এস.এস.সি", "entity_type": "exam", "description": "মাধ্যমিক পরীক্ষা", "key_score": 85}},
+    {{"entity_name": "এইচ.এস.সি", "entity_type": "exam", "description": "উচ্চ মাধ্যমিক পরীক্ষা", "key_score": 85}},
+    {{"entity_name": "১৮.০০", "entity_type": "gpa_requirement", "description": "মোট GPA প্রয়োজন", "key_score": 88}}
+  ],
+  "relations": [
+    {{
+      "content": "খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে ২০২৪-২০২৫ শিক্ষাবর্ষে ভর্তির জন্য প্রার্থীদের এস.এস.সি এবং এইচ.এস.সি পরীক্ষায় ন্যূনতম ৪.০০ GPA থাকতে হবে।",
+      "completeness_score": 10,
+      "linked_entities": ["খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়", "২০২৪-২০২৫", "৪.০০", "এস.এস.সি", "এইচ.এস.সি"]
+    }},
+    {{
+      "content": "মোট GPA ১৮.০০ এর কম হলে খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়ে আবেদন করা যাবে না।",
+      "completeness_score": 9,
+      "linked_entities": ["১৮.০০", "খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়"]
+    }}
+  ]
+}}
+
+✅ CORRECT: Each relation is a complete knowledge segment with explicit relationships
+❌ WRONG: {{"content": "৪.০০ is mentioned", "linked_entities": ["৪.০০"]}} (too generic, score ≤6)
+
 ENTITY TYPES (educational domain):
 - department, faculty, university
 - department_code, seat_count, number
-- gpa_requirement, eligibility
+- gpa_requirement, eligibility, academic_year, exam
 - fee, deadline, time, event, location
 - person, organization, concept
 
@@ -470,8 +527,9 @@ IMPORTANT:
 - Output ONLY valid JSON (no commentary)
 - Include EVERY number mentioned in text
 - Do NOT add information not in text
-- Mark completeness honestly
+- Mark completeness honestly (use scoring guide above)
 - ALWAYS populate linked_entities for each relation (REQUIRED)
+- Focus on RELATIONSHIPS, not just entity enumeration
 """
         return prompt
 

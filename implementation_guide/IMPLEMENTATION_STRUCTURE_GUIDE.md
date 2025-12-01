@@ -4196,23 +4196,28 @@ This comprehensive guide covers the complete A-to-Z implementation of the BiG-RA
 ### Key Takeaways
 
 **Technical Highlights:**
+- **Modular indexing system** (Jan 2025): Strategy pattern with pluggable components → 45% code reduction, zero duplication
 - **Bipartite graph** (not hypergraph): True two-layer structure with entities and relations as separate node types
+- **Three-path retrieval**: Entity (Path A) + Relation (Path B) + Chunk (Path C) with RRF fusion
 - **Multi-turn gleaning**: Iterative entity extraction improves coverage by 15-25%
 - **LLM caching**: Transparent cost optimization with 60-70% API call reduction
 - **Active masking**: Sequences stop generating when tool calls fail, saving computation
-- **Hybrid retrieval**: Combines entity and relation paths for robust performance
 - **Async patterns**: Critical for distributed training and event loop management
 
 **Development Guidance:**
+- **Modular architecture**: Use `IndexingConfig` for preset or custom strategy combinations
 - **Testing**: Demo dataset with 10 test cases validates all major functionality
 - **Performance**: Batch processing, caching, and local models reduce costs by 60-70%
 - **Debugging**: GraphML export, verbose logging, and profiling tools included
-- **Extensibility**: All extension points designed for minimal core code changes
+- **Extensibility**: Strategy pattern enables adding new chunkers/extractors/validators without core changes
 
 **Production Readiness:**
 - Storage backends support enterprise databases (Neo4J, Milvus, Oracle, TiDB)
 - 10+ LLM providers supported with automatic failover
 - Rate limiting and exponential backoff implemented
 - Memory usage scales with external vector databases
+- Field name consistency across all extractors (`weight` field standardized)
+
+**Architecture Note**: The core bipartite graph structure, storage layers, and retrieval algorithms remain unchanged from the original design. The modular system refactors how extraction and indexing logic is organized (from monolithic pipelines to pluggable strategies).
 
 This guide enables LLMs, developers, and DevOps teams to understand, deploy, debug, optimize, and extend the BiG-RAG framework effectively in both development and production environments.

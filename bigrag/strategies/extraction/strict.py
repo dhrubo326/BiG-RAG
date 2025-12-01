@@ -72,10 +72,21 @@ class StrictExtractor(ExtractorInterface):
                     relation_id = compute_mdhash_id(relation.get('content', '').strip(), prefix=RELATION_PREFIX)
                     relation['relation_id'] = relation_id
 
-                # CRITICAL: Initialize linked_entities (will be populated in post-merge linking)
+                # CRITICAL: Populate linked_entities from LLM output (NEW - entity-relation linking)
+                # LLM now outputs linked_entities array with entity_name values
                 if 'metadata' not in relation:
                     relation['metadata'] = {}
-                relation['metadata']['linked_entities'] = []
+
+                # Extract linked_entities from LLM output (if provided)
+                linked_entities_from_llm = relation.get('linked_entities', [])
+                if linked_entities_from_llm:
+                    # LLM provided entity names - store in metadata
+                    relation['metadata']['linked_entities'] = linked_entities_from_llm
+                    relation['metadata']['linking_source'] = 'llm_extraction'
+                else:
+                    # LLM didn't provide links - will be populated in Step 6.5 (post-merge linking)
+                    relation['metadata']['linked_entities'] = []
+                    relation['metadata']['linking_source'] = 'post_merge_fallback'
 
                 all_relations.append(relation)
                 chunk_relations.append(relation)

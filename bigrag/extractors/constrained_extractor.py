@@ -406,7 +406,7 @@ class ConstrainedLLMExtractor:
 
         prompt = f"""You are an ULTRA-PRECISE entity and relation extractor for academic admission documents.
 
-TASK: Extract entities and knowledge segments from this paragraph.
+TASK: Extract entities and knowledge segments from this paragraph with EXPLICIT ENTITY-RELATION LINKS.
 
 CRITICAL CONSTRAINTS (ZERO TOLERANCE):
 1. Extract ONLY what is EXPLICITLY mentioned in text (no inference)
@@ -435,28 +435,43 @@ OUTPUT FORMAT (JSON only):
       "entity_type": "department",
       "description": "একটি প্রকৌশল বিভাগ",
       "key_score": 90
+    }},
+    {{
+      "entity_name": "১২০",
+      "entity_type": "number",
+      "description": "আসন সংখ্যা",
+      "key_score": 85
     }}
   ],
   "relations": [
     {{
       "content": "কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং বিভাগে ১২০টি আসন রয়েছে।",
-      "completeness_score": 10
+      "completeness_score": 10,
+      "linked_entities": ["কম্পিউটার সায়েন্স এন্ড ইঞ্জিনিয়ারিং", "১২০"]
     }}
   ]
 }}
 
 ENTITY TYPES (educational domain):
 - department, faculty, university
-- department_code, seat_count
+- department_code, seat_count, number
 - gpa_requirement, eligibility
 - fee, deadline, time, event, location
 - person, organization, concept
+
+CRITICAL - ENTITY-RELATION LINKING:
+- EVERY relation MUST include a "linked_entities" array
+- "linked_entities" contains the EXACT entity_name values of ALL entities mentioned in that relation
+- This explicitly links entities to relations (prevents orphan entities)
+- Example: If relation mentions "CSE has 180 seats", linked_entities: ["CSE", "180"]
+- Use exact entity_name as written (case-sensitive, including Bengali/English variations)
 
 IMPORTANT:
 - Output ONLY valid JSON (no commentary)
 - Include EVERY number mentioned in text
 - Do NOT add information not in text
 - Mark completeness honestly
+- ALWAYS populate linked_entities for each relation (REQUIRED)
 """
         return prompt
 
@@ -485,6 +500,7 @@ IMPORTANT:
 - Maintain the same JSON format
 - Preserve exact numeric values from text
 - Output language: {language}
+- CRITICAL: Include "linked_entities" array for EACH relation (REQUIRED)
 
 Source text:
 {paragraph_text}
@@ -495,7 +511,7 @@ Return JSON with:
         {{"entity_name": "name", "entity_type": "type", "description": "...", "key_score": 0-100}}
     ],
     "relations": [
-        {{"content": "relation description", "completeness_score": 0-10}}
+        {{"content": "relation description", "completeness_score": 0-10, "linked_entities": ["entity_name_1", "entity_name_2"]}}
     ]
 }}
 

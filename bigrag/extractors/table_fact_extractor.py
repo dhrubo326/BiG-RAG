@@ -60,7 +60,7 @@ class TableFactExtractor:
                 {
                     'role': 'relation',
                     'content': 'CSE বিভাগের কোড CSE এবং আসন সংখ্যা 120।',
-                    'completeness_score': 10,
+                    'weight': 10,  # FIX: Changed from 'completeness_score' to align with RelationValidator
                     'source_id': chunk_id,
                     'metadata': {...}
                 }
@@ -110,7 +110,7 @@ class TableFactExtractor:
                 'role': 'relation',
                 'content': relation_content,
                 'description': relation_content,  # Required for BiG-RAG retrieval
-                'completeness_score': 10,  # 100% complete (from structured table)
+                'weight': 10,  # FIX: Changed from 'completeness_score' to align with RelationValidator (expects 'weight' field, min=6.0 for MODERATE)
                 'source_id': chunk_id,
                 'relation_id': relation_id,  # CRITICAL FIX: Changed from 'hyper_relation' to 'relation_id' (matches lookup at enhanced_pipeline.py:560)
                 'metadata': {
@@ -595,7 +595,7 @@ class TableFactExtractor:
                 'role': 'relation',
                 'content': relation_content,
                 'description': relation_content,
-                'completeness_score': 8,  # Slightly lower than original (synthetic)
+                'weight': 8,  # FIX: Changed from 'completeness_score' (slightly lower than original 10, but still > 6.0 threshold)
                 'source_id': chunk_id,
                 'relation_id': relation_id,
                 'metadata': {

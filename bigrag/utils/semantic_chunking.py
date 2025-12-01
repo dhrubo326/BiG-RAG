@@ -230,12 +230,12 @@ class SemanticChunkingEngine:
             # Get overlap from previous chunk (if not first)
             before_overlap = ""
             if not is_first:
-                before_overlap = get_overlap_text(chunks[idx - 1], overlap, from_end=True)
+                before_overlap = get_overlap_text(chunks[idx - 1], overlap, direction='end')
 
             # Get overlap from next chunk (if not last)
             after_overlap = ""
             if not is_last:
-                after_overlap = get_overlap_text(chunks[idx + 1], overlap, from_end=False)
+                after_overlap = get_overlap_text(chunks[idx + 1], overlap, direction='start')
 
             # Build overlapped chunk
             overlapped_chunk = before_overlap + chunk + after_overlap

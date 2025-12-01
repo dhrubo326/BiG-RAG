@@ -3,6 +3,8 @@
 **Status**: ✅ **PRODUCTION READY** - Modular strategy-based indexing with stable entity IDs
 **Version**: 3.0 (Modular Architecture - January 2025)
 
+**Note on Field Names**: This document references `completeness_score` in code examples. As of January 2025, all extractors output `weight` field (consistent naming). The concepts remain identical - `weight` replaces `completeness_score` throughout the codebase.
+
 ---
 
 ## Overview

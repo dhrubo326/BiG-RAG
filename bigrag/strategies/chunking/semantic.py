@@ -14,8 +14,8 @@ Fully modular implementation with:
 """
 
 from bigrag.interfaces.chunker import ChunkerInterface
+from bigrag.utils import compute_mdhash_id
 from typing import List, Dict, Optional
-import hashlib
 import re
 import logging
 
@@ -138,13 +138,14 @@ class SemanticChunker(ChunkerInterface):
                 from bigrag.utils.table_formatting import TableFormatter
                 nl_content = TableFormatter.table_to_natural_language(table)
 
-                chunk_id = hashlib.md5(nl_content.encode()).hexdigest()[:16]
+                # FIX: Use compute_mdhash_id() for full 32-character hash (was truncated to 16 chars)
+                chunk_id = compute_mdhash_id(nl_content.strip(), prefix='chunk-')
 
                 # Detect language in table content
                 lang_info = BilingualDetector.detect_languages(nl_content)
 
                 chunks.append({
-                    'chunk_id': f'chunk-{chunk_id}',
+                    'chunk_id': chunk_id,
                     'type': 'table',
                     'content': nl_content,
                     'structured_data': table,
@@ -175,11 +176,12 @@ class SemanticChunker(ChunkerInterface):
         from bigrag.preprocessors.table_extractor import BilingualDetector
 
         for chunk_text in text_chunks:
-            chunk_id = hashlib.md5(chunk_text.encode()).hexdigest()[:16]
+            # FIX: Use compute_mdhash_id() for full 32-character hash (was truncated to 16 chars)
+            chunk_id = compute_mdhash_id(chunk_text.strip(), prefix='chunk-')
             lang_info = BilingualDetector.detect_languages(chunk_text)
 
             chunks.append({
-                'chunk_id': f'chunk-{chunk_id}',
+                'chunk_id': chunk_id,
                 'type': 'paragraph',
                 'content': chunk_text,
                 'metadata': {

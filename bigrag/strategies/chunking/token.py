@@ -6,8 +6,8 @@ This implementation uses the PROVEN logic from the old production pipeline.
 """
 
 from bigrag.interfaces.chunker import ChunkerInterface
+from bigrag.utils import compute_mdhash_id
 from typing import List, Dict, Optional
-import hashlib
 
 
 class TokenChunker(ChunkerInterface):
@@ -61,10 +61,11 @@ class TokenChunker(ChunkerInterface):
         # Convert to chunk dicts (with metadata tracking)
         chunks = []
         for i, chunk_text in enumerate(text_chunks):
-            chunk_id = hashlib.md5(chunk_text.encode()).hexdigest()[:16]
+            # FIX: Use compute_mdhash_id() for full 32-character hash (was truncated to 16 chars)
+            chunk_id = compute_mdhash_id(chunk_text.strip(), prefix='chunk-')
 
             chunks.append({
-                'chunk_id': f'chunk-{chunk_id}',
+                'chunk_id': chunk_id,
                 'type': 'paragraph',
                 'content': chunk_text,
                 'metadata': {

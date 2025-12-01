@@ -157,85 +157,68 @@ pip3 install -r requirements-rl.txt
 
 ---
 
-## 🔄 Dual Pipeline System & Unified Subgraph Architecture
+## 🔄 Modular Indexing System & Unified Subgraph Architecture
 
-BiG-RAG supports two distinct knowledge graph construction pipelines with a unified retrieval backend. Both pipelines produce **100% compatible** graph structures (as of January 2025).
+BiG-RAG uses a **single modular indexing system** (as of January 2025) with pluggable strategies for chunking, extraction, merging, validation, and orphan linking. The legacy dual pipeline system (Standard/Production) has been replaced by the modular architecture with IndexingConfig presets.
 
-### Two Pipeline Modes
+### Current System: Modular Architecture
 
-#### Standard Pipeline (Default - Fast & Low Cost)
+**Status**: PRODUCTION READY (January 2025)
 
-**Use Cases:**
-- General-purpose RAG applications
-- Quick prototyping and testing
-- Cost-sensitive deployments
-- Large document corpora (>10K documents)
+**Core Concept**: Strategy pattern with pluggable components instead of monolithic pipelines.
 
-**Characteristics:**
-- **Chunking**: Token-based sliding window (1200 tokens, 100 overlap)
-- **Extraction**: Basic entity and relation extraction
-- **Quality**: Good (90-95% accuracy)
-- **Speed**: Fast (~2-3 minutes per 1K documents)
-- **Cost**: Low (~$0.60 per 10K documents with GPT-4o-mini)
-- **Node IDs**: Hash-based (`entity-abc123`, `rel-def456`)
+**Usage** (Recommended):
+```python
+from bigrag import BiGRAG
+from bigrag.config import IndexingConfig
 
-**Usage:**
-```bash
-# Build via script
-python script_build.py --data_source my_dataset
+# Option 1: Use preset configuration
+config = IndexingConfig.preset_balanced()  # or preset_fast(), preset_quality()
 
-# Build via API (default)
-curl -X POST "http://localhost:8001/documents/upload" \
-  -F "file=@document.md" \
-  -F "use_production_pipeline=false"  # Optional (default)
-```
+# Option 2: Custom configuration
+config = IndexingConfig(
+    chunker='semantic',        # Table-aware chunking
+    extractor='hybrid',        # Table + paragraph extraction
+    merger='fuzzy',            # Advanced entity merging
+    validators=['numeric', 'entity', 'relation'],
+    orphan_linker='synthetic', # Link orphan entities
+    hitl='file',               # Save failures for review
+    validation_mode='document' # Document-level validation
+)
 
-**Output**: Standard BiG-RAG knowledge graph in `expr/my_dataset/`
+# Initialize BiGRAG with IndexingConfig
+rag = BiGRAG(
+    indexing_config=config,
+    working_dir='./expr/my_kg'
+)
 
----
-
-#### Production Pipeline (Enhanced - High Accuracy)
-
-**Use Cases:**
-- Educational/technical content with tables and structured data
-- Domain-specific knowledge bases requiring high precision
-- Applications where accuracy is critical
-- Small to medium corpora (<10K documents)
-
-**Characteristics:**
-- **Chunking**: Table-aware semantic chunking (preserves table structure)
-- **Extraction**: Validated entity extraction with entity linking
-- **Quality**: Excellent (95-99% accuracy)
-- **Speed**: Slower (~10-15 minutes per 1K documents)
-- **Cost**: Higher (~$2-3 per 10K documents)
-- **Node IDs**: Hash-based (`entity-abc123`, `rel-def456`) - **identical to standard**
-- **Special Features**:
-  - Table content preservation
-  - Entity consistency validation
-  - Metadata-enhanced extraction
-
-**Usage:**
-```bash
-# Build via script
-python script_build.py --data_source my_dataset --use_production_pipeline
-
-# Build via API
-curl -X POST "http://localhost:8001/documents/upload" \
-  -F "file=@document.md" \
-  -F "use_production_pipeline=true"
-
-# Or use the dynamic dataset endpoint (always uses production pipeline)
-curl -X POST "http://localhost:8001/datasets/create-and-index" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "dataset_name": "my_new_dataset",
-    "documents": [
-      {"content": "Document text...", "title": "Doc 1"}
+# Upload documents - uses modular system
+rag.insert(
+    documents=["Document 1 text...", "Document 2 text..."],
+    metadata=[
+        {"title": "Doc 1", "category": "science"},
+        {"title": "Doc 2", "category": "engineering"}
     ]
-  }'
+)
 ```
 
-**Output**: Production BiG-RAG knowledge graph in `expr/my_dataset/`
+### Legacy Pipeline Modes (Deprecated - Use Modular System Instead)
+
+The old dual pipeline system (Standard/Production) is deprecated in favor of the modular architecture. For backward compatibility, you can still use:
+
+```bash
+# Legacy standard pipeline (use_enhanced_pipeline=False)
+rag = BiGRAG(working_dir='./expr/my_kg', use_enhanced_pipeline=False)
+
+# Legacy production pipeline (use_enhanced_pipeline=True)
+rag = BiGRAG(working_dir='./expr/my_kg', use_enhanced_pipeline=True)
+```
+
+**Migration**: Replace legacy pipelines with IndexingConfig presets:
+- Standard Pipeline → `IndexingConfig.preset_fast()`
+- Production Pipeline → `IndexingConfig.preset_quality()`
+
+See [MODULAR_SYSTEM_FIX_SUMMARY.md](MODULAR_SYSTEM_FIX_SUMMARY.md) for migration guide.
 
 ---
 
@@ -782,6 +765,8 @@ weight = Σ(importance_score) for all occurrences
 ```
 weight = Σ(completeness_score) for all occurrences
 ```
+
+**Note**: As of January 2025, all extractors now consistently output `weight` field (not `completeness_score`). The TableFactExtractor was updated to match this convention.
 
 **Interpretation:**
 - **Range**: 0 to N×10 (where N = number of chunks mentioning the relation)

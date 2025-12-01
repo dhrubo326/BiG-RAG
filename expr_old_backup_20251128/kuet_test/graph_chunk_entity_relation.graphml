@@ -1,138 +1,600 @@
 <?xml version='1.0' encoding='utf-8'?>
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
-  <key id="d6" for="edge" attr.name="source_id" attr.type="string" />
-  <key id="d5" for="edge" attr.name="keywords" attr.type="string" />
-  <key id="d4" for="edge" attr.name="description" attr.type="string" />
-  <key id="d3" for="edge" attr.name="weight" attr.type="long" />
-  <key id="d2" for="node" attr.name="source_id" attr.type="string" />
-  <key id="d1" for="node" attr.name="description" attr.type="string" />
-  <key id="d0" for="node" attr.name="entity_type" attr.type="string" />
+  <key id="d9" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d8" for="edge" attr.name="weight" attr.type="long" />
+  <key id="d7" for="node" attr.name="entity_type" attr.type="string" />
+  <key id="d6" for="node" attr.name="entity_name" attr.type="string" />
+  <key id="d5" for="node" attr.name="extraction_quality" attr.type="string" />
+  <key id="d4" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d3" for="node" attr.name="weight" attr.type="long" />
+  <key id="d2" for="node" attr.name="description" attr.type="string" />
+  <key id="d1" for="node" attr.name="content" attr.type="string" />
+  <key id="d0" for="node" attr.name="role" attr.type="string" />
   <graph edgedefault="undirected">
-    <node id="&quot;ড. মোঃ রফিকুল ইসলাম&quot;">
-      <data key="d0">person</data>
-      <data key="d1">Chairman of the Admission Committee for 1st Year B.Sc. Engineering, BEURP and BArch courses</data>
-      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    <node id="rel-c9b58e8dc93e3ec9c40b1c6a00684958">
+      <data key="d0">relation</data>
+      <data key="d1">Khulna University of Engineering and Technology offers admission for the academic year ২০২৪-২০২৫.</data>
+      <data key="d2">Khulna University of Engineering and Technology offers admission for the academic year ২০২৪-২০২৫.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং&quot;">
-      <data key="d0">category</data>
-      <data key="d1">First Year B.Sc. Engineering course</data>
-      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    <node id="rel-100c51aa2d94b7b3fce7c809ba05ad5c">
+      <data key="d0">relation</data>
+      <data key="d1">The total number of seats available for admission is ১০৬৫.</data>
+      <data key="d2">The total number of seats available for admission is ১০৬৫.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;বিইউআরপি&quot;">
-      <data key="d0">category</data>
-      <data key="d1">BEURP course</data>
-      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    <node id="rel-7435bb35dbf2befe4cb8191e99435b03">
+      <data key="d0">relation</data>
+      <data key="d1">Candidates must have a minimum GPA of ৪.০০ to be eligible for admission.</data>
+      <data key="d2">Candidates must have a minimum GPA of ৪.০০ to be eligible for admission.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;বিআর্ক&quot;">
-      <data key="d0">category</data>
-      <data key="d1">BArch course</data>
-      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    <node id="rel-987bc1a52be3f7ff78987f47f52e1477">
+      <data key="d0">relation</data>
+      <data key="d1">Candidates must achieve a total GPA of at least ১৮.০০ in specific subjects.</data>
+      <data key="d2">Candidates must achieve a total GPA of at least ১৮.০০ in specific subjects.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং&quot;">
-      <data key="d0">category</data>
-      <data key="d1">Faculty of Electrical and Electronic Engineering</data>
-      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    <node id="rel-b813ac7cb0aa2c701d9d91149bc537f9">
+      <data key="d0">relation</data>
+      <data key="d1">A total of ২০,০০০ candidates will be allowed to participate in the admission test.</data>
+      <data key="d2">A total of ২০,০০০ candidates will be allowed to participate in the admission test.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়&quot;">
-      <data key="d0">category</data>
-      <data key="d1">Khulna University of Engineering and Technology</data>
-      <data key="d2">chunk-36a18454de0167862b6c0ee1eff11187</data>
+    <node id="rel-7cf14dfa622a84555f9bb2bba1638fcb">
+      <data key="d0">relation</data>
+      <data key="d1">Foreign candidates must have a minimum of ১২ years of study.</data>
+      <data key="d2">Foreign candidates must have a minimum of ১২ years of study.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;REL-BFA5A544D46E2BC39E3946D5EEE6403A&quot;">
-      <data key="d0">category</data>
-      <data key="d1">ড. মোঃ রফিকুল ইসলাম is mentioned as a person.</data>
-      <data key="d2">UNKNOWN</data>
+    <node id="rel-25950908ba049eaa0d2af99c71aa848a">
+      <data key="d0">relation</data>
+      <data key="d1">Foreign candidates must achieve at least ৮০% in specific subjects.</data>
+      <data key="d2">Foreign candidates must achieve at least ৮০% in specific subjects.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;REL-45CA2C162DF6906CE0D109DD721DF82F&quot;">
-      <data key="d0">category</data>
-      <data key="d1">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং is mentioned as a course.</data>
-      <data key="d2">UNKNOWN</data>
+    <node id="rel-0d780584f1ddc401fa0233e9e81630d5">
+      <data key="d0">relation</data>
+      <data key="d1">Candidates must have an average of at least ৭০% in their secondary examination.</data>
+      <data key="d2">Candidates must have an average of at least ৭০% in their secondary examination.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;REL-B1D83E9F3AF6B975063A84A369F6472F&quot;">
-      <data key="d0">category</data>
-      <data key="d1">বিইউআরপি is mentioned as a course.</data>
-      <data key="d2">UNKNOWN</data>
+    <node id="rel-fb6e3c538cc15911c933617b8afccea0">
+      <data key="d0">relation</data>
+      <data key="d1">The admission test will be conducted for a total of ৫০০ marks.</data>
+      <data key="d2">The admission test will be conducted for a total of ৫০০ marks.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;REL-3A6FB09CB7897B062342C22BDD99F0CC&quot;">
-      <data key="d0">category</data>
-      <data key="d1">বিআর্ক is mentioned as a course.</data>
-      <data key="d2">UNKNOWN</data>
+    <node id="rel-f4406ef59f504e8b7d8a17eb9c4fd116">
+      <data key="d0">relation</data>
+      <data key="d1">B.Arch course candidates must participate in a drawing test worth ১০০ marks.</data>
+      <data key="d2">B.Arch course candidates must participate in a drawing test worth ১০০ marks.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;REL-732C57851E0626352D5BC3B0695FECDD&quot;">
-      <data key="d0">category</data>
-      <data key="d1">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং is mentioned as a faculty.</data>
-      <data key="d2">UNKNOWN</data>
+    <node id="rel-3d9cfa35de208e987dc8fcbe8212694c">
+      <data key="d0">relation</data>
+      <data key="d1">Office hours for contact are from ৯:০০ AM.</data>
+      <data key="d2">Office hours for contact are from ৯:০০ AM.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
     </node>
-    <node id="&quot;REL-523C46316338B139AD2AAD41863DE96D&quot;">
-      <data key="d0">category</data>
+    <node id="rel-7a6a2f5a002b55e2c4b4bed16a390e89">
+      <data key="d0">relation</data>
+      <data key="d1">The contact number for assistance is ১৭99273655.</data>
+      <data key="d2">The contact number for assistance is ১৭99273655.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-348015bc96bbf092f5a92d508122b51f">
+      <data key="d0">relation</data>
+      <data key="d1">There are ৫ reserved seats for indigenous people and residents of the hill districts of Chittagong.</data>
+      <data key="d2">There are ৫ reserved seats for indigenous people and residents of the hill districts of Chittagong.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-955d382b91ea1c69a985d77255fd5d30">
+      <data key="d0">relation</data>
+      <data key="d1">The MCQ test will last for ৩ hours.</data>
+      <data key="d2">The MCQ test will last for ৩ hours.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-d978df49e2d7cb41ce8cc76fef307fae">
+      <data key="d0">relation</data>
+      <data key="d1">The drawing test for B.Arch course is worth ১০০ marks.</data>
+      <data key="d2">The drawing test for B.Arch course is worth ১০০ marks.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-fb571e4133bd93068add48511a9ff360">
+      <data key="d0">relation</data>
+      <data key="d1">Office hours for contact are from ৯:০০ AM to ৫:০০ PM.</data>
+      <data key="d2">Office hours for contact are from ৯:০০ AM to ৫:০০ PM.</data>
+      <data key="d3">10</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-523c46316338b139ad2aad41863de96d">
+      <data key="d0">relation</data>
       <data key="d1">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় is mentioned as a university.</data>
-      <data key="d2">UNKNOWN</data>
-    </node>
-    <node id="&quot;ENTITY-591F1622D226D5673FD89F386C76135B&quot;">
-      <data key="d2">UNKNOWN</data>
-      <data key="d1">UNKNOWN</data>
-      <data key="d0">category</data>
-    </node>
-    <node id="&quot;ENTITY-BA4230D70D84AE9EFC0B13193C9C5C30&quot;">
-      <data key="d2">UNKNOWN</data>
-      <data key="d1">UNKNOWN</data>
-      <data key="d0">category</data>
-    </node>
-    <node id="&quot;ENTITY-B7BC6FFF9DEF8A308F35ECC9C7A99D55&quot;">
-      <data key="d2">UNKNOWN</data>
-      <data key="d1">UNKNOWN</data>
-      <data key="d0">category</data>
-    </node>
-    <node id="&quot;ENTITY-C460D9A501FDC74DCB2F7B81917BC939&quot;">
-      <data key="d2">UNKNOWN</data>
-      <data key="d1">UNKNOWN</data>
-      <data key="d0">category</data>
-    </node>
-    <node id="&quot;ENTITY-CE89319EDF3CD16ABADAEA700EF6452D&quot;">
-      <data key="d2">UNKNOWN</data>
-      <data key="d1">UNKNOWN</data>
-      <data key="d0">category</data>
-    </node>
-    <node id="&quot;ENTITY-19662AA59ABA85531D225C6FA9992D51&quot;">
-      <data key="d2">UNKNOWN</data>
-      <data key="d1">UNKNOWN</data>
-      <data key="d0">category</data>
-    </node>
-    <edge source="&quot;REL-BFA5A544D46E2BC39E3946D5EEE6403A&quot;" target="&quot;ENTITY-591F1622D226D5673FD89F386C76135B&quot;">
+      <data key="d2">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় is mentioned as a university.</data>
       <data key="d3">5</data>
-      <data key="d4">ড. মোঃ রফিকুল ইসলাম is mentioned as a person.</data>
-      <data key="d5">ড. মোঃ রফিকুল ইসলাম is mentioned as a person.</data>
-      <data key="d6">UNKNOWN</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-cad775cc168157e52733ab215f74ebc3">
+      <data key="d0">relation</data>
+      <data key="d1">২০২৪-২০২৫ is mentioned as a academic_year.</data>
+      <data key="d2">২০২৪-২০২৫ is mentioned as a academic_year.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-45ca2c162df6906ce0d109dd721df82f">
+      <data key="d0">relation</data>
+      <data key="d1">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং is mentioned as a course.</data>
+      <data key="d2">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং is mentioned as a course.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-c74673a94c65728740896d347144e755">
+      <data key="d0">relation</data>
+      <data key="d1">১০৬৫ is mentioned as a seat_count.</data>
+      <data key="d2">১০৬৫ is mentioned as a seat_count.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-7eff2fb812154dc2a1b75eec920a5e9f">
+      <data key="d0">relation</data>
+      <data key="d1">৪.০০ is mentioned as a gpa_requirement.</data>
+      <data key="d2">৪.০০ is mentioned as a gpa_requirement.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-444778331a5f830352e8cbd67529e2e2">
+      <data key="d0">relation</data>
+      <data key="d1">১৮.০০ is mentioned as a gpa_requirement.</data>
+      <data key="d2">১৮.০০ is mentioned as a gpa_requirement.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-7d2bdae149b6df9e4759a40f7af35aaa">
+      <data key="d0">relation</data>
+      <data key="d1">২০,০০০ is mentioned as a seat_count.</data>
+      <data key="d2">২০,০০০ is mentioned as a seat_count.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-59ee7e87c300ea0c969e73ab02470b05">
+      <data key="d0">relation</data>
+      <data key="d1">১২ is mentioned as a study_years.</data>
+      <data key="d2">১২ is mentioned as a study_years.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-302571fe18fc741ca64ba97068dc8c9d">
+      <data key="d0">relation</data>
+      <data key="d1">৮০% is mentioned as a percentage_requirement.</data>
+      <data key="d2">৮০% is mentioned as a percentage_requirement.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-82999d503c60c97ebc8afe3cf596f67d">
+      <data key="d0">relation</data>
+      <data key="d1">৭০% is mentioned as a percentage_requirement.</data>
+      <data key="d2">৭০% is mentioned as a percentage_requirement.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-d3b9298ddebbcc77b86eb16a10f0dbcb">
+      <data key="d0">relation</data>
+      <data key="d1">৫০০ is mentioned as a total_marks.</data>
+      <data key="d2">৫০০ is mentioned as a total_marks.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-484bbbedccb4ddfab26b31b8b67a70d7">
+      <data key="d0">relation</data>
+      <data key="d1">১০০ is mentioned as a total_marks.</data>
+      <data key="d2">১০০ is mentioned as a total_marks.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-659fcb738822927397fceee64c638bbf">
+      <data key="d0">relation</data>
+      <data key="d1">৯:০০ is mentioned as a time.</data>
+      <data key="d2">৯:০০ is mentioned as a time.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-1bcb5aa73db8940807fef0844635eacf">
+      <data key="d0">relation</data>
+      <data key="d1">১৭99273655 is mentioned as a contact_number.</data>
+      <data key="d2">১৭99273655 is mentioned as a contact_number.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-5c34dc9962fb4ed3f16721152b67be0f">
+      <data key="d0">relation</data>
+      <data key="d1">৫ is mentioned as a seat_count.</data>
+      <data key="d2">৫ is mentioned as a seat_count.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-0a6cefa4f356a15ae441911d4867d4e2">
+      <data key="d0">relation</data>
+      <data key="d1">৩ is mentioned as a duration.</data>
+      <data key="d2">৩ is mentioned as a duration.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="rel-3faafb9e1177207ff5a80620e67f0d55">
+      <data key="d0">relation</data>
+      <data key="d1">৫:০০ is mentioned as a time.</data>
+      <data key="d2">৫:০০ is mentioned as a time.</data>
+      <data key="d3">5</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-19662aa59aba85531d225c6fa9992d51">
+      <data key="d0">entity</data>
+      <data key="d6">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয়</data>
+      <data key="d7">university</data>
+      <data key="d2">Khulna University of Engineering and Technology</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-0c85a5e4a5c134e3b10e84247022104a">
+      <data key="d0">entity</data>
+      <data key="d6">২০২৪-২০২৫</data>
+      <data key="d7">academic_year</data>
+      <data key="d2">Academic year for admission</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-ba4230d70d84ae9efc0b13193c9c5c30">
+      <data key="d0">entity</data>
+      <data key="d6">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং</data>
+      <data key="d7">course</data>
+      <data key="d2">First year B.Sc. Engineering course</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-5dc2436dfa70367d822a206ed89ff525">
+      <data key="d0">entity</data>
+      <data key="d6">১০৬৫</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Total number of seats available for admission</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d0">entity</data>
+      <data key="d6">৪.০০</data>
+      <data key="d7">gpa_requirement</data>
+      <data key="d2">Minimum GPA requirement for admission</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-71c7ac6a9855f9df7eec3333dab3250a">
+      <data key="d0">entity</data>
+      <data key="d6">১৮.০০</data>
+      <data key="d7">gpa_requirement</data>
+      <data key="d2">Minimum total GPA requirement in specific subjects</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-dc6a1ec7f53c5c762b03041d239c713f">
+      <data key="d0">entity</data>
+      <data key="d6">২০,০০০</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Number of candidates allowed to participate in the admission test</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d0">entity</data>
+      <data key="d6">১২</data>
+      <data key="d7">study_years</data>
+      <data key="d2">Minimum years of study required for foreign candidates</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-34d60f8bca645f3ac57b4cd0fe9d79a4">
+      <data key="d0">entity</data>
+      <data key="d6">৮০%</data>
+      <data key="d7">percentage_requirement</data>
+      <data key="d2">Minimum percentage requirement in specific subjects for foreign candidates</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-b89d196cbbfe8ae1f01a6c735793f24e">
+      <data key="d0">entity</data>
+      <data key="d6">৭০%</data>
+      <data key="d7">percentage_requirement</data>
+      <data key="d2">Minimum average percentage requirement for secondary examination</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-5565d9afc2ff5c444e576eb548d2769a">
+      <data key="d0">entity</data>
+      <data key="d6">৫০০</data>
+      <data key="d7">total_marks</data>
+      <data key="d2">Total marks for the admission test</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d0">entity</data>
+      <data key="d6">১০০</data>
+      <data key="d7">total_marks</data>
+      <data key="d2">Total marks for the drawing test for B.Arch course</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-f7fa2b16f846ee469381596e9ba3bfc2">
+      <data key="d0">entity</data>
+      <data key="d6">৯:০০</data>
+      <data key="d7">time</data>
+      <data key="d2">Start time for office hours for contact</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-9c6a2d89e1ad8c27a0e756c0f5e0be19">
+      <data key="d0">entity</data>
+      <data key="d6">১৭99273655</data>
+      <data key="d7">contact_number</data>
+      <data key="d2">Contact number for assistance during office hours</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d0">entity</data>
+      <data key="d6">৫</data>
+      <data key="d7">seat_count</data>
+      <data key="d2">Reserved seats for indigenous people and residents of the hill districts of Chittagong</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d0">entity</data>
+      <data key="d6">৩</data>
+      <data key="d7">duration</data>
+      <data key="d2">Duration of the MCQ test in hours</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <node id="entity-91b39523df0f4ce235475cae8c1660bf">
+      <data key="d0">entity</data>
+      <data key="d6">৫:০০</data>
+      <data key="d7">time</data>
+      <data key="d2">End time for office hours for contact</data>
+      <data key="d3">0</data>
+      <data key="d4">chunk-1b11a0cb6affa77e</data>
+      <data key="d5">PASS</data>
+    </node>
+    <edge source="rel-c9b58e8dc93e3ec9c40b1c6a00684958" target="entity-0c85a5e4a5c134e3b10e84247022104a">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
     </edge>
-    <edge source="&quot;REL-45CA2C162DF6906CE0D109DD721DF82F&quot;" target="&quot;ENTITY-BA4230D70D84AE9EFC0B13193C9C5C30&quot;">
-      <data key="d3">5</data>
-      <data key="d4">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং is mentioned as a course.</data>
-      <data key="d5">১ম বর্ষ বি. এস-সি. ইঞ্জিনিয়ারিং is mentioned as a course.</data>
-      <data key="d6">UNKNOWN</data>
+    <edge source="rel-c9b58e8dc93e3ec9c40b1c6a00684958" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
     </edge>
-    <edge source="&quot;REL-B1D83E9F3AF6B975063A84A369F6472F&quot;" target="&quot;ENTITY-B7BC6FFF9DEF8A308F35ECC9C7A99D55&quot;">
-      <data key="d3">5</data>
-      <data key="d4">বিইউআরপি is mentioned as a course.</data>
-      <data key="d5">বিইউআরপি is mentioned as a course.</data>
-      <data key="d6">UNKNOWN</data>
+    <edge source="rel-100c51aa2d94b7b3fce7c809ba05ad5c" target="entity-5dc2436dfa70367d822a206ed89ff525">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
     </edge>
-    <edge source="&quot;REL-3A6FB09CB7897B062342C22BDD99F0CC&quot;" target="&quot;ENTITY-C460D9A501FDC74DCB2F7B81917BC939&quot;">
-      <data key="d3">5</data>
-      <data key="d4">বিআর্ক is mentioned as a course.</data>
-      <data key="d5">বিআর্ক is mentioned as a course.</data>
-      <data key="d6">UNKNOWN</data>
+    <edge source="rel-100c51aa2d94b7b3fce7c809ba05ad5c" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
     </edge>
-    <edge source="&quot;REL-732C57851E0626352D5BC3B0695FECDD&quot;" target="&quot;ENTITY-CE89319EDF3CD16ABADAEA700EF6452D&quot;">
-      <data key="d3">5</data>
-      <data key="d4">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং is mentioned as a faculty.</data>
-      <data key="d5">ইলেক্ট্রিক্যাল এন্ড ইলেক্ট্রনিক ইঞ্জিনিয়ারিং is mentioned as a faculty.</data>
-      <data key="d6">UNKNOWN</data>
+    <edge source="rel-7435bb35dbf2befe4cb8191e99435b03" target="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
     </edge>
-    <edge source="&quot;REL-523C46316338B139AD2AAD41863DE96D&quot;" target="&quot;ENTITY-19662AA59ABA85531D225C6FA9992D51&quot;">
-      <data key="d3">5</data>
-      <data key="d4">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় is mentioned as a university.</data>
-      <data key="d5">খুলনা প্রকৌশল ও প্রযুক্তি বিশ্ববিদ্যালয় is mentioned as a university.</data>
-      <data key="d6">UNKNOWN</data>
+    <edge source="rel-987bc1a52be3f7ff78987f47f52e1477" target="entity-71c7ac6a9855f9df7eec3333dab3250a">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-b813ac7cb0aa2c701d9d91149bc537f9" target="entity-dc6a1ec7f53c5c762b03041d239c713f">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-7cf14dfa622a84555f9bb2bba1638fcb" target="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-25950908ba049eaa0d2af99c71aa848a" target="entity-34d60f8bca645f3ac57b4cd0fe9d79a4">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-0d780584f1ddc401fa0233e9e81630d5" target="entity-b89d196cbbfe8ae1f01a6c735793f24e">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-fb6e3c538cc15911c933617b8afccea0" target="entity-5565d9afc2ff5c444e576eb548d2769a">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-fb6e3c538cc15911c933617b8afccea0" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-f4406ef59f504e8b7d8a17eb9c4fd116" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-3d9cfa35de208e987dc8fcbe8212694c" target="entity-f7fa2b16f846ee469381596e9ba3bfc2">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-7a6a2f5a002b55e2c4b4bed16a390e89" target="entity-9c6a2d89e1ad8c27a0e756c0f5e0be19">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-348015bc96bbf092f5a92d508122b51f" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-955d382b91ea1c69a985d77255fd5d30" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-d978df49e2d7cb41ce8cc76fef307fae" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-fb571e4133bd93068add48511a9ff360" target="entity-f7fa2b16f846ee469381596e9ba3bfc2">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-fb571e4133bd93068add48511a9ff360" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-fb571e4133bd93068add48511a9ff360" target="entity-91b39523df0f4ce235475cae8c1660bf">
+      <data key="d8">10</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-523c46316338b139ad2aad41863de96d" target="entity-19662aa59aba85531d225c6fa9992d51">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-cad775cc168157e52733ab215f74ebc3" target="entity-0c85a5e4a5c134e3b10e84247022104a">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-cad775cc168157e52733ab215f74ebc3" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-45ca2c162df6906ce0d109dd721df82f" target="entity-ba4230d70d84ae9efc0b13193c9c5c30">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-c74673a94c65728740896d347144e755" target="entity-5dc2436dfa70367d822a206ed89ff525">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-c74673a94c65728740896d347144e755" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-7eff2fb812154dc2a1b75eec920a5e9f" target="entity-97638f90fbd10cd8703feec78c1587bf">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-444778331a5f830352e8cbd67529e2e2" target="entity-71c7ac6a9855f9df7eec3333dab3250a">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-7d2bdae149b6df9e4759a40f7af35aaa" target="entity-dc6a1ec7f53c5c762b03041d239c713f">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-59ee7e87c300ea0c969e73ab02470b05" target="entity-4047b6d1da30dca95f421d0372404752">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-302571fe18fc741ca64ba97068dc8c9d" target="entity-34d60f8bca645f3ac57b4cd0fe9d79a4">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-82999d503c60c97ebc8afe3cf596f67d" target="entity-b89d196cbbfe8ae1f01a6c735793f24e">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-d3b9298ddebbcc77b86eb16a10f0dbcb" target="entity-5565d9afc2ff5c444e576eb548d2769a">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-d3b9298ddebbcc77b86eb16a10f0dbcb" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-484bbbedccb4ddfab26b31b8b67a70d7" target="entity-e80448e1807a1a86f4d5f6169f6cd07d">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-659fcb738822927397fceee64c638bbf" target="entity-f7fa2b16f846ee469381596e9ba3bfc2">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-1bcb5aa73db8940807fef0844635eacf" target="entity-9c6a2d89e1ad8c27a0e756c0f5e0be19">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-5c34dc9962fb4ed3f16721152b67be0f" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-0a6cefa4f356a15ae441911d4867d4e2" target="entity-2bfb0c0d69c196d05512d2ee3c0e9d49">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-3faafb9e1177207ff5a80620e67f0d55" target="entity-1258abe2d9546595225da359e4eb6836">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
+    </edge>
+    <edge source="rel-3faafb9e1177207ff5a80620e67f0d55" target="entity-91b39523df0f4ce235475cae8c1660bf">
+      <data key="d8">5</data>
+      <data key="d9">chunk-1b11a0cb6affa77e</data>
     </edge>
   </graph>
 </graphml>

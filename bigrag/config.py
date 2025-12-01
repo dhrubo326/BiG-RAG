@@ -703,7 +703,7 @@ class IndexingConfig:
         if self.extractor not in valid_extractors:
             raise ValueError(f"extractor must be one of {valid_extractors}")
 
-        valid_validators = ['numeric', 'semantic']
+        valid_validators = ['numeric', 'entity', 'relation', 'semantic']
         for v in self.validators:
             if v not in valid_validators:
                 raise ValueError(f"validator '{v}' invalid. Choose from {valid_validators}")

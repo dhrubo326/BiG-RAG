@@ -319,14 +319,25 @@ class BiGRAG:
         """
         Index a single document into BiG-RAG knowledge graph.
 
-        Pipeline (FIXED ORDER - no coupling between stages):
+        Pipeline (CORRECTED - January 2025):
+        0. Language detection (cascading fallback)
         1. Chunk document (strategy: token/semantic/hybrid)
         2. Extract entities + relations (strategy: strict/gleaning/hybrid)
-        3. Validate extractions (strategy: numeric/semantic/composite/noop)
-        4. Merge entities (strategy: basic/fuzzy/hybrid)
-        5. Link orphan entities (strategy: synthetic/noop)
-        6. Build bipartite graph
-        7. Store to disk
+        3. Merge entities (strategy: basic/fuzzy/hybrid)
+        3.25. Normalize source_id fields (list → string) ⭐ CRITICAL
+        3.5. Remap entity IDs in relations (after merge)
+        4. Validate extractions (strategy: numeric/semantic/composite/noop)
+        5. Handle HITL failures
+        6.5. Verify entity-relation links (preserve extractor links) ⭐ CRITICAL
+        7. Add hyper_relation to entities
+        7.5. Link orphan entities (strategy: synthetic/noop) ⭐ MOVED HERE
+        8. Build bipartite graph
+        9. Store to disk
+
+        CRITICAL FIXES (January 2025):
+        - ⭐ Step 3.25: source_id normalization BEFORE validation (not at Step 8)
+        - ⭐ Step 6.5: Only re-link if extractor didn't provide links (preserves accuracy)
+        - ⭐ Step 7.5: Orphan linking AFTER hyper_relation is set (was Step 3.5)
 
         Args:
             text: Document content (markdown)
@@ -340,40 +351,163 @@ class BiGRAG:
                 'validation': {...}
             }
         """
+        # Step 0: Language detection
+        from bigrag.utils.language_detection import get_language_with_fallback
+        final_language = get_language_with_fallback(
+            explicit_language=None,
+            document_text=text,
+            env_default=True
+        )
+
         # Step 1: Chunk
         chunks = await self.chunker.chunk(text, metadata)
 
         # Step 2: Extract
-        extractions = await self.extractor.extract(chunks)
+        extractions = await self.extractor.extract(chunks, language=final_language)
 
-        # Step 3: Validate
-        validated = await self.validator.validate(extractions)
+        # Step 3: Merge entities
+        merged_entities = await self.merger.merge(extractions['entities'])
 
-        # Step 4: Handle HITL failures
-        if validated['failed_chunks']:
+        # Step 3.25: Normalize source_id (CRITICAL - must be before validation)
+        # Mergers produce 'source_id' (list) or 'source_ids' (list)
+        # Normalize to 'source_id' (string) for consistency across all steps
+        from bigrag.constants import GRAPH_FIELD_SEP
+        for entity in merged_entities:
+            if 'source_id' in entity and isinstance(entity.get('source_id'), list):
+                entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_id']) if entity['source_id'] else 'unknown'
+            elif 'source_ids' in entity and isinstance(entity['source_ids'], list):
+                entity['source_id'] = GRAPH_FIELD_SEP.join(entity['source_ids']) if entity['source_ids'] else 'unknown'
+                del entity['source_ids']
+            elif 'source_id' not in entity:
+                entity['source_id'] = 'unknown'
+
+        # Step 3.5: Remap entity IDs in relations
+        # After merging, old entity IDs become invalid (e.g., entity-cse002 merged into entity-cse001)
+        # Must remap BEFORE validation so validator sees correct entity IDs
+        entity_id_mapping = {}
+        for merged in merged_entities:
+            primary_id = merged.get('entity_id')
+            if primary_id:
+                entity_id_mapping[primary_id] = primary_id
+                for old_id in merged.get('entity_ids_merged', []):
+                    entity_id_mapping[old_id] = primary_id
+
+        for relation in extractions['relations']:
+            old_links = relation.get('metadata', {}).get('linked_entities', [])
+            new_links = [entity_id_mapping.get(old_id, old_id) for old_id in old_links]
+            if 'metadata' not in relation:
+                relation['metadata'] = {}
+            relation['metadata']['linked_entities'] = new_links
+
+        # Step 4: Validate
+        validated = await self.validator.validate({
+            'entities': merged_entities,
+            'relations': extractions['relations'],
+            'failed_chunks': extractions.get('failed_chunks', []),
+            'chunks': chunks,
+            'source_document': text,
+            'metadata': metadata
+        })
+
+        # Step 5: Handle HITL failures
+        if validated.get('failed_chunks'):
             await self.hitl.save_failures(
                 validated['failed_chunks'],
                 metadata=metadata
             )
 
-        # Step 5: Merge entities
-        merged_entities = await self.merger.merge(validated['entities'])
+        # Use validated entities and relations
+        linked_entities = validated['entities']
+        all_relations = validated['relations']
 
-        # Step 6: Link orphan entities (NEW)
-        linked_entities, synthetic_relations = await self.orphan_linker.link(
-            entities=merged_entities,
-            relations=validated['relations']
-        )
-        all_relations = validated['relations'] + synthetic_relations
+        # Step 6.5: Verify entity-relation links (CRITICAL - preserve extractor links)
+        # Extractors (TableFactExtractor, ConstrainedLLMExtractor) provide accurate links
+        # Only re-link if extractor didn't provide links (e.g., synthetic relations)
+        for relation in all_relations:
+            existing_links = relation.get('metadata', {}).get('linked_entities', [])
 
-        # Step 7: Build graph (existing code)
+            if existing_links:
+                # Extractor provided links - KEEP THEM (already remapped in Step 3.5)
+                continue
+
+            # No existing links - need to create them using entity aliases
+            relation_content = relation.get('content', '')
+            linked_entity_ids = []
+
+            for entity in linked_entities:
+                entity_name = entity.get('entity_name', '')
+                aliases = entity.get('aliases', [])
+                all_names = [entity_name] + aliases if aliases else [entity_name]
+
+                # Check if any name/alias appears in relation content
+                for name in all_names:
+                    if name and name in relation_content:
+                        entity_id = entity.get('entity_id')
+                        if entity_id and entity_id not in linked_entity_ids:
+                            linked_entity_ids.append(entity_id)
+                        break
+
+            if 'metadata' not in relation:
+                relation['metadata'] = {}
+            relation['metadata']['linked_entities'] = linked_entity_ids
+
+        # Step 7: Add hyper_relation to entities (bidirectional linking)
+        entity_lookup = {e['entity_id']: e for e in linked_entities if e.get('entity_id')}
+        for relation in all_relations:
+            relation_id = relation.get('relation_id')
+            if relation_id:
+                for entity_id in relation.get('metadata', {}).get('linked_entities', []):
+                    if entity_id in entity_lookup:
+                        entity_lookup[entity_id]['hyper_relation'] = relation_id
+
+        # Step 7.5: Link orphan entities (CRITICAL - MOVED HERE from Step 3.5)
+        # NOW orphan detection works correctly because hyper_relation field exists
+        # Orphans = entities without hyper_relation field
+        orphan_entities = [e for e in linked_entities if not e.get('hyper_relation')]
+
+        if orphan_entities:
+            # Create synthetic relations for orphans
+            orphan_linked_entities, synthetic_relations = await self.orphan_linker.link(
+                entities=linked_entities,
+                relations=all_relations
+            )
+
+            # Update entity lookup with orphan links
+            for entity in orphan_linked_entities:
+                entity_id = entity.get('entity_id')
+                if entity_id and entity_id in entity_lookup:
+                    entity_lookup[entity_id].update(entity)
+
+            # Add synthetic relations to all_relations
+            if synthetic_relations:
+                # Normalize source_id for synthetic relations
+                for relation in synthetic_relations:
+                    if 'source_id' in relation and isinstance(relation.get('source_id'), list):
+                        relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_id']) if relation['source_id'] else 'synthetic'
+                    elif 'source_ids' in relation and isinstance(relation['source_ids'], list):
+                        relation['source_id'] = GRAPH_FIELD_SEP.join(relation['source_ids']) if relation['source_ids'] else 'synthetic'
+                        del relation['source_ids']
+                    elif 'source_id' not in relation:
+                        relation['source_id'] = 'synthetic'
+
+                all_relations.extend(synthetic_relations)
+
+                # Add hyper_relation to orphan entities from synthetic relations
+                for relation in synthetic_relations:
+                    relation_id = relation.get('relation_id')
+                    if relation_id:
+                        for entity_id in relation.get('metadata', {}).get('linked_entities', []):
+                            if entity_id in entity_lookup:
+                                entity_lookup[entity_id]['hyper_relation'] = relation_id
+
+        # Step 8: Build graph (source_id already normalized in Step 3.25)
         await self._build_graph(
             entities=linked_entities,
             relations=all_relations,
             chunks=chunks
         )
 
-        # Step 8: Persist (existing code)
+        # Step 9: Persist
         await self._persist()
 
         return {

@@ -520,8 +520,42 @@ class BiGRAG:
             update_storage = True
             logger.info(f"[New Docs] inserting {len(new_docs)} docs")
 
-            # NEW: Enhanced/Production pipeline vs standard pipeline
-            if self.use_enhanced_pipeline:
+            # PRIORITY 1: Route to modular system if IndexingConfig provided
+            if self.indexing_config:
+                logger.info(f"[Modular System] Using index_document() with IndexingConfig")
+                logger.info(f"[Modular System] Config: chunker={self.indexing_config.chunker}, "
+                           f"extractor={self.indexing_config.extractor}, "
+                           f"merger={self.indexing_config.merger}, "
+                           f"validators={self.indexing_config.validators}")
+
+                # Process each document through modular pipeline
+                for doc_key, doc in new_docs.items():
+                    logger.info(f"[Modular System] Processing document: {doc_key}")
+                    try:
+                        result = await self.index_document(
+                            text=doc["content"],
+                            metadata=doc.get("metadata", {}),
+                            language=None  # Auto-detect language
+                        )
+                        logger.info(f"[Modular System] Document {doc_key} processed successfully")
+                        logger.info(f"  → Statistics: {result['statistics']}")
+                    except Exception as e:
+                        error_msg = f"[Modular System] Failed to process document {doc_key}: {e}"
+                        logger.error(error_msg)
+                        import traceback
+                        logger.error(f"Traceback:\n{traceback.format_exc()}")
+                        raise RuntimeError(error_msg) from e
+
+                # Store full documents to KV storage
+                # NOTE: index_document() already persisted graph, chunks, and VDBs via _insert_done()
+                # We only need to store the full document metadata
+                await self.full_docs.upsert(new_docs)
+                logger.info(f"[Modular System] Persisted {len(new_docs)} documents to full_docs storage")
+                logger.info(f"[Modular System] ========== INDEXING COMPLETE ==========")
+                return  # index_document() already handled all storage
+
+            # LEGACY: Enhanced/Production pipeline (DEPRECATED - kept for backward compatibility)
+            elif self.use_enhanced_pipeline:
                 logger.info(f"[Enhanced Pipeline v1.0] Using extraction strategy: {self.enhanced_pipeline_config.get('extraction_strategy', 'hybrid')}")
                 # Process each document with enhanced pipeline
                 for doc_key, doc in new_docs.items():
